@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Training outputs
+output/
+*.zip
+*.pt
+*.pth
+tensorboard_logs/
+tb_logs/
+
+# .NET build
+bridge_mod/bin/
+bridge_mod/obj/
+bridge_mod_v2/bin/
+bridge_mod_v2/obj/
+bridge_mod_v2/.godot/
+bridge_mod_v2/packages/
+bridge_mod_minimal/bin/
+bridge_mod_minimal/obj/
+
+# Godot
+.godot/
+
+# Decompiled source (too large, regenerate with ILSpy)
+decompiled/
+extracted_pck/
+
+# Temp
+*.log
+.pytest_cache/
+.specstory/
+
+# NuGet
+nuget.config

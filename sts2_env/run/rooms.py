@@ -1,0 +1,98 @@
+"""Room types for each map point kind.
+
+Each room encapsulates the logic for what happens when the player enters.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from sts2_env.core.enums import RoomType
+
+
+@dataclass
+class Room:
+    """Base room that the player enters on the map."""
+
+    room_type: RoomType
+    is_finished: bool = False
+
+    def enter(self, run_state: Any) -> None:
+        """Called when the player enters this room."""
+        pass
+
+    def get_choices(self, run_state: Any) -> list[str]:
+        """Return available choices/actions in this room."""
+        return []
+
+
+@dataclass
+class CombatRoom(Room):
+    """A room with a combat encounter (Monster, Elite, or Boss)."""
+
+    encounter_id: str = ""
+    is_elite: bool = False
+    is_boss: bool = False
+
+    def __post_init__(self) -> None:
+        if self.is_boss:
+            self.room_type = RoomType.BOSS
+        elif self.is_elite:
+            self.room_type = RoomType.ELITE
+        else:
+            self.room_type = RoomType.MONSTER
+
+
+@dataclass
+class ShopRoom(Room):
+    """Merchant shop room."""
+
+    room_type: RoomType = field(default=RoomType.SHOP)
+
+
+@dataclass
+class RestSiteRoom(Room):
+    """Rest site with heal/smith/etc. options."""
+
+    room_type: RoomType = field(default=RoomType.REST_SITE)
+
+    def get_choices(self, run_state: Any) -> list[str]:
+        choices = ["heal", "smith"]
+        # Relic-based options will be added via hooks
+        return choices
+
+
+@dataclass
+class EventRoom(Room):
+    """An event room (Unknown "?" rooms that resolve to events, or Ancients)."""
+
+    event_id: str = ""
+    room_type: RoomType = field(default=RoomType.EVENT)
+
+
+@dataclass
+class TreasureRoom(Room):
+    """Treasure chest room -- player picks a relic."""
+
+    room_type: RoomType = field(default=RoomType.TREASURE)
+
+
+def create_room(room_type: RoomType, **kwargs: Any) -> Room:
+    """Factory for creating room instances."""
+    mapping = {
+        RoomType.MONSTER: CombatRoom,
+        RoomType.ELITE: lambda **kw: CombatRoom(is_elite=True, room_type=RoomType.ELITE, **kw),
+        RoomType.BOSS: lambda **kw: CombatRoom(is_boss=True, room_type=RoomType.BOSS, **kw),
+        RoomType.SHOP: ShopRoom,
+        RoomType.REST_SITE: RestSiteRoom,
+        RoomType.TREASURE: TreasureRoom,
+        RoomType.EVENT: EventRoom,
+    }
+    factory = mapping.get(room_type, Room)
+    if callable(factory):
+        try:
+            return factory(**kwargs)
+        except TypeError:
+            return factory(room_type=room_type, **kwargs)
+    return Room(room_type=room_type)

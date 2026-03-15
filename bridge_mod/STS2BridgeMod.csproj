@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>STS2BridgeMod</RootNamespace>
+    <AssemblyName>STS2BridgeMod</AssemblyName>
+    <!-- Set STS2GamePath via environment variable or msbuild property:
+         dotnet build -p:STS2GamePath="C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2" -->
+    <STS2GamePath Condition="'$(STS2GamePath)' == ''">$(USERPROFILE)\Games\SlayTheSpire2</STS2GamePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Harmony for runtime patching (hooks) -->
+    <Reference Include="0Harmony">
+      <HintPath>$(STS2GamePath)\data_sts2_windows_x86_64\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <!-- Godot engine bindings (Node, CallDeferred, etc.) -->
+    <Reference Include="GodotSharp">
+      <HintPath>$(STS2GamePath)\data_sts2_windows_x86_64\GodotSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <!-- Main game assembly (CombatManager, PlayCardAction, etc.) -->
+    <Reference Include="sts2">
+      <HintPath>$(STS2GamePath)\data_sts2_windows_x86_64\sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

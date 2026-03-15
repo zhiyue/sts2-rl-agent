@@ -1,0 +1,7111 @@
+# Slay the Spire 2 - Complete Card Reference
+
+**Total cards parsed: 577**
+
+## Summary
+
+| Pool | Count |
+|------|-------|
+| Ironclad | 87 |
+| Silent | 88 |
+| Defect | 88 |
+| Necrobinder | 88 |
+| Regent | 88 |
+| Colorless | 64 |
+| Event | 27 |
+| Token | 14 |
+| Status | 11 |
+| Curse | 18 |
+| Quest | 3 |
+| Unknown/Uncategorized | 1 |
+| **Total** | **577** |
+
+## Table of Contents
+
+- [Ironclad (87 cards)](#ironclad)
+- [Silent (88 cards)](#silent)
+- [Defect (88 cards)](#defect)
+- [Necrobinder (88 cards)](#necrobinder)
+- [Regent (88 cards)](#regent)
+- [Colorless (64 cards)](#colorless)
+- [Event (27 cards)](#event)
+- [Token (14 cards)](#token)
+- [Status (11 cards)](#status)
+- [Curse (18 cards)](#curse)
+- [Quest (3 cards)](#quest)
+- [Unknown/Uncategorized (1 cards)](#unknownuncategorized)
+
+---
+
+## Ironclad
+
+*87 cards*
+
+### Bash
+- **ID:** BASH
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Basic
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 8, VulnerablePower: 2}
+- **Effect:** Deal Damage to target enemy; Apply Vulnerable to target
+- **Upgrade:** Damage+2; Vulnerable+1
+### DefendIronclad
+- **ID:** DEFEND_IRONCLAD
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** Defend
+- **Vars:** {Block: 5}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### StrikeIronclad
+- **ID:** STRIKE_IRONCLAD
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Basic
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### Anger
+- **ID:** ANGER
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy; Preview card(s); Add generated card(s) to discard
+- **Upgrade:** Damage+2
+### Armaments
+- **ID:** ARMAMENTS
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 5}
+- **Effect:** Gain Block; Upgrade card(s)
+- **Upgrade:** No upgrade changes
+### BloodWall
+- **ID:** BLOOD_WALL
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 16, HpLoss: 2}
+- **Effect:** Deal non-attack damage; Gain Block
+- **Upgrade:** Block+4
+### Bloodletting
+- **ID:** BLOODLETTING
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {HpLoss: 3, Energy: 2}
+- **Effect:** Deal non-attack damage; Gain Energy
+- **Upgrade:** Energy+1
+### BodySlam
+- **ID:** BODY_SLAM
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 0, ExtraDamage: 1, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Cost-1
+- **Special:** Damage scales with current Block
+### Breakthrough
+- **ID:** BREAKTHROUGH
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 9, HpLoss: 1}
+- **Effect:** Deal Damage to ALL enemies; Deal non-attack damage
+- **Upgrade:** Damage+4
+### Cinder
+- **ID:** CINDER
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 17, CardsToExhaust: 1}
+- **Effect:** Deal Damage to target enemy; Exhaust card(s) from hand; Shuffle draw pile
+- **Upgrade:** Damage+5
+### Havoc
+- **ID:** HAVOC
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Auto-play card(s) from draw pile
+- **Upgrade:** Cost-1
+### Headbutt
+- **ID:** HEADBUTT
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 9}
+- **Effect:** Deal Damage to target enemy; Choose from card grid; Add card to Draw pile
+- **Upgrade:** Damage+3
+### IronWave
+- **ID:** IRON_WAVE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, Block: 5}
+- **Effect:** Deal Damage to target enemy; Gain Block
+- **Upgrade:** Damage+2; Block+2
+### MoltenFist
+- **ID:** MOLTEN_FIST
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Damage: 10}
+- **Effect:** Deal Damage to target enemy; Apply Vulnerable to target
+- **Upgrade:** Damage+4
+### PerfectedStrike
+- **ID:** PERFECTED_STRIKE
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {CalcBase: 6, ExtraDamage: 2, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1; ExtraDamage+1
+- **Special:** Damage scales with Strike cards in deck
+### PommelStrike
+- **ID:** POMMEL_STRIKE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 9, Cards: 1}
+- **Effect:** Deal Damage to target enemy; Draw card(s)
+- **Upgrade:** Damage+1; Cards+1
+### SetupStrike
+- **ID:** SETUP_STRIKE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 7, StrengthPower: 2}
+- **Effect:** Deal Damage to target enemy; Apply SetupStrike to self
+- **Upgrade:** Damage+2; Strength+1
+### ShrugItOff
+- **ID:** SHRUG_IT_OFF
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 8, Cards: 1}
+- **Effect:** Gain Block; Draw card(s)
+- **Upgrade:** Block+3
+### SwordBoomerang
+- **ID:** SWORD_BOOMERANG
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** RandomEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Repeat+1
+### Thunderclap
+- **ID:** THUNDERCLAP
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 4, VulnerablePower: 1}
+- **Effect:** Deal Damage to ALL enemies; Apply Vulnerable to self
+- **Upgrade:** Damage+3
+### Tremble
+- **ID:** TREMBLE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {VulnerablePower: 2}
+- **Effect:** Apply Vulnerable to target
+- **Upgrade:** Vulnerable+1
+### TrueGrit
+- **ID:** TRUE_GRIT
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 7}
+- **Effect:** Gain Block; Exhaust card(s) from hand; Select card(s) from hand
+- **Upgrade:** Block+2
+### TwinStrike
+- **ID:** TWIN_STRIKE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 5}
+- **Effect:** Deal Damage to target enemy 2 times
+- **Upgrade:** Damage+2
+### AshenStrike
+- **ID:** ASHEN_STRIKE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {CalcBase: 6, ExtraDamage: 3, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1; ExtraDamage+1
+- **Special:** Scales with exhaust pile size
+### BattleTrance
+- **ID:** BATTLE_TRANCE
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Apply NoDraw to self; Draw card(s)
+- **Upgrade:** Cards+1
+### Bludgeon
+- **ID:** BLUDGEON
+- **Color:** ironclad
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 32}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+10
+### Bully
+- **ID:** BULLY
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 4, ExtraDamage: 2, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1; ExtraDamage+1
+- **Special:** Scales with VulnerablePower stacks
+### BurningPact
+- **ID:** BURNING_PACT
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Draw card(s); Exhaust card(s) from hand; Select card(s) from hand
+- **Upgrade:** Cards+1
+### DemonicShield
+- **ID:** DEMONIC_SHIELD
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyAlly
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {HpLoss: 1, CalcBase: 0, CalculatedBlock: dynamic, CalcExtra: 1}
+- **Effect:** Deal non-attack damage; Gain Block
+- **Upgrade:** Remove Exhaust
+- **Special:** Damage scales with current Block
+### Dismantle
+- **ID:** DISMANTLE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 8}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2
+### Dominate
+- **ID:** DOMINATE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {StrengthPerVulnerable: 1}
+- **Effect:** Apply Strength to self
+- **Upgrade:** Remove Exhaust
+### DrumOfBattle
+- **ID:** DRUM_OF_BATTLE
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DrumOfBattlePower: 1, Cards: 2}
+- **Effect:** Apply DrumOfBattle to self; Draw card(s)
+- **Upgrade:** Cards+1
+### EvilEye
+- **ID:** EVIL_EYE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 8}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### ExpectAFight
+- **ID:** EXPECT_A_FIGHT
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 0, CalcBase: 0, CalculatedEnergy: dynamic, CalcExtra: 1}
+- **Effect:** Gain Energy
+- **Upgrade:** Cost-1
+- **Special:** Scales with skills in hand
+### FeelNoPain
+- **ID:** FEEL_NO_PAIN
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Power: 3}
+- **Effect:** Apply FeelNoPain to self
+- **Upgrade:** Power+1
+### FightMe
+- **ID:** FIGHT_ME
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, StrengthPower: 2, EnemyStrength: 1}
+- **Effect:** Deal Damage to target enemy multiple times; Apply Strength to self; Apply Strength to target
+- **Upgrade:** Damage+1; Strength+1
+### FlameBarrier
+- **ID:** FLAME_BARRIER
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 12, DamageBack: 4}
+- **Effect:** Gain Block; Apply FlameBarrier to self
+- **Upgrade:** Block+4; DamageBack+2
+### ForgottenRitual
+- **ID:** FORGOTTEN_RITUAL
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 3}
+- **Effect:** Gain Energy
+- **Upgrade:** Energy+1
+### Grapple
+- **ID:** GRAPPLE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7, GrapplePower: 5}
+- **Effect:** Deal Damage to target enemy; Apply Grapple to target
+- **Upgrade:** Damage+2; GrapplePower+2
+### Hemokinesis
+- **ID:** HEMOKINESIS
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 14, HpLoss: 2}
+- **Effect:** Deal Damage to target enemy; Deal non-attack damage
+- **Upgrade:** Damage+5
+### HowlFromBeyond
+- **ID:** HOWL_FROM_BEYOND
+- **Color:** ironclad
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 16}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+5
+### InfernalBlade
+- **ID:** INFERNAL_BLADE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Set card(s) to cost 0; Add generated card(s) to hand
+- **Upgrade:** Cost-1
+### Inferno
+- **ID:** INFERNO
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {InfernoPower: 6}
+- **Effect:** Apply Inferno to self
+- **Upgrade:** InfernoPower+3
+### Inflame
+- **ID:** INFLAME
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 2}
+- **Effect:** Apply Strength to self
+- **Upgrade:** StrengthPower+1
+### Juggling
+- **ID:** JUGGLING
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Juggling to self
+- **Upgrade:** Add Innate
+### Pillage
+- **ID:** PILLAGE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy; Draw card(s)
+- **Upgrade:** Damage+3
+### Rage
+- **ID:** RAGE
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Power: 3}
+- **Effect:** Apply Rage to self
+- **Upgrade:** Power+2
+### Rampage
+- **ID:** RAMPAGE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 9, Increase: 5}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Increase+4
+- **Special:** Self-mutating: damage increases each time this card is played
+### Rupture
+- **ID:** RUPTURE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 1}
+- **Effect:** Apply Rupture to self
+- **Upgrade:** Strength+1
+### SecondWind
+- **ID:** SECOND_WIND
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 5}
+- **Effect:** Gain Block; Exhaust card(s) from hand
+- **Upgrade:** Block+2
+### Spite
+- **ID:** SPITE
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6, Cards: 1}
+- **Effect:** Deal Damage to target enemy; Draw card(s)
+- **Upgrade:** Damage+3
+### Stampede
+- **ID:** STAMPEDE
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Power: 1}
+- **Effect:** Apply Stampede to self
+- **Upgrade:** Cost-1
+### Stomp
+- **ID:** STOMP
+- **Color:** ironclad
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 12}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+3
+### StoneArmor
+- **ID:** STONE_ARMOR
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PlatingPower: 4}
+- **Effect:** Apply Plating to self
+- **Upgrade:** PlatingPower+2
+### Taunt
+- **ID:** TAUNT
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 7, VulnerablePower: 1}
+- **Effect:** Gain Block; Apply Vulnerable to target
+- **Upgrade:** Block+1; Vulnerable+1
+### Unrelenting
+- **ID:** UNRELENTING
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 12}
+- **Effect:** Deal Damage to target enemy; Apply FreeAttack to self
+- **Upgrade:** Damage+6
+### Uppercut
+- **ID:** UPPERCUT
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 13, Power: 1}
+- **Effect:** Deal Damage to target enemy; Apply Weak to target; Apply Vulnerable to target
+- **Upgrade:** Power+1
+### Vicious
+- **ID:** VICIOUS
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Apply Vicious to self
+- **Upgrade:** Cards+1
+### Whirlwind
+- **ID:** WHIRLWIND
+- **Color:** ironclad
+- **Cost:** X
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5}
+- **Effect:** Deal Damage to ALL enemies X times (X=energy)
+- **Upgrade:** Damage+3
+- **Special:** X-cost: uses all remaining energy
+### Aggression
+- **ID:** AGGRESSION
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Aggression to self
+- **Upgrade:** Add Innate
+### Barricade
+- **ID:** BARRICADE
+- **Color:** ironclad
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Barricade to self
+- **Upgrade:** Cost-1
+### Brand
+- **ID:** BRAND
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 1, HpLoss: 1}
+- **Effect:** Deal non-attack damage; Apply Strength to self; Exhaust card(s) from hand; Select card(s) from hand
+- **Upgrade:** Strength+1
+### Cascade
+- **ID:** CASCADE
+- **Color:** ironclad
+- **Cost:** X
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Auto-play card(s) from draw pile; Uses X (remaining energy)
+- **Upgrade:** No upgrade changes
+- **Special:** X-cost: uses all remaining energy
+### Colossus
+- **ID:** COLOSSUS
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 5, Colossus: 1}
+- **Effect:** Gain Block; Apply Colossus to self
+- **Upgrade:** Block+3
+### Conflagration
+- **ID:** CONFLAGRATION
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 8, ExtraDamage: 2, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+1; CalculationBase+1; ExtraDamage+1
+### CrimsonMantle
+- **ID:** CRIMSON_MANTLE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CrimsonMantlePower: 8}
+- **Effect:** Apply CrimsonMantle to self
+- **Upgrade:** CrimsonMantlePower+2
+### Cruelty
+- **ID:** CRUELTY
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CrueltyPower: 25}
+- **Effect:** Apply Cruelty to self
+- **Upgrade:** CrueltyPower+25
+### DarkEmbrace
+- **ID:** DARK_EMBRACE
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply DarkEmbrace to self
+- **Upgrade:** Cost-1
+### DemonForm
+- **ID:** DEMON_FORM
+- **Color:** ironclad
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 2}
+- **Effect:** Apply DemonForm to self
+- **Upgrade:** StrengthPower+1
+### Feed
+- **ID:** FEED
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Damage: 10}
+- **Effect:** Deal Damage to target enemy; Gain Max HP
+- **Upgrade:** Damage+2; MaxHp+1
+### FiendFire
+- **ID:** FIEND_FIRE
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Damage: 7}
+- **Effect:** Deal Damage to target enemy multiple times; Exhaust card(s) from hand
+- **Upgrade:** Damage+3
+### Hellraiser
+- **ID:** HELLRAISER
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Hellraiser to self
+- **Upgrade:** Cost-1
+### Impervious
+- **ID:** IMPERVIOUS
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Block: 30}
+- **Effect:** Gain Block
+- **Upgrade:** Block+10
+### Juggernaut
+- **ID:** JUGGERNAUT
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {JuggernautPower: 5}
+- **Effect:** Apply Juggernaut to self
+- **Upgrade:** JuggernautPower+2
+### Mangle
+- **ID:** MANGLE
+- **Color:** ironclad
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 15, StrengthLoss: 10}
+- **Effect:** Deal Damage to target enemy; Apply Mangle to target
+- **Upgrade:** Damage+5; StrengthLoss+5
+### Offering
+- **ID:** OFFERING
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 3, HpLoss: 6, Energy: 2}
+- **Effect:** Deal non-attack damage; Draw card(s); Gain Energy
+- **Upgrade:** Cards+2
+### OneTwoPunch
+- **ID:** ONE_TWO_PUNCH
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Attacks: 1}
+- **Effect:** Apply OneTwoPunch to self
+- **Upgrade:** Attacks+1
+### PactsEnd
+- **ID:** PACTS_END
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 17, Cards: 3}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+6
+### PrimalForce
+- **ID:** PRIMAL_FORCE
+- **Color:** ironclad
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Upgrade card(s); Transform card(s); Create GiantRock card
+- **Upgrade:** No upgrade changes
+### Pyre
+- **ID:** PYRE
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 1}
+- **Effect:** Apply Pyre to self
+- **Upgrade:** Energy+1
+### Stoke
+- **ID:** STOKE
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Draw card(s); Exhaust card(s) from hand
+- **Upgrade:** Cost-1
+### Tank
+- **ID:** TANK
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Tank to self
+- **Upgrade:** Cost-1
+### TearAsunder
+- **ID:** TEAR_ASUNDER
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2
+### Thrash
+- **ID:** THRASH
+- **Color:** ironclad
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 4}
+- **Effect:** Deal Damage to target enemy 2 times; Exhaust card(s) from hand
+- **Upgrade:** Damage+2
+### Unmovable
+- **ID:** UNMOVABLE
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Unmovable to self
+- **Upgrade:** Cost-1
+### Break
+- **ID:** BREAK
+- **Color:** ironclad
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Ancient
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 20, VulnerablePower: 5}
+- **Effect:** Deal Damage to target enemy; Apply Vulnerable to target
+- **Upgrade:** Damage+5; Vulnerable+2
+### Corruption
+- **ID:** CORRUPTION
+- **Color:** ironclad
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Power: 1}
+- **Effect:** Apply Corruption to self
+- **Upgrade:** Cost-1
+---
+
+## Silent
+
+*88 cards*
+
+### DefendSilent
+- **ID:** DEFEND_SILENT
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** Defend
+- **Vars:** {Block: 5}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### Neutralize
+- **ID:** NEUTRALIZE
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Basic
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3, WeakPower: 1}
+- **Effect:** Deal Damage to target enemy; Apply Weak to target
+- **Upgrade:** Damage+1; Weak+1
+### StrikeSilent
+- **ID:** STRIKE_SILENT
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Basic
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### Survivor
+- **ID:** SURVIVOR
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 8}
+- **Effect:** Gain Block; Discard card(s)
+- **Upgrade:** Block+3
+### Acrobatics
+- **ID:** ACROBATICS
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Draw card(s); Discard card(s)
+- **Upgrade:** Cards+1
+### Anticipate
+- **ID:** ANTICIPATE
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DexterityPower: 3}
+- **Effect:** Apply Anticipate to self
+- **Upgrade:** Dexterity+2
+### Backflip
+- **ID:** BACKFLIP
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 5, Cards: 2}
+- **Effect:** Gain Block; Draw card(s)
+- **Upgrade:** Block+3
+### BladeDance
+- **ID:** BLADE_DANCE
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Create Shiv(s) in hand
+- **Upgrade:** Cards+1
+### CloakAndDagger
+- **ID:** CLOAK_AND_DAGGER
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 6, Cards: 1}
+- **Effect:** Gain Block; Create Shiv(s) in hand
+- **Upgrade:** Cards+1
+### DaggerSpray
+- **ID:** DAGGER_SPRAY
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 4}
+- **Effect:** Deal Damage to ALL enemies 2 times
+- **Upgrade:** Damage+2
+### DaggerThrow
+- **ID:** DAGGER_THROW
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 9}
+- **Effect:** Deal Damage to target enemy; Draw card(s); Discard card(s)
+- **Upgrade:** Damage+3
+### DeadlyPoison
+- **ID:** DEADLY_POISON
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PoisonPower: 5}
+- **Effect:** Apply Poison to target
+- **Upgrade:** Poison+2
+### Deflect
+- **ID:** DEFLECT
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 4}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### DodgeAndRoll
+- **ID:** DODGE_AND_ROLL
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 4}
+- **Effect:** Gain Block; Apply BlockNextTurn to self
+- **Upgrade:** Block+2
+### FlickFlack
+- **ID:** FLICK_FLACK
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** Sly
+- **Tags:** None
+- **Vars:** {Damage: 7}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+2
+### LeadingStrike
+- **ID:** LEADING_STRIKE
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 7}
+- **Effect:** Deal Damage to target enemy; Create Shiv(s) in hand
+- **Upgrade:** Damage+3
+### PiercingWail
+- **ID:** PIERCING_WAIL
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {StrengthLoss: 6}
+- **Effect:** Apply PiercingWail to self
+- **Upgrade:** StrengthLoss+2
+### PoisonedStab
+- **ID:** POISONED_STAB
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6, PoisonPower: 3}
+- **Effect:** Deal Damage to target enemy; Apply Poison to target
+- **Upgrade:** Damage+2; Poison+1
+### Prepared
+- **ID:** PREPARED
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Draw card(s); Discard card(s)
+- **Upgrade:** Cards+1
+### Ricochet
+- **ID:** RICOCHET
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** RandomEnemy
+- **Keywords:** Sly
+- **Tags:** None
+- **Vars:** {Damage: 3}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Repeat+1
+### Slice
+- **ID:** SLICE
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### Snakebite
+- **ID:** SNAKEBITE
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** Retain
+- **Tags:** None
+- **Vars:** {PoisonPower: 7}
+- **Effect:** Apply Poison to target
+- **Upgrade:** Poison+3
+### SuckerPunch
+- **ID:** SUCKER_PUNCH
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 8, WeakPower: 1}
+- **Effect:** Deal Damage to target enemy; Apply Weak to target
+- **Upgrade:** Damage+2; Weak+1
+### Untouchable
+- **ID:** UNTOUCHABLE
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** Sly
+- **Tags:** None
+- **Vars:** {Block: 9}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### Accuracy
+- **ID:** ACCURACY
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {AccuracyPower: 4}
+- **Effect:** Apply Accuracy to self
+- **Upgrade:** AccuracyPower+2
+### Backstab
+- **ID:** BACKSTAB
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust, Innate
+- **Tags:** None
+- **Vars:** {Damage: 11}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+4
+### Blur
+- **ID:** BLUR
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 5, Blur: 1}
+- **Effect:** Gain Block; Apply Blur to self
+- **Upgrade:** Block+3
+### BouncingFlask
+- **ID:** BOUNCING_FLASK
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** RandomEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PoisonPower: 3}
+- **Effect:** Apply Poison to self
+- **Upgrade:** Repeat+1
+### BubbleBubble
+- **ID:** BUBBLE_BUBBLE
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PoisonPower: 9}
+- **Effect:** Apply Poison to target
+- **Upgrade:** Poison+3
+### CalculatedGamble
+- **ID:** CALCULATED_GAMBLE
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Discard card(s); Discard and redraw
+- **Upgrade:** Add Retain
+### Dash
+- **ID:** DASH
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10, Block: 10}
+- **Effect:** Deal Damage to target enemy; Gain Block
+- **Upgrade:** Damage+3; Block+3
+### EscapePlan
+- **ID:** ESCAPE_PLAN
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 3}
+- **Effect:** Gain Block; Draw card(s)
+- **Upgrade:** Block+2
+### Expertise
+- **ID:** EXPERTISE
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 6}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cards+1
+### Expose
+- **ID:** EXPOSE
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Power: 2}
+- **Effect:** Lose Block; Apply Vulnerable to target; Remove Artifact
+- **Upgrade:** Power+1
+### Finisher
+- **ID:** FINISHER
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6, CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2
+### Flanking
+- **ID:** FLANKING
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Flanking to target
+- **Upgrade:** Cost-1
+### Flechettes
+- **ID:** FLECHETTES
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2
+- **Special:** Scales with skills in hand
+### FollowThrough
+- **ID:** FOLLOW_THROUGH
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6, WeakPower: 1}
+- **Effect:** Deal Damage to ALL enemies; Apply Weak to self
+- **Upgrade:** Damage+2; Weak+1
+### Footwork
+- **ID:** FOOTWORK
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DexterityPower: 2}
+- **Effect:** Apply Dexterity to self
+- **Upgrade:** Dexterity+1
+### HandTrick
+- **ID:** HAND_TRICK
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 7}
+- **Effect:** Gain Block; Apply Sly to card(s); Select card(s) from hand
+- **Upgrade:** Block+3
+### Haze
+- **ID:** HAZE
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** Sly
+- **Tags:** None
+- **Vars:** {PoisonPower: 4}
+- **Effect:** Apply Poison to self
+- **Upgrade:** Poison+2
+### HiddenDaggers
+- **ID:** HIDDEN_DAGGERS
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2, Shivs: 2}
+- **Effect:** Discard card(s); Upgrade card(s); Create Shiv(s) in hand
+- **Upgrade:** No upgrade changes
+### InfiniteBlades
+- **ID:** INFINITE_BLADES
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply InfiniteBlades to self
+- **Upgrade:** Add Innate
+### LegSweep
+- **ID:** LEG_SWEEP
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 11, WeakPower: 2}
+- **Effect:** Gain Block; Apply Weak to target
+- **Upgrade:** Block+3; Weak+1
+### MementoMori
+- **ID:** MEMENTO_MORI
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 8, ExtraDamage: 4, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1; CalculationBase+2; ExtraDamage+1
+### Mirage
+- **ID:** MIRAGE
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {CalcBase: 0, CalculatedBlock: dynamic, CalcExtra: 1}
+- **Effect:** Gain Block
+- **Upgrade:** Cost-1
+- **Special:** Scales with PoisonPower stacks
+### NoxiousFumes
+- **ID:** NOXIOUS_FUMES
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PoisonPerTurn: 2}
+- **Effect:** Apply NoxiousFumes to self
+- **Upgrade:** PoisonPerTurn+1
+### Outbreak
+- **ID:** OUTBREAK
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {OutbreakPower: 11}
+- **Effect:** Apply Outbreak to self
+- **Upgrade:** OutbreakPower+4
+### PhantomBlades
+- **ID:** PHANTOM_BLADES
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PhantomBladesPower: 9}
+- **Effect:** Apply PhantomBlades to self
+- **Upgrade:** PhantomBladesPower+3
+### Pinpoint
+- **ID:** PINPOINT
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 17}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+5
+### Pounce
+- **ID:** POUNCE
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 12}
+- **Effect:** Deal Damage to target enemy; Apply FreeSkill to self
+- **Upgrade:** Damage+6
+### PreciseCut
+- **ID:** PRECISE_CUT
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 13, ExtraDamage: 2, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** CalculationBase+3
+- **Special:** Scales with skills in hand
+### Predator
+- **ID:** PREDATOR
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 15}
+- **Effect:** Deal Damage to target enemy; Apply DrawCardsNextTurn to self
+- **Upgrade:** Damage+5
+### Reflex
+- **ID:** REFLEX
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Sly
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cards+1
+### Skewer
+- **ID:** SKEWER
+- **Color:** silent
+- **Cost:** X
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7}
+- **Effect:** Deal Damage to target enemy X times (X=energy)
+- **Upgrade:** Damage+3
+- **Special:** X-cost: uses all remaining energy
+### Speedster
+- **ID:** SPEEDSTER
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {SpeedsterPower: 2}
+- **Effect:** Apply Speedster to self
+- **Upgrade:** SpeedsterPower+1
+### Strangle
+- **ID:** STRANGLE
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 8, StranglePower: 2}
+- **Effect:** Deal Damage to target enemy; Apply Strangle to target
+- **Upgrade:** Damage+2; StranglePower+1
+### Tactician
+- **ID:** TACTICIAN
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Sly
+- **Tags:** None
+- **Vars:** {Energy: 1}
+- **Effect:** Gain Energy
+- **Upgrade:** Energy+1
+### UpMySleeve
+- **ID:** UP_MY_SLEEVE
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Create Shiv(s) in hand; Change card cost by -1 this combat
+- **Upgrade:** Cards+1
+### WellLaidPlans
+- **ID:** WELL_LAID_PLANS
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {RetainAmount: 1}
+- **Effect:** Apply WellLaidPlans to self
+- **Upgrade:** RetainAmount+1
+### Abrasive
+- **ID:** ABRASIVE
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Sly
+- **Tags:** None
+- **Vars:** {ThornsPower: 4, DexterityPower: 1}
+- **Effect:** Apply Dexterity to self; Apply Thorns to self
+- **Upgrade:** ThornsPower+2
+### Accelerant
+- **ID:** ACCELERANT
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Accelerant: 1}
+- **Effect:** Apply Accelerant to self
+- **Upgrade:** Accelerant+1
+### Adrenaline
+- **ID:** ADRENALINE
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 2, Energy: 1}
+- **Effect:** Draw card(s); Gain Energy
+- **Upgrade:** Energy+1
+### Afterimage
+- **ID:** AFTERIMAGE
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {AfterimagePower: 1}
+- **Effect:** Apply Afterimage to self
+- **Upgrade:** Add Innate
+### Assassinate
+- **ID:** ASSASSINATE
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Innate, Exhaust
+- **Tags:** None
+- **Vars:** {Damage: 10, VulnerablePower: 1}
+- **Effect:** Deal Damage to target enemy; Apply Vulnerable to target
+- **Upgrade:** Damage+3; Vulnerable+1
+### BladeOfInk
+- **ID:** BLADE_OF_INK
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 2}
+- **Effect:** Apply BladeOfInk to self
+- **Upgrade:** Strength+1
+### BulletTime
+- **ID:** BULLET_TIME
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply NoDraw to self; Set card(s) to cost 0
+- **Upgrade:** Cost-1
+### Burst
+- **ID:** BURST
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Skills: 1}
+- **Effect:** Apply Burst to self
+- **Upgrade:** Skills+1
+### CorrosiveWave
+- **ID:** CORROSIVE_WAVE
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CorrosiveWave: 3}
+- **Effect:** Apply CorrosiveWave to self
+- **Upgrade:** CorrosiveWave+1
+### EchoingSlash
+- **ID:** ECHOING_SLASH
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10}
+- **Effect:** Deal non-attack damage
+- **Upgrade:** Damage+3
+### Envenom
+- **ID:** ENVENOM
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {EnvenomPower: 1}
+- **Effect:** Apply Envenom to self
+- **Upgrade:** EnvenomPower+1
+### FanOfKnives
+- **ID:** FAN_OF_KNIVES
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply FanOfKnives to self; Create Shiv(s) in hand
+- **Upgrade:** Shivs+1
+### GrandFinale
+- **ID:** GRAND_FINALE
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 50}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+10
+### KnifeTrap
+- **ID:** KNIFE_TRAP
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Shiv
+- **Vars:** {CalcBase: 0, CalculatedShivs: dynamic, CalcExtra: 1}
+- **Effect:** Auto-play card(s); Upgrade card(s)
+- **Upgrade:** No upgrade changes
+- **Special:** Scales with exhaust pile size
+### Malaise
+- **ID:** MALAISE
+- **Color:** silent
+- **Cost:** X
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Strength to target; Apply Weak to target; Uses X (remaining energy)
+- **Upgrade:** No upgrade changes
+- **Special:** X-cost: uses all remaining energy
+### MasterPlanner
+- **ID:** MASTER_PLANNER
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply MasterPlanner to self
+- **Upgrade:** Cost-1
+### Murder
+- **ID:** MURDER
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 1, ExtraDamage: 1, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Cost-1
+### Nightmare
+- **ID:** NIGHTMARE
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Nightmare to self; Select card(s) from hand
+- **Upgrade:** Cost-1
+### SerpentForm
+- **ID:** SERPENT_FORM
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {SerpentFormPower: 4}
+- **Effect:** Apply SerpentForm to self
+- **Upgrade:** SerpentFormPower+1
+### ShadowStep
+- **ID:** SHADOW_STEP
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Apply ShadowStep to self; Discard card(s)
+- **Upgrade:** Cost-1
+### Shadowmeld
+- **ID:** SHADOWMELD
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Power: 1}
+- **Effect:** Apply Shadowmeld to self
+- **Upgrade:** Cost-1
+### Sneaky
+- **ID:** SNEAKY
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Sly
+- **Tags:** None
+- **Vars:** {SneakyPower: 1}
+- **Effect:** Apply Sneaky to self
+- **Upgrade:** SneakyPower+1
+### StormOfSteel
+- **ID:** STORM_OF_STEEL
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Discard card(s); Upgrade card(s); Create Shiv(s) in hand
+- **Upgrade:** No upgrade changes
+### TheHunt
+- **ID:** THE_HUNT
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Damage: 10}
+- **Effect:** Deal Damage to target enemy; Apply TheHunt to self; Add extra combat reward
+- **Upgrade:** Damage+5
+### ToolsOfTheTrade
+- **ID:** TOOLS_OF_THE_TRADE
+- **Color:** silent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply ToolsOfTheTrade to self
+- **Upgrade:** Cost-1
+### Tracking
+- **ID:** TRACKING
+- **Color:** silent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Tracking to self; Apply Tracking to self
+- **Upgrade:** Cost-1
+### Suppress
+- **ID:** SUPPRESS
+- **Color:** silent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Ancient
+- **Target:** AnyEnemy
+- **Keywords:** Innate
+- **Tags:** None
+- **Vars:** {Damage: 11, WeakPower: 3}
+- **Effect:** Deal Damage to target enemy; Apply Weak to target
+- **Upgrade:** Damage+6; Weak+2
+### WraithForm
+- **ID:** WRAITH_FORM
+- **Color:** silent
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {IntangiblePower: 2, WraithFormPower: 1}
+- **Effect:** Apply Intangible to self; Apply WraithForm to self
+- **Upgrade:** IntangiblePower+1
+---
+
+## Defect
+
+*88 cards*
+
+### DefendDefect
+- **ID:** DEFEND_DEFECT
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** Defend
+- **Vars:** {Block: 5}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### Dualcast
+- **ID:** DUALCAST
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Evoke front orb
+- **Upgrade:** Cost-1
+### StrikeDefect
+- **ID:** STRIKE_DEFECT
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Basic
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### Zap
+- **ID:** ZAP
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Channel Lightning orb
+- **Upgrade:** Cost-1
+### BallLightning
+- **ID:** BALL_LIGHTNING
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7}
+- **Effect:** Deal Damage to target enemy; Channel Lightning orb
+- **Upgrade:** Damage+3
+### Barrage
+- **ID:** BARRAGE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2
+- **Special:** Scales with orb count
+### BeamCell
+- **ID:** BEAM_CELL
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3, VulnerablePower: 1}
+- **Effect:** Deal Damage to target enemy; Apply Vulnerable to target
+- **Upgrade:** Damage+1; Vulnerable+1
+### BoostAway
+- **ID:** BOOST_AWAY
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 6}
+- **Effect:** Gain Block; Preview card(s); Create Dazed card; Add generated card(s) to discard
+- **Upgrade:** Block+3
+### ChargeBattery
+- **ID:** CHARGE_BATTERY
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 7, Energy: 1}
+- **Effect:** Gain Block; Apply EnergyNextTurn to self
+- **Upgrade:** Block+3
+### Claw
+- **ID:** CLAW
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3, Increase: 2}
+- **Effect:** Deal Damage to target enemy; All Claw copies gain +Increase damage permanently
+- **Upgrade:** Damage+1; Increase+1
+- **Special:** Self-mutating: ALL copies of this card gain damage when any copy is played
+### ColdSnap
+- **ID:** COLD_SNAP
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy; Channel Frost orb
+- **Upgrade:** Damage+3
+### CompileDriver
+- **ID:** COMPILE_DRIVER
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7, CalcBase: 0, CalculatedCards: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy; Draw card(s)
+- **Upgrade:** Damage+3
+- **Special:** Scales with orb count
+### Coolheaded
+- **ID:** COOLHEADED
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Draw card(s); Channel Frost orb
+- **Upgrade:** Cards+1
+### FocusedStrike
+- **ID:** FOCUSED_STRIKE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 9, FocusPower: 1}
+- **Effect:** Deal Damage to target enemy; Apply FocusedStrike to self
+- **Upgrade:** Damage+2; FocusPower+1
+### GoForTheEyes
+- **ID:** GO_FOR_THE_EYES
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3, WeakPower: 1}
+- **Effect:** Deal Damage to target enemy; Apply Weak to target
+- **Upgrade:** Damage+1; Weak+1
+### GunkUp
+- **ID:** GUNK_UP
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 4}
+- **Effect:** Deal Damage to target enemy multiple times; Preview card(s); Create Slimed card; Add generated card(s) to discard
+- **Upgrade:** Damage+1
+### Hologram
+- **ID:** HOLOGRAM
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Block: 3}
+- **Effect:** Gain Block; Choose from card grid; Add card to Hand pile
+- **Upgrade:** Block+2; Remove Exhaust
+### Hotfix
+- **ID:** HOTFIX
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {FocusPower: 2}
+- **Effect:** Apply Hotfix to self
+- **Upgrade:** FocusPower+1
+### Leap
+- **ID:** LEAP
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 9}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### LightningRod
+- **ID:** LIGHTNING_ROD
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 4, LightningRodPower: 2}
+- **Effect:** Gain Block; Apply LightningRod to self
+- **Upgrade:** Block+3
+### MomentumStrike
+- **ID:** MOMENTUM_STRIKE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 10}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### SweepingBeam
+- **ID:** SWEEPING_BEAM
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6, Cards: 1}
+- **Effect:** Deal Damage to ALL enemies; Draw card(s)
+- **Upgrade:** Damage+3
+### Turbo
+- **ID:** TURBO
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 2}
+- **Effect:** Preview card(s); Create Void card; Add generated card(s) to discard; Gain Energy
+- **Upgrade:** Energy+1
+### Uproar
+- **ID:** UPROAR
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5}
+- **Effect:** Deal Damage to target enemy 2 times; Auto-play card(s)
+- **Upgrade:** Damage+2
+### BootSequence
+- **ID:** BOOT_SEQUENCE
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Innate, Exhaust
+- **Tags:** None
+- **Vars:** {Block: 10}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### BulkUp
+- **ID:** BULK_UP
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 2, DexterityPower: 2, OrbSlots: 1}
+- **Effect:** Apply Strength to self; Apply Dexterity to self; Remove orb slot(s)
+- **Upgrade:** Strength+1; Dexterity+1
+### Capacitor
+- **ID:** CAPACITOR
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Gain orb slot(s)
+- **Upgrade:** Repeat+1
+### Chaos
+- **ID:** CHAOS
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Channel random orb
+- **Upgrade:** Repeat+1
+### Chill
+- **ID:** CHILL
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Channel Frost orb
+- **Upgrade:** Remove Exhaust
+### Compact
+- **ID:** COMPACT
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 6}
+- **Effect:** Gain Block; Upgrade card(s); Transform card(s); Create Fuel card
+- **Upgrade:** Block+1
+### Darkness
+- **ID:** DARKNESS
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Channel Dark orb; Trigger orb passive(s)
+- **Upgrade:** No upgrade changes
+### DoubleEnergy
+- **ID:** DOUBLE_ENERGY
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Gain Energy
+- **Upgrade:** Cost-1
+### EnergySurge
+- **ID:** ENERGY_SURGE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AllAllies
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Energy: 2}
+- **Effect:** Gain Energy
+- **Upgrade:** Energy+1
+### Feral
+- **ID:** FERAL
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {FeralPower: 1}
+- **Effect:** Apply Feral to self
+- **Upgrade:** Cost-1
+### FightThrough
+- **ID:** FIGHT_THROUGH
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 13}
+- **Effect:** Gain Block; Preview card(s); Create Wound card; Add generated card(s) to discard
+- **Upgrade:** Block+4
+### Ftl
+- **ID:** FTL
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, Cards: 1, PlayMax: 3}
+- **Effect:** Deal Damage to target enemy; Draw card(s)
+- **Upgrade:** Damage+1; PlayMax+1
+### Fusion
+- **ID:** FUSION
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Channel Plasma orb
+- **Upgrade:** Cost-1
+### Glacier
+- **ID:** GLACIER
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 6}
+- **Effect:** Gain Block; Channel Frost orb
+- **Upgrade:** Block+3
+### Glasswork
+- **ID:** GLASSWORK
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 5}
+- **Effect:** Gain Block; Channel Glass orb
+- **Upgrade:** Block+3
+### Hailstorm
+- **ID:** HAILSTORM
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {HailstormPower: 6}
+- **Effect:** Apply Hailstorm to self
+- **Upgrade:** HailstormPower+2
+### Iteration
+- **ID:** ITERATION
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {IterationPower: 2}
+- **Effect:** Apply Iteration to self
+- **Upgrade:** IterationPower+1
+### Loop
+- **ID:** LOOP
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Loop: 1}
+- **Effect:** Apply Loop to self
+- **Upgrade:** Loop+1
+### Null
+- **ID:** NULL
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10, WeakPower: 2}
+- **Effect:** Deal Damage to target enemy; Apply Weak to target; Channel Dark orb
+- **Upgrade:** Damage+3; Weak+1
+### Overclock
+- **ID:** OVERCLOCK
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Draw card(s); Preview card(s); Create Burn card; Add generated card(s) to discard
+- **Upgrade:** Cards+1
+### Refract
+- **ID:** REFRACT
+- **Color:** defect
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 9}
+- **Effect:** Deal Damage to target enemy 2 times; Channel Glass orb
+- **Upgrade:** Damage+3
+### RocketPunch
+- **ID:** ROCKET_PUNCH
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 13, Cards: 1}
+- **Effect:** Deal Damage to target enemy; Draw card(s)
+- **Upgrade:** Damage+1; Cards+1
+### Scavenge
+- **ID:** SCAVENGE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 2}
+- **Effect:** Apply EnergyNextTurn to self; Exhaust card(s) from hand; Select card(s) from hand
+- **Upgrade:** Energy+1
+### Scrape
+- **ID:** SCRAPE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7, Cards: 4}
+- **Effect:** Deal Damage to target enemy; Draw card(s); Discard card(s)
+- **Upgrade:** Damage+3; Cards+1
+### ShadowShield
+- **ID:** SHADOW_SHIELD
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 11}
+- **Effect:** Gain Block; Channel Dark orb
+- **Upgrade:** Block+4
+### Skim
+- **ID:** SKIM
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cards+1
+### Smokestack
+- **ID:** SMOKESTACK
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {SmokestackPower: 5}
+- **Effect:** Apply Smokestack to self
+- **Upgrade:** SmokestackPower+2
+### Storm
+- **ID:** STORM
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StormPower: 1}
+- **Effect:** Apply Storm to self
+- **Upgrade:** StormPower+1
+### Subroutine
+- **ID:** SUBROUTINE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Subroutine to self
+- **Upgrade:** Cost-1
+### Sunder
+- **ID:** SUNDER
+- **Color:** defect
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 24, Energy: 3}
+- **Effect:** Deal Damage to target enemy; Gain Energy
+- **Upgrade:** Damage+8
+### Synchronize
+- **ID:** SYNCHRONIZE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {CalcBase: 0, CalculatedFocus: dynamic, CalcExtra: 2}
+- **Effect:** Apply Synchronize to self
+- **Upgrade:** Remove Exhaust
+- **Special:** Scales with orb count
+### Synthesis
+- **ID:** SYNTHESIS
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 12}
+- **Effect:** Deal Damage to target enemy; Apply FreePower to self
+- **Upgrade:** Damage+6
+### Tempest
+- **ID:** TEMPEST
+- **Color:** defect
+- **Cost:** X
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Channel Lightning orb; Uses X (remaining energy)
+- **Upgrade:** No upgrade changes
+- **Special:** X-cost: uses all remaining energy
+### TeslaCoil
+- **ID:** TESLA_COIL
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3}
+- **Effect:** Deal Damage to target enemy; Trigger orb passive(s)
+- **Upgrade:** Damage+3
+### Thunder
+- **ID:** THUNDER
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {ThunderPower: 6}
+- **Effect:** Apply Thunder to self
+- **Upgrade:** ThunderPower+2
+### WhiteNoise
+- **ID:** WHITE_NOISE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Set card(s) to cost 0; Add generated card(s) to hand
+- **Upgrade:** Cost-1
+### AdaptiveStrike
+- **ID:** ADAPTIVE_STRIKE
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 18}
+- **Effect:** Deal Damage to target enemy; Preview card(s); Add generated card(s) to discard
+- **Upgrade:** Damage+5
+### AllForOne
+- **ID:** ALL_FOR_ONE
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10}
+- **Effect:** Deal Damage to target enemy; Add card to Hand pile
+- **Upgrade:** Damage+4
+### Buffer
+- **ID:** BUFFER
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {BufferPower: 1}
+- **Effect:** Apply Buffer to self
+- **Upgrade:** BufferPower+1
+### ConsumingShadow
+- **ID:** CONSUMING_SHADOW
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {ConsumingShadowPower: 1}
+- **Effect:** Apply ConsumingShadow to self; Channel Dark orb
+- **Upgrade:** Repeat+1
+### Coolant
+- **ID:** COOLANT
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CoolantPower: 2}
+- **Effect:** Apply Coolant to self
+- **Upgrade:** CoolantPower+1
+### CreativeAi
+- **ID:** CREATIVE_AI
+- **Color:** defect
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CreativeAi: 1}
+- **Effect:** Apply CreativeAi to self
+- **Upgrade:** Cost-1
+### Defragment
+- **ID:** DEFRAGMENT
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {FocusPower: 1}
+- **Effect:** Apply Focus to self
+- **Upgrade:** FocusPower+1
+### EchoForm
+- **ID:** ECHO_FORM
+- **Color:** defect
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {EchoForm: 1}
+- **Effect:** Apply EchoForm to self
+- **Upgrade:** Remove Ethereal
+### FlakCannon
+- **ID:** FLAK_CANNON
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** RandomEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 8, CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy multiple times; Exhaust card(s) from hand
+- **Upgrade:** Damage+3
+### GeneticAlgorithm
+- **ID:** GENETIC_ALGORITHM
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Block: CurrentBlock, Increase: 3}
+- **Effect:** Gain Block; This card's damage permanently increases by Increase
+- **Upgrade:** Increase+1
+- **Special:** Persistent state saved across combats; Self-mutating: Block permanently increases each play
+### HelixDrill
+- **ID:** HELIX_DRILL
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3, CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2
+### Hyperbeam
+- **ID:** HYPERBEAM
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 26, FocusPower: 3}
+- **Effect:** Deal Damage to ALL enemies; Apply Focus to self
+- **Upgrade:** Damage+8
+### IceLance
+- **ID:** ICE_LANCE
+- **Color:** defect
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 19}
+- **Effect:** Deal Damage to target enemy; Channel Frost orb
+- **Upgrade:** Damage+5
+### Ignition
+- **ID:** IGNITION
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** AnyAlly
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Channel Plasma orb
+- **Upgrade:** Remove Exhaust
+### MachineLearning
+- **ID:** MACHINE_LEARNING
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Apply MachineLearning to self
+- **Upgrade:** Add Innate
+### MeteorStrike
+- **ID:** METEOR_STRIKE
+- **Color:** defect
+- **Cost:** 5
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 24}
+- **Effect:** Deal Damage to target enemy; Channel Plasma orb
+- **Upgrade:** Damage+6
+### Modded
+- **ID:** MODDED
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Draw card(s); Gain orb slot(s); Change card cost by 1 this combat
+- **Upgrade:** Cards+1
+### MultiCast
+- **ID:** MULTI_CAST
+- **Color:** defect
+- **Cost:** X
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Evoke front orb; Uses X (remaining energy)
+- **Upgrade:** No upgrade changes
+- **Special:** X-cost: uses all remaining energy
+### Rainbow
+- **ID:** RAINBOW
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Channel Lightning orb; Channel Frost orb; Channel Dark orb
+- **Upgrade:** Remove Exhaust
+### Reboot
+- **ID:** REBOOT
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 4}
+- **Effect:** Draw card(s); Shuffle draw pile; Add card to Draw pile
+- **Upgrade:** Cards+2
+### Shatter
+- **ID:** SHATTER
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 11}
+- **Effect:** Deal Damage to ALL enemies; Evoke front orb
+- **Upgrade:** Damage+4
+### SignalBoost
+- **ID:** SIGNAL_BOOST
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {SignalBoostPower: 1}
+- **Effect:** Apply SignalBoost to self
+- **Upgrade:** Cost-1
+### Spinner
+- **ID:** SPINNER
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {SpinnerPower: 1}
+- **Effect:** Apply Spinner to self; Channel Glass orb
+- **Upgrade:** No upgrade changes
+### Supercritical
+- **ID:** SUPERCRITICAL
+- **Color:** defect
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Energy: 4}
+- **Effect:** Gain Energy
+- **Upgrade:** Energy+2
+### TrashToTreasure
+- **ID:** TRASH_TO_TREASURE
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply TrashToTreasure to self
+- **Upgrade:** Add Innate
+### Voltaic
+- **ID:** VOLTAIC
+- **Color:** defect
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {CalcBase: 0, CalculatedChannels: dynamic, CalcExtra: 1}
+- **Effect:** Channel Lightning orb
+- **Upgrade:** Remove Exhaust
+### BiasedCognition
+- **ID:** BIASED_COGNITION
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {FocusPower: 4, BiasedCognitionPower: 1}
+- **Effect:** Apply Focus to self; Apply BiasedCognition to self
+- **Upgrade:** FocusPower+1
+### Quadcast
+- **ID:** QUADCAST
+- **Color:** defect
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Evoke front orb
+- **Upgrade:** Cost-1
+---
+
+## Necrobinder
+
+*88 cards*
+
+### Bodyguard
+- **ID:** BODYGUARD
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Summon minion
+- **Upgrade:** Summon+2
+### DefendNecrobinder
+- **ID:** DEFEND_NECROBINDER
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** Defend
+- **Vars:** {Block: 5}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### StrikeNecrobinder
+- **ID:** STRIKE_NECROBINDER
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Basic
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### Unleash
+- **ID:** UNLEASH
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Basic
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** {CalcBase: 6, ExtraDamage: 1, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** CalculationBase+3
+### Afterlife
+- **ID:** AFTERLIFE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Summon minion
+- **Upgrade:** Summon+3
+### BlightStrike
+- **ID:** BLIGHT_STRIKE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 8}
+- **Effect:** Deal Damage to target enemy; Apply Doom to target
+- **Upgrade:** Damage+2
+### Defile
+- **ID:** DEFILE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {Damage: 13}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+4
+### Defy
+- **ID:** DEFY
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {Block: 6, WeakPower: 1}
+- **Effect:** Gain Block; Apply Weak to target
+- **Upgrade:** Block+1; Weak+1
+### DrainPower
+- **ID:** DRAIN_POWER
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10, Cards: 2}
+- **Effect:** Deal Damage to target enemy; Upgrade card(s); Preview card(s)
+- **Upgrade:** Damage+2; Cards+1
+### Fear
+- **ID:** FEAR
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {Damage: 7, VulnerablePower: 1}
+- **Effect:** Deal Damage to target enemy; Apply Vulnerable to target
+- **Upgrade:** Damage+1; Vulnerable+1
+### Flatten
+- **ID:** FLATTEN
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** None
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+4; OstyDamage+4
+### GraveWarden
+- **ID:** GRAVE_WARDEN
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 8, Cards: 1}
+- **Effect:** Gain Block; Upgrade card(s); Preview card(s); Create Soul(s); Add generated card(s) to draw pile
+- **Upgrade:** Block+2
+### Graveblast
+- **ID:** GRAVEBLAST
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Damage: 4}
+- **Effect:** Deal Damage to target enemy; Choose from card grid; Add card to Hand pile
+- **Upgrade:** Damage+2; Remove Exhaust
+### Invoke
+- **ID:** INVOKE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 2}
+- **Effect:** Apply SummonNextTurn to self; Apply EnergyNextTurn to self
+- **Upgrade:** Summon+1; Energy+1
+### NegativePulse
+- **ID:** NEGATIVE_PULSE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 5, DoomPower: 7}
+- **Effect:** Gain Block; Apply Doom to self
+- **Upgrade:** Block+1; Doom+4
+### Poke
+- **ID:** POKE
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** None
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3; OstyDamage+3
+### PullAggro
+- **ID:** PULL_AGGRO
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 7}
+- **Effect:** Gain Block; Summon minion
+- **Upgrade:** Block+2; Summon+1
+### Reap
+- **ID:** REAP
+- **Color:** necrobinder
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** Retain
+- **Tags:** None
+- **Vars:** {Damage: 27}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+6
+### Reave
+- **ID:** REAVE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 9, Cards: 1}
+- **Effect:** Deal Damage to target enemy; Upgrade card(s); Preview card(s); Create Soul(s); Add generated card(s) to draw pile
+- **Upgrade:** Damage+2
+### Scourge
+- **ID:** SCOURGE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DoomPower: 13, Cards: 1}
+- **Effect:** Apply Doom to target; Draw card(s)
+- **Upgrade:** Doom+3; Cards+1
+### SculptingStrike
+- **ID:** SCULPTING_STRIKE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 8}
+- **Effect:** Deal Damage to target enemy; Select card(s) from hand
+- **Upgrade:** Damage+3
+### Snap
+- **ID:** SNAP
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** None
+- **Effect:** Deal Damage to target enemy; Select card(s) from hand
+- **Upgrade:** Damage+3; OstyDamage+3
+### Sow
+- **ID:** SOW
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** Retain
+- **Tags:** None
+- **Vars:** {Damage: 8}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+3
+### Wisp
+- **ID:** WISP
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Energy: 1}
+- **Effect:** Gain Energy
+- **Upgrade:** Add Retain
+### BoneShards
+- **ID:** BONE_SHARDS
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** {Block: 9}
+- **Effect:** Deal Damage to ALL enemies; Gain Block; Kill creature
+- **Upgrade:** Damage+3; Block+3; OstyDamage+3
+### BorrowedTime
+- **ID:** BORROWED_TIME
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DoomPower: 3, Energy: 1}
+- **Effect:** Apply Doom to self; Gain Energy
+- **Upgrade:** Energy+1
+### Bury
+- **ID:** BURY
+- **Color:** necrobinder
+- **Cost:** 4
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 52}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+11
+### Calcify
+- **ID:** CALCIFY
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcifyPower: 4}
+- **Effect:** Apply Calcify to self
+- **Upgrade:** CalcifyPower+2
+### CaptureSpirit
+- **ID:** CAPTURE_SPIRIT
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Deal non-attack damage; Preview card(s); Create Soul(s); Add generated card(s) to draw pile
+- **Upgrade:** Damage+1; Cards+1
+### Cleanse
+- **ID:** CLEANSE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Exhaust card(s) from hand; Choose from card grid; Summon minion
+- **Upgrade:** Summon+2
+### Countdown
+- **ID:** COUNTDOWN
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CountdownPower: 6}
+- **Effect:** Apply Countdown to self
+- **Upgrade:** CountdownPower+3
+### DanseMacabre
+- **ID:** DANSE_MACABRE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DanseMacabrePower: 3, Energy: 2}
+- **Effect:** Apply DanseMacabre to self
+- **Upgrade:** DanseMacabrePower+1
+### DeathMarch
+- **ID:** DEATH_MARCH
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 8, ExtraDamage: 3, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1; CalculationBase+1; ExtraDamage+1
+### Deathbringer
+- **ID:** DEATHBRINGER
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DoomPower: 21, WeakPower: 1}
+- **Effect:** Apply Doom to self; Apply Weak to self
+- **Upgrade:** Doom+5
+### DeathsDoor
+- **ID:** DEATHS_DOOR
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 6}
+- **Effect:** Gain Block
+- **Upgrade:** Block+1
+### Debilitate
+- **ID:** DEBILITATE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7, DebilitatePower: 3}
+- **Effect:** Deal Damage to target enemy; Apply Debilitate to target
+- **Upgrade:** Damage+2; DebilitatePower+1
+### Delay
+- **ID:** DELAY
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 11, Energy: 1}
+- **Effect:** Gain Block; Apply EnergyNextTurn to self
+- **Upgrade:** Block+2; Energy+1
+### Dirge
+- **ID:** DIRGE
+- **Color:** necrobinder
+- **Cost:** X
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Upgrade card(s); Preview card(s); Create Soul(s); Add generated card(s) to draw pile; Summon minion; Uses X (remaining energy)
+- **Upgrade:** Summon+1
+- **Special:** X-cost: uses all remaining energy
+### Dredge
+- **ID:** DREDGE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Choose from card grid; Add card to Discard pile
+- **Upgrade:** Add Retain
+### EnfeeblingTouch
+- **ID:** ENFEEBLING_TOUCH
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {StrengthLoss: 8}
+- **Effect:** Apply EnfeeblingTouch to target
+- **Upgrade:** StrengthLoss+3
+### Fetch
+- **ID:** FETCH
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** {Cards: 1}
+- **Effect:** Deal Damage to target enemy; Draw card(s)
+- **Upgrade:** Damage+3; OstyDamage+3
+### Friendship
+- **ID:** FRIENDSHIP
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 2, Energy: 1}
+- **Effect:** Apply Strength to self; Apply Friendship to self
+- **Upgrade:** StrengthPower-1
+### Haunt
+- **ID:** HAUNT
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {HpLoss: 6}
+- **Effect:** Apply Haunt to self
+- **Upgrade:** HpLoss+2
+### HighFive
+- **ID:** HIGH_FIVE
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** {VulnerablePower: 2}
+- **Effect:** Deal Damage to ALL enemies; Apply Vulnerable to self
+- **Upgrade:** Damage+2; OstyDamage+2; Vulnerable+1
+### LegionOfBone
+- **ID:** LEGION_OF_BONE
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AllAllies
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Summon minion
+- **Upgrade:** Summon+2
+### Lethality
+- **ID:** LETHALITY
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {LethalityPower: 50}
+- **Effect:** Apply Lethality to self
+- **Upgrade:** LethalityPower+25
+### Melancholy
+- **ID:** MELANCHOLY
+- **Color:** necrobinder
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 13, Energy: 1}
+- **Effect:** Gain Block
+- **Upgrade:** Block+4
+### NoEscape
+- **ID:** NO_ESCAPE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DoomThreshold: 10, CalcBase: 10, CalculatedDoom: dynamic, CalcExtra: 5}
+- **Effect:** Apply Doom to target
+- **Upgrade:** CalculationBase+5
+- **Special:** Scales with DoomPower stacks
+### Pagestorm
+- **ID:** PAGESTORM
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Apply Pagestorm to self
+- **Upgrade:** Cost-1
+### Parse
+- **ID:** PARSE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cards+1
+### PullFromBelow
+- **ID:** PULL_FROM_BELOW
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2
+### Putrefy
+- **ID:** PUTREFY
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Power: 2}
+- **Effect:** Apply Weak to target; Apply Vulnerable to target
+- **Upgrade:** Power+1
+### Rattle
+- **ID:** RATTLE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** {CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2; OstyDamage+2
+### RightHandHand
+- **ID:** RIGHT_HAND_HAND
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** {Energy: 2}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+2; OstyDamage+2
+### Severance
+- **ID:** SEVERANCE
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 13}
+- **Effect:** Deal Damage to target enemy; Preview card(s); Create Soul(s); Add generated card(s) to hand
+- **Upgrade:** Damage+5
+### Shroud
+- **ID:** SHROUD
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 2}
+- **Effect:** Apply Shroud to self
+- **Upgrade:** Block+1
+### SicEm
+- **ID:** SIC_EM
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** {SicEmPower: 2}
+- **Effect:** Deal Damage to target enemy; Apply SicEm to target
+- **Upgrade:** Damage+1; SicEmPower+1; OstyDamage+1
+### SleightOfFlesh
+- **ID:** SLEIGHT_OF_FLESH
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {SleightOfFleshPower: 9}
+- **Effect:** Apply SleightOfFlesh to self
+- **Upgrade:** SleightOfFleshPower+4
+### Spur
+- **ID:** SPUR
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Retain
+- **Tags:** None
+- **Vars:** {Heal: 5}
+- **Effect:** Heal HP; Summon minion
+- **Upgrade:** Summon+2; Heal+2
+### Veilpiercer
+- **ID:** VEILPIERCER
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10}
+- **Effect:** Deal Damage to target enemy; Apply Veilpiercer to self
+- **Upgrade:** Damage+3
+### BansheesCry
+- **ID:** BANSHEES_CRY
+- **Color:** necrobinder
+- **Cost:** 6
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 33, Energy: 2}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+6
+### CallOfTheVoid
+- **ID:** CALL_OF_THE_VOID
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Apply CallOfTheVoid to self
+- **Upgrade:** Add Innate
+### Demesne
+- **ID:** DEMESNE
+- **Color:** necrobinder
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {Cards: 1, Energy: 1}
+- **Effect:** Apply Demesne to self
+- **Upgrade:** Cost-1
+### DevourLife
+- **ID:** DEVOUR_LIFE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DevourLifePower: 1}
+- **Effect:** Apply DevourLife to self
+- **Upgrade:** DevourLifePower+1
+### Eidolon
+- **ID:** EIDOLON
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Intangible to self; Exhaust card(s) from hand
+- **Upgrade:** Cost-1
+### EndOfDays
+- **ID:** END_OF_DAYS
+- **Color:** necrobinder
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DoomPower: 29}
+- **Effect:** Apply Doom to self; Kill creature
+- **Upgrade:** Doom+8
+### Eradicate
+- **ID:** ERADICATE
+- **Color:** necrobinder
+- **Cost:** X
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Retain
+- **Tags:** None
+- **Vars:** {Damage: 11}
+- **Effect:** Deal Damage to target enemy X times (X=energy)
+- **Upgrade:** Damage+3
+- **Special:** X-cost: uses all remaining energy
+### GlimpseBeyond
+- **ID:** GLIMPSE_BEYOND
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** AllAllies
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Preview card(s); Create Soul(s); Add generated card(s) to draw pile
+- **Upgrade:** Cards+1
+### Hang
+- **ID:** HANG
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10}
+- **Effect:** Deal Damage to target enemy; Apply Hang to target
+- **Upgrade:** Damage+3
+### Misery
+- **ID:** MISERY
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+2; Add Retain
+### NecroMastery
+- **ID:** NECRO_MASTERY
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply NecroMastery to self; Summon minion
+- **Upgrade:** Summon+3
+### Neurosurge
+- **ID:** NEUROSURGE
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {NeurosurgePower: 3, Cards: 2, Energy: 3}
+- **Effect:** Apply Neurosurge to self; Draw card(s); Gain Energy
+- **Upgrade:** Energy+1
+### Oblivion
+- **ID:** OBLIVION
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DoomPower: 3}
+- **Effect:** Apply Oblivion to target
+- **Upgrade:** Doom+1
+### Reanimate
+- **ID:** REANIMATE
+- **Color:** necrobinder
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Summon minion
+- **Upgrade:** Summon+5
+### ReaperForm
+- **ID:** REAPER_FORM
+- **Color:** necrobinder
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply ReaperForm to self
+- **Upgrade:** Add Retain
+### Sacrifice
+- **ID:** SACRIFICE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Retain
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Gain Block; Kill creature
+- **Upgrade:** Cost-1
+### Seance
+- **ID:** SEANCE
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Upgrade card(s); Transform card(s); Transform into Soul; Choose from card grid
+- **Upgrade:** No upgrade changes
+### SentryMode
+- **ID:** SENTRY_MODE
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {SentryModePower: 1}
+- **Effect:** Apply SentryMode to self
+- **Upgrade:** Cost-1
+### SharedFate
+- **ID:** SHARED_FATE
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {EnemyStrengthLoss: 2, PlayerStrengthLoss: 2}
+- **Effect:** Apply Strength to self; Apply Strength to target
+- **Upgrade:** EnemyStrengthLoss+1
+### SoulStorm
+- **ID:** SOUL_STORM
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 9, ExtraDamage: 2, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1; ExtraDamage+1
+- **Special:** Damage scales with Souls in exhaust pile
+### SpiritOfAsh
+- **ID:** SPIRIT_OF_ASH
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {BlockOnExhaust: 4}
+- **Effect:** Apply SpiritOfAsh to self
+- **Upgrade:** BlockOnExhaust+1
+### Squeeze
+- **ID:** SQUEEZE
+- **Color:** necrobinder
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** {CalcBase: 25, ExtraDamage: 5, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1; CalculationBase+5; ExtraDamage+1
+- **Special:** Scales with total cards
+### TheScythe
+- **ID:** THE_SCYTHE
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Increase: 3}
+- **Effect:** Deal Damage to target enemy; This card's damage permanently increases by Increase
+- **Upgrade:** Increase+1
+- **Special:** Persistent state saved across combats
+### TimesUp
+- **ID:** TIMES_UP
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {CalcBase: 0, ExtraDamage: 1, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Add Retain
+- **Special:** Scales with DoomPower stacks
+### Transfigure
+- **ID:** TRANSFIGURE
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Energy: 1}
+- **Effect:** Grant Replay to card; Select card(s) from hand
+- **Upgrade:** Remove Exhaust
+### Undeath
+- **ID:** UNDEATH
+- **Color:** necrobinder
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 7}
+- **Effect:** Gain Block; Preview card(s); Add generated card(s) to discard
+- **Upgrade:** Block+2
+### ForbiddenGrimoire
+- **ID:** FORBIDDEN_GRIMOIRE
+- **Color:** necrobinder
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** Eternal
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply ForbiddenGrimoire to self
+- **Upgrade:** Cost-1
+- **Special:** Cannot be removed from deck (Eternal)
+### Protector
+- **ID:** PROTECTOR
+- **Color:** necrobinder
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Ancient
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** OstyAttack
+- **Vars:** {CalcBase: 10, ExtraDamage: 1, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Cost-1; CalculationBase+5
+---
+
+## Regent
+
+*88 cards*
+
+### DefendRegent
+- **ID:** DEFEND_REGENT
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** Defend
+- **Vars:** {Block: 5}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### FallingStar
+- **ID:** FALLING_STAR
+- **Color:** regent
+- **Cost:** 0 | StarCost: 2
+- **Type:** Attack
+- **Rarity:** Basic
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7, VulnerablePower: 1, WeakPower: 1}
+- **Effect:** Deal Damage to target enemy; Apply Weak to target; Apply Vulnerable to target
+- **Upgrade:** Damage+4
+### StrikeRegent
+- **ID:** STRIKE_REGENT
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Basic
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### Venerate
+- **ID:** VENERATE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Basic
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Stars: 2}
+- **Effect:** Gain Stars
+- **Upgrade:** Stars+1
+### AstralPulse
+- **ID:** ASTRAL_PULSE
+- **Color:** regent
+- **Cost:** 0 | StarCost: 3
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 14}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+4
+### Begone
+- **ID:** BEGONE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 4}
+- **Effect:** Deal Damage to target enemy; Upgrade card(s); Transform card(s); Create MinionDiveBomb card; Select card(s) from hand
+- **Upgrade:** Damage+1
+### CelestialMight
+- **ID:** CELESTIAL_MIGHT
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2
+### CloakOfStars
+- **ID:** CLOAK_OF_STARS
+- **Color:** regent
+- **Cost:** 0 | StarCost: 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 7}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### CollisionCourse
+- **ID:** COLLISION_COURSE
+- **Color:** regent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 9}
+- **Effect:** Deal Damage to target enemy; Create Debris card; Add generated card(s) to hand
+- **Upgrade:** Damage+3
+### CosmicIndifference
+- **ID:** COSMIC_INDIFFERENCE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 6}
+- **Effect:** Gain Block; Choose from card grid; Add card to Draw pile
+- **Upgrade:** Block+3
+### CrescentSpear
+- **ID:** CRESCENT_SPEAR
+- **Color:** regent
+- **Cost:** 1 | StarCost: 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 6, ExtraDamage: 2, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1; ExtraDamage+1
+- **Special:** Scales with total cards
+### CrushUnder
+- **ID:** CRUSH_UNDER
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7, StrengthLoss: 1}
+- **Effect:** Deal Damage to ALL enemies; Apply CrushUnder to self
+- **Upgrade:** Damage+1; StrengthLoss+1
+### GatherLight
+- **ID:** GATHER_LIGHT
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 7, Stars: 1}
+- **Effect:** Gain Block; Gain Stars
+- **Upgrade:** Block+3
+### Glitterstream
+- **ID:** GLITTERSTREAM
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 11}
+- **Effect:** Gain Block; Apply BlockNextTurn to self
+- **Upgrade:** Block+2; BlockNextTurn+2
+### Glow
+- **ID:** GLOW
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2, Stars: 1}
+- **Effect:** Draw card(s); Gain Stars
+- **Upgrade:** Stars+1
+### GuidingStar
+- **ID:** GUIDING_STAR
+- **Color:** regent
+- **Cost:** 1 | StarCost: 2
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 12, Cards: 2}
+- **Effect:** Deal Damage to target enemy; Apply DrawCardsNextTurn to self
+- **Upgrade:** Damage+1; Cards+1
+### HiddenCache
+- **ID:** HIDDEN_CACHE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StarNextTurnPower: 3, Stars: 1}
+- **Effect:** Apply StarNextTurn to self; Gain Stars
+- **Upgrade:** StarNextTurnPower+1
+### KnowThyPlace
+- **ID:** KNOW_THY_PLACE
+- **Color:** regent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {WeakPower: 1, VulnerablePower: 1}
+- **Effect:** Apply Weak to target; Apply Vulnerable to target
+- **Upgrade:** Remove Exhaust
+### Patter
+- **ID:** PATTER
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 8, VigorPower: 2}
+- **Effect:** Gain Block; Apply Vigor to self
+- **Upgrade:** Block+2; VigorPower+1
+### PhotonCut
+- **ID:** PHOTON_CUT
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10, Cards: 1, PutBack: 1}
+- **Effect:** Deal Damage to target enemy; Draw card(s); Add card to pile; Select card(s) from hand
+- **Upgrade:** Damage+3; Cards+1
+### RefineBlade
+- **ID:** REFINE_BLADE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 1, Forge: 6}
+- **Effect:** Apply EnergyNextTurn to self; Forge (upgrade random card in deck)
+- **Upgrade:** Forge+4
+### SolarStrike
+- **ID:** SOLAR_STRIKE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 8, Stars: 1}
+- **Effect:** Deal Damage to target enemy; Gain Stars
+- **Upgrade:** Damage+1; Stars+1
+### SpoilsOfBattle
+- **ID:** SPOILS_OF_BATTLE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Common
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Forge: 10}
+- **Effect:** Forge (upgrade random card in deck)
+- **Upgrade:** Forge+5
+### WroughtInWar
+- **ID:** WROUGHT_IN_WAR
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Common
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7, Forge: 5}
+- **Effect:** Deal Damage to target enemy; Forge (upgrade random card in deck)
+- **Upgrade:** Damage+2; Forge+2
+### Alignment
+- **ID:** ALIGNMENT
+- **Color:** regent
+- **Cost:** 0 | StarCost: 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 2}
+- **Effect:** Gain Energy
+- **Upgrade:** Energy+1
+### BlackHole
+- **ID:** BLACK_HOLE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {BlackHolePower: 3}
+- **Effect:** Apply BlackHole to self
+- **Upgrade:** BlackHolePower+1
+### Bulwark
+- **ID:** BULWARK
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 13, Forge: 10}
+- **Effect:** Gain Block; Forge (upgrade random card in deck)
+- **Upgrade:** Block+3; Forge+3
+### Charge
+- **ID:** CHARGE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Upgrade card(s); Transform card(s); Transform into MinionStrike; Choose from card grid
+- **Upgrade:** No upgrade changes
+### ChildOfTheStars
+- **ID:** CHILD_OF_THE_STARS
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {BlockForStars: 2}
+- **Effect:** Apply ChildOfTheStars to self
+- **Upgrade:** BlockForStars+1
+### Conqueror
+- **ID:** CONQUEROR
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Forge: 3}
+- **Effect:** Apply Conqueror to target; Forge (upgrade random card in deck)
+- **Upgrade:** Forge+2
+### Convergence
+- **ID:** CONVERGENCE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 1, Stars: 1}
+- **Effect:** Apply RetainHand to self; Apply EnergyNextTurn to self; Apply StarNextTurn to self
+- **Upgrade:** Stars+1
+### Devastate
+- **ID:** DEVASTATE
+- **Color:** regent
+- **Cost:** 1 | StarCost: 4
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 30}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+10
+### Furnace
+- **ID:** FURNACE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Forge: 4}
+- **Effect:** Apply Furnace to self
+- **Upgrade:** Forge+2
+### GammaBlast
+- **ID:** GAMMA_BLAST
+- **Color:** regent
+- **Cost:** 0 | StarCost: 3
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 13, VulnerablePower: 2, WeakPower: 2}
+- **Effect:** Deal Damage to target enemy; Apply Weak to target; Apply Vulnerable to target
+- **Upgrade:** Damage+5
+### Glimmer
+- **ID:** GLIMMER
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 3, PutBack: 1}
+- **Effect:** Draw card(s); Add card to Draw pile; Select card(s) from hand
+- **Upgrade:** Cards+1
+### Hegemony
+- **ID:** HEGEMONY
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 15, Energy: 2}
+- **Effect:** Deal Damage to target enemy; Apply EnergyNextTurn to self
+- **Upgrade:** Damage+3; Energy+1
+### KinglyKick
+- **ID:** KINGLY_KICK
+- **Color:** regent
+- **Cost:** 4
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 24}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+6
+### KinglyPunch
+- **ID:** KINGLY_PUNCH
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 8, Increase: 3}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Increase+2
+### KnockoutBlow
+- **ID:** KNOCKOUT_BLOW
+- **Color:** regent
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 30, Stars: 5}
+- **Effect:** Deal Damage to target enemy; Gain Stars
+- **Upgrade:** Damage+8
+### Largesse
+- **ID:** LARGESSE
+- **Color:** regent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyAlly
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Upgrade card(s); Add generated card(s) to hand
+- **Upgrade:** No upgrade changes
+### LunarBlast
+- **ID:** LUNAR_BLAST
+- **Color:** regent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 4, CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+1
+### ManifestAuthority
+- **ID:** MANIFEST_AUTHORITY
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 7}
+- **Effect:** Gain Block; Upgrade card(s); Add generated card(s) to hand
+- **Upgrade:** Block+1
+### Monologue
+- **ID:** MONOLOGUE
+- **Color:** regent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Power: 1}
+- **Effect:** Apply Monologue to self
+- **Upgrade:** Add Retain
+### Orbit
+- **ID:** ORBIT
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 1}
+- **Effect:** Apply Orbit to self
+- **Upgrade:** Cost-1
+### PaleBlueDot
+- **ID:** PALE_BLUE_DOT
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1, CardPlay: 5}
+- **Effect:** Apply PaleBlueDot to self
+- **Upgrade:** Cards+1
+### Parry
+- **ID:** PARRY
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {ParryPower: 6}
+- **Effect:** Apply Parry to self
+- **Upgrade:** ParryPower+3
+### ParticleWall
+- **ID:** PARTICLE_WALL
+- **Color:** regent
+- **Cost:** 0 | StarCost: 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 9}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### PillarOfCreation
+- **ID:** PILLAR_OF_CREATION
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 3}
+- **Effect:** Apply PillarOfCreation to self
+- **Upgrade:** Block+1
+### Prophesize
+- **ID:** PROPHESIZE
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 6}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cards+3
+### Quasar
+- **ID:** QUASAR
+- **Color:** regent
+- **Cost:** 0 | StarCost: 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Upgrade card(s); Choose card(s); Add generated card(s) to hand
+- **Upgrade:** No upgrade changes
+### Radiate
+- **ID:** RADIATE
+- **Color:** regent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3, Stars: 1, CalcBase: 0, CalculatedHits: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to ALL enemies multiple times
+- **Upgrade:** Damage+1
+### Reflect
+- **ID:** REFLECT
+- **Color:** regent
+- **Cost:** 1 | StarCost: 3
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 17}
+- **Effect:** Gain Block; Apply Reflect to self
+- **Upgrade:** Block+4
+### Resonance
+- **ID:** RESONANCE
+- **Color:** regent
+- **Cost:** 1 | StarCost: 3
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 1}
+- **Effect:** Apply Strength to self; Apply Strength to self
+- **Upgrade:** StrengthPower+1
+### RoyalGamble
+- **ID:** ROYAL_GAMBLE
+- **Color:** regent
+- **Cost:** 0 | StarCost: 5
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Stars: 9}
+- **Effect:** Gain Stars
+- **Upgrade:** Add Retain
+### ShiningStrike
+- **ID:** SHINING_STRIKE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 8, Stars: 2}
+- **Effect:** Deal Damage to target enemy; Add card to Draw pile; Gain Stars
+- **Upgrade:** Damage+3
+### SpectrumShift
+- **ID:** SPECTRUM_SHIFT
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Apply SpectrumShift to self
+- **Upgrade:** Cost-1
+### Stardust
+- **ID:** STARDUST
+- **Color:** regent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** RandomEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Damage+2
+### SummonForth
+- **ID:** SUMMON_FORTH
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Forge: 8}
+- **Effect:** Add card to Hand pile; Forge (upgrade random card in deck)
+- **Upgrade:** Forge+3
+### Supermassive
+- **ID:** SUPERMASSIVE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 5, ExtraDamage: 3, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1; ExtraDamage+1
+### Terraforming
+- **ID:** TERRAFORMING
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {VigorPower: 6}
+- **Effect:** Apply Vigor to self
+- **Upgrade:** VigorPower+2
+### Arsenal
+- **ID:** ARSENAL
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {ArsenalPower: 1}
+- **Effect:** Apply Arsenal to self
+- **Upgrade:** ArsenalPower+1
+### BeatIntoShape
+- **ID:** BEAT_INTO_SHAPE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, CalcBase: 5, CalculatedForge: dynamic, CalcExtra: 5}
+- **Effect:** Deal Damage to target enemy; Forge (upgrade random card in deck)
+- **Upgrade:** Damage+2; CalculationBase+2; CalculationExtra+2
+### BigBang
+- **ID:** BIG_BANG
+- **Color:** regent
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 1, Energy: 1, Stars: 1, Forge: 5}
+- **Effect:** Draw card(s); Gain Energy; Gain Stars; Forge (upgrade random card in deck)
+- **Upgrade:** Add Innate
+### Bombardment
+- **ID:** BOMBARDMENT
+- **Color:** regent
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Damage: 18}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+6
+### BundleOfJoy
+- **ID:** BUNDLE_OF_JOY
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Add generated card(s) to hand
+- **Upgrade:** Cards+1
+### Comet
+- **ID:** COMET
+- **Color:** regent
+- **Cost:** 0 | StarCost: 5
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 33, VulnerablePower: 3, WeakPower: 3}
+- **Effect:** Deal Damage to target enemy; Apply Weak to target; Apply Vulnerable to target
+- **Upgrade:** Damage+11
+### CrashLanding
+- **ID:** CRASH_LANDING
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 21}
+- **Effect:** Deal Damage to ALL enemies; Create Debris card; Add generated card(s) to hand
+- **Upgrade:** Damage+5
+### DecisionsDecisions
+- **ID:** DECISIONS_DECISIONS
+- **Color:** regent
+- **Cost:** 0 | StarCost: 6
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Draw card(s); Auto-play card(s); Select card(s) from hand
+- **Upgrade:** Cards+2
+### DyingStar
+- **ID:** DYING_STAR
+- **Color:** regent
+- **Cost:** 1 | StarCost: 3
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** Ethereal
+- **Tags:** None
+- **Vars:** {Damage: 9, StrengthLoss: 9}
+- **Effect:** Deal Damage to ALL enemies; Apply DyingStar to self
+- **Upgrade:** Damage+2; StrengthLoss+2
+### ForegoneConclusion
+- **ID:** FOREGONE_CONCLUSION
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Apply ForegoneConclusion to self
+- **Upgrade:** Cards+1
+### Genesis
+- **ID:** GENESIS
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StarsPerTurn: 2}
+- **Effect:** Apply Genesis to self
+- **Upgrade:** StarsPerTurn+1
+### Guards
+- **ID:** GUARDS
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Upgrade card(s); Transform card(s); Create MinionSacrifice card; Select card(s) from hand
+- **Upgrade:** No upgrade changes
+### HammerTime
+- **ID:** HAMMER_TIME
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply HammerTime to self
+- **Upgrade:** Cost-1
+### HeavenlyDrill
+- **ID:** HEAVENLY_DRILL
+- **Color:** regent
+- **Cost:** X
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 8, Energy: 4}
+- **Effect:** Deal Damage to target enemy X times (X=energy)
+- **Upgrade:** Damage+2
+- **Special:** X-cost: uses all remaining energy
+### HeirloomHammer
+- **ID:** HEIRLOOM_HAMMER
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 17}
+- **Effect:** Deal Damage to target enemy; Add generated card(s) to hand; Select card(s) from hand
+- **Upgrade:** Damage+5
+### IAmInvincible
+- **ID:** I_AM_INVINCIBLE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 9}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### MakeItSo
+- **ID:** MAKE_IT_SO
+- **Color:** regent
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 6, Cards: 3}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### MonarchsGaze
+- **ID:** MONARCHS_GAZE
+- **Color:** regent
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthLoss: 1}
+- **Effect:** Apply MonarchsGaze to self
+- **Upgrade:** Cost-1
+### NeutronAegis
+- **ID:** NEUTRON_AEGIS
+- **Color:** regent
+- **Cost:** 1 | StarCost: 5
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PlatingPower: 8}
+- **Effect:** Apply Plating to self
+- **Upgrade:** PlatingPower+3
+### Royalties
+- **ID:** ROYALTIES
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Gold: 30}
+- **Effect:** Apply Royalties to self
+- **Upgrade:** Gold+5
+### SeekingEdge
+- **ID:** SEEKING_EDGE
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Forge: 7}
+- **Effect:** Apply SeekingEdge to self; Forge (upgrade random card in deck)
+- **Upgrade:** Forge+4
+### SevenStars
+- **ID:** SEVEN_STARS
+- **Color:** regent
+- **Cost:** 2 | StarCost: 7
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7}
+- **Effect:** Deal Damage to ALL enemies multiple times
+- **Upgrade:** Cost-1
+### SwordSage
+- **ID:** SWORD_SAGE
+- **Color:** regent
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {SwordSagePower: 1}
+- **Effect:** Apply SwordSage to self
+- **Upgrade:** Cost-1
+### TheSmith
+- **ID:** THE_SMITH
+- **Color:** regent
+- **Cost:** 1 | StarCost: 4
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Forge: 30}
+- **Effect:** Forge (upgrade random card in deck)
+- **Upgrade:** Forge+10
+### Tyranny
+- **ID:** TYRANNY
+- **Color:** regent
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Tyranny to self
+- **Upgrade:** Add Innate
+### VoidForm
+- **ID:** VOID_FORM
+- **Color:** regent
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {VoidFormPower: 2}
+- **Effect:** Apply VoidForm to self; End turn
+- **Upgrade:** VoidFormPower+1
+### MeteorShower
+- **ID:** METEOR_SHOWER
+- **Color:** regent
+- **Cost:** 0 | StarCost: 2
+- **Type:** Attack
+- **Rarity:** Ancient
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 14, VulnerablePower: 2, WeakPower: 2}
+- **Effect:** Deal Damage to ALL enemies; Apply Weak to self; Apply Vulnerable to self
+- **Upgrade:** Damage+7
+### TheSealedThrone
+- **ID:** THE_SEALED_THRONE
+- **Color:** regent
+- **Cost:** 1 | StarCost: 3
+- **Type:** Power
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply TheSealedThrone to self
+- **Upgrade:** Add Innate
+---
+
+## Colorless
+
+*64 cards*
+
+### Automation
+- **ID:** AUTOMATION
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 1}
+- **Effect:** Apply Automation to self
+- **Upgrade:** Cost-1
+### BelieveInYou
+- **ID:** BELIEVE_IN_YOU
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyAlly
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 3}
+- **Effect:** Gain Energy
+- **Upgrade:** Energy+1
+### Catastrophe
+- **ID:** CATASTROPHE
+- **Color:** colorless
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Auto-play card(s)
+- **Upgrade:** Cards+1
+### Coordinate
+- **ID:** COORDINATE
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyAlly
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 5}
+- **Effect:** Apply Coordinate to target
+- **Upgrade:** Strength+3
+### DarkShackles
+- **ID:** DARK_SHACKLES
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {StrengthLoss: 9}
+- **Effect:** Apply DarkShackles to target
+- **Upgrade:** StrengthLoss+6
+### Discovery
+- **ID:** DISCOVERY
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Choose card(s); Add generated card(s) to hand; Set card cost temporarily
+- **Upgrade:** Remove Exhaust
+### DramaticEntrance
+- **ID:** DRAMATIC_ENTRANCE
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** Exhaust, Innate
+- **Tags:** None
+- **Vars:** {Damage: 11}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+4
+### Equilibrium
+- **ID:** EQUILIBRIUM
+- **Color:** colorless
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 13, Equilibrium: 1}
+- **Effect:** Gain Block; Apply RetainHand to self
+- **Upgrade:** Block+3
+### Fasten
+- **ID:** FASTEN
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** Defend
+- **Vars:** {ExtraBlock: 5}
+- **Effect:** Apply Fasten to self
+- **Upgrade:** ExtraBlock+2
+### Finesse
+- **ID:** FINESSE
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 4, Cards: 1}
+- **Effect:** Gain Block; Draw card(s)
+- **Upgrade:** Block+3
+### Fisticuffs
+- **ID:** FISTICUFFS
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7}
+- **Effect:** Deal Damage to target enemy; Gain Block
+- **Upgrade:** Damage+2
+### FlashOfSteel
+- **ID:** FLASH_OF_STEEL
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, Cards: 1}
+- **Effect:** Deal Damage to target enemy; Draw card(s)
+- **Upgrade:** Damage+3
+### GangUp
+- **ID:** GANG_UP
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 5, ExtraDamage: 5, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+2; ExtraDamage+2
+### HuddleUp
+- **ID:** HUDDLE_UP
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AllAllies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cards+1
+### Impatience
+- **ID:** IMPATIENCE
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cards+1
+### Intercept
+- **ID:** INTERCEPT
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyAlly
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 9}
+- **Effect:** Gain Block; Apply Covered to target
+- **Upgrade:** Block+4
+### JackOfAllTrades
+- **ID:** JACK_OF_ALL_TRADES
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Add generated card(s) to hand
+- **Upgrade:** Cards+1
+### Lift
+- **ID:** LIFT
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AnyAlly
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 11}
+- **Effect:** Gain Block
+- **Upgrade:** Block+5
+### MindBlast
+- **ID:** MIND_BLAST
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** Innate
+- **Tags:** None
+- **Vars:** {CalcBase: 0, ExtraDamage: 1, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Cost-1
+- **Special:** Scales with draw pile size
+### Omnislice
+- **ID:** OMNISLICE
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 8}
+- **Effect:** Deal non-attack damage; Deal non-attack damage
+- **Upgrade:** Damage+3
+### Panache
+- **ID:** PANACHE
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PanacheDamage: 10}
+- **Effect:** Apply Panache to self
+- **Upgrade:** PanacheDamage+4
+### PanicButton
+- **ID:** PANIC_BUTTON
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Block: 30, Turns: 2}
+- **Effect:** Gain Block; Apply NoBlock to self
+- **Upgrade:** Block+10
+### PrepTime
+- **ID:** PREP_TIME
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PrepTimePower: 4}
+- **Effect:** Apply PrepTime to self
+- **Upgrade:** PrepTimePower+2
+### Production
+- **ID:** PRODUCTION
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Energy: 2}
+- **Effect:** Gain Energy
+- **Upgrade:** Remove Exhaust
+### Prolong
+- **ID:** PROLONG
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply BlockNextTurn to self
+- **Upgrade:** Remove Exhaust
+### Prowess
+- **ID:** PROWESS
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 1, DexterityPower: 1}
+- **Effect:** Apply Strength to self; Apply Dexterity to self
+- **Upgrade:** Dexterity+1; Strength+1
+### Purity
+- **ID:** PURITY
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Retain, Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Exhaust card(s) from hand; Select card(s) from hand
+- **Upgrade:** Cards+2
+### Restlessness
+- **ID:** RESTLESSNESS
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Retain
+- **Tags:** None
+- **Vars:** {Cards: 2, Energy: 2}
+- **Effect:** Draw card(s); Gain Energy
+- **Upgrade:** Cards+1; Energy+1
+### SeekerStrike
+- **ID:** SEEKER_STRIKE
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 6, Cards: 3}
+- **Effect:** Deal Damage to target enemy; Choose from card grid; Add card to Hand pile
+- **Upgrade:** Damage+3
+### Shockwave
+- **ID:** SHOCKWAVE
+- **Color:** colorless
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** AllEnemies
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Power: 3}
+- **Effect:** Apply Weak to self; Apply Vulnerable to self
+- **Upgrade:** Power+2
+### Splash
+- **ID:** SPLASH
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Upgrade card(s); Set card(s) to cost 0; Choose card(s); Add generated card(s) to hand
+- **Upgrade:** No upgrade changes
+### Stratagem
+- **ID:** STRATAGEM
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Stratagem to self
+- **Upgrade:** Cost-1
+### TagTeam
+- **ID:** TAG_TEAM
+- **Color:** colorless
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 11}
+- **Effect:** Deal Damage to target enemy; Apply TagTeam to target
+- **Upgrade:** Damage+4
+### TheBomb
+- **ID:** THE_BOMB
+- **Color:** colorless
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Turns: 3, BombDamage: 40}
+- **Effect:** Apply TheBomb to self
+- **Upgrade:** BombDamage+10
+### ThinkingAhead
+- **ID:** THINKING_AHEAD
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Draw card(s); Add card to Draw pile; Select card(s) from hand
+- **Upgrade:** Remove Exhaust
+### ThrummingHatchet
+- **ID:** THRUMMING_HATCHET
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 11}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### UltimateDefend
+- **ID:** ULTIMATE_DEFEND
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Uncommon
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** Defend
+- **Vars:** {Block: 11}
+- **Effect:** Gain Block
+- **Upgrade:** Block+4
+### UltimateStrike
+- **ID:** ULTIMATE_STRIKE
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** Strike
+- **Vars:** {Damage: 14}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+6
+### Volley
+- **ID:** VOLLEY
+- **Color:** colorless
+- **Cost:** X
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** RandomEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10}
+- **Effect:** Deal Damage to target enemy X times (X=energy)
+- **Upgrade:** Damage+4
+- **Special:** X-cost: uses all remaining energy
+### Alchemize
+- **ID:** ALCHEMIZE
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Generate potion
+- **Upgrade:** Cost-1
+### Anointed
+- **ID:** ANOINTED
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Add card to Hand pile
+- **Upgrade:** Add Retain
+### BeaconOfHope
+- **ID:** BEACON_OF_HOPE
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply BeaconOfHope to self
+- **Upgrade:** Add Innate
+### BeatDown
+- **ID:** BEAT_DOWN
+- **Color:** colorless
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** RandomEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Auto-play card(s)
+- **Upgrade:** Cards+1
+### Bolas
+- **ID:** BOLAS
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+1
+### Calamity
+- **ID:** CALAMITY
+- **Color:** colorless
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Calamity to self
+- **Upgrade:** Cost-1
+### Entropy
+- **ID:** ENTROPY
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Apply Entropy to self
+- **Upgrade:** Add Innate
+### EternalArmor
+- **ID:** ETERNAL_ARMOR
+- **Color:** colorless
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {PlatingPower: 7}
+- **Effect:** Apply Plating to self
+- **Upgrade:** PlatingPower+2
+### GoldAxe
+- **ID:** GOLD_AXE
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 0, ExtraDamage: 1, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Add Retain
+### HandOfGreed
+- **ID:** HAND_OF_GREED
+- **Color:** colorless
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 20, Gold: 20}
+- **Effect:** Deal Damage to target enemy; Gain Gold
+- **Upgrade:** Damage+5; Gold+5
+### HiddenGem
+- **ID:** HIDDEN_GEM
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Replay: 2}
+- **Effect:** Preview card(s); Grant Replay to card
+- **Upgrade:** Replay+1
+### Jackpot
+- **ID:** JACKPOT
+- **Color:** colorless
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 25, Cards: 3}
+- **Effect:** Deal Damage to target enemy; Upgrade card(s); Add generated card(s) to hand
+- **Upgrade:** Damage+5
+### Knockdown
+- **ID:** KNOCKDOWN
+- **Color:** colorless
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10, KnockdownPower: 2}
+- **Effect:** Deal Damage to target enemy; Apply Knockdown to target
+- **Upgrade:** Damage+4; KnockdownPower+1
+### MasterOfStrategy
+- **ID:** MASTER_OF_STRATEGY
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cards+1
+### Mayhem
+- **ID:** MAYHEM
+- **Color:** colorless
+- **Cost:** 2
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Mayhem to self
+- **Upgrade:** Cost-1
+### Mimic
+- **ID:** MIMIC
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** AnyAlly
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {CalcBase: 0, CalculatedBlock: dynamic, CalcExtra: 1}
+- **Effect:** Gain Block
+- **Upgrade:** Remove Exhaust
+- **Special:** Damage scales with current Block
+### Nostalgia
+- **ID:** NOSTALGIA
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply Nostalgia to self
+- **Upgrade:** Cost-1
+### Rally
+- **ID:** RALLY
+- **Color:** colorless
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** AllAllies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 12}
+- **Effect:** Gain Block
+- **Upgrade:** Block+5
+### Rend
+- **ID:** REND
+- **Color:** colorless
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 15, ExtraDamage: 5, CalculatedDamage: dynamic}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3; ExtraDamage+3; CalculationBase+3
+### RollingBoulder
+- **ID:** ROLLING_BOULDER
+- **Color:** colorless
+- **Cost:** 3
+- **Type:** Power
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {RollingBoulderPower: 5, IncrementAmount: 5}
+- **Effect:** Apply RollingBoulder to self
+- **Upgrade:** RollingBoulderPower+5
+### Salvo
+- **ID:** SALVO
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Rare
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 12}
+- **Effect:** Deal Damage to target enemy; Apply RetainHand to self
+- **Upgrade:** Damage+4
+### Scrawl
+- **ID:** SCRAWL
+- **Color:** colorless
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Draw card(s)
+- **Upgrade:** Add Retain
+### SecretTechnique
+- **ID:** SECRET_TECHNIQUE
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Choose from card grid; Add card to Hand pile
+- **Upgrade:** Remove Exhaust
+### SecretWeapon
+- **ID:** SECRET_WEAPON
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Choose from card grid; Add card to Hand pile
+- **Upgrade:** Remove Exhaust
+### TheGambit
+- **ID:** THE_GAMBIT
+- **Color:** colorless
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Rare
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 50}
+- **Effect:** Gain Block; Apply TheGambit to self
+- **Upgrade:** Block+25
+---
+
+## Event
+
+*27 cards*
+
+### RipAndTear
+- **ID:** RIP_AND_TEAR
+- **Color:** event
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Uncommon
+- **Target:** RandomEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 7}
+- **Effect:** Deal Damage to target enemy 2 times
+- **Upgrade:** Damage+2
+### Apotheosis
+- **ID:** APOTHEOSIS
+- **Color:** event
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** Exhaust, Innate
+- **Tags:** None
+- **Vars:** None
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cost-1
+### Apparition
+- **ID:** APPARITION
+- **Color:** event
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** Ethereal, Exhaust
+- **Tags:** None
+- **Vars:** {IntangiblePower: 1}
+- **Effect:** Apply Intangible to self
+- **Upgrade:** Remove Ethereal
+### BrightestFlame
+- **ID:** BRIGHTEST_FLAME
+- **Color:** event
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 2, Energy: 2}
+- **Effect:** Draw card(s); Gain Energy; Lose Max HP
+- **Upgrade:** Energy+1; Cards+1
+### Maul
+- **ID:** MAUL
+- **Color:** event
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Ancient
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 5, Increase: 1}
+- **Effect:** Deal Damage to target enemy 2 times; All Maul copies gain +Increase damage permanently
+- **Upgrade:** Damage+1; Increase+1
+- **Special:** Self-mutating: ALL copies of Maul gain damage when any copy is played
+### NeowsFury
+- **ID:** NEOWS_FURY
+- **Color:** event
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Ancient
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Damage: 10, Cards: 2}
+- **Effect:** Deal Damage to target enemy; Add card to Hand pile
+- **Upgrade:** Damage+4
+### Relax
+- **ID:** RELAX
+- **Color:** event
+- **Cost:** 3
+- **Type:** Skill
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Block: 15, Cards: 2, Energy: 2}
+- **Effect:** Gain Block; Apply DrawCardsNextTurn to self; Apply EnergyNextTurn to self
+- **Upgrade:** Block+2; Cards+1; Energy+1
+### Whistle
+- **ID:** WHISTLE
+- **Color:** event
+- **Cost:** 3
+- **Type:** Attack
+- **Rarity:** Ancient
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Damage: 33}
+- **Effect:** Deal Damage to target enemy; Stun enemy
+- **Upgrade:** Damage+11
+### Wish
+- **ID:** WISH
+- **Color:** event
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Ancient
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Choose from card grid; Add card to Hand pile
+- **Upgrade:** Add Retain
+### ByrdSwoop
+- **ID:** BYRD_SWOOP
+- **Color:** event
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Event
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 14}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+4
+### Caltrops
+- **ID:** CALTROPS
+- **Color:** event
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {ThornsPower: 3}
+- **Effect:** Apply Thorns to self
+- **Upgrade:** ThornsPower+2
+### Clash
+- **ID:** CLASH
+- **Color:** event
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Event
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 14}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+4
+### Distraction
+- **ID:** DISTRACTION
+- **Color:** event
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Set card(s) to cost 0; Add generated card(s) to hand
+- **Upgrade:** Cost-1
+### DualWield
+- **ID:** DUAL_WIELD
+- **Color:** event
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Add generated card(s) to hand; Select card(s) from hand
+- **Upgrade:** Cards+1
+### Enlightenment
+- **ID:** ENLIGHTENMENT
+- **Color:** event
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** No OnPlay effect
+- **Upgrade:** No upgrade changes
+### Entrench
+- **ID:** ENTRENCH
+- **Color:** event
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Gain Block
+- **Upgrade:** Cost-1
+### Exterminate
+- **ID:** EXTERMINATE
+- **Color:** event
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Event
+- **Target:** AllEnemies
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 3}
+- **Effect:** Deal Damage to ALL enemies multiple times
+- **Upgrade:** Damage+1
+### FeedingFrenzy
+- **ID:** FEEDING_FRENZY
+- **Color:** event
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {StrengthPower: 5}
+- **Effect:** Apply FeedingFrenzy to self
+- **Upgrade:** Strength+2
+### HelloWorld
+- **ID:** HELLO_WORLD
+- **Color:** event
+- **Cost:** 1
+- **Type:** Power
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Apply HelloWorld to self
+- **Upgrade:** Add Innate
+### MadScience
+- **ID:** MAD_SCIENCE
+- **Color:** event
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Event
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 12, Block: 8, ViolenceHits: 3, CuriousReduction: 1}
+- **Effect:** TinkerTime variant: Attack=deal damage, Skill=gain block, Power=apply power; may have rider effect
+- **Upgrade:** Add Innate
+### Metamorphosis
+- **ID:** METAMORPHOSIS
+- **Color:** event
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 3}
+- **Effect:** Set card(s) to cost 0; Preview card(s); Add generated card(s) to draw pile
+- **Upgrade:** Cards+2
+### Outmaneuver
+- **ID:** OUTMANEUVER
+- **Color:** event
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Energy: 2}
+- **Effect:** Apply EnergyNextTurn to self
+- **Upgrade:** Energy+1
+### Peck
+- **ID:** PECK
+- **Color:** event
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Event
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 2}
+- **Effect:** Deal Damage to target enemy multiple times
+- **Upgrade:** Repeat+1
+### Rebound
+- **ID:** REBOUND
+- **Color:** event
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Event
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 9}
+- **Effect:** Deal Damage to target enemy; Apply Rebound to self
+- **Upgrade:** Damage+3
+### Squash
+- **ID:** SQUASH
+- **Color:** event
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Event
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 10, VulnerablePower: 2}
+- **Effect:** Deal Damage to target enemy; Apply Vulnerable to target
+- **Upgrade:** Damage+2; Vulnerable+1
+### Stack
+- **ID:** STACK
+- **Color:** event
+- **Cost:** 1
+- **Type:** Skill
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {CalcBase: 0, CalculatedBlock: dynamic, CalcExtra: 1}
+- **Effect:** Gain Block
+- **Upgrade:** CalculationBase+3
+- **Special:** Scales with discard pile size
+### ToricToughness
+- **ID:** TORIC_TOUGHNESS
+- **Color:** event
+- **Cost:** 2
+- **Type:** Skill
+- **Rarity:** Event
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Block: 5, Turns: 2}
+- **Effect:** Gain Block; Apply ToricToughness to self
+- **Upgrade:** Block+2
+---
+
+## Token
+
+*14 cards*
+
+### Fuel
+- **ID:** FUEL
+- **Color:** token
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Token
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 1, Energy: 1}
+- **Effect:** Draw card(s); Gain Energy
+- **Upgrade:** Cards+1
+### GiantRock
+- **ID:** GIANT_ROCK
+- **Color:** token
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Token
+- **Target:** AnyEnemy
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {Damage: 16}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+4
+### Luminesce
+- **ID:** LUMINESCE
+- **Color:** token
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Token
+- **Target:** Self
+- **Keywords:** Exhaust, Retain
+- **Tags:** None
+- **Vars:** {Energy: 2}
+- **Effect:** Gain Energy
+- **Upgrade:** Energy+1
+### MinionDiveBomb
+- **ID:** MINION_DIVE_BOMB
+- **Color:** token
+- **Cost:** 1
+- **Type:** Attack
+- **Rarity:** Token
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** Minion
+- **Vars:** {Damage: 13}
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+3
+### MinionSacrifice
+- **ID:** MINION_SACRIFICE
+- **Color:** token
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Token
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** Minion
+- **Vars:** {Block: 9}
+- **Effect:** Gain Block
+- **Upgrade:** Block+3
+### MinionStrike
+- **ID:** MINION_STRIKE
+- **Color:** token
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Token
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** Minion, Strike
+- **Vars:** {Damage: 7, Cards: 1}
+- **Effect:** Deal Damage to target enemy; Draw card(s)
+- **Upgrade:** Damage+3
+### Shiv
+- **ID:** SHIV
+- **Color:** token
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Token
+- **Target:** AnyEnemy
+- **Keywords:** Exhaust
+- **Tags:** Shiv
+- **Vars:** {Damage: 4, CalcBase: 0, FanOfKnivesAmount: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to ALL enemies
+- **Upgrade:** Damage+2
+- **Special:** Scales with FanOfKnivesPower stacks; Targets ALL enemies if FanOfKnives power is active
+### Soul
+- **ID:** SOUL
+- **Color:** token
+- **Cost:** 0
+- **Type:** Skill
+- **Rarity:** Token
+- **Target:** Self
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 2}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cards+1
+### SovereignBlade
+- **ID:** SOVEREIGN_BLADE
+- **Color:** token
+- **Cost:** 2
+- **Type:** Attack
+- **Rarity:** Token
+- **Target:** AnyEnemy
+- **Keywords:** Retain
+- **Tags:** None
+- **Vars:** {Damage: 10, CalcBase: 0, SeekingEdgeAmount: dynamic, CalcExtra: 1}
+- **Effect:** Deal Damage to ALL enemies multiple times
+- **Upgrade:** Cost-1
+- **Special:** Scales with SeekingEdgePower stacks
+### SweepingGaze
+- **ID:** SWEEPING_GAZE
+- **Color:** token
+- **Cost:** 0
+- **Type:** Attack
+- **Rarity:** Token
+- **Target:** RandomEnemy
+- **Keywords:** Ethereal, Exhaust
+- **Tags:** OstyAttack
+- **Vars:** None
+- **Effect:** Deal Damage to target enemy
+- **Upgrade:** Damage+5; OstyDamage+5
+### Disintegration
+- **ID:** DISINTEGRATION
+- **Color:** token
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {DisintegrationPower: 6}
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### MindRot
+- **ID:** MIND_ROT
+- **Color:** token
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {MindRotPower: 1}
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Sloth
+- **ID:** SLOTH
+- **Color:** token
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {SlothPower: 3}
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### WasteAway
+- **ID:** WASTE_AWAY
+- **Color:** token
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {WasteAwayPower: 1}
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+---
+
+## Status
+
+*11 cards*
+
+### Beckon
+- **ID:** BECKON
+- **Color:** status
+- **Cost:** 1
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** {HpLoss: 6}
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Burn
+- **ID:** BURN
+- **Color:** status
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Dazed
+- **ID:** DAZED
+- **Color:** status
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** Ethereal, Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Debris
+- **ID:** DEBRIS
+- **Color:** status
+- **Cost:** 1
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### FranticEscape
+- **ID:** FRANTIC_ESCAPE
+- **Color:** status
+- **Cost:** 1
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** Self
+- **Keywords:** None
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Change card cost by 1 this combat; Modify Sandpit power (escape progress)
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Infection
+- **ID:** INFECTION
+- **Color:** status
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Slimed
+- **ID:** SLIMED
+- **Color:** status
+- **Cost:** 1
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** {Cards: 1}
+- **Effect:** Draw card(s)
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Soot
+- **ID:** SOOT
+- **Color:** status
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Toxic
+- **ID:** TOXIC
+- **Color:** status
+- **Cost:** 1
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Void
+- **ID:** VOID
+- **Color:** status
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** Unplayable, Ethereal
+- **Tags:** None
+- **Vars:** {Energy: 1}
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Wound
+- **ID:** WOUND
+- **Color:** status
+- **Cost:** Unplayable
+- **Type:** Status
+- **Rarity:** Status
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+---
+
+## Curse
+
+*18 cards*
+
+### AscendersBane
+- **ID:** ASCENDERS_BANE
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Eternal, Unplayable, Ethereal
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded; Cannot be generated by card-creation effects; Cannot be removed from deck (Eternal)
+### BadLuck
+- **ID:** BAD_LUCK
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Eternal, Unplayable
+- **Tags:** None
+- **Vars:** {HpLoss: 13}
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded; Cannot be generated by card-creation effects; Cannot be removed from deck (Eternal)
+### Clumsy
+- **ID:** CLUMSY
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable, Ethereal
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### CurseOfTheBell
+- **ID:** CURSE_OF_THE_BELL
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Eternal, Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded; Cannot be generated by card-creation effects; Cannot be removed from deck (Eternal)
+### Debt
+- **ID:** DEBT
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** {Gold: 10}
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Decay
+- **ID:** DECAY
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Doubt
+- **ID:** DOUBT
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** {WeakPower: 1}
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Enthralled
+- **ID:** ENTHRALLED
+- **Color:** curse
+- **Cost:** 2
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Eternal
+- **Tags:** None
+- **Vars:** None
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded; Cannot be generated by card-creation effects; Cannot be removed from deck (Eternal)
+### Folly
+- **ID:** FOLLY
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable, Eternal, Innate
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded; Cannot be generated by card-creation effects; Cannot be removed from deck (Eternal)
+### Greed
+- **ID:** GREED
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Eternal, Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded; Cannot be generated by card-creation effects; Cannot be removed from deck (Eternal)
+### Guilty
+- **ID:** GUILTY
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** {Combats: 5}
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Persistent state saved across combats; Cannot be upgraded
+### Injury
+- **ID:** INJURY
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Normality
+- **ID:** NORMALITY
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** {CalcBase: 3, CalculatedCards: dynamic}
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### PoorSleep
+- **ID:** POOR_SLEEP
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable, Retain
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded; Cannot be generated by card-creation effects
+### Regret
+- **ID:** REGRET
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### Shame
+- **ID:** SHAME
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** {Frail: 1}
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### SporeMind
+- **ID:** SPORE_MIND
+- **Color:** curse
+- **Cost:** 1
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Exhaust
+- **Tags:** None
+- **Vars:** None
+- **Effect:** No OnPlay effect
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded; Cannot be generated by card-creation effects
+### Writhe
+- **ID:** WRITHE
+- **Color:** curse
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Innate, Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+---
+
+## Quest
+
+*3 cards*
+
+### ByrdonisEgg
+- **ID:** BYRDONIS_EGG
+- **Color:** quest
+- **Cost:** Unplayable
+- **Type:** Quest
+- **Rarity:** Quest
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### LanternKey
+- **ID:** LANTERN_KEY
+- **Color:** quest
+- **Cost:** Unplayable
+- **Type:** Quest
+- **Rarity:** Quest
+- **Target:** Self
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+### SpoilsMap
+- **ID:** SPOILS_MAP
+- **Color:** quest
+- **Cost:** Unplayable
+- **Type:** Quest
+- **Rarity:** Quest
+- **Target:** Self
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** {Gold: 600}
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Persistent state saved across combats; Cannot be upgraded
+---
+
+## Unknown/Uncategorized
+
+*1 cards*
+
+### DeprecatedCard
+- **ID:** DEPRECATED_CARD
+- **Color:** unknown
+- **Cost:** Unplayable
+- **Type:** Curse
+- **Rarity:** Curse
+- **Target:** None
+- **Keywords:** Unplayable
+- **Tags:** None
+- **Vars:** None
+- **Effect:** Unplayable
+- **Upgrade:** Cannot be upgraded
+- **Special:** Cannot be upgraded
+---
+

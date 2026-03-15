@@ -1,0 +1,26 @@
+[project]
+name = "sts2-rl-agent"
+version = "0.1.0"
+description = "Slay the Spire 2 headless combat simulator for RL training"
+requires-python = ">=3.11"
+dependencies = [
+    "gymnasium>=1.0.0",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+train = [
+    "stable-baselines3>=2.3.0",
+    "sb3-contrib>=2.3.0",
+    "torch>=2.0",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["sts2_env*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
