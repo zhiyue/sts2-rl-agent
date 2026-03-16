@@ -42,8 +42,7 @@ bridge_mod_minimal/obj/
 # Godot
 .godot/
 
-# Decompiled source (too large, regenerate with ILSpy)
-decompiled/
+# Extracted PCK resources (2.5GB, too large for git)
 extracted_pck/
 
 # Temp
