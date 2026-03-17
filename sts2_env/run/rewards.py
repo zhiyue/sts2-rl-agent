@@ -6,16 +6,26 @@ blacklist handling, and GetNextHighestRarity fallback.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from sts2_env.cards.base import CardInstance
-from sts2_env.cards.factory import create_card, eligible_character_cards
+from sts2_env.cards.factory import create_card, eligible_character_cards, eligible_registered_cards
 from sts2_env.core.enums import CardRarity
 from sts2_env.core.rng import Rng
 
 if TYPE_CHECKING:
     from sts2_env.run.run_state import RunState
-    from sts2_env.cards.base import CardInstance
+
+
+@dataclass(frozen=True)
+class CardRewardGenerationOptions:
+    context: str = "regular"
+    num_cards: int = 3
+    character_ids: tuple[str, ...] = field(default_factory=tuple)
+    forced_rarities: tuple[CardRarity, ...] = field(default_factory=tuple)
+    include_colorless: bool = False
+    use_default_character_pool: bool = True
 
 
 def _get_next_highest_rarity(rarity: CardRarity) -> CardRarity:
@@ -104,30 +114,62 @@ def _pick_reward_card(
     run_state: RunState,
     rarity: CardRarity,
     chosen_ids: set,
+    *,
+    character_ids: tuple[str, ...],
+    include_colorless: bool = False,
 ) -> CardInstance | None:
     current_rarity = rarity
     candidate_ids = []
 
     while True:
-        candidate_ids = [
-            card_id
+        seen_ids = set()
+        candidate_ids = []
+        for character_id in character_ids:
             for card_id in eligible_character_cards(
-                run_state.player.character_id,
+                character_id,
                 rarity=current_rarity,
                 generation_context=None,
-            )
-            if card_id not in chosen_ids
-        ]
+            ):
+                if card_id in chosen_ids or card_id in seen_ids:
+                    continue
+                seen_ids.add(card_id)
+                candidate_ids.append(card_id)
+        if include_colorless:
+            for card_id in eligible_registered_cards(
+                module_name="sts2_env.cards.colorless",
+                rarity=current_rarity,
+                generation_context=None,
+            ):
+                if card_id in chosen_ids or card_id in seen_ids:
+                    continue
+                seen_ids.add(card_id)
+                candidate_ids.append(card_id)
         if candidate_ids or current_rarity == CardRarity.RARE:
             break
         current_rarity = _get_next_highest_rarity(current_rarity)
 
     if not candidate_ids:
-        candidate_ids = eligible_character_cards(
-            run_state.player.character_id,
-            rarity=current_rarity,
-            generation_context=None,
-        )
+        seen_ids = set()
+        for character_id in character_ids:
+            for card_id in eligible_character_cards(
+                character_id,
+                rarity=current_rarity,
+                generation_context=None,
+            ):
+                if card_id in seen_ids:
+                    continue
+                seen_ids.add(card_id)
+                candidate_ids.append(card_id)
+        if include_colorless:
+            for card_id in eligible_registered_cards(
+                module_name="sts2_env.cards.colorless",
+                rarity=current_rarity,
+                generation_context=None,
+            ):
+                if card_id in seen_ids:
+                    continue
+                seen_ids.add(card_id)
+                candidate_ids.append(card_id)
     if not candidate_ids:
         return None
 
@@ -146,13 +188,25 @@ def generate_combat_reward_cards(
     run_state: RunState,
     context: str = "regular",
     num_cards: int = 3,
+    *,
+    character_ids: tuple[str, ...] | None = None,
+    forced_rarities: tuple[CardRarity, ...] = (),
+    include_colorless: bool = False,
 ) -> list[CardInstance]:
     """Generate concrete card reward options for a post-combat reward screen."""
-    rarities = generate_card_reward(run_state, context=context, num_cards=num_cards)
+    if character_ids is None:
+        character_ids = (run_state.player.character_id,)
+    rarities = list(forced_rarities) if forced_rarities else generate_card_reward(run_state, context=context, num_cards=num_cards)
     chosen_ids: set = set()
     cards: list[CardInstance] = []
     for rarity in rarities:
-        card = _pick_reward_card(run_state, rarity, chosen_ids)
+        card = _pick_reward_card(
+            run_state,
+            rarity,
+            chosen_ids,
+            character_ids=character_ids,
+            include_colorless=include_colorless,
+        )
         if card is not None:
             cards.append(card)
     return cards

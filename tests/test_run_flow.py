@@ -7,6 +7,7 @@ rest site healing, and full run lifecycle.
 import math
 import pytest
 
+from sts2_env.cards.ironclad import create_ironclad_starter_deck
 from sts2_env.core.enums import (
     CardId, CardRarity, CardType, MapPointType, RoomType, TargetType,
 )
@@ -17,6 +18,7 @@ from sts2_env.run.run_state import RunState, PlayerState
 from sts2_env.run.rooms import create_room, CombatRoom, ShopRoom, RestSiteRoom, EventRoom, TreasureRoom
 from sts2_env.run.rest_site import generate_rest_site_options, HealOption, SmithOption
 from sts2_env.run.odds import UnknownMapPointOdds, PotionRewardOdds
+from sts2_env.run.run_manager import RunManager
 
 
 class TestRunStateInitialization:
@@ -162,6 +164,46 @@ class TestPlayerState:
 
         assert rs.player.gold == starting_gold + 15
 
+    def test_gold_gain_notifies_relic_hooks(self):
+        rs = RunState(seed=42, character_id="Ironclad")
+        rs.initialize_run()
+        rs.player.obtain_relic("DRAGON_FRUIT")
+        starting_gold = rs.player.gold
+        starting_max_hp = rs.player.max_hp
+
+        rs.player.gain_gold(20)
+
+        assert rs.player.gold == starting_gold + 20
+        assert rs.player.max_hp == starting_max_hp + 1
+
+    def test_gold_gain_can_be_blocked_by_relic_hook(self):
+        rs = RunState(seed=42, character_id="Ironclad")
+        rs.initialize_run()
+        rs.player.obtain_relic("ECTOPLASM")
+        starting_gold = rs.player.gold
+
+        rs.player.gain_gold(20)
+
+        assert rs.player.gold == starting_gold
+
+    def test_card_added_to_deck_can_duplicate_via_relic_hook(self):
+        rs = RunState(seed=42, character_id="Ironclad")
+        rs.initialize_run()
+        rs.player.obtain_relic("BING_BONG")
+        starting_deck = len(rs.player.deck)
+
+        card = CardInstance(
+            card_id=CardId.STRIKE_IRONCLAD,
+            cost=1,
+            card_type=CardType.ATTACK,
+            target_type=TargetType.ANY_ENEMY,
+            rarity=CardRarity.BASIC,
+            base_damage=6,
+        )
+        rs.player.add_card_instance_to_deck(card)
+
+        assert len(rs.player.deck) == starting_deck + 2
+
 
 class TestMapNavigation:
     def test_available_coords_at_start(self):
@@ -279,6 +321,48 @@ class TestRoomCreation:
     def test_create_shop_room(self):
         room = create_room(RoomType.SHOP)
         assert isinstance(room, ShopRoom)
+
+
+class TestConcreteRunObjects:
+    def test_shop_purchase_adds_real_card_and_potion(self):
+        mgr = RunManager(seed=71, character_id="Ironclad")
+        mgr._enter_shop()
+        inv = mgr._shop_inventory
+        assert inv is not None
+
+        card_entry = next(entry for entry in inv.cards if entry.card_id and mgr.run_state.player.gold >= entry.price)
+        gold_before = mgr.run_state.player.gold
+        deck_before = len(mgr.run_state.player.deck)
+        result = mgr._do_shop_action({"action": "buy_card", "index": inv.cards.index(card_entry)})
+        assert result["phase"] == RunManager.PHASE_SHOP
+        assert mgr.run_state.player.gold < gold_before
+        assert len(mgr.run_state.player.deck) == deck_before + 1
+
+        potion_entry = next(entry for entry in inv.potions if entry.potion_id and mgr.run_state.player.gold >= entry.price)
+        potions_before = len(mgr.run_state.player.held_potions())
+        mgr._do_shop_action({"action": "buy_potion", "index": inv.potions.index(potion_entry)})
+        assert len(mgr.run_state.player.held_potions()) == potions_before + 1
+
+    def test_boss_relic_options_are_real_ids(self):
+        mgr = RunManager(seed=73, character_id="Ironclad")
+        mgr._enter_boss_relic()
+        assert len(mgr._boss_relics) == 3
+        assert all(relic_id.isupper() for relic_id in mgr._boss_relics)
+
+    def test_rest_site_smith_uses_pending_choice_flow(self):
+        mgr = RunManager(seed=75, character_id="Ironclad")
+        mgr.run_state.player.deck = create_ironclad_starter_deck()
+        mgr._enter_rest_site()
+
+        result = mgr._do_rest_site({"option_id": "SMITH"})
+        assert result["phase"] == RunManager.PHASE_REST_SITE
+
+        actions = mgr.get_available_actions()
+        assert any(action["action"] == "choose" for action in actions)
+
+        final = mgr.take_action({"action": "choose", "index": 0})
+        assert final["phase"] == RunManager.PHASE_MAP_CHOICE
+        assert any(card.upgraded for card in mgr.run_state.player.deck)
 
     def test_create_rest_site_room(self):
         room = create_room(RoomType.REST_SITE)

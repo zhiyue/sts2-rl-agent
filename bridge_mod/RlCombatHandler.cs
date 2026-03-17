@@ -39,6 +39,7 @@ namespace STS2BridgeMod;
 public class RlCombatHandler : IRoomHandler, IHandler
 {
     private static readonly TimeSpan AgentTimeout = TimeSpan.FromSeconds(30);
+    private const int MaxRlHandSlots = 10;
 
     public RoomType[] HandledTypes => new RoomType[]
     {
@@ -144,7 +145,7 @@ public class RlCombatHandler : IRoomHandler, IHandler
 
     /// <summary>
     /// Execute an action from the Python agent response JSON.
-    /// Returns true if turn was ended, false if a card was played.
+    /// Returns true if turn was ended, false if a card or potion was used.
     /// </summary>
     private async Task<bool> ExecuteAgentAction(
         string json, Player player, Rng random, CancellationToken ct)
@@ -162,6 +163,14 @@ public class RlCombatHandler : IRoomHandler, IHandler
                     int cardIndex = root.GetProperty("card_index").GetInt32();
                     int targetIndex = root.TryGetProperty("target_index", out var ti)
                         ? ti.GetInt32() : -1;
+
+                    if (cardIndex >= MaxRlHandSlots)
+                    {
+                        int potionSlot = cardIndex - MaxRlHandSlots;
+                        Logger.Log($"[RlCombat] Using potion slot {potionSlot} -> target_index {targetIndex}");
+                        await UsePotionAndWaitAsync(player, potionSlot, targetIndex, ct);
+                        return false;
+                    }
 
                     CardPile hand = PileType.Hand.GetPile(player);
                     if (cardIndex < 0 || cardIndex >= hand.Cards.Count)
@@ -197,6 +206,16 @@ public class RlCombatHandler : IRoomHandler, IHandler
                     Logger.Log("[RlCombat] Agent chose to end turn");
                     PlayerCmd.EndTurn(player, canBackOut: false);
                     return true;
+                }
+
+                case "potion":
+                {
+                    int slot = root.GetProperty("slot").GetInt32();
+                    int targetIndex = root.TryGetProperty("target_index", out var ti)
+                        ? ti.GetInt32() : -1;
+                    Logger.Log($"[RlCombat] Using potion slot {slot} -> target_index {targetIndex}");
+                    await UsePotionAndWaitAsync(player, slot, targetIndex, ct);
+                    return false;
                 }
 
                 default:
@@ -268,6 +287,43 @@ public class RlCombatHandler : IRoomHandler, IHandler
         return combatState.HittableEnemies.FirstOrDefault();
     }
 
+    private static Creature? ResolvePotionTarget(Player player, PotionModel? potion, int targetIndex)
+    {
+        if (potion == null)
+            return null;
+
+        string targetType = "Self";
+        try
+        {
+            targetType = potion.TargetType?.ToString() ?? "Self";
+        }
+        catch
+        {
+            return player.Creature;
+        }
+
+        if (targetType == "AnyEnemy")
+        {
+            CombatState? combatState = player.Creature?.CombatState;
+            if (combatState == null)
+                return null;
+            List<Creature> allEnemies = combatState.Enemies.ToList();
+            if (targetIndex >= 0)
+            {
+                if (targetIndex >= allEnemies.Count)
+                    return null;
+                Creature indexedEnemy = allEnemies[targetIndex];
+                return indexedEnemy.IsHittable ? indexedEnemy : null;
+            }
+            return combatState.HittableEnemies.FirstOrDefault();
+        }
+
+        if (targetType == "Self" || targetType == "AnyPlayer")
+            return player.Creature;
+
+        return null;
+    }
+
     private static Creature? GetRandomTarget(CardModel card, Rng random)
     {
         if (card.TargetType != TargetType.AnyEnemy)
@@ -297,6 +353,56 @@ public class RlCombatHandler : IRoomHandler, IHandler
             if (energyNow != energyBefore || handNow != handBefore
                 || !CombatManager.Instance.IsPlayPhase
                 || !CombatManager.Instance.IsInProgress)
+                break;
+            await Task.Delay(50, ct);
+            waitMs += 50;
+        }
+    }
+
+    private static async Task UsePotionAndWaitAsync(
+        Player player, int slot, int targetIndex, CancellationToken ct)
+    {
+        if (slot < 0)
+            return;
+
+        dynamic potion = null;
+        try
+        {
+            potion = player.GetPotionAtSlotIndex(slot);
+        }
+        catch
+        {
+            return;
+        }
+
+        if (potion == null)
+            return;
+
+        Creature? target = ResolvePotionTarget(player, potion, targetIndex);
+        if (potion.TargetType.ToString() == "AnyEnemy" && target == null)
+            return;
+
+        var usePotionAction = new UsePotionAction(
+            potion,
+            target,
+            CombatManager.Instance.IsInProgress
+        );
+        RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(usePotionAction);
+
+        int waitMs = 0;
+        while (waitMs < 3000)
+        {
+            dynamic potionNow = null;
+            try
+            {
+                potionNow = player.GetPotionAtSlotIndex(slot);
+            }
+            catch
+            {
+                potionNow = null;
+            }
+
+            if (potionNow == null || !CombatManager.Instance.IsPlayPhase || !CombatManager.Instance.IsInProgress)
                 break;
             await Task.Delay(50, ct);
             waitMs += 50;
@@ -370,12 +476,15 @@ public class RlCombatHandler : IRoomHandler, IHandler
             // Run state info
             RunState runState = RunManager.Instance.DebugOnlyGetState();
 
+            List<Dictionary<string, object>> potions = SerializePotions(player);
             var state = new Dictionary<string, object>
             {
                 ["type"] = "combat_action",
                 ["player"] = playerObj,
                 ["hand"] = handCards,
                 ["enemies"] = enemies,
+                ["potions"] = potions,
+                ["available_actions"] = GetAvailableActions(potions),
                 ["draw_pile_count"] = pcs?.DrawPile.Cards.Count ?? 0,
                 ["discard_pile_count"] = pcs?.DiscardPile.Cards.Count ?? 0,
                 ["exhaust_pile_count"] = pcs?.ExhaustPile.Cards.Count ?? 0,
@@ -482,5 +591,61 @@ public class RlCombatHandler : IRoomHandler, IHandler
         }
 
         return data;
+    }
+
+    private static List<Dictionary<string, object>> SerializePotions(Player player)
+    {
+        var potions = new List<Dictionary<string, object>>();
+        try
+        {
+            int slot = 0;
+            foreach (dynamic potion in player.PotionSlots)
+            {
+                if (potion != null)
+                {
+                    string targetType = "Self";
+                    bool canUse = true;
+                    try
+                    {
+                        targetType = potion.TargetType?.ToString() ?? "Self";
+                    }
+                    catch { }
+
+                    try
+                    {
+                        string usage = potion.Usage?.ToString() ?? "";
+                        if (string.Equals(usage, "Automatic", StringComparison.OrdinalIgnoreCase))
+                            canUse = false;
+                    }
+                    catch { }
+
+                    potions.Add(new Dictionary<string, object>
+                    {
+                        ["slot"] = slot,
+                        ["id"] = potion.Id.Entry,
+                        ["usage"] = potion.Usage.ToString(),
+                        ["can_use"] = canUse,
+                        ["target"] = targetType,
+                        ["requires_target"] = targetType == "AnyEnemy",
+                        ["target_type"] = targetType,
+                    });
+                }
+                slot++;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[RlCombat] Error serializing potions: {ex.Message}");
+        }
+
+        return potions;
+    }
+
+    private static List<string> GetAvailableActions(IEnumerable<Dictionary<string, object>> potions)
+    {
+        var actions = new List<string> { "PLAY", "END_TURN" };
+        if (potions.Any(p => p.TryGetValue("can_use", out object? canUse) && canUse is bool b && b))
+            actions.Add("POTION");
+        return actions;
     }
 }

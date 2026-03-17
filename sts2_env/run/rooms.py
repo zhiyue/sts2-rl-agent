@@ -11,6 +11,31 @@ from typing import Any
 from sts2_env.core.enums import RoomType
 
 
+@dataclass(frozen=True)
+class RoomVisitContext:
+    room_type: RoomType
+
+    @property
+    def is_combat(self) -> bool:
+        return self.room_type in {RoomType.MONSTER, RoomType.ELITE, RoomType.BOSS}
+
+    @property
+    def is_boss(self) -> bool:
+        return self.room_type == RoomType.BOSS
+
+    @property
+    def is_rest_site(self) -> bool:
+        return self.room_type == RoomType.REST_SITE
+
+    @property
+    def is_merchant(self) -> bool:
+        return self.room_type == RoomType.SHOP
+
+    @property
+    def is_unknown(self) -> bool:
+        return False
+
+
 @dataclass
 class Room:
     """Base room that the player enters on the map."""

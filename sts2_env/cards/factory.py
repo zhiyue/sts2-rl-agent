@@ -543,3 +543,82 @@ def create_distinct_character_cards(
         generation_context=generation_context,
         distinct=True,
     )
+
+
+def eligible_transform_cards(
+    original: CardInstance,
+    *,
+    character_id: str,
+    generation_context: GenerationContext | None = None,
+) -> list[CardId]:
+    """Return the decompiled-style transform pool for a specific original card."""
+    registry = _factory_registry()
+    source_module = registry.get(original.card_id, (None, None, _reference_source_module(original.card_id)))[2]
+    use_colorless_pool = (
+        original.card_type == CardType.QUEST
+        or original.rarity in {CardRarity.EVENT, CardRarity.ANCIENT}
+        or source_module == "sts2_env.cards.colorless"
+    )
+    if use_colorless_pool:
+        candidates = eligible_registered_cards(
+            module_name="sts2_env.cards.colorless",
+            generation_context=generation_context,
+        )
+    elif original.card_id in set(get_character(character_id).card_pool):
+        candidates = eligible_character_cards(
+            character_id,
+            generation_context=generation_context,
+        )
+    elif source_module is not None:
+        candidates = eligible_registered_cards(
+            module_name=source_module,
+            generation_context=generation_context,
+        )
+    else:
+        candidates = eligible_character_cards(
+            character_id,
+            generation_context=generation_context,
+        )
+
+    if original.rarity not in {CardRarity.EVENT, CardRarity.ANCIENT}:
+        candidates = [
+            card_id
+            for card_id in candidates
+            if card_metadata(card_id).rarity in {CardRarity.COMMON, CardRarity.UNCOMMON, CardRarity.RARE}
+        ]
+
+    candidates = [card_id for card_id in candidates if card_id != original.card_id]
+    if original.rarity == CardRarity.BASIC and ("STRIKE" in original.card_id.name or "DEFEND" in original.card_id.name):
+        candidates = [
+            card_id
+            for card_id in candidates
+            if not (
+                card_metadata(card_id).rarity == CardRarity.BASIC
+                and ("STRIKE" in card_id.name or "DEFEND" in card_id.name)
+            )
+        ]
+    if candidates:
+        return candidates
+    return [
+        card_id
+        for card_id in eligible_character_cards(character_id, generation_context=generation_context)
+        if card_id != original.card_id and card_metadata(card_id).rarity in {CardRarity.COMMON, CardRarity.UNCOMMON, CardRarity.RARE}
+    ]
+
+
+def create_transform_card(
+    original: CardInstance,
+    *,
+    character_id: str,
+    rng: Rng,
+    generation_context: GenerationContext | None = None,
+) -> CardInstance:
+    """Create a run-level transform result using the original-card-specific pool."""
+    candidates = eligible_transform_cards(
+        original,
+        character_id=character_id,
+        generation_context=generation_context,
+    )
+    if not candidates:
+        raise ValueError(f"No valid transform candidates for {original.card_id.name}")
+    return create_card(rng.choice(candidates))

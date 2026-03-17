@@ -1,193 +1,169 @@
 # Parity Gaps to Exact Match
 
-This document tracks the currently known blockers that prevent `sts2_env` from being described as fully identical to the decompiled game logic under `decompiled/`.
+This document tracks the currently confirmed blockers between `sts2_env` and the decompiled game logic under `decompiled/`.
 
-As of 2026-03-16, the correct status is:
+As of 2026-03-17, the correct status is:
 
-- Core combat flow is close to the decompiled implementation.
-- The currently covered subset is stable.
-- Exact parity is not guaranteed.
+- Several gaps called out by earlier audits are now fixed in code.
+- The previous version of this document had become stale and is superseded by this rewrite.
+- Exact parity is still not guaranteed.
 
-## Evidence Collected
+## Recently Fixed
 
-- Verified passing tests:
-  - `tests/test_combat_parity.py`: 20 passed
-  - `tests/test_run_flow.py tests/test_rewards.py tests/test_shop.py`: 110 passed
-  - `tests/test_cards.py tests/test_powers.py tests/test_monster_ai.py tests/test_potions.py`: 92 passed
-- Static scan of `sts2_env/` found 113 `stub` / `placeholder` / `not implemented` / `no-op` markers.
-- High-risk uncovered domains still include Regent, Necrobinder, complex card-selection/generation effects, potion-slot logic, and helper methods in `core/combat.py`.
-- Text search over `tests/` found no direct coverage for `Regent`, `Necrobinder`, `Osty`, `Venerate`, `Bodyguard`, `Wish`, `DualWield`, `Metamorphosis`, or `Transfigure`.
+The following items were previously listed as major parity blockers and are now implemented or aligned:
 
-## Exact-Parity Standard
+- `sts2_env/core/combat.py`
+  - `summon_osty()`
+  - `auto_play_from_draw()`
+  - `generate_card_to_hand()`
+  - `generate_ethereal_cards()`
+  - owner-aware Osty lookup / summon / kill for allied player-creatures
+- Combat potion support across the RL stack
+  - fixed combat action-space layout for potions
+  - simulator potion masking / decoding / execution
+  - bridge-side potion masking / decoding / execution
+- Simulator/bridge observation alignment for pile-summary composition features
+  - the simulator now keeps the bridge-only-unavailable composition slots zeroed
+- `sts2_env/gym_env/run_env.py`
+  - step exceptions are logged instead of being silently converted into losses
+- Explicit card-choice parity fixes
+  - Silent: `Acrobatics`, `DaggerThrow`, `Prepared`, `HiddenDaggers`
+  - Defect: `Scavenge`, `FlakCannon`
+- Additional colorless parity fixes and tests
+  - `Alchemize`
+  - `BeatDown`
+  - `HandOfGreed`
+- Additional Defect / Silent parity tests
+  - `Compact`
+  - `WhiteNoise`
+  - `TheHunt`
+- Additional Regent / Necrobinder parity tests
+  - `RefineBlade`
+  - `SeekingEdge`
+  - `TheSmith`
+  - `SolarStrike`
+  - `SpoilsOfBattle`
+  - `WroughtInWar`
+  - `KnockoutBlow`
+  - `Charge`
+  - `Guards`
+  - `BigBang`
+  - `HiddenCache`
+  - `Resonance`
+  - `SummonForth`
+  - `Bulwark`
+  - `Conqueror`
+  - `Convergence`
+  - `Glimmer`
+  - `DecisionsDecisions`
+  - `Quasar`
+  - `HeirloomHammer`
+  - `CrashLanding`
+  - `BlackHole`
+  - `Furnace`
+  - `Orbit`
+  - `PaleBlueDot`
+  - `Bodyguard`
+  - `Reanimate`
+  - `Seance`
+  - `Afterlife`
+  - `GraveWarden`
+  - `PullAggro`
+  - `LegionOfBone`
+  - `Spur`
+  - `NecroMastery`
+  - `Dirge`
+  - `Eidolon`
+  - `Protector`
+  - `BoneShards`
+  - `Rattle`
+  - owner-aware `HighFive`
+  - `DrainPower`
+  - `SculptingStrike`
+  - `EndOfDays`
+  - `GlimpseBeyond`
+  - `Severance`
+  - `SoulStorm`
+  - `TheScythe`
+  - `TimesUp`
+  - `BorrowedTime`
+  - `CountdownCard`
+  - `DanseMacabre`
+  - `DeathMarch`
 
-We should not claim exact parity until all of the following are true:
+## Tests Covering Previously Listed Gaps
 
-1. Every gameplay-affecting `stub` / `placeholder` / `pass` listed below is either implemented or proven unreachable.
-2. The foundational helper methods in `sts2_env/core/combat.py` are implemented where the decompiled game has real behavior.
-3. Every listed gap has at least one parity test tied to the relevant decompiled class.
-4. The remaining `stub` markers are limited to:
-   - base-class no-op hook defaults
-   - deprecated content that is provably never reachable in normal gameplay
-5. Regent, Necrobinder, colorless/event cards, and potion-slot behavior have direct test coverage.
+Recent targeted tests now cover several flows that older parity notes incorrectly described as still missing:
 
-## Blocking Gaps
+- `tests/test_combat_parity.py`
+- `tests/test_card_choice_parity.py`
+- `tests/test_silent_choice_parity.py`
+- `tests/test_defect_choice_parity.py`
+- `tests/test_regent_parity.py`
+- `tests/test_necrobinder_parity.py`
+- `tests/test_action_space_potions.py`
+- `tests/test_bridge_state_adapter.py`
+- targeted helper coverage in `tests/test_parity_helpers.py`
 
-### P0: Foundational Helpers
+In particular, these areas now have direct automated coverage:
 
-These are root-cause gaps. As long as these methods are incomplete, multiple cards, powers, relics, and potions cannot be exact.
+- Wish / draw-pile choice ordering
+- Secret Weapon / Secret Technique draw-pile filtering
+- Discovery / Purity / Dredge / Cleanse choice flows
+- Nightmare snapshot behavior
+- Osty summon helpers
+- focused Regent card flows such as `Begone`, `PhotonCut`, `Largesse`, `ManifestAuthority`, `VoidForm`, `RefineBlade`, `SeekingEdge`, `TheSmith`, `SolarStrike`, `SpoilsOfBattle`, `WroughtInWar`, `KnockoutBlow`, `Charge`, `Guards`, `BigBang`, `HiddenCache`, `Resonance`, `SummonForth`, `Bulwark`, `Conqueror`, `Convergence`, `Glimmer`, `DecisionsDecisions`, `Quasar`, `HeirloomHammer`, `CrashLanding`, `BlackHole`, `Furnace`, `Orbit`, and `PaleBlueDot`
+- focused Necrobinder card flows such as `CaptureSpirit`, `Sacrifice`, `Transfigure`, `Undeath`, `Bodyguard`, `Reanimate`, `Seance`, `Afterlife`, `GraveWarden`, `PullAggro`, `LegionOfBone`, `Spur`, `NecroMastery`, `Dirge`, `Eidolon`, `Protector`, `BoneShards`, `Rattle`, owner-aware `HighFive`, `DrainPower`, `SculptingStrike`, `EndOfDays`, `GlimpseBeyond`, `Severance`, `SoulStorm`, `TheScythe`, `TimesUp`, `BorrowedTime`, `CountdownCard`, `DanseMacabre`, and `DeathMarch`
+- Entropic Brew and combat potion-slot filling
+- Combat potion action decoding and bridge mask generation
 
-| Python location | Current status | Affected decompiled classes |
-|---|---|---|
-| `sts2_env/core/combat.py::summon_osty()` | Unimplemented | `MegaCrit.Sts2.Core.Models.Cards/Bodyguard.cs`, `Afterlife.cs`, `Reanimate.cs`; `MegaCrit.Sts2.Core.Models.Powers/SummonNextTurnPower.cs` |
-| `sts2_env/core/combat.py::auto_play_from_draw()` | Unimplemented | `MegaCrit.Sts2.Core.Models.Powers/MayhemPower.cs`; `MegaCrit.Sts2.Core.Models.Cards/Catastrophe.cs`, `BeatDown.cs`, `Uproar.cs` |
-| `sts2_env/core/combat.py::generate_card_to_hand()` | Unimplemented | `MegaCrit.Sts2.Core.Models.Powers/CreativeAiPower.cs`, `HelloWorldPower.cs`; `MegaCrit.Sts2.Core.Models.Cards/NeowsFury.cs`, `JackOfAllTrades.cs`, `WhiteNoise.cs` |
-| `sts2_env/core/combat.py::generate_ethereal_cards()` | Unimplemented | `MegaCrit.Sts2.Core.Models.Relics/BigHat.cs` |
-| `sts2_env/cards/effects.py::summon_osty()` | Placeholder wrapper | Same gap surface as `summon_osty()` above |
-| `sts2_env/cards/effects.py::channel_orb()` | Marked placeholder, partial behavior only | Defect orb-related logic depends on exact passive/evoke ordering in decompiled combat flow |
+## Current Confirmed Blockers
 
-### P0: Regent System Gaps
+### 1. Exact parity still exceeds the current audited surface
 
-`sts2_env/cards/regent.py` contains the highest concentration of gameplay-affecting placeholders in the repository.
+The codebase is no longer blocked on the old “core helper missing” category, but broad exact-match claims still require more decompiled-backed tests across:
 
-| Python location | Current status | Decompiled class |
-|---|---|---|
-| `VENERATE` | `pass`, Stars not granted | `MegaCrit.Sts2.Core.Models.Cards/Venerate.cs` |
-| `BEGONE` | transform/create follow-up card stub | `MegaCrit.Sts2.Core.Models.Cards/Begone.cs` |
-| `PHOTON_CUT` | put-back-on-draw-pile stub | `MegaCrit.Sts2.Core.Models.Cards/PhotonCut.cs` |
-| `REFINE_BLADE` | forge/upgrade stub | `MegaCrit.Sts2.Core.Models.Cards/RefineBlade.cs` |
-| `SOLAR_STRIKE` | Stars gain stub | `MegaCrit.Sts2.Core.Models.Cards/SolarStrike.cs` |
-| `SPOILS_OF_BATTLE` | forge/upgrade stub | `MegaCrit.Sts2.Core.Models.Cards/SpoilsOfBattle.cs` |
-| `WROUGHT_IN_WAR` | forge stub | `MegaCrit.Sts2.Core.Models.Cards/WroughtInWar.cs` |
-| `KNOCKOUT_BLOW` | Stars gain stub | `MegaCrit.Sts2.Core.Models.Cards/KnockoutBlow.cs` |
-| `LARGESSE` | generate upgraded cards stub | `MegaCrit.Sts2.Core.Models.Cards/Largesse.cs` |
-| `MANIFEST_AUTHORITY` | generate upgraded cards stub | `MegaCrit.Sts2.Core.Models.Cards/ManifestAuthority.cs` |
-| `SEEKING_EDGE` | immediate forge stub | `MegaCrit.Sts2.Core.Models.Cards/SeekingEdge.cs` |
-| `THE_SMITH` | forge stub | `MegaCrit.Sts2.Core.Models.Cards/TheSmith.cs` |
-| `VOID_FORM` | end-turn rider stub | `MegaCrit.Sts2.Core.Models.Cards/VoidForm.cs` |
+- colorless and event cards outside the targeted choice-flow subset
+- full Regent and Necrobinder regression coverage
+- relic interactions across combat, shop, rewards, and rest-site hooks
+- broader bridge smoke testing against a live game
 
-Notes:
+This is primarily a coverage gap, not proof of incorrect behavior, but it prevents claiming an exact match.
 
-- Many Regent gaps are not cosmetic. They alter Stars, Forge, card generation, card movement, or end-turn sequencing.
-- Until these are implemented, Regent cannot be considered parity-complete.
+### 2. Implemented but not yet fully parity-audited cards
 
-### P0: Necrobinder and Osty Gaps
+There are still implemented cards that need deeper decompiled-backed coverage, but the previously tracked `Compact`, `WhiteNoise`, and `TheHunt` items are now covered by dedicated parity tests.
 
-These are gameplay-critical because the character revolves around Osty, souls, summons, and card-state mutation.
+### 3. Bridge/runtime validation gap
 
-| Python location | Current status | Decompiled class |
-|---|---|---|
-| `BODYGUARD` | summon stub | `MegaCrit.Sts2.Core.Models.Cards/Bodyguard.cs` |
-| `AFTERLIFE` | summon stub | `MegaCrit.Sts2.Core.Models.Cards/Afterlife.cs` |
-| `GRAVE_WARDEN` | create Soul cards stub | `MegaCrit.Sts2.Core.Models.Cards/GraveWarden.cs` |
-| `GRAVEBLAST` | exhaust-pile selection stub | `MegaCrit.Sts2.Core.Models.Cards/Graveblast.cs` |
-| `CAPTURE_SPIRIT` | non-attack damage plus Soul generation stub | `MegaCrit.Sts2.Core.Models.Cards/CaptureSpirit.cs` |
-| `CLEANSE` | exhaust/select/summon stub | `MegaCrit.Sts2.Core.Models.Cards/Cleanse.cs` |
-| `EIDOLON` | exhaust-from-hand selection stub | `MegaCrit.Sts2.Core.Models.Cards/Eidolon.cs` |
-| `END_OF_DAYS` | kill-minion rider stub | `MegaCrit.Sts2.Core.Models.Cards/EndOfDays.cs` |
-| `REANIMATE` | powerful summon stub | `MegaCrit.Sts2.Core.Models.Cards/Reanimate.cs` |
-| `SACRIFICE` | kill-minion rider stub | `MegaCrit.Sts2.Core.Models.Cards/Sacrifice.cs` |
-| `SEANCE` | transform/select stub | `MegaCrit.Sts2.Core.Models.Cards/Seance.cs` |
-| `TRANSFIGURE` | Replay grant stub | `MegaCrit.Sts2.Core.Models.Cards/Transfigure.cs` |
-| `UNDEATH` | generated-card-to-discard stub | `MegaCrit.Sts2.Core.Models.Cards/Undeath.cs` |
+The Python-side bridge adapter and the C# combat handler now both understand potion actions, but this workspace has not compiled or smoke-tested the bridge mod against a live game session during this audit.
 
-Notes:
+Until that happens, bridge potion support should be considered implemented but not fully field-verified.
 
-- This file alone still contains 23 explicit placeholder markers.
-- Many of these depend on the unimplemented `summon_osty()` helper, so parity work must start from the combat core.
+### 4. Reachability / semantic audit backlog
 
-### P1: Card Selection, Copying, and Generation
+Some no-op or deprecated bodies remain and need explicit audit before claiming strict exactness:
 
-These are common enough that they materially affect deck quality and combat outcomes.
+- deprecated Act 3 event stubs in `sts2_env/events/act3.py`
+- intentionally inert status / curse `OnPlay` bodies in `sts2_env/cards/status.py`
 
-| Python location | Current status | Decompiled class |
-|---|---|---|
-| `sts2_env/cards/status.py::WISH` | draw-pile grid selection stub | `MegaCrit.Sts2.Core.Models.Cards/Wish.cs` |
-| `sts2_env/cards/status.py::DUAL_WIELD` | copy selected card stub | `MegaCrit.Sts2.Core.Models.Cards/DualWield.cs` |
-| `sts2_env/cards/status.py::METAMORPHOSIS` | generate free attacks to draw pile stub | `MegaCrit.Sts2.Core.Models.Cards/Metamorphosis.cs` |
-| `sts2_env/cards/status.py::NEOWS_FURY` | add-card-to-hand rider stub | `MegaCrit.Sts2.Core.Models.Cards/NeowsFury.cs` |
-| `sts2_env/cards/status.py::WHISTLE` | stun rider stub | `MegaCrit.Sts2.Core.Models.Cards/Whistle.cs` |
-| `sts2_env/cards/status.py::DISTRACTION` | cost-0 generation stub | `MegaCrit.Sts2.Core.Models.Cards/Distraction.cs` |
+Those may be correct, but they should be documented as “intentionally unreachable” or “semantically handled elsewhere” rather than left ambiguous.
 
-### P1: Colorless and Event Cards
+## Standard for Claiming Exact Parity
 
-This area contains many selection/generation effects that are currently simplified away.
+We should not describe `sts2_env` as an exact match until all of the following are true:
 
-| Python location | Current status | Decompiled class |
-|---|---|---|
-| `CATASTROPHE` | auto-play stub | `MegaCrit.Sts2.Core.Models.Cards/Catastrophe.cs` |
-| `DISCOVERY` | choose-and-add-cost-0 stub | `MegaCrit.Sts2.Core.Models.Cards/Discovery.cs` |
-| `JACK_OF_ALL_TRADES` | generated colorless card stub | `MegaCrit.Sts2.Core.Models.Cards/JackOfAllTrades.cs` |
-| `PURITY` | exhaust selected cards stub | `MegaCrit.Sts2.Core.Models.Cards/Purity.cs` |
-| `SEEKER_STRIKE` | choose-from-draw stub | `MegaCrit.Sts2.Core.Models.Cards/SeekerStrike.cs` |
-| `SPLASH` | upgrade/select/add-to-hand stub | `MegaCrit.Sts2.Core.Models.Cards/Splash.cs` |
-| `ALCHEMIZE` | generate random potion stub | `MegaCrit.Sts2.Core.Models.Cards/Alchemize.cs` |
-| `ANOINTED` | add card from exhaust pile stub | `MegaCrit.Sts2.Core.Models.Cards/Anointed.cs` |
-| `BEAT_DOWN` | auto-play stub | `MegaCrit.Sts2.Core.Models.Cards/BeatDown.cs` |
-| `HAND_OF_GREED` | gold-on-kill rider stub | `MegaCrit.Sts2.Core.Models.Cards/HandOfGreed.cs` |
-| `HIDDEN_GEM` | Replay grant stub | `MegaCrit.Sts2.Core.Models.Cards/HiddenGem.cs` |
-| `JACKPOT` | upgraded card generation stub | `MegaCrit.Sts2.Core.Models.Cards/Jackpot.cs` |
-| `SECRET_TECHNIQUE` | select Skill from draw stub | `MegaCrit.Sts2.Core.Models.Cards/SecretTechnique.cs` |
-| `SECRET_WEAPON` | select Attack from draw stub | `MegaCrit.Sts2.Core.Models.Cards/SecretWeapon.cs` |
-
-### P1: Silent and Defect Simplifications
-
-These are not always full no-ops, but they still diverge from the decompiled selection and sequencing behavior.
-
-| Python location | Current status | Decompiled class |
-|---|---|---|
-| `sts2_env/cards/silent.py::SURVIVOR` | discards last card instead of player-selected card | `MegaCrit.Sts2.Core.Models.Cards/Survivor.cs` |
-| `sts2_env/cards/silent.py::HAND_TRICK` | Sly application stub | `MegaCrit.Sts2.Core.Models.Cards/HandTrick.cs` |
-| `sts2_env/cards/silent.py::NIGHTMARE` | approximated with generic power | `MegaCrit.Sts2.Core.Models.Cards/Nightmare.cs` |
-| `sts2_env/cards/silent.py::THE_HUNT` | extra reward rider stub | `MegaCrit.Sts2.Core.Models.Cards/TheHunt.cs` |
-| `sts2_env/cards/defect.py::HOLOGRAM` | takes top discard instead of selected discard | `MegaCrit.Sts2.Core.Models.Cards/Hologram.cs` |
-| `sts2_env/cards/defect.py::UPROAR` | auto-play top draw approximated as discard move | `MegaCrit.Sts2.Core.Models.Cards/Uproar.cs` |
-| `sts2_env/cards/defect.py::COMPACT` | transform/create rider stub | `MegaCrit.Sts2.Core.Models.Cards/Compact.cs` |
-| `sts2_env/cards/defect.py::WHITE_NOISE` | random Power generation stub | `MegaCrit.Sts2.Core.Models.Cards/WhiteNoise.cs` |
-
-### P1: Potion-Slot and Procure Logic
-
-| Python location | Current status | Decompiled class |
-|---|---|---|
-| `sts2_env/potions/effects.py::_entropic_brew()` | no-op placeholder because potion slots are not fully modeled | `MegaCrit.Sts2.Core.Models.Potions/EntropicBrew.cs` |
-
-### P2: Reachability and Content-Completeness Notes
-
-These do not by themselves prove gameplay drift, but they show the codebase is not yet in an “every gameplay class audited” state.
-
-| Python location | Current status | Decompiled counterpart |
-|---|---|---|
-| `sts2_env/monsters/act3.py` `ConstructMenagerie` comment block | encounter placeholder note | Related decompiled encounter configuration must still be verified |
-| `sts2_env/events/act3.py::DeprecatedEvent` | explicit deprecated stub, intentionally unreachable | Deprecated content; acceptable only if proven unreachable |
-| `sts2_env/events/act3.py::DeprecatedAncientEvent` | explicit deprecated stub, intentionally unreachable | Deprecated content; acceptable only if proven unreachable |
-
-## Test Coverage Gaps
-
-The current tests are useful, but they do not justify exact-parity claims in the highest-risk domains.
-
-High-priority missing coverage areas:
-
-- Regent card effects and Stars / Forge interactions
-- Necrobinder and Osty summon flow
-- Card selection from draw, discard, and exhaust piles
-- Replay-granting effects
-- Free-cost generated cards
-- Potion-slot filling and potion procurement
-- Silent and Defect cards currently implemented with simplified selection heuristics
-
-## Recommended Order to Reach Exact Match
-
-1. Implement the four foundational helper gaps in `sts2_env/core/combat.py`.
-2. Finish Regent and Necrobinder, because they currently contain the largest concentration of gameplay-affecting stubs.
-3. Implement card-selection and card-generation logic for `Wish`, `DualWield`, `Metamorphosis`, `Transfigure`, and similar effects.
-4. Complete potion-slot state and `EntropicBrew`.
-5. Add decompiled-backed parity tests for every entry in this document.
-6. Re-run the static scan and only claim exact parity when gameplay-affecting stub markers are gone.
+1. The remaining confirmed blockers above are closed.
+2. Every gameplay-affecting divergence is either implemented exactly or proven unreachable.
+3. The bridge path is smoke-tested against a live game for the combat features we depend on.
+4. The remaining no-op markers are limited to base-class defaults or explicitly documented unreachable content.
 
 ## Repository Pointers
 
 - Combat core: `sts2_env/core/combat.py`
 - Card implementations: `sts2_env/cards/`
-- Power implementations: `sts2_env/powers/`
-- Relics: `sts2_env/relics/`
-- Potions: `sts2_env/potions/`
+- Potion implementations: `sts2_env/potions/`
+- RL envs: `sts2_env/gym_env/`
+- Bridge adapter: `sts2_env/bridge/state_adapter.py`
+- Bridge mod: `bridge_mod/RlCombatHandler.cs`
 - Decompiled reference: `decompiled/MegaCrit.Sts2.Core.Models.*`

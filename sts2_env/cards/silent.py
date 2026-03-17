@@ -67,10 +67,14 @@ def survivor(card: CardInstance, combat: CombatState, target: Creature | None) -
 def acrobatics(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     draw = card.effect_vars.get("cards", 3)
     combat._draw_cards(draw)
-    # Discard 1 card
-    if combat.hand:
-        c = combat.hand.pop()
-        combat.discard_pile.append(c)
+    if not combat.hand:
+        return
+    combat.request_card_choice(
+        prompt="Choose a hand card to discard",
+        cards=list(combat.hand),
+        source_pile="hand",
+        resolver=lambda selected: combat.discard_cards([selected] if selected is not None else []),
+    )
 
 
 @register_effect(CardId.ANTICIPATE)
@@ -122,9 +126,14 @@ def dagger_throw(card: CardInstance, combat: CombatState, target: Creature | Non
     dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
     apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat._draw_cards(1)
-    if combat.hand:
-        c = combat.hand.pop()
-        combat.discard_pile.append(c)
+    if not combat.hand:
+        return
+    combat.request_card_choice(
+        prompt="Choose a hand card to discard",
+        cards=list(combat.hand),
+        source_pile="hand",
+        resolver=lambda selected: combat.discard_cards([selected] if selected is not None else []),
+    )
 
 
 @register_effect(CardId.DEADLY_POISON)
@@ -185,9 +194,25 @@ def poisoned_stab(card: CardInstance, combat: CombatState, target: Creature | No
 def prepared(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     draw = card.effect_vars.get("cards", 1)
     combat._draw_cards(draw)
-    if combat.hand:
-        c = combat.hand.pop()
-        combat.discard_pile.append(c)
+    discard_count = min(draw, len(combat.hand))
+    if discard_count <= 0:
+        return
+    if discard_count == 1:
+        combat.request_card_choice(
+            prompt="Choose a hand card to discard",
+            cards=list(combat.hand),
+            source_pile="hand",
+            resolver=lambda selected: combat.discard_cards([selected] if selected is not None else []),
+        )
+        return
+    combat.request_multi_card_choice(
+        prompt="Choose hand cards to discard",
+        cards=list(combat.hand),
+        source_pile="hand",
+        resolver=lambda selected_cards: combat.discard_cards(selected_cards),
+        min_count=discard_count,
+        max_count=discard_count,
+    )
 
 
 @register_effect(CardId.RICOCHET)
@@ -296,10 +321,16 @@ def dash(card: CardInstance, combat: CombatState, target: Creature | None) -> No
 
 @register_effect(CardId.ESCAPE_PLAN)
 def escape_plan(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    pre_draw_hand_size = len(combat.hand)
+    combat._draw_cards(1)
+    if len(combat.hand) <= pre_draw_hand_size:
+        return
+    drawn_card = combat.hand[pre_draw_hand_size]
+    if not drawn_card.is_skill:
+        return
     owner = _owner(card, combat)
     blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
     owner.gain_block(blk)
-    combat._draw_cards(1)
 
 
 @register_effect(CardId.EXPERTISE)
@@ -395,12 +426,37 @@ def haze(card: CardInstance, combat: CombatState, target: Creature | None) -> No
 
 @register_effect(CardId.HIDDEN_DAGGERS)
 def hidden_daggers(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Discard 2, create 2 upgraded Shivs
-    for _ in range(min(2, len(combat.hand))):
-        c = combat.hand.pop()
-        combat.discard_pile.append(c)
-    for _ in range(card.effect_vars.get("shivs", 2)):
-        combat.hand.append(_make_shiv())
+    discard_count = min(card.effect_vars.get("cards", 2), len(combat.hand))
+
+    def _finish() -> None:
+        for _ in range(card.effect_vars.get("shivs", 2)):
+            combat.hand.append(_make_shiv())
+
+    if discard_count <= 0:
+        _finish()
+        return
+    if discard_count == 1:
+        combat.request_card_choice(
+            prompt="Choose a hand card to discard",
+            cards=list(combat.hand),
+            source_pile="hand",
+            resolver=lambda selected: (
+                combat.discard_cards([selected] if selected is not None else []),
+                _finish(),
+            ),
+        )
+        return
+    combat.request_multi_card_choice(
+        prompt="Choose hand cards to discard",
+        cards=list(combat.hand),
+        source_pile="hand",
+        resolver=lambda selected_cards: (
+            combat.discard_cards(selected_cards),
+            _finish(),
+        ),
+        min_count=discard_count,
+        max_count=discard_count,
+    )
 
 
 @register_effect(CardId.INFINITE_BLADES_CARD)

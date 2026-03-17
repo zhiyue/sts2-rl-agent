@@ -24,6 +24,7 @@ Sent when the game is in the combat play phase and awaiting a card play or end-t
 ```json
 {
   "type": "combat_action",
+  "request_id": "42",
   "player": {
     "hp": 70,
     "max_hp": 80,
@@ -98,6 +99,7 @@ Sent when the game is in the combat play phase and awaiting a card play or end-t
 | Field | Type | Description |
 |-------|------|-------------|
 | `type` | string | Always `"combat_action"` |
+| `request_id` | string | Request/response correlation token. The client should echo it back on the chosen action. |
 | `player.hp` | int | Current HP |
 | `player.max_hp` | int | Maximum HP |
 | `player.block` | int | Current block |
@@ -283,7 +285,21 @@ Choose an option (map node, card reward, event option, etc.).
 | `action` | string | `"choose"` |
 | `index` | int | 0-indexed choice from the available options |
 
-For card rewards, the `index` maps to the `cards` array. To skip, use an index >= the number of offered cards (e.g., 99).
+For single-select card rewards, the `index` maps to the `cards` array. To skip, either:
+
+- send `{"action":"skip"}`
+- or send `{"action":"choose","index":N}` where `N >= len(cards)`
+
+For multi-card `card_select` prompts, the client may send:
+
+```json
+{
+  "action": "choose",
+  "indexes": [0, 2]
+}
+```
+
+`request_id` should be echoed back on all non-ping actions when present in the state.
 
 ### skip
 

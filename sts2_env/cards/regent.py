@@ -786,7 +786,7 @@ def make_it_so_late(watched: CardInstance, played: CardInstance, combat: CombatS
     if interval <= 0:
         return
     if combat.count_cards_played_this_turn(watched_owner, card_type=CardType.SKILL) % interval == 0:
-        combat.move_card_to_hand(watched)
+        combat.move_card_to_creature_hand(watched_owner, watched)
 
 
 @register_effect(CardId.MONARCHS_GAZE_CARD)

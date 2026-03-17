@@ -7,23 +7,23 @@ bookkeeping, act transitions) are handled internally by RunManager.
 
 Action space
 ------------
-``Discrete(100)`` with **action masking** so that only the actions valid
+``Discrete(157)`` with **action masking** so that only the actions valid
 for the current game phase are unmasked:
 
 ===========  ========  ====================================================
  Slice        Phase     Meaning
 ===========  ========  ====================================================
- 0            COMBAT    End turn / Continue / Skip
- 1-10         COMBAT    Play card from hand slot 0-9 (self-target)
- 11-60        COMBAT    Play card *i* targeting enemy *j* (i*5+j)
- 61-65        MAP       Map choice 0-4
- 66-69        CARD_RWD  Card reward pick 0-2, or skip (69)
- 70-72        BOSS_REL  Boss relic choice 0-2
- 73-82        SHOP      Shop action 0-9
- 83-87        REST      Rest-site option 0-4
- 88-91        EVENT     Event option 0-3
- 92           TREASURE  Take and continue
- 93-99        COMBAT    Select acting player 0-6
+ 0-114        COMBAT    Card/end-turn/potion actions from combat env
+ 115-119      MAP       Map choice 0-4
+ 120-123      CARD_RWD  Card reward pick 0-2, or skip
+ 124-126      CARD_RWD  Extra card reward picks 3-5 when present
+ 127-129      BOSS_REL  Boss relic choice 0-2
+ 130-139      SHOP      Shop action 0-9
+ 140-144      REST      Rest-site option 0-4
+ 145-148      EVENT     Event option 0-3
+ 149          TREASURE  Take and continue
+ 149          CARD_RWD  Reroll current card reward when available
+ 150-156      COMBAT    Select acting player 0-6
 ===========  ========  ====================================================
 
 Observation space
@@ -51,6 +51,8 @@ Implements ``action_masks()`` for *sb3-contrib* ``MaskablePPO``.
 
 from __future__ import annotations
 
+import logging
+from dataclasses import dataclass
 from typing import Any
 
 import gymnasium
@@ -63,52 +65,121 @@ from sts2_env.core.constants import (
     MAX_HAND_SIZE,
 )
 from sts2_env.core.enums import RoomType
-from sts2_env.gym_env.action_space import action_to_card_and_target, get_action_mask
+from sts2_env.gym_env.action_space import (
+    action_to_card_and_target,
+    action_to_potion_and_target,
+    get_action_mask,
+    is_potion_action,
+)
 from sts2_env.gym_env.observation import OBS_SIZE as COMBAT_OBS_SIZE, encode_observation
 from sts2_env.run.run_manager import RunManager
 
+@dataclass(frozen=True)
+class _ActionLayout:
+    combat_start: int
+    combat_size: int
+    map_start: int
+    map_size: int
+    card_reward_start: int
+    card_reward_size: int
+    card_reward_extra_start: int
+    card_reward_extra_size: int
+    boss_relic_start: int
+    boss_relic_size: int
+    shop_start: int
+    shop_size: int
+    rest_start: int
+    rest_size: int
+    event_start: int
+    event_size: int
+    treasure_start: int
+    treasure_size: int
+    player_select_start: int
+    player_select_size: int
+
+    @property
+    def card_reward_reroll(self) -> int:
+        return self.treasure_start
+
+    @property
+    def total_actions(self) -> int:
+        return self.player_select_start + self.player_select_size
+
+
+def _build_action_layout() -> _ActionLayout:
+    combat_start = 0
+    combat_size = COMBAT_ACTION_SPACE_SIZE
+    map_start = combat_start + combat_size
+    map_size = 5
+    card_reward_start = map_start + map_size
+    card_reward_size = 4
+    card_reward_extra_start = card_reward_start + card_reward_size
+    card_reward_extra_size = 3
+    boss_relic_start = card_reward_extra_start + card_reward_extra_size
+    boss_relic_size = 3
+    shop_start = boss_relic_start + boss_relic_size
+    shop_size = 10
+    rest_start = shop_start + shop_size
+    rest_size = 5
+    event_start = rest_start + rest_size
+    event_size = 4
+    treasure_start = event_start + event_size
+    treasure_size = 1
+    player_select_start = treasure_start + treasure_size
+    player_select_size = 7
+    return _ActionLayout(
+        combat_start=combat_start,
+        combat_size=combat_size,
+        map_start=map_start,
+        map_size=map_size,
+        card_reward_start=card_reward_start,
+        card_reward_size=card_reward_size,
+        card_reward_extra_start=card_reward_extra_start,
+        card_reward_extra_size=card_reward_extra_size,
+        boss_relic_start=boss_relic_start,
+        boss_relic_size=boss_relic_size,
+        shop_start=shop_start,
+        shop_size=shop_size,
+        rest_start=rest_start,
+        rest_size=rest_size,
+        event_start=event_start,
+        event_size=event_size,
+        treasure_start=treasure_start,
+        treasure_size=treasure_size,
+        player_select_start=player_select_start,
+        player_select_size=player_select_size,
+    )
+
+
 # ---------------------------------------------------------------------------
-# Unified action-space layout   (Discrete(100))
+# Unified action-space layout
 # ---------------------------------------------------------------------------
 
-TOTAL_ACTIONS = 100
+_LAYOUT = _build_action_layout()
+TOTAL_ACTIONS = _LAYOUT.total_actions
 
-# Combat (mirrors existing 61-action combat env)
-_COMBAT_START = 0       # 0 = end turn, 1-10 self-target, 11-60 targeted
-_COMBAT_SIZE = COMBAT_ACTION_SPACE_SIZE  # 61
-
-# Map choice
-_MAP_START = 61
-_MAP_SIZE = 5           # up to 5 paths
-
-# Card reward
-_CARD_RWD_START = 66
-_CARD_RWD_SIZE = 4      # 66-68 = pick card 0-2, 69 = skip
-
-# Boss relic
-_BOSS_RELIC_START = 70
-_BOSS_RELIC_SIZE = 3
-
-# Shop
-_SHOP_START = 73
-_SHOP_SIZE = 10         # 0 = leave, 1-5 buy card, 6-7 buy relic,
-#                         8 buy potion, 9 = card removal
-
-# Rest site
-_REST_START = 83
-_REST_SIZE = 5
-
-# Event
-_EVENT_START = 88
-_EVENT_SIZE = 4
-
-# Treasure
-_TREASURE_START = 92
-_TREASURE_SIZE = 1
-
-# Multiplayer combat player selection
-_PLAYER_SELECT_START = 93
-_PLAYER_SELECT_SIZE = 7
+# Export the legacy names that tests and callers already import.
+_COMBAT_START = _LAYOUT.combat_start
+_COMBAT_SIZE = _LAYOUT.combat_size
+_MAP_START = _LAYOUT.map_start
+_MAP_SIZE = _LAYOUT.map_size
+_CARD_RWD_START = _LAYOUT.card_reward_start
+_CARD_RWD_SIZE = _LAYOUT.card_reward_size
+_CARD_RWD_EXTRA_START = _LAYOUT.card_reward_extra_start
+_CARD_RWD_EXTRA_SIZE = _LAYOUT.card_reward_extra_size
+_BOSS_RELIC_START = _LAYOUT.boss_relic_start
+_BOSS_RELIC_SIZE = _LAYOUT.boss_relic_size
+_SHOP_START = _LAYOUT.shop_start
+_SHOP_SIZE = _LAYOUT.shop_size
+_REST_START = _LAYOUT.rest_start
+_REST_SIZE = _LAYOUT.rest_size
+_EVENT_START = _LAYOUT.event_start
+_EVENT_SIZE = _LAYOUT.event_size
+_TREASURE_START = _LAYOUT.treasure_start
+_TREASURE_SIZE = _LAYOUT.treasure_size
+_CARD_RWD_REROLL = _LAYOUT.card_reward_reroll
+_PLAYER_SELECT_START = _LAYOUT.player_select_start
+_PLAYER_SELECT_SIZE = _LAYOUT.player_select_size
 
 # ---------------------------------------------------------------------------
 # Phase index for one-hot encoding (8 phases)
@@ -140,11 +211,13 @@ RUN_OBS_SIZE = COMBAT_OBS_SIZE + _RUN_STATE_SIZE  # 131 + 20 = 151
 REWARD_WIN = 1.0
 REWARD_DEATH = -1.0
 
+logger = logging.getLogger(__name__)
+
 
 class STS2RunEnv(gymnasium.Env):
     """Gymnasium environment for a complete STS2 run.
 
-    Wraps :class:`RunManager` with a ``Discrete(100)`` action space and
+    Wraps :class:`RunManager` with a ``Discrete(157)`` action space and
     action masking suitable for ``MaskablePPO``.
 
     Parameters
@@ -177,7 +250,7 @@ class STS2RunEnv(gymnasium.Env):
         self.observation_space = spaces.Box(
             low=-1.0, high=10.0, shape=(RUN_OBS_SIZE,), dtype=np.float32,
         )
-        self.action_space = spaces.Discrete(TOTAL_ACTIONS)
+        self.action_space = spaces.Discrete(_LAYOUT.total_actions)
 
         self._character_id = character_id
         self._ascension_level = ascension_level
@@ -220,10 +293,13 @@ class STS2RunEnv(gymnasium.Env):
 
         reward = 0.0
         phase = self._mgr.phase
+        actions = self._mgr.get_available_actions()
 
         # ---- dispatch action to RunManager ----
         try:
-            if phase == RunManager.PHASE_COMBAT:
+            if phase != RunManager.PHASE_COMBAT and any(a.get("action") in {"choose", "confirm_choice"} for a in actions):
+                self._step_noncombat_choice(action)
+            elif phase == RunManager.PHASE_COMBAT:
                 self._step_combat(action)
             elif phase == RunManager.PHASE_MAP_CHOICE:
                 self._step_map_choice(action)
@@ -242,6 +318,7 @@ class STS2RunEnv(gymnasium.Env):
         except Exception:
             # Guard against simulation bugs so the episode can finish.
             # Force-end as a loss if the run is not already over.
+            logger.exception("STS2RunEnv.step failed during phase %s with action %s", phase, action)
             if not self._mgr.is_over:
                 self._mgr.run_state.lose_run()
 
@@ -262,11 +339,12 @@ class STS2RunEnv(gymnasium.Env):
         return obs, float(reward), terminated, truncated, info
 
     def action_masks(self) -> np.ndarray:
-        """Return a boolean mask over ``Discrete(100)`` actions.
+        """Return a boolean mask over the unified discrete action space.
 
         Required by *sb3-contrib* ``MaskablePPO``.
         """
-        mask = np.zeros(TOTAL_ACTIONS, dtype=np.int8)
+        layout = _LAYOUT
+        mask = np.zeros(layout.total_actions, dtype=np.int8)
 
         if self._mgr is None or self._mgr.is_over:
             # Fallback: unmask a single action so sampling never fails.
@@ -276,7 +354,13 @@ class STS2RunEnv(gymnasium.Env):
         phase = self._mgr.phase
         actions = self._mgr.get_available_actions()
 
-        if phase == RunManager.PHASE_COMBAT:
+        if phase != RunManager.PHASE_COMBAT and any(a.get("action") in {"choose", "confirm_choice"} for a in actions):
+            if any(a.get("action") == "confirm_choice" for a in actions):
+                mask[layout.combat_start] = 1
+            choose_actions = [a for a in actions if a.get("action") == "choose"]
+            for i in range(min(len(choose_actions), layout.combat_size - 1)):
+                mask[layout.combat_start + 1 + i] = 1
+        elif phase == RunManager.PHASE_COMBAT:
             combat = self._mgr.get_combat_state()
             if combat is not None:
                 selected_action = next(
@@ -290,72 +374,69 @@ class STS2RunEnv(gymnasium.Env):
                             selected_owner = state.creature
                             break
                 combat_mask = get_action_mask(combat, owner=selected_owner)
-                n = min(len(combat_mask), _COMBAT_SIZE)
-                mask[_COMBAT_START: _COMBAT_START + n] = combat_mask[:n]
+                available_combat_slots = max(0, len(mask) - layout.combat_start)
+                n = min(len(combat_mask), layout.combat_size, available_combat_slots)
+                mask[layout.combat_start: layout.combat_start + n] = combat_mask[:n]
                 select_actions = [
                     a for a in actions if a.get("action") == "select_player"
                 ]
-                for i in range(min(len(select_actions), _PLAYER_SELECT_SIZE)):
-                    mask[_PLAYER_SELECT_START + i] = 1
+                for i in range(min(len(select_actions), layout.player_select_size)):
+                    mask[layout.player_select_start + i] = 1
             else:
-                mask[_COMBAT_START] = 1  # end turn fallback
+                mask[layout.combat_start] = 1  # end turn fallback
 
         elif phase == RunManager.PHASE_MAP_CHOICE:
-            n = min(len(actions), _MAP_SIZE)
+            n = min(len(actions), layout.map_size)
             for i in range(n):
-                mask[_MAP_START + i] = 1
+                mask[layout.map_start + i] = 1
 
         elif phase == RunManager.PHASE_CARD_REWARD:
             if any(a.get("action") == "pick_potion" for a in actions):
-                mask[_CARD_RWD_START] = 1
-                mask[_CARD_RWD_START + 3] = 1
+                mask[layout.card_reward_start] = 1
+                mask[layout.card_reward_start + 3] = 1
             elif any(a.get("action") == "pick_relic_reward" for a in actions):
-                mask[_CARD_RWD_START] = 1
-                mask[_CARD_RWD_START + 3] = 1
+                mask[layout.card_reward_start] = 1
+                mask[layout.card_reward_start + 3] = 1
             else:
-                mask[_CARD_RWD_START + 3] = 1
-                n_cards = sum(
-                    1 for a in actions if a.get("action") == "pick_card"
-                )
-                for i in range(min(n_cards, 3)):
-                    mask[_CARD_RWD_START + i] = 1
+                mask[layout.card_reward_start + 3] = 1
+                pick_actions = [a for a in actions if a.get("action") == "pick_card"]
+                for i in range(min(len(pick_actions), 3)):
+                    mask[layout.card_reward_start + i] = 1
+                extra_cards = max(0, len(pick_actions) - 3)
+                for i in range(min(extra_cards, layout.card_reward_extra_size)):
+                    mask[layout.card_reward_extra_start + i] = 1
+                if any(a.get("action") == "reroll_card_reward" for a in actions):
+                    mask[layout.card_reward_reroll] = 1
 
         elif phase == RunManager.PHASE_BOSS_RELIC:
             n = min(
                 sum(1 for a in actions if a.get("action") == "pick_relic"),
-                _BOSS_RELIC_SIZE,
+                layout.boss_relic_size,
             )
             for i in range(n):
-                mask[_BOSS_RELIC_START + i] = 1
+                mask[layout.boss_relic_start + i] = 1
 
         elif phase == RunManager.PHASE_SHOP:
             # Action 0 = leave (always valid when in shop)
-            mask[_SHOP_START] = 1
+            mask[layout.shop_start] = 1
             self._mask_shop(actions, mask)
 
         elif phase == RunManager.PHASE_REST_SITE:
             rest_actions = [
                 a for a in actions if a.get("action") == "rest_option"
             ]
-            for i in range(min(len(rest_actions), _REST_SIZE)):
-                mask[_REST_START + i] = 1
+            for i in range(min(len(rest_actions), layout.rest_size)):
+                mask[layout.rest_start + i] = 1
 
         elif phase == RunManager.PHASE_EVENT:
-            if any(a.get("action") in {"choose", "confirm_choice"} for a in actions):
-                if any(a.get("action") == "confirm_choice" for a in actions):
-                    mask[_COMBAT_START] = 1
-                choose_actions = [a for a in actions if a.get("action") == "choose"]
-                for i in range(min(len(choose_actions), _COMBAT_SIZE - 1)):
-                    mask[_COMBAT_START + 1 + i] = 1
-            else:
-                event_actions = [
-                    a for a in actions if a.get("action") == "event_choice"
-                ]
-                for i in range(min(len(event_actions), _EVENT_SIZE)):
-                    mask[_EVENT_START + i] = 1
+            event_actions = [
+                a for a in actions if a.get("action") == "event_choice"
+            ]
+            for i in range(min(len(event_actions), layout.event_size)):
+                mask[layout.event_start + i] = 1
 
         elif phase == RunManager.PHASE_TREASURE:
-            mask[_TREASURE_START] = 1
+            mask[layout.treasure_start] = 1
 
         # Safety: guarantee at least one action is unmasked.
         if mask.sum() == 0:
@@ -369,46 +450,54 @@ class STS2RunEnv(gymnasium.Env):
 
     def _step_combat(self, action: int) -> None:
         """Translate a unified action index into a RunManager combat action."""
+        layout = _LAYOUT
         mgr = self._mgr
         assert mgr is not None
         combat = mgr.get_combat_state()
         if combat is None or combat.is_over:
             return
 
-        if _PLAYER_SELECT_START <= action < _PLAYER_SELECT_START + _PLAYER_SELECT_SIZE:
+        if layout.player_select_start <= action < layout.player_select_start + layout.player_select_size:
             select_actions = [
                 a for a in mgr.get_available_actions()
                 if a.get("action") == "select_player"
             ]
-            idx = action - _PLAYER_SELECT_START
+            idx = action - layout.player_select_start
             if 0 <= idx < len(select_actions):
                 mgr.take_action(select_actions[idx])
             return
 
-        local = max(0, min(action - _COMBAT_START, _COMBAT_SIZE - 1))
+        local = max(0, min(action - layout.combat_start, layout.combat_size - 1))
         if combat.pending_choice is not None:
             if local == 0:
                 mgr.take_action({"action": "confirm_choice"})
             else:
                 mgr.take_action({"action": "choose", "index": local - 1})
         else:
-            hand_idx, target_idx = action_to_card_and_target(local)
-
-            if hand_idx is None:
-                mgr.take_action({"action": "end_turn"})
+            if is_potion_action(local):
+                slot_idx, target_idx = action_to_potion_and_target(local)
+                if slot_idx is not None:
+                    combat_now = mgr.get_combat_state()
+                    if combat_now is not None and not combat_now.is_over:
+                        combat_now.use_potion(slot_idx, target_index=target_idx)
             else:
-                act: dict[str, Any] = {
-                    "action": "play_card",
-                    "hand_index": hand_idx,
-                }
-                if target_idx is not None:
-                    act["target_index"] = target_idx
-                result = mgr.take_action(act)
-                if not result.get("success", True) and not mgr.is_over:
-                    if mgr.phase == RunManager.PHASE_COMBAT:
-                        combat2 = mgr.get_combat_state()
-                        if combat2 is not None and not combat2.is_over:
-                            mgr.take_action({"action": "end_turn"})
+                hand_idx, target_idx = action_to_card_and_target(local)
+
+                if hand_idx is None:
+                    mgr.take_action({"action": "end_turn"})
+                else:
+                    act: dict[str, Any] = {
+                        "action": "play_card",
+                        "hand_index": hand_idx,
+                    }
+                    if target_idx is not None:
+                        act["target_index"] = target_idx
+                    result = mgr.take_action(act)
+                    if not result.get("success", True) and not mgr.is_over:
+                        if mgr.phase == RunManager.PHASE_COMBAT:
+                            combat2 = mgr.get_combat_state()
+                            if combat2 is not None and not combat2.is_over:
+                                mgr.take_action({"action": "end_turn"})
 
         # Force-end combat if it exceeds the turn limit.
         if mgr.phase == RunManager.PHASE_COMBAT:
@@ -422,34 +511,44 @@ class STS2RunEnv(gymnasium.Env):
                 mgr.run_state.lose_run()
 
     def _step_map_choice(self, action: int) -> None:
+        layout = _LAYOUT
         mgr = self._mgr
         assert mgr is not None
         actions = mgr.get_available_actions()
         if not actions:
             return
-        local = max(0, min(action - _MAP_START, len(actions) - 1))
+        local = max(0, min(action - layout.map_start, len(actions) - 1))
         mgr.take_action(actions[local])
 
     def _step_card_reward(self, action: int) -> None:
+        layout = _LAYOUT
         mgr = self._mgr
         assert mgr is not None
         actions = mgr.get_available_actions()
         if any(a.get("action") == "pick_potion" for a in actions):
-            local = action - _CARD_RWD_START
+            local = action - layout.card_reward_start
             if local == 0:
                 mgr.take_action({"action": "pick_potion"})
             else:
                 mgr.take_action({"action": "skip_potion"})
             return
         if any(a.get("action") == "pick_relic_reward" for a in actions):
-            local = action - _CARD_RWD_START
+            local = action - layout.card_reward_start
             if local == 0:
                 mgr.take_action({"action": "pick_relic_reward"})
             else:
                 mgr.take_action({"action": "skip_relic"})
             return
 
-        local = action - _CARD_RWD_START
+        if action == layout.card_reward_reroll and any(a.get("action") == "reroll_card_reward" for a in actions):
+            mgr.take_action({"action": "reroll_card_reward"})
+            return
+
+        if layout.card_reward_extra_start <= action < layout.card_reward_extra_start + layout.card_reward_extra_size:
+            mgr.take_action({"action": "pick_card", "index": 3 + (action - layout.card_reward_extra_start)})
+            return
+
+        local = action - layout.card_reward_start
 
         if local == 3 or local < 0 or local > 3:
             # Skip
@@ -458,17 +557,19 @@ class STS2RunEnv(gymnasium.Env):
             mgr.take_action({"action": "pick_card", "index": local})
 
     def _step_boss_relic(self, action: int) -> None:
+        layout = _LAYOUT
         mgr = self._mgr
         assert mgr is not None
-        local = max(0, min(action - _BOSS_RELIC_START, _BOSS_RELIC_SIZE - 1))
+        local = max(0, min(action - layout.boss_relic_start, layout.boss_relic_size - 1))
         mgr.take_action({"action": "pick_relic", "index": local})
 
     def _step_shop(self, action: int) -> None:
+        layout = _LAYOUT
         mgr = self._mgr
         assert mgr is not None
-        local = action - _SHOP_START
+        local = action - layout.shop_start
 
-        if local <= 0 or local >= _SHOP_SIZE:
+        if local <= 0 or local >= layout.shop_size:
             mgr.take_action({"action": "leave_shop"})
             return
 
@@ -484,6 +585,7 @@ class STS2RunEnv(gymnasium.Env):
             mgr.take_action({"action": "leave_shop"})
 
     def _step_rest_site(self, action: int) -> None:
+        layout = _LAYOUT
         mgr = self._mgr
         assert mgr is not None
         actions = [
@@ -492,15 +594,16 @@ class STS2RunEnv(gymnasium.Env):
         ]
         if not actions:
             return
-        local = max(0, min(action - _REST_START, len(actions) - 1))
+        local = max(0, min(action - layout.rest_start, len(actions) - 1))
         mgr.take_action(actions[local])
 
     def _step_event(self, action: int) -> None:
+        layout = _LAYOUT
         mgr = self._mgr
         assert mgr is not None
         actions = mgr.get_available_actions()
         if any(a.get("action") in {"choose", "confirm_choice"} for a in actions):
-            local = max(0, min(action - _COMBAT_START, _COMBAT_SIZE - 1))
+            local = max(0, min(action - layout.combat_start, layout.combat_size - 1))
             if local == 0:
                 mgr.take_action({"action": "confirm_choice"})
             else:
@@ -513,8 +616,18 @@ class STS2RunEnv(gymnasium.Env):
         ]
         if not actions:
             return
-        local = max(0, min(action - _EVENT_START, len(actions) - 1))
+        local = max(0, min(action - layout.event_start, len(actions) - 1))
         mgr.take_action(actions[local])
+
+    def _step_noncombat_choice(self, action: int) -> None:
+        mgr = self._mgr
+        assert mgr is not None
+        layout = _LAYOUT
+        local = max(0, min(action - layout.combat_start, layout.combat_size - 1))
+        if local == 0:
+            mgr.take_action({"action": "confirm_choice"})
+        else:
+            mgr.take_action({"action": "choose", "index": local - 1})
 
     def _step_treasure(self) -> None:
         mgr = self._mgr
@@ -536,11 +649,12 @@ class STS2RunEnv(gymnasium.Env):
 
     def _mask_shop(self, actions: list[dict], mask: np.ndarray) -> None:
         """Populate *mask* for shop buy-actions at indices 1..N."""
+        layout = _LAYOUT
         buyable = [
             a for a in actions if a.get("action") != "leave_shop"
         ]
-        for i in range(min(len(buyable), _SHOP_SIZE - 1)):
-            mask[_SHOP_START + 1 + i] = 1
+        for i in range(min(len(buyable), layout.shop_size - 1)):
+            mask[layout.shop_start + 1 + i] = 1
 
     # ------------------------------------------------------------------
     # Observation encoding

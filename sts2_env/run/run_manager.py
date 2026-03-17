@@ -20,6 +20,7 @@ The run follows this lifecycle:
 from __future__ import annotations
 
 import math
+from contextlib import contextmanager
 from typing import Any, TYPE_CHECKING
 
 from sts2_env.cards.base import CardInstance, reset_instance_counter
@@ -31,10 +32,20 @@ from sts2_env.core.enums import (
 from sts2_env.core.rng import Rng
 from sts2_env.map.map_point import MapCoord
 from sts2_env.potions.base import PotionInstance, create_potion, roll_random_potion_model
-from sts2_env.relics.base import RelicPool, RelicRarity
-from sts2_env.relics.registry import RELIC_REGISTRY, load_all_relics
 from sts2_env.run.events import EventModel, EventOption, EventResult, pick_event
-from sts2_env.run.reward_objects import CardReward, GoldReward, PotionReward, RelicReward, Reward, RewardsSet
+from sts2_env.run.reward_objects import (
+    CardReward,
+    DuplicateCardReward,
+    EnchantCardsReward,
+    GoldReward,
+    PotionReward,
+    RelicReward,
+    RemoveCardReward,
+    Reward,
+    RewardsSet,
+    TransformCardsReward,
+    UpgradeCardsReward,
+)
 from sts2_env.run.rest_site import RestSiteOption, generate_rest_site_options
 from sts2_env.run.rewards import generate_combat_reward_cards
 from sts2_env.run.rooms import CombatRoom, Room, RoomVisitContext, create_room
@@ -142,6 +153,20 @@ _GOLD_REWARDS: dict[RoomType, tuple[int, int]] = {
     RoomType.BOSS: (50, 75),
 }
 
+_BOSS_RELIC_POOL = [
+    "ASTROLABE",
+    "BLACK_STAR",
+    "CALLING_BELL",
+    "ECTOPLASM",
+    "PANDORAS_BOX",
+    "PHILOSOPHERS_STONE",
+    "RUNIC_PYRAMID",
+    "SNECKO_EYE",
+    "SOZU",
+    "TOUCH_OF_OROBAS",
+    "VELVET_CHOKER",
+]
+
 
 # ---------------------------------------------------------------------------
 # RunManager
@@ -188,6 +213,7 @@ class RunManager:
             ascension_level=ascension_level,
             character_id=character_id,
         )
+        self._run_state.enable_deck_choice_requests = True
         self._run_state.player.max_hp = config["hp"]
         self._run_state.player.current_hp = config["hp"]
         self._run_state.player.gold = config["gold"]
@@ -219,12 +245,14 @@ class RunManager:
         self._pending_rewards: list[Reward] = []
         self._current_reward: Reward | None = None
         self._return_phase_after_rewards: str | None = None
+        self._resume_after_reward_chain = None
         self._selected_combat_player_id: int | None = None
         self._rest_options: list[RestSiteOption] = []
         self._shop_inventory: ShopInventory | None = None
         self._event_model: EventModel | None = None
         self._event_options: list[EventOption] = []
         self._boss_relics: list[str] = []
+        self._resume_after_run_choice = None
 
         # Kick off the map
         self._enter_map_choice()
@@ -268,6 +296,8 @@ class RunManager:
         """
         if self._run_state.is_over:
             return []
+        if self._phase != self.PHASE_COMBAT and self._run_state.pending_choice is not None:
+            return self._actions_run_choice()
 
         if self._phase == self.PHASE_MAP_CHOICE:
             return self._actions_map_choice()
@@ -299,6 +329,12 @@ class RunManager:
             return {"phase": self.PHASE_RUN_OVER, "description": "Run is over."}
 
         action_type = action.get("action", "")
+
+        if self._phase != self.PHASE_COMBAT and self._run_state.pending_choice is not None:
+            if action_type == "choose":
+                return self._do_run_choose(action)
+            if action_type == "confirm_choice":
+                return self._do_run_confirm_choice()
 
         if self._phase == self.PHASE_MAP_CHOICE and action_type == "move":
             return self._do_map_move(action)
@@ -362,6 +398,36 @@ class RunManager:
         self._pending_rewards = list(generated)
         self._phase = self.PHASE_CARD_REWARD
         self._advance_post_combat_rewards()
+
+    @contextmanager
+    def _deferred_followup_rewards(self):
+        previous = self._run_state.defer_followup_rewards
+        self._run_state.defer_followup_rewards = True
+        try:
+            yield
+        finally:
+            self._run_state.defer_followup_rewards = previous
+
+    def _do_run_choose(self, action: dict) -> dict:
+        success = self._run_state.resolve_pending_choice(action.get("index"))
+        if not success:
+            return {"phase": self.phase, "description": "Failed to resolve pending choice.", "success": False}
+        return self._finalize_after_run_choice()
+
+    def _do_run_confirm_choice(self) -> dict:
+        success = self._run_state.resolve_pending_choice(None)
+        if not success:
+            return {"phase": self.phase, "description": "Failed to confirm pending choice.", "success": False}
+        return self._finalize_after_run_choice()
+
+    def _finalize_after_run_choice(self) -> dict:
+        if self._run_state.pending_choice is not None:
+            return {"phase": self.phase, "description": "Pending choice updated.", "finished": False, "success": True}
+        callback = self._resume_after_run_choice
+        self._resume_after_run_choice = None
+        if callback is not None:
+            callback()
+        return {"phase": self.phase, "description": "Resolved pending choice.", "finished": True, "success": True}
 
     def get_combat_state(self) -> CombatState | None:
         """Return the active CombatState, or None if not in combat."""
@@ -470,13 +536,24 @@ class RunManager:
         self._offered_relic = None
         self._current_reward = None
 
-        remaining: list[Reward] = []
-        for reward in self._pending_rewards:
-            if isinstance(reward, GoldReward):
+        while self._pending_rewards:
+            reward = self._pending_rewards[0]
+            if isinstance(reward, (
+                GoldReward,
+                RemoveCardReward,
+                UpgradeCardsReward,
+                TransformCardsReward,
+                DuplicateCardReward,
+                EnchantCardsReward,
+            )):
+                self._current_reward = self._pending_rewards.pop(0)
                 reward.select(self)
-            else:
-                remaining.append(reward)
-        self._pending_rewards = remaining
+                if self._run_state.pending_choice is not None:
+                    self._resume_after_run_choice = self._advance_post_combat_rewards
+                    return
+                self._current_reward = None
+                continue
+            break
 
         for reward_type in (CardReward, PotionReward, RelicReward):
             for index, reward in enumerate(self._pending_rewards):
@@ -514,16 +591,8 @@ class RunManager:
     def _enter_boss_relic(self) -> None:
         """Offer three boss relics after defeating a boss."""
         self._phase = self.PHASE_BOSS_RELIC
-        load_all_relics()
-        desired_pool = getattr(RelicPool, self._run_state.player.character_id.upper(), None)
         owned = set(self._run_state.player.relics)
-        candidates = [
-            relic_id.name
-            for relic_id, relic_cls in RELIC_REGISTRY.items()
-            if relic_cls.rarity is RelicRarity.BOSS
-            and relic_id.name not in owned
-            and (desired_pool is None or relic_cls.pool in {RelicPool.SHARED, desired_pool})
-        ]
+        candidates = [relic_id for relic_id in _BOSS_RELIC_POOL if relic_id not in owned]
         self._rng.shuffle(candidates)
         self._boss_relics = candidates[:3]
 
@@ -554,6 +623,12 @@ class RunManager:
 
     def _enter_treasure(self) -> None:
         self._phase = self.PHASE_TREASURE
+        self._current_rewards = RewardsSet(self._run_state.player.player_id, room=self._current_room)
+        self._pending_rewards = []
+        generated = self._current_rewards.with_custom_rewards([
+            RelicReward(self._run_state.player.player_id, rng_stream="treasure_room")
+        ]).generate_without_offering(self._run_state)
+        self._current_reward = generated[0] if generated else None
 
     def _enter_room(self, room_type: RoomType) -> None:
         """Dispatch to the correct phase based on room type."""
@@ -596,6 +671,27 @@ class RunManager:
                 "action": "move",
                 "coord": (coord.col, coord.row),
                 "point_type": point_type,
+            })
+        return actions
+
+    def _actions_run_choice(self) -> list[dict]:
+        choice = self._run_state.pending_choice
+        if choice is None:
+            return []
+        actions: list[dict] = []
+        if choice.can_confirm():
+            actions.append({
+                "action": "confirm_choice",
+                "prompt": choice.prompt,
+                "selected_count": len(choice.selected_indices),
+            })
+        for i, option in enumerate(choice.options):
+            actions.append({
+                "action": "choose",
+                "index": i,
+                "card_id": option.card.card_id.name,
+                "source_pile": option.source_pile,
+                "selected": i in choice.selected_indices,
             })
         return actions
 
@@ -823,7 +919,10 @@ class RunManager:
         ]
 
     def _actions_treasure(self) -> list[dict]:
-        return [{"action": "collect"}]
+        action: dict[str, Any] = {"action": "collect"}
+        if isinstance(self._current_reward, RelicReward):
+            action["relic_id"] = self._current_reward.relic_id
+        return [action]
 
     # ------------------------------------------------------------------
     # Action executors
@@ -1076,6 +1175,10 @@ class RunManager:
             return {"phase": self.phase, "description": "No relic reward."}
         info = reward.select(self)
         self._offered_relic = None
+        if self._run_state.pending_choice is not None:
+            self._resume_after_run_choice = lambda: (self._consume_run_pending_rewards(), self._advance_post_combat_rewards())
+            info["phase"] = self.phase
+            return info
         self._consume_run_pending_rewards()
         self._advance_post_combat_rewards()
         info["phase"] = self.phase
@@ -1090,6 +1193,11 @@ class RunManager:
 
     def _after_card_reward(self) -> None:
         """Transition after the card reward screen."""
+        callback = self._resume_after_reward_chain
+        if callback is not None:
+            self._resume_after_reward_chain = None
+            callback()
+            return
         if self._return_phase_after_rewards is not None:
             self._phase = self._return_phase_after_rewards
             self._return_phase_after_rewards = None
@@ -1104,10 +1212,18 @@ class RunManager:
         relic_id = ""
         if 0 <= index < len(self._boss_relics):
             relic_id = self._boss_relics[index]
-            self._run_state.player.obtain_relic(relic_id)
+            with self._deferred_followup_rewards():
+                self._run_state.player.obtain_relic(relic_id)
 
         description = f"Picked boss relic '{relic_id}'."
+        if self._run_state.pending_choice is not None:
+            self._resume_after_run_choice = lambda: (
+                self._consume_run_pending_rewards(),
+                self._transition_next_act() if self.phase != self.PHASE_CARD_REWARD else None,
+            )
+            return {"phase": self.phase, "description": description, "relic_id": relic_id}
         if self._run_state.pending_rewards:
+            self._resume_after_reward_chain = self._transition_next_act
             self._consume_run_pending_rewards()
             return {"phase": self.phase, "description": description, "relic_id": relic_id}
         self._transition_next_act()
@@ -1151,8 +1267,20 @@ class RunManager:
                 if player.gold >= entry.price:
                     player.lose_gold(entry.price)
                     if entry.relic_id:
-                        player.obtain_relic(entry.relic_id)
+                        with self._deferred_followup_rewards():
+                            player.obtain_relic(entry.relic_id)
                     self._handle_post_shop_purchase("relic", entry)
+                    if self._run_state.pending_choice is not None:
+                        self._resume_after_run_choice = lambda: (
+                            self._consume_run_pending_rewards(),
+                            setattr(self, "_phase", self.PHASE_SHOP) if self.phase != self.PHASE_CARD_REWARD else None,
+                        )
+                        return {
+                            "phase": self.phase,
+                            "description": f"Bought relic ({entry.relic_rarity.name}).",
+                        }
+                    if self._run_state.pending_rewards:
+                        self._resume_after_reward_chain = lambda: setattr(self, "_phase", self.PHASE_SHOP)
                     self._consume_run_pending_rewards()
                     return {
                         "phase": self.phase,
@@ -1176,16 +1304,31 @@ class RunManager:
             return {"phase": self.phase, "description": "Cannot afford potion."}
 
         if action_type == "remove_card":
-            if player.gold >= inv.removal_cost and len(player.deck) > 0:
+            removable = [card for card in player.deck if card.rarity.name != "QUEST" and card.is_removable]
+            if player.gold >= inv.removal_cost and removable:
                 player.lose_gold(inv.removal_cost)
-                player.card_shop_removals_used += 1
-                inv.removal_cost += 25
-                for relic in player.get_relic_objects():
-                    relic.on_item_purchased(player)
-                return {
-                    "phase": self.phase,
-                    "description": "Card removal purchased.",
-                }
+                reward = RemoveCardReward(player.player_id, count=1)
+                info = reward.select(self)
+
+                def _finalize_removal_purchase() -> None:
+                    player.card_shop_removals_used += 1
+                    inv.removal_cost = 75 + 25 * player.card_shop_removals_used
+                    for relic in player.get_relic_objects():
+                        relic.on_item_purchased(player)
+
+                if self._run_state.pending_choice is not None:
+                    self._resume_after_run_choice = _finalize_removal_purchase
+                    return {
+                        "phase": self.phase,
+                        "description": info["description"],
+                    }
+
+                if info.get("removed", 0) > 0:
+                    _finalize_removal_purchase()
+                    return {
+                        "phase": self.phase,
+                        "description": info["description"],
+                    }
             return {"phase": self.phase, "description": "Cannot afford removal."}
 
         return {"phase": self.phase, "description": "Unknown shop action."}
@@ -1209,18 +1352,8 @@ class RunManager:
 
         description = "Rested."
         if chosen is not None:
-            if chosen.option_id == "SMITH":
-                # Auto-select first upgradable card
-                for i, card in enumerate(player.deck):
-                    if not card.upgraded:
-                        result_str = chosen.execute(player, card_index=i)
-                        description = result_str
-                        break
-                else:
-                    description = "No card to upgrade."
-            else:
-                result_str = chosen.execute(player)
-                description = result_str
+            result_str = chosen.execute(player)
+            description = result_str
 
         disable_remaining = True
         if chosen is not None:
@@ -1232,6 +1365,14 @@ class RunManager:
         has_remaining_rest_options = any(opt.enabled for opt in self._rest_options)
         if not disable_remaining and has_remaining_rest_options:
             self._return_phase_after_rewards = self.PHASE_REST_SITE
+
+        if self._run_state.pending_choice is not None:
+            self._resume_after_run_choice = lambda: (
+                self._consume_run_pending_rewards(),
+                setattr(self, "_phase", self.PHASE_REST_SITE) if self._return_phase_after_rewards == self.PHASE_REST_SITE and self.phase != self.PHASE_CARD_REWARD else None,
+                self._enter_map_choice() if self._return_phase_after_rewards != self.PHASE_REST_SITE and self.phase != self.PHASE_CARD_REWARD else None,
+            )
+            return {"phase": self.phase, "description": description}
 
         self._consume_run_pending_rewards()
         if self._phase == self.PHASE_CARD_REWARD:
@@ -1314,7 +1455,34 @@ class RunManager:
             return {"phase": self.PHASE_RUN_OVER, "description": description}
 
         reward_objects = result.rewards.get("reward_objects", [])
+        if self._run_state.pending_choice is not None:
+            def _resume_after_event_choice() -> None:
+                if self._run_state.is_over:
+                    self._phase = self.PHASE_RUN_OVER
+                    return
+                if self._run_state.player.is_dead:
+                    self._run_state.lose_run()
+                    self._phase = self.PHASE_RUN_OVER
+                    return
+                if reward_objects:
+                    self._current_rewards = RewardsSet(self._run_state.player.player_id).with_custom_rewards(reward_objects)
+                    self._pending_rewards = self._current_rewards.generate_without_offering(self._run_state)
+                    self._phase = self.PHASE_CARD_REWARD
+                    self._advance_post_combat_rewards()
+                    return
+                if self._run_state.pending_rewards:
+                    self._consume_run_pending_rewards()
+                    return
+                self._enter_map_choice()
+
+            self._resume_after_run_choice = _resume_after_event_choice
+            return {
+                "phase": self.phase,
+                "description": description,
+                "finished": False,
+            }
         if reward_objects:
+            self._resume_after_reward_chain = self._enter_map_choice
             self._current_rewards = RewardsSet(self._run_state.player.player_id).with_custom_rewards(reward_objects)
             self._pending_rewards = self._current_rewards.generate_without_offering(self._run_state)
             self._phase = self.PHASE_CARD_REWARD
@@ -1326,6 +1494,7 @@ class RunManager:
             }
 
         if self._run_state.pending_rewards:
+            self._resume_after_reward_chain = self._enter_map_choice
             self._consume_run_pending_rewards()
             return {
                 "phase": self.phase,
@@ -1337,16 +1506,27 @@ class RunManager:
         return {"phase": self.phase, "description": description}
 
     def _do_treasure_collect(self) -> dict:
-        # Simple treasure: gain gold
-        gold = self._rng.next_int(30, 60)
-        self._run_state.player.gain_gold(gold)
+        reward = self._current_reward
+        if not isinstance(reward, RelicReward):
+            self._enter_map_choice()
+            return {
+                "phase": self.phase,
+                "description": "Collected treasure.",
+            }
 
-        self._enter_map_choice()
-        return {
-            "phase": self.phase,
-            "description": f"Collected treasure: {gold} gold.",
-            "gold": gold,
-        }
+        info = reward.select(self)
+        self._current_reward = None
+        if self._run_state.pending_choice is not None:
+            self._resume_after_run_choice = self._enter_map_choice
+            info["phase"] = self.phase
+            info["description"] = f"Collected treasure relic: {info.get('relic_id', reward.relic_id)}."
+            return info
+        self._consume_run_pending_rewards()
+        if self._phase != self.PHASE_CARD_REWARD:
+            self._enter_map_choice()
+        info["phase"] = self.phase
+        info["description"] = f"Collected treasure relic: {info.get('relic_id', reward.relic_id)}."
+        return info
 
     # ------------------------------------------------------------------
     # Act transitions

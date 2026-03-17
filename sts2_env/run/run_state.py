@@ -8,11 +8,18 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from sts2_env.cards.factory import create_card, create_character_cards, eligible_character_cards, eligible_registered_cards
+from sts2_env.cards.enchantments import can_enchant_card
+from sts2_env.cards.factory import (
+    create_card,
+    create_transform_card,
+    eligible_character_cards,
+    eligible_registered_cards,
+)
+from sts2_env.core.selection import CardChoiceOption, PendingCardChoice
 from sts2_env.core.enums import CardId, CardRarity, CardType
 from sts2_env.core.rng import Rng
 from sts2_env.core.enums import MapPointType, RoomType
-from sts2_env.characters.all import get_character
+from sts2_env.characters.all import ALL_CHARACTERS, get_character
 from sts2_env.map.map_point import MapCoord, MapPoint
 from sts2_env.map.generator import ActMap, generate_act_map
 from sts2_env.map.acts import ActConfig, get_act_config, ALL_ACTS
@@ -69,6 +76,34 @@ class PlayerState:
     def held_potions(self) -> list[PotionInstance]:
         return [p for p in self.potions if p is not None]
 
+    def request_deck_choice(
+        self,
+        *,
+        prompt: str,
+        cards: list[CardInstance],
+        resolver,
+        allow_skip: bool = False,
+        min_count: int = 1,
+        max_count: int = 1,
+    ) -> bool:
+        if (
+            self.run_state is None
+            or self.run_state.pending_choice is not None
+            or not getattr(self.run_state, "enable_deck_choice_requests", False)
+        ):
+            return False
+        if not cards:
+            return False
+        self.run_state.pending_choice = PendingCardChoice(
+            prompt=prompt,
+            options=[CardChoiceOption(card=card, source_pile="deck") for card in cards],
+            resolver=resolver,
+            allow_skip=allow_skip,
+            min_choices=min_count,
+            max_choices=max_count,
+        )
+        return True
+
     def heal(self, amount: int) -> int:
         before = self.current_hp
         self.current_hp = min(self.current_hp + amount, self.max_hp)
@@ -80,7 +115,16 @@ class PlayerState:
         return actual
 
     def gain_gold(self, amount: int) -> None:
+        if amount <= 0:
+            return
+        for relic in self._ensure_relic_objects():
+            if relic.should_gain_gold(self, amount) is False:
+                return
         self.gold += amount
+        for relic in self._ensure_relic_objects():
+            on_gold_gained = getattr(relic, "on_gold_gained", None)
+            if callable(on_gold_gained):
+                on_gold_gained(self, amount)
 
     def lose_gold(self, amount: int) -> int:
         actual = min(amount, self.gold)
@@ -104,12 +148,57 @@ class PlayerState:
                 continue
         return self.relic_objects
 
+    def get_relic_objects(self) -> list[Any]:
+        return self._ensure_relic_objects()
+
+    def upgrade_card_instance(self, card: CardInstance | None) -> CardInstance | None:
+        if card is None or card.upgraded:
+            return card
+        try:
+            upgraded_card = create_card(card.card_id, upgraded=True)
+        except KeyError:
+            return card
+        if not upgraded_card.upgraded:
+            return card
+
+        card.cost = upgraded_card.cost
+        card.card_type = upgraded_card.card_type
+        card.target_type = upgraded_card.target_type
+        card.rarity = upgraded_card.rarity
+        card.base_damage = upgraded_card.base_damage
+        card.base_block = upgraded_card.base_block
+        card.upgraded = upgraded_card.upgraded
+        card.keywords = upgraded_card.keywords
+        card.tags = upgraded_card.tags
+        card.can_be_generated_in_combat = upgraded_card.can_be_generated_in_combat
+        card.can_be_generated_by_modifiers = upgraded_card.can_be_generated_by_modifiers
+        card.effect_vars = dict(upgraded_card.effect_vars)
+        card.original_cost = upgraded_card.original_cost
+        card.has_energy_cost_x = upgraded_card.has_energy_cost_x
+        card.star_cost = upgraded_card.star_cost
+        return card
+
+    def modify_card_being_added_to_deck(self, card: CardInstance) -> CardInstance:
+        modified = card
+        for relic in self.get_relic_objects():
+            modifier = getattr(relic, "modify_card_being_added_to_deck", None)
+            if not callable(modifier):
+                continue
+            updated = modifier(self, modified)
+            if updated is not None:
+                modified = updated
+        return modified
+
     def add_card_instance_to_deck(self, card: CardInstance) -> None:
-        self.deck.append(card)
-        for relic in self._ensure_relic_objects():
+        self.deck.append(self.modify_card_being_added_to_deck(card))
+        for relic in self.get_relic_objects():
             on_card_added = getattr(relic, "on_card_added_to_deck", None)
             if callable(on_card_added):
                 on_card_added(self)
+        if card.card_type == CardType.CURSE:
+            for relic in self.get_relic_objects():
+                if getattr(getattr(relic, "relic_id", None), "name", "") == "DARKSTONE_PERIAPT":
+                    self.gain_max_hp(6)
 
     def gain_max_hp(self, amount: int) -> None:
         self.max_hp += amount
@@ -131,12 +220,31 @@ class PlayerState:
         return self.lose_hp(amount)
 
     def enchant_cards(self, enchantment: str, amount: int, count: int) -> int:
+        candidates = [card for card in self.deck if can_enchant_card(card, enchantment)]
+        return self.enchant_selected_cards(enchantment, amount, count, cards=candidates)
+
+    def enchant_selected_cards(
+        self,
+        enchantment: str,
+        amount: int,
+        count: int,
+        *,
+        cards: list[CardInstance] | None = None,
+    ) -> int:
+        candidates = list(cards) if cards is not None else [card for card in self.deck if can_enchant_card(card, enchantment)]
+        if count > 0 and candidates and self.request_deck_choice(
+            prompt=f"Choose up to {count} cards to enchant with {enchantment}",
+            cards=candidates,
+            resolver=lambda selected: [card.add_enchantment(enchantment, amount) for card in selected],
+            allow_skip=True,
+            min_count=0,
+            max_count=min(count, len(candidates)),
+        ):
+            return 0
         enchanted = 0
-        for card in self.deck:
+        for card in candidates:
             if enchanted >= count:
                 break
-            if card.rarity.name == "QUEST":
-                continue
             card.add_enchantment(enchantment, amount)
             enchanted += 1
         return enchanted
@@ -200,39 +308,77 @@ class PlayerState:
             added += 1
         return added
 
-    def duplicate_card_from_deck(self) -> bool:
-        if not self.deck:
-            return False
-        self.add_card_instance_to_deck(self.deck[0].clone(20_000_000 + len(self.deck)))
-        return True
+    def duplicable_deck_cards(self) -> list[CardInstance]:
+        return [card for card in self.deck if card.card_type != CardType.QUEST]
 
-    def upgrade_selected_cards(self, count: int) -> int:
-        from sts2_env.cards.factory import create_card
+    def removable_deck_cards(self) -> list[CardInstance]:
+        return [
+            card for card in self.deck
+            if card.card_type != CardType.QUEST and card.rarity.name != "QUEST" and card.is_removable
+        ]
 
-        upgraded = 0
+    def transformable_deck_cards(self) -> list[CardInstance]:
+        return [card for card in self.removable_deck_cards()]
+
+    def basic_strike_defend_cards(self) -> list[CardInstance]:
+        return [
+            card for card in self.removable_deck_cards()
+            if card.rarity == CardRarity.BASIC and ("STRIKE" in card.card_id.name or "DEFEND" in card.card_id.name)
+        ]
+
+    def upgradable_deck_cards(self, card_type: CardType | None = None) -> list[CardInstance]:
+        candidates: list[CardInstance] = []
         for card in self.deck:
-            if upgraded >= count or card.upgraded:
+            if card.upgraded:
+                continue
+            if card_type is not None and card.card_type != card_type:
                 continue
             try:
                 upgraded_card = create_card(card.card_id, upgraded=True)
             except KeyError:
                 continue
-            if not upgraded_card.upgraded:
-                continue
-            card.cost = upgraded_card.cost
-            card.card_type = upgraded_card.card_type
-            card.target_type = upgraded_card.target_type
-            card.rarity = upgraded_card.rarity
-            card.base_damage = upgraded_card.base_damage
-            card.base_block = upgraded_card.base_block
-            card.upgraded = upgraded_card.upgraded
-            card.keywords = upgraded_card.keywords
-            card.tags = upgraded_card.tags
-            card.can_be_generated_in_combat = upgraded_card.can_be_generated_in_combat
-            card.can_be_generated_by_modifiers = upgraded_card.can_be_generated_by_modifiers
-            card.effect_vars = dict(upgraded_card.effect_vars)
-            card.original_cost = upgraded_card.original_cost
-            upgraded += 1
+            if upgraded_card.upgraded:
+                candidates.append(card)
+        return candidates
+
+    def duplicate_card_from_deck(self, *, cards: list[CardInstance] | None = None) -> bool:
+        candidates = list(cards) if cards is not None else self.duplicable_deck_cards()
+        if candidates and self.request_deck_choice(
+            prompt="Choose a card to duplicate",
+            cards=candidates,
+            resolver=lambda selected: selected and self.add_card_instance_to_deck(selected[0].clone(20_000_000 + len(self.deck))),
+            allow_skip=True,
+        ):
+            return True
+        if not candidates:
+            return False
+        self.add_card_instance_to_deck(candidates[0].clone(20_000_000 + len(self.deck)))
+        return True
+
+    def duplicate_last_added_card(self) -> bool:
+        if not self.deck:
+            return False
+        self.add_card_instance_to_deck(self.deck[-1].clone(20_000_000 + len(self.deck)))
+        return True
+
+    def upgrade_selected_cards(self, count: int, *, cards: list[CardInstance] | None = None) -> int:
+        candidates = list(cards) if cards is not None else self.upgradable_deck_cards()
+        required = min(count, len(candidates))
+        if required > 0 and self.request_deck_choice(
+            prompt=f"Choose {min(count, len(candidates))} cards to upgrade",
+            cards=candidates,
+            resolver=lambda selected: [self.upgrade_card_instance(card) for card in selected],
+            allow_skip=False,
+            min_count=required,
+            max_count=required,
+        ):
+            return 0
+        upgraded = 0
+        for card in candidates:
+            if upgraded >= count:
+                break
+            if self.upgrade_card_instance(card) is not None and card.upgraded:
+                upgraded += 1
         return upgraded
 
     def clone_enchanted_cards(self, enchantment: str) -> int:
@@ -243,119 +389,236 @@ class PlayerState:
         self.deck.extend(clones)
         return len(clones)
 
-    def remove_cards_from_deck(self, count: int) -> int:
+    def remove_cards_from_deck(self, count: int, *, cards: list[CardInstance] | None = None) -> int:
+        candidates = list(cards) if cards is not None else self.removable_deck_cards()
+        required = min(count, len(candidates))
+        if required > 0 and self.request_deck_choice(
+            prompt=f"Choose {min(count, len(candidates))} cards to remove",
+            cards=candidates,
+            resolver=lambda selected: [self.deck.remove(card) for card in selected if card in self.deck],
+            allow_skip=False,
+            min_count=required,
+            max_count=required,
+        ):
+            return 0
         removed = 0
+        selected = candidates[:count]
         remaining = []
         for card in self.deck:
-            if removed < count and card.rarity.name != "QUEST":
+            if removed < count and card in selected:
                 removed += 1
                 continue
             remaining.append(card)
         self.deck = remaining
         return removed
 
-    def transform_cards(self, count: int) -> int:
-        candidates = self.deck[:count]
-        replacements = create_character_cards(self.character_id, self.run_state.rng.niche, len(candidates), distinct=False, generation_context=None)
+    def transform_cards(self, count: int, *, cards: list[CardInstance] | None = None) -> int:
+        candidates = list(cards) if cards is not None else self.transformable_deck_cards()
+        required = min(count, len(candidates))
+        if required > 0 and self.request_deck_choice(
+            prompt=f"Choose {min(count, len(candidates))} cards to transform",
+            cards=candidates,
+            resolver=lambda selected: self._transform_selected_cards(selected),
+            allow_skip=False,
+            min_count=required,
+            max_count=required,
+        ):
+            return 0
+        candidates = candidates[:count]
         transformed = 0
-        for card, replacement in zip(candidates, replacements):
-            card.card_id = replacement.card_id
-            card.cost = replacement.cost
-            card.card_type = replacement.card_type
-            card.target_type = replacement.target_type
-            card.rarity = replacement.rarity
-            card.base_damage = replacement.base_damage
-            card.base_block = replacement.base_block
-            card.upgraded = replacement.upgraded
-            card.keywords = replacement.keywords
-            card.tags = replacement.tags
-            card.can_be_generated_in_combat = replacement.can_be_generated_in_combat
-            card.can_be_generated_by_modifiers = replacement.can_be_generated_by_modifiers
-            card.enchantments = dict(replacement.enchantments)
-            card.effect_vars = dict(replacement.effect_vars)
-            card.original_cost = replacement.original_cost
+        for card in candidates[:count]:
+            replacement = create_transform_card(
+                card,
+                character_id=self.character_id,
+                rng=self.run_state.rng.niche,
+                generation_context=None,
+            )
+            self._apply_card_replacement(card, replacement)
             transformed += 1
         return transformed
 
     def transform_basic_cards(self, count: int, upgrade: int = 0) -> int:
-        basics = [card for card in self.deck if card.rarity == CardRarity.BASIC][:count]
-        transformed = self.transform_cards(len(basics))
+        basics = self.basic_strike_defend_cards()[:count]
+        transformed = self.transform_cards(len(basics), cards=basics)
         if upgrade:
             self.upgrade_random_cards(None, upgrade)
         return transformed
 
     def transform_all_basic_cards(self) -> int:
-        basics = [card for card in self.deck if card.rarity == CardRarity.BASIC]
-        return self.transform_cards(len(basics))
+        basics = self.basic_strike_defend_cards()
+        return self.transform_cards(len(basics), cards=basics)
 
-    def transform_starter_card(self) -> bool:
-        basics = [card for card in self.deck if card.rarity == CardRarity.BASIC]
-        return self.transform_cards(1) > 0 if basics else False
+    def transform_specific_cards(self, cards: list[CardInstance]) -> int:
+        return self._transform_selected_cards(list(cards))
 
-    def transform_cards_to(self, name: str, count: int) -> int:
+    def transform_specific_cards_with_mapping(
+        self,
+        cards: list[CardInstance],
+        mapping: dict[CardId, CardId],
+    ) -> int:
+        return self._transform_selected_cards_with_mapping(list(cards), mapping)
+
+    def transform_starter_card(self, *, mapping: dict[CardId, CardId] | None = None) -> bool:
+        basics = [
+            card for card in self.deck
+            if (card.rarity == CardRarity.BASIC if mapping is None else card.card_id in mapping)
+        ]
+        if basics and self.request_deck_choice(
+            prompt="Choose a starter card to transform",
+            cards=basics,
+            resolver=lambda selected: self._transform_selected_cards(selected) if mapping is None else self._transform_selected_cards_with_mapping(selected, mapping),
+            allow_skip=True,
+        ):
+            return True
+        if not basics:
+            return False
+        if mapping is not None:
+            return self._transform_selected_cards_with_mapping(basics[:1], mapping) > 0
+        return self.transform_cards(1, cards=basics) > 0
+
+    def transform_cards_to(
+        self,
+        name: str,
+        count: int,
+        *,
+        cards: list[CardInstance] | None = None,
+        preserve_upgrades: bool = False,
+        preserve_enchantments: bool = False,
+        min_count: int | None = None,
+    ) -> int:
         card_id = self._coerce_card_id(name)
         if card_id is None:
             return 0
+        candidates = list(cards) if cards is not None else list(self.deck)
+        required = min_count if min_count is not None else min(count, len(candidates))
+        if count > 0 and candidates and self.request_deck_choice(
+            prompt=f"Choose {min(count, len(candidates))} cards to transform into {name}",
+            cards=candidates,
+            resolver=lambda selected: self._transform_selected_cards_to(
+                selected,
+                card_id,
+                preserve_upgrades=preserve_upgrades,
+                preserve_enchantments=preserve_enchantments,
+            ),
+            allow_skip=min_count == 0,
+            min_count=required,
+            max_count=min(count, len(candidates)),
+        ):
+            return 0
         transformed = 0
-        for card in self.deck[:count]:
-            replacement = create_card(card_id)
-            card.card_id = replacement.card_id
-            card.cost = replacement.cost
-            card.card_type = replacement.card_type
-            card.target_type = replacement.target_type
-            card.rarity = replacement.rarity
-            card.base_damage = replacement.base_damage
-            card.base_block = replacement.base_block
-            card.upgraded = replacement.upgraded
-            card.keywords = replacement.keywords
-            card.tags = replacement.tags
-            card.can_be_generated_in_combat = replacement.can_be_generated_in_combat
-            card.can_be_generated_by_modifiers = replacement.can_be_generated_by_modifiers
-            card.enchantments = dict(replacement.enchantments)
-            card.effect_vars = dict(replacement.effect_vars)
-            card.original_cost = replacement.original_cost
+        for card in candidates[:count]:
+            replacement = create_card(card_id, upgraded=preserve_upgrades and card.upgraded)
+            old_enchantments = self._apply_card_replacement(card, replacement)
+            if preserve_enchantments:
+                for name, amount in old_enchantments.items():
+                    if can_enchant_card(card, name):
+                        card.add_enchantment(name, amount)
             transformed += 1
         return transformed
 
-    def transform_and_upgrade_cards(self, count: int) -> int:
-        transformed = self.transform_cards(count)
-        self.upgrade_random_cards(None, transformed)
+    def transform_and_upgrade_cards(self, count: int, *, cards: list[CardInstance] | None = None) -> int:
+        candidates = list(cards) if cards is not None else self.transformable_deck_cards()
+        required = min(count, len(candidates))
+        if required > 0 and self.request_deck_choice(
+            prompt=f"Choose {min(count, len(candidates))} cards to transform and upgrade",
+            cards=candidates,
+            resolver=lambda selected: self._transform_and_upgrade_selected(selected),
+            allow_skip=False,
+            min_count=required,
+            max_count=required,
+        ):
+            return 0
+        return self._transform_and_upgrade_selected(candidates[:count])
+
+    def _apply_card_replacement(self, card: CardInstance, replacement: CardInstance) -> None:
+        original_enchantments = dict(card.enchantments)
+        card.card_id = replacement.card_id
+        card.cost = replacement.cost
+        card.card_type = replacement.card_type
+        card.target_type = replacement.target_type
+        card.rarity = replacement.rarity
+        card.base_damage = replacement.base_damage
+        card.base_block = replacement.base_block
+        card.upgraded = replacement.upgraded
+        card.keywords = replacement.keywords
+        card.tags = replacement.tags
+        card.can_be_generated_in_combat = replacement.can_be_generated_in_combat
+        card.can_be_generated_by_modifiers = replacement.can_be_generated_by_modifiers
+        card.enchantments = dict(replacement.enchantments)
+        card.effect_vars = dict(replacement.effect_vars)
+        card.original_cost = replacement.original_cost
+        return original_enchantments
+
+    def _transform_selected_cards(self, cards: list[CardInstance]) -> int:
+        transformed = 0
+        for card in cards:
+            replacement = create_transform_card(
+                card,
+                character_id=self.character_id,
+                rng=self.run_state.rng.niche,
+                generation_context=None,
+            )
+            self._apply_card_replacement(card, replacement)
+            transformed += 1
+        return transformed
+
+    def _transform_selected_cards_to(
+        self,
+        cards: list[CardInstance],
+        card_id: CardId,
+        *,
+        preserve_upgrades: bool = False,
+        preserve_enchantments: bool = False,
+    ) -> int:
+        transformed = 0
+        for card in cards:
+            replacement = create_card(card_id, upgraded=preserve_upgrades and card.upgraded)
+            old_enchantments = self._apply_card_replacement(card, replacement)
+            if preserve_enchantments:
+                for name, amount in old_enchantments.items():
+                    if can_enchant_card(card, name):
+                        card.add_enchantment(name, amount)
+            transformed += 1
+        return transformed
+
+    def _transform_and_upgrade_selected(self, cards: list[CardInstance]) -> int:
+        transformed = self._transform_selected_cards(cards)
+        for card in cards:
+            self.upgrade_card_instance(card)
+        return transformed
+
+    def _transform_selected_cards_with_mapping(self, cards: list[CardInstance], mapping: dict[CardId, CardId]) -> int:
+        transformed = 0
+        for card in cards:
+            target_id = mapping.get(card.card_id)
+            if target_id is None:
+                continue
+            replacement = create_card(target_id, upgraded=card.upgraded)
+            old_enchantments = self._apply_card_replacement(card, replacement)
+            for name, amount in old_enchantments.items():
+                if can_enchant_card(card, name):
+                    card.add_enchantment(name, amount)
+            transformed += 1
         return transformed
 
     def upgrade_random_cards(self, card_type: CardType | None, count: int) -> int:
-        from sts2_env.cards.factory import create_card
-
         candidates = [card for card in self.deck if not card.upgraded and (card_type is None or card.card_type == card_type)]
         if not candidates:
             return 0
         self.run_state.rng.rewards.shuffle(candidates)
         upgraded = 0
         for card in candidates[:count]:
-            try:
-                replacement = create_card(card.card_id, upgraded=True)
-            except KeyError:
-                continue
-            if not replacement.upgraded:
-                continue
-            card.cost = replacement.cost
-            card.card_type = replacement.card_type
-            card.target_type = replacement.target_type
-            card.rarity = replacement.rarity
-            card.base_damage = replacement.base_damage
-            card.base_block = replacement.base_block
-            card.upgraded = replacement.upgraded
-            card.keywords = replacement.keywords
-            card.tags = replacement.tags
-            card.can_be_generated_in_combat = replacement.can_be_generated_in_combat
-            card.can_be_generated_by_modifiers = replacement.can_be_generated_by_modifiers
-            card.effect_vars = dict(replacement.effect_vars)
-            card.original_cost = replacement.original_cost
-            upgraded += 1
+            if self.upgrade_card_instance(card) is not None and card.upgraded:
+                upgraded += 1
         return upgraded
 
     def procure_potion(self, potion_id: str) -> bool:
         from sts2_env.potions.base import create_potion, roll_random_potion_model
 
+        for relic in self.get_relic_objects():
+            should_procure = getattr(relic, "should_procure_potion", None)
+            if callable(should_procure) and should_procure(self) is False:
+                return False
         if potion_id == "random":
             model = roll_random_potion_model(self.run_state.rng.rewards, character_id=self.character_id, in_combat=False)
             if model is None:
@@ -363,27 +626,122 @@ class PlayerState:
             return self.add_potion(create_potion(model.potion_id))
         return self.add_potion(create_potion(potion_id))
 
+    def fill_empty_potion_slots(self) -> int:
+        filled = 0
+        while len(self.held_potions()) < self.max_potion_slots:
+            if not self.procure_potion("random"):
+                break
+            filled += 1
+        return filled
+
     def offer_card_reward(self) -> None:
         from sts2_env.run.reward_objects import CardReward
 
         self.run_state.pending_rewards.append(CardReward(self.player_id))
 
-    def offer_colorless_cards(self, count: int) -> None:
-        from sts2_env.cards.factory import create_cards_from_ids, eligible_registered_cards
+    def offer_custom_card_reward(
+        self,
+        *,
+        context: str = "regular",
+        option_count: int | None = None,
+        character_ids: tuple[str, ...] | None = None,
+        forced_rarities: tuple[CardRarity, ...] | None = None,
+        include_colorless: bool = False,
+        use_default_character_pool: bool = True,
+        cards: list[CardInstance] | None = None,
+    ) -> None:
         from sts2_env.run.reward_objects import CardReward
 
-        ids = eligible_registered_cards(module_name="sts2_env.cards.colorless", generation_context=None)
-        cards = create_cards_from_ids(ids, self.run_state.rng.rewards, count, distinct=True)
-        self.run_state.pending_rewards.append(CardReward(self.player_id, cards=cards, option_count=len(cards)))
+        reward = CardReward(
+            self.player_id,
+            context=context,
+            option_count=option_count,
+            character_ids=character_ids,
+            forced_rarities=forced_rarities,
+            include_colorless=include_colorless,
+            use_default_character_pool=use_default_character_pool,
+            cards=cards,
+        )
+        self.run_state.pending_rewards.append(reward)
+
+    def offer_colorless_cards(self, count: int) -> None:
+        self.offer_custom_card_reward(
+            option_count=count,
+            include_colorless=True,
+            use_default_character_pool=False,
+        )
 
     def offer_multiplayer_cards(self, count: int) -> None:
-        self.offer_colorless_cards(count)
+        self.offer_custom_card_reward(
+            option_count=count,
+            character_ids=tuple(character.character_id for character in ALL_CHARACTERS),
+            include_colorless=True,
+        )
 
-    def offer_relic_rewards(self, count: int) -> None:
+    def offer_relic_rewards(
+        self,
+        count: int,
+        *,
+        rarities: tuple[Any, ...] | None = None,
+        rng_stream: str = "rewards",
+    ) -> None:
         from sts2_env.run.reward_objects import RelicReward
 
-        for _ in range(count):
-            self.run_state.pending_rewards.append(RelicReward(self.player_id))
+        rarity_sequence = tuple(rarities or ())
+        for index in range(count):
+            rarity = rarity_sequence[index] if index < len(rarity_sequence) else None
+            self.run_state.pending_rewards.append(
+                RelicReward(self.player_id, rarity=rarity, rng_stream=rng_stream)
+            )
+
+    def offer_remove_card_reward(self, count: int = 1, *, cards: list[CardInstance] | None = None) -> None:
+        from sts2_env.run.reward_objects import RemoveCardReward
+
+        self.run_state.pending_rewards.append(RemoveCardReward(self.player_id, count=count, cards=cards))
+
+    def offer_upgrade_cards_reward(self, count: int = 1, *, cards: list[CardInstance] | None = None) -> None:
+        from sts2_env.run.reward_objects import UpgradeCardsReward
+
+        self.run_state.pending_rewards.append(UpgradeCardsReward(self.player_id, count=count, cards=cards))
+
+    def offer_transform_cards_reward(
+        self,
+        count: int = 1,
+        *,
+        upgrade: bool = False,
+        cards: list[CardInstance] | None = None,
+        mapping: dict[CardId, CardId] | None = None,
+    ) -> None:
+        from sts2_env.run.reward_objects import TransformCardsReward
+
+        self.run_state.pending_rewards.append(
+            TransformCardsReward(self.player_id, count=count, upgrade=upgrade, cards=cards, mapping=mapping)
+        )
+
+    def offer_duplicate_card_reward(self, count: int = 1, *, cards: list[CardInstance] | None = None) -> None:
+        from sts2_env.run.reward_objects import DuplicateCardReward
+
+        self.run_state.pending_rewards.append(DuplicateCardReward(self.player_id, count=count, cards=cards))
+
+    def offer_enchant_cards_reward(
+        self,
+        enchantment: str,
+        amount: int = 1,
+        count: int = 1,
+        *,
+        cards: list[CardInstance] | None = None,
+    ) -> None:
+        from sts2_env.run.reward_objects import EnchantCardsReward
+
+        self.run_state.pending_rewards.append(
+            EnchantCardsReward(
+                self.player_id,
+                enchantment=enchantment,
+                amount=amount,
+                count=count,
+                cards=cards,
+            )
+        )
 
     def offer_potion_reward(self) -> None:
         from sts2_env.run.reward_objects import PotionReward
@@ -395,8 +753,13 @@ class PlayerState:
             self.offer_potion_reward()
 
     def offer_card_bundles(self) -> None:
-        self.offer_card_reward()
-        self.offer_card_reward()
+        bundle_rarities = (
+            CardRarity.COMMON,
+            CardRarity.COMMON,
+            CardRarity.UNCOMMON,
+        )
+        self.offer_custom_card_reward(forced_rarities=bundle_rarities)
+        self.offer_custom_card_reward(forced_rarities=bundle_rarities)
 
     def obtain_random_relics(self, count: int) -> int:
         obtained = 0
@@ -438,6 +801,22 @@ class PlayerState:
             return True
         self.relic_objects.append(relic)
         relic.after_obtained(self)
+        return True
+
+    def transform_relic(self, current_relic: Any, new_relic_id: Any) -> bool:
+        from sts2_env.relics.registry import create_relic_by_name
+
+        current_name = getattr(getattr(current_relic, "relic_id", None), "name", str(current_relic))
+        new_name = getattr(new_relic_id, "name", str(new_relic_id))
+        try:
+            index = self.relics.index(current_name)
+        except ValueError:
+            return False
+        self.relics[index] = new_name
+        if index < len(self.relic_objects):
+            self.relic_objects[index] = create_relic_by_name(new_name)
+        else:
+            self._ensure_relic_objects()
         return True
 
     @property
@@ -508,6 +887,9 @@ class RunState:
         self.card_rarity_odds = CardRarityOdds(ascension_level)
         self.potion_reward_odds = PotionRewardOdds()
         self.pending_rewards: list[Any] = []
+        self.pending_choice: PendingCardChoice | None = None
+        self.enable_deck_choice_requests: bool = False
+        self.defer_followup_rewards: bool = False
 
         # Run state flags
         self.is_over: bool = False
@@ -530,6 +912,33 @@ class RunState:
             if player.player_id == player_id:
                 return player
         raise KeyError(f"Unknown player_id {player_id}")
+
+    def resolve_pending_choice(self, choice_index: int | None) -> bool:
+        choice = self.pending_choice
+        if choice is None:
+            return False
+
+        if choice.is_multi:
+            if choice_index is None:
+                if not choice.can_confirm():
+                    return False
+                selected_cards = choice.selected_cards
+                self.pending_choice = None
+                choice.resolver(selected_cards)
+                return True
+            return choice.toggle(choice_index)
+
+        selected_cards: list[CardInstance] = []
+        if choice_index is None:
+            if not choice.allow_skip:
+                return False
+        else:
+            if choice_index < 0 or choice_index >= len(choice.options):
+                return False
+            selected_cards = [choice.options[choice_index].card]
+        self.pending_choice = None
+        choice.resolver(selected_cards)
+        return True
 
     def initialize_run(self) -> None:
         """Set up a new run: apply ascension, generate first map."""
@@ -579,7 +988,7 @@ class RunState:
                 keywords=frozenset({"unplayable", "ethereal"}),
                 can_be_generated_by_modifiers=False,
             )
-            self.player.deck.append(curse)
+            self.player.add_card_instance_to_deck(curse)
 
         # A7: Scarcity — card upgrade scaling halved (stored for rewards.py)
         # The actual check is: scaling = 0.125 if asc >= 7 else 0.25

@@ -9,8 +9,7 @@ The observation format is defined in gym_env/observation.py:
   - Player state: hp/max_hp, block/50, energy/10, max_energy/10 (4)
   - Player powers: str, dex, vuln, weak, frail, artifact (6)
   - Hand cards: card_id_norm, cost, damage, block, is_attack (10 * 5 = 50)
-  - Pile sizes: draw, discard, exhaust, draw_attacks, draw_skills,
-                discard_attacks (6)
+  - Pile sizes: draw, discard, exhaust, reserved, reserved, reserved (6)
   - Enemies: alive, hp%, block, intent_onehot(5), intent_dmg,
              intent_hits, vuln, weak, str (5 * 13 = 65)
   Total: 131 dimensions
@@ -27,6 +26,9 @@ from sts2_env.core.constants import (
     ACTION_SPACE_SIZE,
     MAX_ENEMIES,
     MAX_HAND_SIZE,
+    MAX_POTION_SLOTS,
+    POTION_ACTION_START,
+    POTION_TARGET_OPTIONS,
 )
 from sts2_env.core.enums import CardId
 from sts2_env.gym_env.observation import (
@@ -69,6 +71,17 @@ _TRACKED_POWERS = ["STRENGTH", "DEXTERITY", "VULNERABLE", "WEAK", "FRAIL", "ARTI
 _TARGETED_TYPES = {TargetTypeName.ANY_ENEMY, "ANY_ENEMY", "RANDOM_ENEMY", TargetTypeName.RANDOM_ENEMY}
 _UNTARGETED_TYPES = {TargetTypeName.SELF, TargetTypeName.NONE, TargetTypeName.ALL_ENEMIES,
                      "SELF", "NONE", "ALL_ENEMIES", "Self", "None", "AllEnemies"}
+_POTION_TARGETED_TYPES = {TargetTypeName.ANY_ENEMY, "ANY_ENEMY", "AnyEnemy"}
+_POTION_UNTARGETED_TYPES = {
+    TargetTypeName.SELF,
+    TargetTypeName.ALL_ENEMIES,
+    "SELF",
+    "ANY_PLAYER",
+    "ALL_ENEMIES",
+    "Self",
+    "AnyPlayer",
+    "AllEnemies",
+}
 
 
 class StateAdapter:
@@ -151,9 +164,8 @@ class StateAdapter:
             idx += CARD_FEATURES
 
         # --- Pile summaries (6) ---
-        # The bridge only sends pile counts, not full composition.
-        # We can only fill in total counts; attack/skill breakdowns are
-        # set to 0 (not available from the bridge state).
+        # Keep the last three pile-summary dimensions zeroed so the bridge
+        # matches gym_env/observation.py exactly.
         draw_count = combat.get("draw_pile_count", 0)
         discard_count = combat.get("discard_pile_count", 0)
         exhaust_count = combat.get("exhaust_pile_count", 0)
@@ -161,9 +173,6 @@ class StateAdapter:
         obs[idx] = draw_count / 20.0
         obs[idx + 1] = discard_count / 20.0
         obs[idx + 2] = exhaust_count / 20.0
-        # draw_attacks, draw_skills, discard_attacks: unavailable from
-        # bridge state, default to 0. These are minor features and the
-        # model should generalize adequately without them.
         obs[idx + 3] = 0.0
         obs[idx + 4] = 0.0
         obs[idx + 5] = 0.0
@@ -203,10 +212,17 @@ class StateAdapter:
     def compute_action_mask(self, state: dict[str, Any]) -> np.ndarray:
         """Compute a boolean mask of valid actions from the game state.
 
-        The action space is Discrete(61):
+        The combat action space is fixed-width and includes cards, end turn,
+        and potion uses.
+
+        Card actions:
           - 0: END_TURN
           - 1..10: Play card i (untargeted: self/none/all_enemies)
           - 11..60: Play card i targeting enemy j (i*5 + j offset)
+
+        Potion actions:
+          - POTION_ACTION_START..: slot-major layout
+          - each slot gets 1 untargeted/self action + MAX_ENEMIES targeted actions
 
         This matches get_action_mask() in gym_env/action_space.py.
 
@@ -214,7 +230,7 @@ class StateAdapter:
             state: Full game state dict from the bridge.
 
         Returns:
-            Int8 numpy array of shape (ACTION_SPACE_SIZE,) = (61,).
+            Int8 numpy array of shape (ACTION_SPACE_SIZE,).
         """
         mask = np.zeros(ACTION_SPACE_SIZE, dtype=np.int8)
 
@@ -231,6 +247,10 @@ class StateAdapter:
         energy = player.get("energy", 0)
         hand = combat.get("hand", [])
         enemies = combat.get("enemies", [])
+        available_actions = {
+            str(item).upper()
+            for item in (combat.get("available_actions") or state.get("available_actions") or [])
+        }
 
         # Build list of alive enemy indices
         alive_enemies = []
@@ -261,6 +281,26 @@ class StateAdapter:
                 for j in alive_enemies:
                     mask[1 + MAX_HAND_SIZE + i * MAX_ENEMIES + j] = 1
 
+        if not available_actions or "POTION" in available_actions:
+            potions = combat.get("potions") or state.get("run_state", {}).get("potions", [])
+            for list_index, potion in enumerate(potions[:MAX_POTION_SLOTS]):
+                if not potion or not potion.get("can_use", True):
+                    continue
+                usage = str(potion.get("usage", "")).upper()
+                if usage == "AUTOMATIC":
+                    continue
+                slot = int(potion.get("slot", list_index))
+                if slot < 0 or slot >= MAX_POTION_SLOTS:
+                    continue
+                action_base = POTION_ACTION_START + slot * POTION_TARGET_OPTIONS
+                target_type = potion.get("target") or potion.get("target_type", "Self")
+                requires_target = potion.get("requires_target", False)
+                if requires_target or target_type in _POTION_TARGETED_TYPES:
+                    for j in alive_enemies:
+                        mask[action_base + 1 + j] = 1
+                elif target_type in _POTION_UNTARGETED_TYPES:
+                    mask[action_base] = 1
+
         return mask
 
     def decode_action(
@@ -269,7 +309,7 @@ class StateAdapter:
         """Convert an action index to an action command dict.
 
         Args:
-            action: Action index from model.predict() (0..60).
+            action: Action index from model.predict().
             state: Current game state (for reference if needed).
 
         Returns:
@@ -277,6 +317,18 @@ class StateAdapter:
         """
         if action == ACTION_END_TURN:
             return {"type": "END_TURN"}
+
+        if action >= POTION_ACTION_START:
+            adjusted = action - POTION_ACTION_START
+            slot = adjusted // POTION_TARGET_OPTIONS
+            target_offset = adjusted % POTION_TARGET_OPTIONS
+            target_index = target_offset - 1 if target_offset > 0 else -1
+            return {
+                "type": "PLAY",
+                "out_of_hand": True,
+                "potion_slot": slot,
+                "target_index": target_index,
+            }
 
         if action <= MAX_HAND_SIZE:
             # Untargeted card play

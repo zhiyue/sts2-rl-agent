@@ -209,6 +209,13 @@ class Creature:
         if state is not None:
             state.max_potion_slots += max(0, amount)
 
+    def fill_empty_potion_slots(self) -> int:
+        combat = self.combat_state
+        fill_slots = getattr(combat, "fill_empty_potion_slots", None) if combat is not None else None
+        if callable(fill_slots):
+            return fill_slots(self)
+        return 0
+
     def upgrade_random_cards(self, card_type: object | None, count: int) -> int:
         combat = self.combat_state
         state = getattr(combat, "combat_player_state_for", lambda *_: None)(self) if combat is not None else None
@@ -226,6 +233,17 @@ class Creature:
         if player_state is not None and hasattr(player_state, "upgrade_random_cards"):
             return player_state.upgrade_random_cards(card_type, count)
         return 0
+
+    def transform_relic(self, current_relic: object, new_relic_id: object) -> bool:
+        combat = self.combat_state
+        transform_relic = getattr(combat, "transform_relic", None) if combat is not None else None
+        if callable(transform_relic):
+            return transform_relic(self, current_relic, new_relic_id)
+        run_state = getattr(self, "run_state", None)
+        player_state = getattr(run_state, "player", None)
+        if player_state is not None and hasattr(player_state, "transform_relic"):
+            return player_state.transform_relic(current_relic, new_relic_id)
+        return False
 
     def gain_stars(self, amount: int) -> int:
         if amount <= 0:

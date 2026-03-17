@@ -1741,6 +1741,31 @@ class TestStatusParity:
         combat.end_player_turn()
         assert combat.player.current_hp == starting_hp - 6
 
+    def test_transform_relic_updates_persistent_and_combat_relic_state(self):
+        from sts2_env.relics.base import RelicId
+        from sts2_env.relics.registry import create_relic_by_name
+        from sts2_env.run.run_state import RunState
+
+        run_state = RunState(seed=42, character_id="Ironclad")
+        run_state.initialize_run()
+        run_state.player.obtain_relic("SWORD_OF_STONE")
+        combat = CombatState(
+            player_hp=run_state.player.current_hp,
+            player_max_hp=run_state.player.max_hp,
+            deck=list(run_state.player.deck),
+            rng_seed=42,
+            character_id="Ironclad",
+            player_state=run_state.player,
+        )
+
+        stone = create_relic_by_name("SWORD_OF_STONE")
+        combat.current_player_state.relics = [stone]
+        combat.player.transform_relic(stone, RelicId.SWORD_OF_JADE)
+
+        assert run_state.player.relics[0] == "SWORD_OF_JADE"
+        assert run_state.player.relic_objects[0].relic_id.name == "SWORD_OF_JADE"
+        assert combat.current_player_state.relics[0].relic_id.name == "SWORD_OF_JADE"
+
     def test_shadow_step_discards_hand_and_applies_shadow_step_power(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Silent")
         card = make_shadow_step()

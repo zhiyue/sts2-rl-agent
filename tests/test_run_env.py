@@ -12,7 +12,7 @@ from sts2_env.cards.factory import create_card
 from sts2_env.cards.ironclad import create_ironclad_starter_deck
 from sts2_env.cards.ironclad_basic import make_strike_ironclad
 from sts2_env.core.combat import CombatState
-from sts2_env.core.enums import CardId
+from sts2_env.core.enums import CardId, CardRarity
 from sts2_env.core.rng import Rng
 from sts2_env.gym_env.run_env import (
     STS2RunEnv,
@@ -25,6 +25,8 @@ from sts2_env.gym_env.run_env import (
     _MAP_SIZE,
     _CARD_RWD_START,
     _CARD_RWD_SIZE,
+    _CARD_RWD_EXTRA_START,
+    _CARD_RWD_REROLL,
     _REST_START,
     _REST_SIZE,
     _SHOP_START,
@@ -42,6 +44,7 @@ from sts2_env.cards.regent import make_gather_light
 from sts2_env.monsters.act1_weak import create_shrinker_beetle
 from sts2_env.run.run_manager import RunManager
 from sts2_env.run.run_state import PlayerState
+from sts2_env.run.shop import ShopInventory
 
 
 # ---------------------------------------------------------------------------
@@ -302,6 +305,51 @@ class TestActionMasksPerPhase:
         assert combat.pending_choice is None
         assert strike in combat.hand
 
+    def test_run_level_shop_deck_choice_uses_choice_slots_instead_of_shop_slots(self, env):
+        env.reset(seed=42)
+
+        mgr = RunManager(seed=804, character_id="Ironclad")
+        mgr._phase = RunManager.PHASE_SHOP
+        mgr.run_state.player.gold = 999
+        starting_deck = len(mgr.run_state.player.deck)
+        mgr._shop_inventory = ShopInventory(removal_cost=75)
+        mgr._do_shop_action({"action": "remove_card"})
+        env._mgr = mgr
+
+        mask = env.action_masks()
+        assert mask[_COMBAT_START + 1] == 1
+        assert mask[_SHOP_START] == 0
+
+        obs, reward, terminated, truncated, info = env.step(_COMBAT_START + 1)
+
+        assert not terminated
+        assert not truncated
+        assert mgr.phase == RunManager.PHASE_SHOP
+        assert len(mgr.run_state.player.deck) == starting_deck - 1
+        assert mgr._shop_inventory is not None
+        assert mgr._shop_inventory.removal_cost == 100
+
+    def test_run_level_multi_choice_in_map_phase_uses_choose_then_confirm(self, env):
+        env.reset(seed=42)
+
+        mgr = RunManager(seed=805, character_id="Ironclad")
+        assert mgr.run_state.player.obtain_relic("BEAUTIFUL_BRACELET")
+        env._mgr = mgr
+
+        mask = env.action_masks()
+        assert mask[_COMBAT_START] == 1
+        assert mask[_COMBAT_START + 1] == 1
+        assert np.sum(mask[_MAP_START:_MAP_START + _MAP_SIZE]) == 0
+
+        env.step(_COMBAT_START + 1)
+        obs, reward, terminated, truncated, info = env.step(_COMBAT_START)
+
+        assert not terminated
+        assert not truncated
+        assert mgr.phase == RunManager.PHASE_MAP_CHOICE
+        assert mgr.run_state.pending_choice is None
+        assert sum(1 for card in mgr.run_state.player.deck if card.has_enchantment("Swift")) == 1
+
     def test_card_reward_mask(self, env):
         """Force into CARD_REWARD phase and verify mask."""
         obs, info = env.reset(seed=42)
@@ -321,6 +369,50 @@ class TestActionMasksPerPhase:
                 assert np.sum(mask[_CARD_RWD_START: _CARD_RWD_START + _CARD_RWD_SIZE]) >= 2
                 return
         pytest.skip("CARD_REWARD phase not reached with this seed")
+
+    def test_card_reward_reroll_mask_and_step(self, env):
+        env.reset(seed=42)
+        mgr = RunManager(seed=401, character_id="Ironclad")
+        mgr.run_state.player.obtain_relic("DRIFTWOOD")
+        mgr._enter_card_reward(context="regular")
+        env._mgr = mgr
+
+        before = [card.card_id.name for card in mgr._offered_cards]
+        mask = env.action_masks()
+
+        assert mask[_CARD_RWD_REROLL] == 1
+
+        env._step_card_reward(_CARD_RWD_REROLL)
+        after = [card.card_id.name for card in mgr._offered_cards]
+        assert before != after
+
+    def test_card_reward_mask_exposes_extra_slots_for_five_card_rewards(self, env):
+        from sts2_env.run.reward_objects import CardReward
+
+        env.reset(seed=42)
+        mgr = RunManager(seed=402, character_id="Ironclad")
+        mgr._phase = RunManager.PHASE_CARD_REWARD
+        reward = CardReward(
+            mgr.run_state.player.player_id,
+            forced_rarities=(
+                CardRarity.COMMON,
+                CardRarity.COMMON,
+                CardRarity.UNCOMMON,
+                CardRarity.UNCOMMON,
+                CardRarity.RARE,
+            ),
+        )
+        mgr._current_reward = reward
+        reward.populate(mgr.run_state, None)
+        mgr._prime_next_card_reward()
+        env._mgr = mgr
+
+        mask = env.action_masks()
+        assert mask[_CARD_RWD_START + 0] == 1
+        assert mask[_CARD_RWD_START + 1] == 1
+        assert mask[_CARD_RWD_START + 2] == 1
+        assert mask[_CARD_RWD_EXTRA_START + 0] == 1
+        assert mask[_CARD_RWD_EXTRA_START + 1] == 1
 
     def test_multiplayer_combat_mask_exposes_player_select_actions(self, env):
         env.reset(seed=42)

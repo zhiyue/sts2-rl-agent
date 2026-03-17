@@ -55,8 +55,8 @@ run/                        Full-run state management (depends on all above)
   events.py                 Event handler
 
 gym_env/                    Gymnasium environments (depends on run/, encounters/)
-  combat_env.py             Single-combat env (Discrete(61), obs 131-dim)
-  run_env.py                Full-run env (Discrete(100), obs 151-dim)
+  combat_env.py             Single-combat env (Discrete(115), obs 131-dim)
+  run_env.py                Full-run env (Discrete(157), obs 151-dim)
   observation.py            CombatState -> 131-dim float32 vector
   action_space.py           Action encoding + masking
   reward.py                 Reward shaping
@@ -332,8 +332,8 @@ The first move is held until `on_move_performed()` is called. After that, `roll_
 Single-combat training environment.
 
 - **Observation:** `Box(low=-1, high=10, shape=(131,), dtype=float32)`
-- **Action space:** `Discrete(61)` = 1 end_turn + 10 self-target cards + 50 targeted (10 cards x 5 enemies)
-- **Action masking:** `action_masks()` returns `int8[61]` marking legal actions. Required by `MaskablePPO`.
+- **Action space:** `Discrete(115)` = 1 end_turn + 10 untargeted card actions + 50 targeted card actions + 54 potion actions (`9 slots * (1 untargeted + 5 enemy targets)`)
+- **Action masking:** `action_masks()` returns `int8[115]` marking legal actions. Required by `MaskablePPO`.
 
 On `reset()`:
 1. Create Ironclad starter deck
@@ -364,10 +364,11 @@ Card ID is normalized as `(card_index + 1) / (total_card_ids + 1)` to produce a 
 
 ### Action space (`gym_env/action_space.py`)
 
-61 discrete actions:
+115 discrete actions:
 - `0` -- end turn
 - `1..10` -- play card from hand slot 0..9 (self/none/all-enemies target)
 - `11..60` -- play card i targeting enemy j: `action = 1 + 10 + hand_idx * 5 + enemy_idx`
+- `61..114` -- use potion from slot-major layout: one untargeted action plus five enemy-targeted actions per slot
 
 ### RunEnv vs CombatEnv
 
@@ -375,21 +376,22 @@ Card ID is normalized as `(card_index + 1) / (total_card_ids + 1)` to produce a 
 |--|-----------|--------|
 | Scope | Single combat | Full multi-act run |
 | Obs size | 131 | 151 (131 combat + 20 run-level) |
-| Action space | Discrete(61) | Discrete(100) |
+| Action space | Discrete(115) | Discrete(157) |
 | Phases | Combat only | Combat + map + card_reward + boss_relic + shop + rest + event + treasure |
 | Reward | +1 win / -1 loss | +1 run win / -1 death or timeout |
 | Run-level obs | N/A | act/floor/hp_ratio/gold/deck_size/relic_count/potions/phase_onehot(8)/ascension/is_elite/is_boss |
 
-RunEnv action layout (Discrete(100)):
-- 0-60: combat actions (same as CombatEnv)
-- 61-65: map choices (0-4 paths)
-- 66-69: card reward (pick 0-2, or skip)
-- 70-72: boss relic choice (0-2)
-- 73-82: shop (leave + buy items)
-- 83-87: rest site options
-- 88-91: event choices (0-3)
-- 92: treasure (collect)
-- 93-99: reserved
+RunEnv action layout (Discrete(157)):
+- 0-114: combat actions (same as CombatEnv)
+- 115-119: map choices (0-4 paths)
+- 120-123: card reward (pick 0-2, or skip)
+- 124-126: extra card reward picks when present
+- 127-129: boss relic choice (0-2)
+- 130-139: shop (leave + buy items)
+- 140-144: rest site options
+- 145-148: event choices (0-3)
+- 149: treasure collect or card-reward reroll, depending on phase
+- 150-156: acting-player selection during multiplayer combat
 
 ---
 

@@ -461,7 +461,7 @@ def volley(card: CardInstance, combat: CombatState, target: Creature | None) -> 
 
 @register_effect(CardId.ALCHEMIZE)
 def alchemize(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.procure_random_potion()
+    combat.procure_random_potion(_owner(card, combat), in_combat=True)
 
 
 @register_effect(CardId.ANOINTED)
@@ -480,7 +480,8 @@ def beacon_of_hope(card: CardInstance, combat: CombatState, target: Creature | N
 def beat_down(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     owner = _owner(card, combat)
     cards = card.effect_vars.get("cards", 3)
-    candidates = [c for c in combat.discard_pile if c.card_type == CardType.ATTACK and not c.is_unplayable]
+    discard = combat._zones_for_creature(owner)["discard"]  # noqa: SLF001
+    candidates = [c for c in discard if c.card_type == CardType.ATTACK and not c.is_unplayable]
     combat.rng.shuffle(candidates)
     for selected in candidates[:cards]:
         if combat.is_over:
@@ -524,10 +525,11 @@ def gold_axe(card: CardInstance, combat: CombatState, target: Creature | None) -
 @register_effect(CardId.HAND_OF_GREED)
 def hand_of_greed(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
+    owner = _owner(card, combat)
     should_trigger_fatal = combat.should_owner_death_trigger_fatal(target)
     _deal_damage_single(card, combat, target)
     if should_trigger_fatal and target.is_dead:
-        combat.gold += card.effect_vars.get("gold", 20)
+        owner.gain_gold(card.effect_vars.get("gold", 20))
 
 
 @register_effect(CardId.HIDDEN_GEM)

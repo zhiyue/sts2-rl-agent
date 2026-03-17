@@ -1,0 +1,442 @@
+# Parity Coverage Backlog
+
+This document inventories the gameplay surfaces that still lack direct parity proof against the decompiled Slay the Spire 2 logic.
+
+It complements [PARITY_GAPS.md](./PARITY_GAPS.md):
+
+- `PARITY_GAPS.md` answers "why can we not yet claim exact parity?"
+- this document answers "which card / relic / event surfaces still lack direct coverage?"
+
+Absence from this document's covered lists is not proof of a bug. It means the repository does not yet have strong, targeted proof for that surface.
+
+## Snapshot
+
+- Snapshot date: 2026-03-17
+- Reference implementation: `decompiled/`
+- Test snapshot used for this inventory:
+  - [tests/test_combat_parity.py](../tests/test_combat_parity.py)
+  - [tests/test_card_choice_parity.py](../tests/test_card_choice_parity.py)
+  - [tests/test_silent_choice_parity.py](../tests/test_silent_choice_parity.py)
+  - [tests/test_defect_choice_parity.py](../tests/test_defect_choice_parity.py)
+  - [tests/test_colorless_parity.py](../tests/test_colorless_parity.py)
+  - [tests/test_regent_parity.py](../tests/test_regent_parity.py)
+  - [tests/test_necrobinder_parity.py](../tests/test_necrobinder_parity.py)
+  - [tests/test_parity_helpers.py](../tests/test_parity_helpers.py)
+  - [tests/test_events_shared.py](../tests/test_events_shared.py)
+  - [tests/test_events_act2.py](../tests/test_events_act2.py)
+  - [tests/test_reward_relic_hooks.py](../tests/test_reward_relic_hooks.py)
+  - [tests/test_rest_site_relic_hooks.py](../tests/test_rest_site_relic_hooks.py)
+  - [tests/test_shop_relic_hooks.py](../tests/test_shop_relic_hooks.py)
+  - [tests/test_shop_event_relic_combat_hooks.py](../tests/test_shop_event_relic_combat_hooks.py)
+  - [tests/test_action_space_potions.py](../tests/test_action_space_potions.py)
+  - [tests/test_bridge_state_adapter.py](../tests/test_bridge_state_adapter.py)
+- Verification status for the parity-focused suites above:
+  - `uv run pytest -q ...`
+  - Result: `270 passed in 0.29s`
+
+## Counting Rules
+
+### Cards
+
+- Card totals come from the lazy registry returned by `sts2_env.cards.factory._factory_registry()`.
+- This is stricter and broader than counting handwritten `make_*` functions because it also includes reference-backed cards exposed through the factory.
+- A card is counted as "explicitly parity-covered" only if it appears in a targeted parity suite or in a decompiled-backed test docstring.
+
+### Relics
+
+- A relic is counted as "directly test-touched" if a test references it via:
+  - `obtain_relic("...")`
+  - `create_relic_by_name("...")`
+  - `relics=[...]` when constructing combat state
+- This is intentionally conservative. Indirect behavior might still be exercised elsewhere, but it is not counted unless the relic is named directly by a focused test.
+
+### Events
+
+- An event is counted as "directly covered" only if a focused event test instantiates it or drives it through `RunManager`.
+- Generic run-flow tests are not counted unless the event itself is named.
+
+## Summary
+
+| Surface | Total | Directly Covered | Gap | Coverage |
+| --- | ---: | ---: | ---: | ---: |
+| Cards | 578 | 80 | 498 | 13.8% |
+| Relics | 289 | 73 | 216 | 25.3% |
+| Events | 68 | 12 | 56 | 17.6% |
+
+## What This Means
+
+The repository has meaningful parity depth in several targeted areas:
+
+- combat turn flow and hook semantics
+- card choice flows
+- Regent and Necrobinder spot checks
+- potion action decoding
+- reward / shop / rest-site relic plumbing
+
+But the proof surface is still sparse relative to the total implementation surface:
+
+- Ironclad has no explicit card-by-card parity suite yet
+- Silent and Defect still only have a small targeted subset covered
+- Status / curse / event / quest cards are mostly uncovered
+- most relics still lack direct named tests
+- most events still lack focused tests
+
+## Current Explicit Card Coverage
+
+The current directly parity-backed card set is:
+
+```text
+ACROBATICS, AFTERLIFE, ALCHEMIZE, BEAT_DOWN, BEGONE, BIG_BANG, BLACK_HOLE,
+BODYGUARD, BONE_SHARDS, BORROWED_TIME, BULWARK, CAPTURE_SPIRIT, CHARGE, CLASH,
+CLEANSE, COMPACT, CONQUEROR, CONVERGENCE, COUNTDOWN_CARD, CRASH_LANDING,
+DAGGER_THROW, DANSE_MACABRE, DEATH_MARCH, DECISIONS_DECISIONS, DIRGE,
+DISCOVERY, DREDGE, EIDOLON, ENTHRALLED, FLAK_CANNON, FURNACE, GLIMMER,
+GRAND_FINALE, GRAVE_WARDEN, GUARDS, HAND_OF_GREED, HAND_TRICK, HEIRLOOM_HAMMER,
+HIDDEN_CACHE, HIDDEN_DAGGERS, HIGH_FIVE, HOLOGRAM, KNOCKOUT_BLOW, LARGESSE,
+LEGION_OF_BONE, MANIFEST_AUTHORITY, NECRO_MASTERY_CARD, NIGHTMARE, ORBIT,
+PALE_BLUE_DOT, PHOTON_CUT, PREPARED, PROTECTOR, PULL_AGGRO, PURITY, QUASAR,
+RATTLE, REANIMATE, REFINE_BLADE, RESONANCE, SACRIFICE, SCAVENGE, SEANCE,
+SECRET_TECHNIQUE, SECRET_WEAPON, SEEKING_EDGE, SOLAR_STRIKE, SPOILS_OF_BATTLE,
+SPUR, SUMMON_FORTH, SURVIVOR, THE_HUNT, THE_SMITH, THINKING_AHEAD, TRANSFIGURE,
+UNDEATH, VOID_FORM, WHITE_NOISE, WISH, WROUGHT_IN_WAR
+```
+
+Notes:
+
+- `NIGHTMARE` is covered through `NightmarePower` snapshot behavior.
+- `COUNTDOWN_CARD` and `NECRO_MASTERY_CARD` are the registered card ids behind the user-facing names `Countdown` and `NecroMastery`.
+
+## Card Coverage Backlog By Module
+
+Module-level counts are derived from `sts2_env.cards.factory._factory_registry()`.
+
+### `sts2_env.cards.ironclad`
+
+- Covered: `0 / 87`
+- Missing direct parity proof: `87 / 87`
+
+```text
+AGGRESSION_CARD, ANGER, ARMAMENTS, ASHEN_STRIKE, BARRICADE_CARD, BASH,
+BATTLE_TRANCE, BLOODLETTING, BLOOD_WALL, BLUDGEON, BODY_SLAM, BRAND, BREAK,
+BREAKTHROUGH, BULLY, BURNING_PACT, CASCADE, CINDER, COLOSSUS_CARD,
+CONFLAGRATION, CORRUPTION_CARD, CRIMSON_MANTLE, CRUELTY_CARD,
+DARK_EMBRACE_CARD, DEFEND_IRONCLAD, DEMONIC_SHIELD, DEMON_FORM_CARD,
+DISMANTLE, DOMINATE, DRUM_OF_BATTLE_CARD, EVIL_EYE, EXPECT_A_FIGHT, FEED,
+FEEL_NO_PAIN_CARD, FIEND_FIRE, FIGHT_ME, FLAME_BARRIER_CARD,
+FORGOTTEN_RITUAL, GRAPPLE, HAVOC, HEADBUTT, HELLRAISER_CARD, HEMOKINESIS,
+HOWL_FROM_BEYOND, IMPERVIOUS, INFERNAL_BLADE, INFERNO_CARD, INFLAME,
+IRON_WAVE, JUGGERNAUT_CARD, JUGGLING_CARD, MANGLE, MOLTEN_FIST, OFFERING,
+ONE_TWO_PUNCH_CARD, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
+PRIMAL_FORCE, PYRE, RAGE_CARD, RAMPAGE, RUPTURE_CARD, SECOND_WIND,
+SETUP_STRIKE_CARD, SHRUG_IT_OFF, SPITE, STAMPEDE_CARD, STOKE, STOMP,
+STONE_ARMOR, STRIKE_IRONCLAD, SWORD_BOOMERANG, TANK_CARD, TAUNT,
+TEAR_ASUNDER, THRASH, THUNDERCLAP, TREMBLE, TRUE_GRIT, TWIN_STRIKE,
+UNMOVABLE, UNRELENTING, UPPERCUT, VICIOUS_CARD, WHIRLWIND
+```
+
+### `sts2_env.cards.silent`
+
+- Covered: `9 / 88`
+- Missing direct parity proof: `79 / 88`
+
+```text
+ABRASIVE, ACCELERANT, ACCURACY_CARD, ADRENALINE, AFTERIMAGE_CARD,
+ANTICIPATE, ASSASSINATE, BACKFLIP, BACKSTAB, BLADE_DANCE, BLADE_OF_INK,
+BLUR_CARD, BOUNCING_FLASK, BUBBLE_BUBBLE, BULLET_TIME, BURST,
+CALCULATED_GAMBLE, CLOAK_AND_DAGGER, CORROSIVE_WAVE, DAGGER_SPRAY, DASH,
+DEADLY_POISON, DEFEND_SILENT, DEFLECT, DODGE_AND_ROLL, ECHOING_SLASH,
+ENVENOM_CARD, ESCAPE_PLAN, EXPERTISE, EXPOSE, FAN_OF_KNIVES_CARD,
+FINISHER, FLANKING, FLECHETTES, FLICK_FLACK, FOLLOW_THROUGH, FOOTWORK,
+HAZE, INFINITE_BLADES_CARD, KNIFE_TRAP, LEADING_STRIKE, LEG_SWEEP,
+MALAISE, MASTER_PLANNER, MEMENTO_MORI, MIRAGE, MURDER, NEUTRALIZE,
+NOXIOUS_FUMES_CARD, OUTBREAK_CARD, PHANTOM_BLADES_CARD, PIERCING_WAIL,
+PINPOINT, POISONED_STAB, POUNCE, PRECISE_CUT, PREDATOR, REFLEX, RICOCHET,
+SERPENT_FORM_CARD, SHADOWMELD, SHADOW_STEP, SKEWER, SLICE, SNAKEBITE,
+SNEAKY_CARD, SPEEDSTER_CARD, STORM_OF_STEEL, STRANGLE, STRIKE_SILENT,
+SUCKER_PUNCH, SUPPRESS, TACTICIAN, TOOLS_OF_THE_TRADE, TRACKING,
+UNTOUCHABLE, UP_MY_SLEEVE, WELL_LAID_PLANS, WRAITH_FORM
+```
+
+### `sts2_env.cards.defect`
+
+- Covered: `5 / 88`
+- Missing direct parity proof: `83 / 88`
+
+```text
+ADAPTIVE_STRIKE, ALL_FOR_ONE, BALL_LIGHTNING, BARRAGE, BEAM_CELL,
+BIASED_COGNITION_CARD, BOOST_AWAY, BOOT_SEQUENCE, BUFFER_CARD, BULK_UP,
+CAPACITOR, CHAOS, CHARGE_BATTERY, CHILL, CLAW, COLD_SNAP, COMPILE_DRIVER,
+CONSUMING_SHADOW, COOLANT, COOLHEADED, CREATIVE_AI_CARD, DARKNESS_CARD,
+DEFEND_DEFECT, DEFRAGMENT, DOUBLE_ENERGY, DUALCAST, ECHO_FORM_CARD,
+ENERGY_SURGE, FERAL, FIGHT_THROUGH, FOCUSED_STRIKE_CARD, FTL, FUSION,
+GENETIC_ALGORITHM, GLACIER, GLASSWORK, GO_FOR_THE_EYES, GUNK_UP, HAILSTORM,
+HELIX_DRILL, HOTFIX, HYPERBEAM, ICE_LANCE, IGNITION, ITERATION_CARD, LEAP,
+LIGHTNING_ROD, LOOP_CARD, MACHINE_LEARNING_CARD, METEOR_STRIKE, MODDED,
+MOMENTUM_STRIKE, MULTI_CAST, NULL_CARD, OVERCLOCK, QUADCAST, RAINBOW,
+REBOOT, REFRACT, ROCKET_PUNCH, SCRAPE, SHADOW_SHIELD, SHATTER, SIGNAL_BOOST,
+SKIM, SMOKESTACK, SPINNER_CARD, STORM_CARD, STRIKE_DEFECT, SUBROUTINE,
+SUNDER, SUPERCRITICAL, SWEEPING_BEAM, SYNCHRONIZE, SYNTHESIS, TEMPEST,
+TESLA_COIL, THUNDER_CARD, TRASH_TO_TREASURE, TURBO, UPROAR, VOLTAIC, ZAP
+```
+
+### `sts2_env.cards.colorless`
+
+- Covered: `8 / 64`
+- Missing direct parity proof: `56 / 64`
+
+```text
+ANOINTED, AUTOMATION, BEACON_OF_HOPE, BELIEVE_IN_YOU, BOLAS, CALAMITY_CARD,
+CATASTROPHE, COORDINATE_CARD, DARK_SHACKLES, DRAMATIC_ENTRANCE, ENTROPY,
+EQUILIBRIUM, ETERNAL_ARMOR, FASTEN, FINESSE, FISTICUFFS, FLASH_OF_STEEL,
+GANG_UP, GOLD_AXE, HIDDEN_GEM, HUDDLE_UP, IMPATIENCE, INTERCEPT_CARD,
+JACKPOT, JACK_OF_ALL_TRADES, KNOCKDOWN, LIFT, MASTER_OF_STRATEGY,
+MAYHEM_CARD, MIMIC, MIND_BLAST, NOSTALGIA_CARD, OMNISLICE, PANACHE_CARD,
+PANIC_BUTTON, PREP_TIME, PRODUCTION, PROLONG, PROWESS, RALLY, REND,
+RESTLESSNESS, ROLLING_BOULDER, SALVO, SCRAWL, SEEKER_STRIKE, SHOCKWAVE,
+SPLASH, STRATAGEM, TAG_TEAM, THE_BOMB_CARD, THE_GAMBIT, THRUMMING_HATCHET,
+ULTIMATE_DEFEND, ULTIMATE_STRIKE, VOLLEY
+```
+
+### `sts2_env.cards.regent`
+
+- Covered: `30 / 88`
+- Missing direct parity proof: `58 / 88`
+
+```text
+ALIGNMENT, ARSENAL, ASTRAL_PULSE, BEAT_INTO_SHAPE, BOMBARDMENT, BUNDLE_OF_JOY,
+CELESTIAL_MIGHT, CHILD_OF_THE_STARS, CLOAK_OF_STARS, COLLISION_COURSE, COMET,
+COSMIC_INDIFFERENCE, CRESCENT_SPEAR, CRUSH_UNDER, DEFEND_REGENT, DEVASTATE,
+DYING_STAR, FALLING_STAR, FOREGONE_CONCLUSION, GAMMA_BLAST, GATHER_LIGHT,
+GENESIS, GLITTERSTREAM, GLOW, GUIDING_STAR, HAMMER_TIME, HEAVENLY_DRILL,
+HEGEMONY, I_AM_INVINCIBLE, KINGLY_KICK, KINGLY_PUNCH, KNOW_THY_PLACE,
+LUNAR_BLAST, MAKE_IT_SO, METEOR_SHOWER, MONARCHS_GAZE_CARD, MONOLOGUE_CARD,
+NEUTRON_AEGIS, PARRY_CARD, PARTICLE_WALL, PATTER, PILLAR_OF_CREATION,
+PROPHESIZE, RADIATE, REFLECT_CARD, ROYALTIES_CARD, ROYAL_GAMBLE, SEVEN_STARS,
+SHINING_STRIKE, SPECTRUM_SHIFT, STARDUST, STRIKE_REGENT, SUPERMASSIVE,
+SWORD_SAGE, TERRAFORMING, THE_SEALED_THRONE, TYRANNY_CARD, VENERATE
+```
+
+### `sts2_env.cards.necrobinder`
+
+- Covered: `25 / 88`
+- Missing direct parity proof: `63 / 88`
+
+```text
+BANSHEES_CRY, BLIGHT_STRIKE, BURY, CALCIFY_CARD, CALL_OF_THE_VOID,
+DEATHBRINGER, DEATHS_DOOR, DEBILITATE_CARD, DEFEND_NECROBINDER, DEFILE, DEFY,
+DELAY, DEMESNE, DEVOUR_LIFE_CARD, DRAIN_POWER, END_OF_DAYS,
+ENFEEBLING_TOUCH, ERADICATE, FEAR, FETCH, FLATTEN, FORBIDDEN_GRIMOIRE,
+FRIENDSHIP, GLIMPSE_BEYOND, GRAVEBLAST, HANG, HAUNT, INVOKE, LETHALITY_CARD,
+MELANCHOLY, MISERY, NEGATIVE_PULSE, NEUROSURGE, NO_ESCAPE, OBLIVION,
+PAGESTORM, PARSE, POKE, PULL_FROM_BELOW, PUTREFY, REAP, REAPER_FORM, REAVE,
+RIGHT_HAND_HAND, SCOURGE, SCULPTING_STRIKE, SENTRY_MODE, SEVERANCE,
+SHARED_FATE, SHROUD, SIC_EM, SLEIGHT_OF_FLESH, SNAP, SOUL_STORM, SOW,
+SPIRIT_OF_ASH, SQUEEZE, STRIKE_NECROBINDER, THE_SCYTHE, TIMES_UP, UNLEASH,
+VEILPIERCER, WISP
+```
+
+### `sts2_env.cards.status`
+
+- Covered: `3 / 75`
+- Missing direct parity proof: `72 / 75`
+
+```text
+APOTHEOSIS, APPARITION, ASCENDERS_BANE, BAD_LUCK, BECKON, BRIGHTEST_FLAME,
+BURN, BYRDONIS_EGG, BYRD_SWOOP, CALTROPS, CLUMSY, CURSE_OF_THE_BELL, DAZED,
+DEBRIS, DEBT, DECAY, DISINTEGRATION, DISTRACTION, DOUBT, DUAL_WIELD,
+ENLIGHTENMENT, ENTRENCH, EXTERMINATE, FEEDING_FRENZY_CARD, FOLLY,
+FRANTIC_ESCAPE, FUEL, GIANT_ROCK, GREED, GUILTY, HELLO_WORLD_CARD,
+INFECTION, INJURY, LANTERN_KEY, LUMINESCE, MAD_SCIENCE, MAUL, METAMORPHOSIS,
+MIND_ROT, MINION_DIVE_BOMB, MINION_SACRIFICE, MINION_STRIKE, NEOWS_FURY,
+NORMALITY, OUTMANEUVER, PAIN, PARASITE, PECK, POOR_SLEEP, REBOUND, REGRET,
+RELAX, RIP_AND_TEAR, SHAME, SHIV, SLIMED, SLOTH_STATUS, SOOT, SOUL,
+SOVEREIGN_BLADE, SPOILS_MAP, SPORE_MIND, SQUASH, STACK, SWEEPING_GAZE,
+TORIC_TOUGHNESS, TOXIC, VOID, WASTE_AWAY, WHISTLE, WOUND, WRITHE
+```
+
+## Current Direct Event Coverage
+
+Focused event tests currently cover only the following event models:
+
+```text
+BattlewornDummy, Bugslayer, JungleMazeAdventure, LuminousChoir, MorphicGrove,
+PotionCourier, RanwidTheElder, RoundTeaParty, TrashHeap, Trial, UnrestSite,
+WhisperingHollow
+```
+
+## Event Coverage Backlog By File
+
+### `sts2_env/events/act1.py`
+
+- Covered: `0 / 4`
+- Missing direct proof: `4 / 4`
+
+```text
+BrainLeech, RoomFullOfCheese, TheLegendsWereTrue, TeaMaster
+```
+
+### `sts2_env/events/act2.py`
+
+- Covered: `6 / 19`
+- Missing direct proof: `13 / 19`
+
+```text
+CrystalSphere, DollRoom, EndlessConveyor, FakeMerchant, FieldOfManSizedHoles,
+RelicTrader, SlipperyBridge, SpiralingWhirlpool, StoneOfAllTime, Symbiote,
+TheFutureOfPotions, WaterloggedScriptorium, WelcomeToWongos
+```
+
+### `sts2_env/events/act3.py`
+
+- Covered: `0 / 5`
+- Missing direct proof: `5 / 5`
+
+```text
+TheArchitect, WarHistorianRepy, Neow, DeprecatedEvent, DeprecatedAncientEvent
+```
+
+### `sts2_env/events/shared.py`
+
+- Covered: `6 / 40`
+- Missing direct proof: `34 / 40`
+
+```text
+AbyssalBaths, Amalgamator, AromaOfChaos, ByrdonisNest, ColorfulPhilosophers,
+ColossalFlower, Darv, DenseVegetation, DoorsOfLightAndDark, DrowningBeacon,
+GraveOfTheForgotten, HungryForMushrooms, InfestedAutomaton, LostWisp,
+Nonupeipe, Orobas, Pael, PunchOff, Reflections, SapphireSeed, SelfHelpBook,
+SpiritGrafter, SunkenStatue, SunkenTreasury, TabletOfTruth, Tanx, Tezcatara,
+TheLanternKey, ThisOrThat, TinkerTime, Vakuu, Wellspring, WoodCarvings,
+ZenWeaver
+```
+
+## Current Direct Relic Coverage
+
+The following relic ids are directly named by focused tests:
+
+```text
+AMETHYST_AUBERGINE, ANCHOR, ARCHAIC_TOOTH, ASTROLABE, BEAUTIFUL_BRACELET,
+BING_BONG, BLACK_STAR, BONE_FLUTE, BOOKMARK, BURNING_BLOOD, BYRDPIP,
+CALLING_BELL, CAULDRON, CHARONS_ASHES, CHOICES_PARADOX, CLAWS,
+DARKSTONE_PERIAPT, DINGY_RUG, DOLLYS_MIRROR, DRAGON_FRUIT, DREAM_CATCHER,
+DRIFTWOOD, ECTOPLASM, FRESNEL_LENS, GLASS_EYE, GLITTER, ICE_CREAM,
+JEWELED_MASK, KIFUDA, LANTERN, LASTING_CANDY, LAVA_LAMP, LAVA_ROCK,
+LEAD_PAPERWEIGHT, LUCKY_FYSH, MASSIVE_SCROLL, MEAL_TICKET, MEMBERSHIP_CARD,
+MINIATURE_TENT, MOLTEN_EGG, NUTRITIOUS_SOUP, OLD_COIN, ORRERY, PAELS_CLAW,
+PAELS_EYE, PAELS_GROWTH, PANDORAS_BOX, PHILOSOPHERS_STONE, PRAYER_WHEEL,
+PRECISE_SCISSORS, PRISMATIC_GEM, PUNCH_DAGGER, REGAL_PILLOW,
+RING_OF_THE_SNAKE, ROYAL_STAMP, RUNIC_PYRAMID, SCROLL_BOXES, SEA_GLASS,
+SILVER_CRUCIBLE, SOZU, STONE_HUMIDIFIER, SWORD_OF_STONE, THE_COURIER,
+TINY_MAILBOX, TOOLBOX, TOY_BOX, WAR_HAMMER, WAR_PAINT, WHETSTONE,
+WHITE_BEAST_STATUE, WHITE_STAR, WING_CHARM, WONGOS_MYSTERY_TICKET
+```
+
+## Highest-Priority Uncovered Relic Buckets
+
+These are the uncovered relic classes most likely to hide exact-parity mismatches because they mutate combat math, card costs, turn sequencing, death handling, or cross-phase rewards.
+
+### Combat-start / turn-sequencing / reactive damage
+
+```text
+AKABEKO, BAG_OF_MARBLES, BAG_OF_PREPARATION, BRONZE_SCALES, CAPTAINS_WHEEL,
+GREMLIN_HORN, MERCURY_HOURGLASS, ORICHALCUM, SELF_FORMING_CLAY,
+STONE_CALENDAR, THE_BOOT, TUNGSTEN_ROD, UNCEASING_TOP
+```
+
+### Cost modification / X-cost / card mutation
+
+```text
+CHEMICAL_X, FROZEN_EGG, MUMMIFIED_HAND, SNECKO_EYE, STRIKE_DUMMY,
+SPIKED_GAUNTLETS, TOXIC_EGG, VELVET_CHOKER
+```
+
+### Character-specific mechanics
+
+```text
+CRACKED_CORE, DATA_DISK, EMOTION_CHIP, GOLD_PLATED_CABLES, POLLINOUS_CORE,
+RUNIC_CAPACITOR, SYMBIOTIC_VIRUS
+```
+
+### Death prevention / healing / persistence
+
+```text
+BLACK_BLOOD, BLOOD_VIAL, LIZARD_TAIL, MEAT_ON_THE_BONE, UNDYING_SIGIL
+```
+
+### Reward / shop / event / Neow-style hooks
+
+```text
+ALCHEMICAL_COFFER, ARCANE_SCROLL, BOOMING_CONCH, CURSED_PEARL, GOLDEN_PEARL,
+LOST_COFFER, NEOWS_TORMENT, NEW_LEAF, PRECARIOUS_SHEARS, VEXING_PUZZLEBOX
+```
+
+## Full Relic Coverage Backlog
+
+Uncovered relic ids:
+
+```text
+AKABEKO, ALCHEMICAL_COFFER, ARCANE_SCROLL, ART_OF_WAR, BAG_OF_MARBLES,
+BAG_OF_PREPARATION, BEATING_REMNANT, BELLOWS, BELT_BUCKLE, BIG_HAT,
+BIG_MUSHROOM, BIIIG_HUG, BLACK_BLOOD, BLESSED_ANTLER, BLOOD_SOAKED_ROSE,
+BLOOD_VIAL, BONE_TEA, BOOK_OF_FIVE_RINGS, BOOK_REPAIR_KNIFE, BOOMING_CONCH,
+BOUND_PHYLACTERY, BOWLER_HAT, BREAD, BRILLIANT_SCARF, BRIMSTONE,
+BRONZE_SCALES, BURNING_STICKS, CANDELABRA, CAPTAINS_WHEEL,
+CENTENNIAL_PUZZLE, CHANDELIER, CHEMICAL_X, CHOSEN_CHEESE, CIRCLET,
+CLOAK_CLASP, CRACKED_CORE, CROSSBOW, CURSED_PEARL, DATA_DISK,
+DAUGHTER_OF_THE_WIND, DELICATE_FROND, DEMON_TONGUE, DEPRECATED_RELIC,
+DIAMOND_DIADEM, DISTINGUISHED_CAPE, DIVINE_DESTINY, DIVINE_RIGHT, DUSTY_TOME,
+ELECTRIC_SHRYMP, EMBER_TEA, EMOTION_CHIP, EMPTY_CAGE, ETERNAL_FEATHER,
+FAKE_ANCHOR, FAKE_BLOOD_VIAL, FAKE_HAPPY_FLOWER, FAKE_LEES_WAFFLE,
+FAKE_MANGO, FAKE_MERCHANTS_RUG, FAKE_ORICHALCUM, FAKE_SNECKO_EYE,
+FAKE_STRIKE_DUMMY, FAKE_VENERABLE_TEA_SET, FENCING_MANUAL, FESTIVE_POPPER,
+FIDDLE, FORGOTTEN_SOUL, FRAGRANT_MUSHROOM, FROZEN_EGG, FUNERARY_MASK,
+FUR_COAT, GALACTIC_DUST, GAMBLING_CHIP, GAME_PIECE, GHOST_SEED, GIRYA,
+GNARLED_HAMMER, GOLDEN_COMPASS, GOLDEN_PEARL, GOLD_PLATED_CABLES, GORGET,
+GREMLIN_HORN, HAND_DRILL, HAPPY_FLOWER, HELICAL_DART, HISTORY_COURSE,
+HORN_CLEAT, INFUSED_CORE, INTIMIDATING_HELMET, IRON_CLUB, IVORY_TILE,
+JEWELRY_BOX, JOSS_PAPER, JUZU_BRACELET, KUNAI, KUSARIGAMA, LARGE_CAPSULE,
+LEAFY_POULTICE, LEES_WAFFLE, LETTER_OPENER, LIZARD_TAIL, LOOMING_FRUIT,
+LORDS_PARASOL, LOST_COFFER, LOST_WISP, LUNAR_PASTRY, MANGO, MAW_BANK,
+MEAT_CLEAVER, MEAT_ON_THE_BONE, MERCURY_HOURGLASS, METRONOME,
+MINIATURE_CANNON, MINI_REGENT, MR_STRUGGLES, MUMMIFIED_HAND, MUSIC_BOX,
+MYSTIC_LIGHTER, NEOWS_TORMENT, NEW_LEAF, NINJA_SCROLL, NUNCHAKU,
+NUTRITIOUS_OYSTER, ODDLY_SMOOTH_STONE, ORANGE_DOUGH, ORICHALCUM,
+ORNAMENTAL_FAN, PAELS_BLOOD, PAELS_FLESH, PAELS_HORN, PAELS_LEGION,
+PAELS_TEARS, PAELS_TOOTH, PAELS_WING, PANTOGRAPH, PAPER_KRANE, PAPER_PHROG,
+PARRYING_SHIELD, PEAR, PENDULUM, PEN_NIB, PERMAFROST, PETRIFIED_TOAD,
+PHYLACTERY_UNBOUND, PLANISPHERE, POCKETWATCH, POLLINOUS_CORE, POMANDER,
+POTION_BELT, POWER_CELL, PRECARIOUS_SHEARS, PRESERVED_FOG, PUMPKIN_CANDLE,
+RADIANT_PEARL, RAINBOW_RING, RAZOR_TOOTH, RED_MASK, RED_SKULL, REGALITE,
+REPTILE_TRINKET, RINGING_TRIANGLE, RING_OF_THE_DRAKE, RIPPLE_BASIN,
+ROYAL_POISON, RUINED_HELMET, RUNIC_CAPACITOR, SAI, SAND_CASTLE,
+SCREAMING_FLAGON, SEAL_OF_GOLD, SELF_FORMING_CLAY, SERE_TALON, SHOVEL,
+SHURIKEN, SIGNET_RING, SLING_OF_COURAGE, SMALL_CAPSULE, SNECKO_EYE,
+SNECKO_SKULL, SPARKLING_ROUGE, SPIKED_GAUNTLETS, STONE_CALENDAR,
+STONE_CRACKER, STORYBOOK, STRAWBERRY, STRIKE_DUMMY, STURDY_CLAMP,
+SWORD_OF_JADE, SYMBIOTIC_VIRUS, TANXS_WHISTLE, TEA_OF_DISCOURTESY, THE_ABACUS,
+THE_BOOT, THROWING_AXE, TINGSHA, TOASTY_MITTENS, TOUCH_OF_OROBAS,
+TOUGH_BANDAGES, TOXIC_EGG, TRI_BOOMERANG, TUNGSTEN_ROD, TUNING_FORK,
+TWISTED_FUNNEL, UNCEASING_TOP, UNDYING_SIGIL, UNSETTLING_LAMP, VAJRA,
+VAMBRACE, VELVET_CHOKER, VENERABLE_TEA_SET, VERY_HOT_COCOA, VEXING_PUZZLEBOX,
+VITRUVIAN_MINION, WHISPERING_EARRING, WONGO_CUSTOMER_APPRECIATION_BADGE,
+YUMMY_COOKIE
+```
+
+## Recommended Order For Closing The Backlog
+
+1. Add a dedicated Ironclad parity suite.
+   - Ironclad is currently the largest unproven single-character combat surface.
+2. Expand Silent and Defect to cover staple powers, energy manipulation, discard/draw, orb scaling, and X-cost behavior.
+3. Add status / curse / event / quest card tests.
+   - This is where many hook-driven semantics live.
+4. Add direct tests for combat-sensitive relics.
+   - Prioritize combat-start, cost mutation, thorns / reactive damage, death prevention, and character-mechanic relics.
+5. Expand event coverage.
+   - Shared events and Act 3 are especially thin.
+6. After the Python-side proof surface is wider, re-run bridge replay and live smoke testing.
+
+## Interpretation Guardrails
+
+- This backlog is about missing proof, not necessarily missing implementation.
+- A surface can be correctly implemented and still appear here.
+- Exact parity should only be claimed once the proof surface is broad enough that remaining untested behavior is clearly unreachable or mechanically trivial.

@@ -9,9 +9,19 @@ hooks, and hook-driven relic/power dispatch.
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Callable, Sequence
 
 from sts2_env.cards.base import CardInstance
+from sts2_env.cards.enchantments import (
+    after_card_played as apply_enchantment_after_card_played,
+    after_player_turn_start as apply_enchantment_after_player_turn_start,
+    before_flush as apply_enchantment_before_flush,
+    enchant_play_count_bonus,
+    modify_shuffle_order as apply_enchantment_shuffle_order,
+    on_card_drawn as apply_enchantment_on_card_drawn,
+    on_card_played as apply_enchantment_on_card_played,
+    reset_combat_enchantments,
+)
 from sts2_env.cards.factory import (
     create_card,
     create_character_cards,
@@ -23,7 +33,16 @@ from sts2_env.core.attack import AttackContext
 from sts2_env.core.combat_player import CombatPlayerState
 from sts2_env.core.constants import BASE_DRAW, BASE_ENERGY, MAX_HAND_SIZE
 from sts2_env.core.creature import Creature
-from sts2_env.core.enums import CardId, CardTag, CardType, CombatSide, PowerId, TargetType, ValueProp
+from sts2_env.core.enums import (
+    CardId,
+    CardTag,
+    CardType,
+    CombatSide,
+    PotionTargetType,
+    PowerId,
+    TargetType,
+    ValueProp,
+)
 from sts2_env.core.rng import Rng
 from sts2_env.core.selection import CardChoiceOption, PendingCardChoice
 from sts2_env.potions.base import PotionInstance
@@ -103,6 +122,7 @@ class CombatState:
         self._pending_retain_count: dict[int, int] = {}
         self.pending_choice: PendingCardChoice | None = None
         self._pending_play: dict[str, object] | None = None
+        self._pending_turn_setup: Callable[[], None] | None = None
         self._end_turn_after_play: bool = False
         self._damage_events_this_turn: list[tuple[Creature | None, Creature, ValueProp]] = []
         self._damage_events_combat: list[tuple[Creature | None, Creature, ValueProp, int]] = []
@@ -576,11 +596,16 @@ class CombatState:
         state.energy = 0
         state.stars = 0
         state.hand.clear()
+        for card in state.starting_deck:
+            reset_combat_enchantments(card)
         state.draw[:] = list(state.starting_deck)
         state.discard.clear()
         state.exhaust.clear()
         state.play.clear()
         self.rng.shuffle(state.draw)
+        imbued_cards = [card for card in state.draw if card.has_enchantment("Imbued")]
+        if imbued_cards:
+            state.draw[:] = [card for card in state.draw if not card.has_enchantment("Imbued")] + imbued_cards
 
     def _draw_opening_hand_for_state(self, state: CombatPlayerState, count: int = BASE_DRAW) -> None:
         innate_cards = [card for card in state.draw if card.is_innate]
@@ -631,12 +656,7 @@ class CombatState:
     def _start_player_turn(self) -> None:
         """Start-of-player-side lifecycle."""
         from sts2_env.core.hooks import (
-            fire_after_block_cleared,
-            fire_after_energy_reset,
-            fire_after_side_turn_start,
             fire_before_side_turn_start,
-            modify_hand_draw,
-            should_reset_energy,
         )
 
         self.current_side = CombatSide.PLAYER
@@ -648,6 +668,19 @@ class CombatState:
         self._played_cards_this_turn = []
 
         fire_before_side_turn_start(CombatSide.PLAYER, self)
+        if self.pending_choice is not None:
+            self._pending_turn_setup = self._continue_player_turn_setup
+            return
+        self._continue_player_turn_setup()
+
+    def _continue_player_turn_setup(self) -> None:
+        from sts2_env.core.hooks import (
+            fire_after_block_cleared,
+            fire_after_energy_reset,
+            fire_after_side_turn_start,
+            modify_hand_draw,
+            should_reset_energy,
+        )
 
         for state in self.combat_player_states:
             owner = state.creature
@@ -668,6 +701,7 @@ class CombatState:
                 draw_count = self._prepare_opening_draw_for_owner(owner, draw_count)
                 self._draw_cards_for_creature(owner, draw_count, from_hand_draw=True)
 
+                apply_enchantment_after_player_turn_start(owner, self)
                 if state.orb_queue is not None:
                     state.orb_queue.trigger_after_turn_start(self)
 
@@ -716,8 +750,10 @@ class CombatState:
         if (
             CardTag.OSTY_ATTACK in getattr(card, "tags", ())
             or "osty_attack" in getattr(card, "tags", ())
-        ) and (self.osty is None or not self.osty.is_alive):
-            return False
+        ):
+            osty = self.get_osty(owner)
+            if osty is None or not osty.is_alive:
+                return False
         if card.target_type == TargetType.ANY_ALLY and not self.get_player_allies_of(owner):
             return False
         if card.card_id == CardId.GRAND_FINALE and owner_state.draw:
@@ -797,7 +833,8 @@ class CombatState:
         if card not in owner_state.play:
             owner_state.play.append(card)
 
-        play_count = modify_card_play_count(1 + getattr(card, "base_replay_count", 0), card, self)
+        play_count = 1 + getattr(card, "base_replay_count", 0) + enchant_play_count_bonus(card)
+        play_count = modify_card_play_count(play_count, card, self)
         fire_after_modifying_card_play_count(card, self)
         self._pending_play = {
             "card": card,
@@ -824,6 +861,8 @@ class CombatState:
                     return
                 with self.acting_player_view(owner):
                     fire_after_card_played(card, self)
+                    apply_enchantment_on_card_played(card, self)
+                    apply_enchantment_after_card_played(card)
                 self._played_cards_this_turn.append(card)
                 self._played_cards_combat.append(card)
                 ctx["awaiting_after_hook"] = False
@@ -867,6 +906,8 @@ class CombatState:
                 return
             with self.acting_player_view(owner):
                 fire_after_card_played(card, self)
+                apply_enchantment_on_card_played(card, self)
+                apply_enchantment_after_card_played(card)
             self._played_cards_this_turn.append(card)
             self._played_cards_combat.append(card)
             if self.is_over:
@@ -959,6 +1000,8 @@ class CombatState:
                     if card.should_retain_this_turn:
                         retained.append(card)
                         retained_ids.add(id(card))
+
+                apply_enchantment_before_flush(owner, self)
 
                 retain_budget = self._pending_retain_count.get(state.player_state.player_id, 0)
                 if retain_budget > 0:
@@ -1074,6 +1117,7 @@ class CombatState:
             state.draw[:] = list(state.discard)
             state.discard.clear()
             self.rng.shuffle(state.draw)
+            apply_enchantment_shuffle_order(state.draw, is_initial_shuffle=False)
             fire_after_shuffle(self)
 
     def add_card_to_discard(self, card: CardInstance) -> None:
@@ -1129,6 +1173,65 @@ class CombatState:
                 break
             filled += 1
         return filled
+
+    def _resolve_potion_target(
+        self,
+        potion: PotionInstance,
+        user: Creature,
+        target_index: int | None,
+    ) -> Creature | None:
+        if potion.target_type in (PotionTargetType.SELF, PotionTargetType.ANY_PLAYER):
+            return user
+        if potion.target_type == PotionTargetType.ALL_ENEMIES:
+            return None
+        if potion.target_type != PotionTargetType.ANY_ENEMY:
+            return None
+        if target_index is not None and 0 <= target_index < len(self.enemies):
+            enemy = self.enemies[target_index]
+            if enemy.is_alive:
+                return enemy
+            return None
+        alive = self.alive_enemies
+        return alive[0] if alive else None
+
+    def can_use_potion(
+        self,
+        slot: int,
+        *,
+        target_index: int | None = None,
+        owner: Creature | None = None,
+    ) -> bool:
+        state = self.combat_player_state_for(owner or self.player) or self._primary_player_state
+        if self.is_over or self.pending_choice is not None or self.current_side != CombatSide.PLAYER:
+            return False
+        if slot < 0 or slot >= len(state.potions):
+            return False
+        potion = state.potions[slot]
+        if potion is None or not potion.can_use_in_combat():
+            return False
+        target = self._resolve_potion_target(potion, state.creature, target_index)
+        if potion.target_type == PotionTargetType.ANY_ENEMY:
+            return target is not None
+        return True
+
+    def use_potion(
+        self,
+        slot: int,
+        *,
+        target_index: int | None = None,
+        owner: Creature | None = None,
+    ) -> bool:
+        state = self.combat_player_state_for(owner or self.player) or self._primary_player_state
+        if not self.can_use_potion(slot, target_index=target_index, owner=state.creature):
+            return False
+        potion = state.potions[slot]
+        assert potion is not None
+        target = self._resolve_potion_target(potion, state.creature, target_index)
+        potion.use(self, state.creature, target)
+        state.potions[slot] = None
+        potion.slot_index = -1
+        self._check_combat_end()
+        return True
 
     def add_card_to_draw_pile(self, owner: Creature, card_name: str) -> None:
         card = self._make_named_card(card_name)
@@ -1278,6 +1381,25 @@ class CombatState:
         if state is None or amount <= 0:
             return 0
         return state.player_state.lose_gold(amount)
+
+    def transform_relic(self, owner: Creature, current_relic: object, new_relic_id: object) -> bool:
+        state = self.combat_player_state_for(owner)
+        if state is None:
+            return False
+        current_name = getattr(getattr(current_relic, "relic_id", None), "name", str(current_relic))
+        new_name = getattr(new_relic_id, "name", str(new_relic_id))
+        try:
+            index = state.player_state.relics.index(current_name)
+        except ValueError:
+            return False
+        from sts2_env.relics.registry import create_relic_by_name
+
+        state.player_state.relics[index] = new_name
+        if index < len(state.player_state.relic_objects):
+            state.player_state.relic_objects[index] = create_relic_by_name(new_name)
+        if index < len(state.relics):
+            state.relics[index] = create_relic_by_name(new_name)
+        return True
 
     def gain_max_hp(self, owner: Creature, amount: int) -> None:
         state = self.combat_player_state_for(owner)
@@ -1517,6 +1639,10 @@ class CombatState:
 
         if self.pending_choice is None and self._pending_play is not None:
             self._resume_pending_play()
+        if self.pending_choice is None and self._pending_turn_setup is not None:
+            pending_setup = self._pending_turn_setup
+            self._pending_turn_setup = None
+            pending_setup()
         self._check_combat_end()
         return True
 
@@ -1689,6 +1815,19 @@ class CombatState:
         if orb_queue is not None:
             orb_queue.trigger_first_passive(self)
 
+    def get_osty(self, owner: Creature | None = None) -> Creature | None:
+        target_owner = owner or self.primary_player
+        if target_owner is self.primary_player:
+            return self.osty
+        return next(
+            (
+                ally
+                for ally in self.allies
+                if getattr(ally, "is_osty", False) and getattr(ally, "pet_owner", None) is target_owner
+            ),
+            None,
+        )
+
     def summon_osty(self, owner: Creature, amount: int, source: object | None = None) -> Creature | None:
         from sts2_env.core.hooks import (
             fire_after_creature_added_to_combat,
@@ -1697,20 +1836,13 @@ class CombatState:
             modify_summon_amount,
         )
 
-        if owner is not self.primary_player:
-            return
+        state = self.combat_player_state_for(owner)
+        if state is None or owner.side != CombatSide.PLAYER or not getattr(owner, "is_player", False):
+            return None
         amount = modify_summon_amount(owner, amount, source, self)
+        osty = self.get_osty(owner)
         if amount <= 0:
-            return self.osty
-
-        osty = self.osty or next(
-            (
-                ally
-                for ally in self.allies
-                if getattr(ally, "is_osty", False) and getattr(ally, "pet_owner", None) is owner
-            ),
-            None,
-        )
+            return osty
         is_new = osty is None
         is_reviving = osty is not None and not osty.is_alive
 
@@ -1727,11 +1859,12 @@ class CombatState:
             osty.pet_owner = owner
             osty.owner = owner
             osty.combat_state = self
-            self.osty = osty
+            if owner is self.primary_player:
+                self.osty = osty
             self.allies.append(osty)
             fire_after_creature_added_to_combat(osty, self)
             osty.apply_power(PowerId.DIE_FOR_YOU, 1)
-        else:
+        elif owner is self.primary_player:
             self.osty = osty
 
         if osty.is_alive and not is_new:
@@ -1754,9 +1887,10 @@ class CombatState:
 
     def kill_osty(self, owner: Creature) -> bool:
         """Kill the player's Osty pet if it is alive."""
-        if owner is not self.primary_player or self.osty is None or not self.osty.is_alive:
+        osty = self.get_osty(owner)
+        if osty is None or not osty.is_alive:
             return False
-        self.kill_creature(self.osty)
+        self.kill_creature(osty)
         return True
 
     def kill_creature(self, creature: Creature | None) -> bool:

@@ -9,8 +9,17 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from sts2_env.cards.factory import create_character_cards
-from sts2_env.cards.status import make_doubt, make_poor_sleep, make_regret, make_shame, make_spore_mind
+from sts2_env.cards.enchantments import can_enchant_card
+from sts2_env.cards.factory import create_transform_card
+from sts2_env.cards.status import (
+    make_doubt,
+    make_guilty,
+    make_metamorphosis,
+    make_poor_sleep,
+    make_regret,
+    make_shame,
+    make_spore_mind,
+)
 from sts2_env.potions.base import create_potion
 from sts2_env.relics.base import RelicId
 from sts2_env.run.reward_objects import CardReward, PotionReward, RelicReward
@@ -42,47 +51,20 @@ def _obtain_random_relics(run_state: RunState, count: int) -> list[str]:
 
 
 def _upgrade_n_cards(run_state: RunState, count: int) -> int:
-    upgraded = 0
-    for card in run_state.player.deck:
-        if upgraded >= count:
-            break
-        if not card.upgraded:
-            from sts2_env.cards.factory import create_card
-
-            try:
-                upgraded_card = create_card(card.card_id, upgraded=True)
-            except KeyError:
-                continue
-            if not upgraded_card.upgraded:
-                continue
-            card.cost = upgraded_card.cost
-            card.card_type = upgraded_card.card_type
-            card.target_type = upgraded_card.target_type
-            card.rarity = upgraded_card.rarity
-            card.base_damage = upgraded_card.base_damage
-            card.base_block = upgraded_card.base_block
-            card.upgraded = upgraded_card.upgraded
-            card.keywords = upgraded_card.keywords
-            card.tags = upgraded_card.tags
-            card.can_be_generated_in_combat = upgraded_card.can_be_generated_in_combat
-            card.can_be_generated_by_modifiers = upgraded_card.can_be_generated_by_modifiers
-            card.effect_vars = dict(upgraded_card.effect_vars)
-            card.original_cost = upgraded_card.original_cost
-            upgraded += 1
-    return upgraded
+    return run_state.player.upgrade_random_cards(None, count)
 
 
 def _transform_n_cards(run_state: RunState, count: int) -> int:
     transformed = 0
-    candidates = [card for card in run_state.player.deck if card.rarity.name not in {"QUEST"}]
-    replacements = create_character_cards(
-        run_state.player.character_id,
-        run_state.rng.niche,
-        count,
-        distinct=False,
-        generation_context=None,
-    )
-    for old_card, new_card in zip(candidates, replacements):
+    candidates = run_state.player.transformable_deck_cards()
+    run_state.rng.niche.shuffle(candidates)
+    for old_card in candidates[:count]:
+        new_card = create_transform_card(
+            old_card,
+            character_id=run_state.player.character_id,
+            rng=run_state.rng.niche,
+            generation_context=None,
+        )
         old_card.card_id = new_card.card_id
         old_card.cost = new_card.cost
         old_card.card_type = new_card.card_type
@@ -107,7 +89,7 @@ def _remove_n_cards(run_state: RunState, count: int) -> int:
     removed = 0
     remaining = []
     for card in run_state.player.deck:
-        if removed < count and card.rarity.name != "QUEST":
+        if removed < count and card.rarity.name != "QUEST" and card.is_removable:
             removed += 1
             continue
         remaining.append(card)
@@ -146,15 +128,14 @@ def _upgrade_selected_cards(cards: list, run_state: RunState) -> int:
 
 
 def _transform_selected_cards(cards: list, run_state: RunState) -> int:
-    replacements = create_character_cards(
-        run_state.player.character_id,
-        run_state.rng.niche,
-        len(cards),
-        distinct=False,
-        generation_context=None,
-    )
     transformed = 0
-    for old_card, new_card in zip(cards, replacements):
+    for old_card in cards:
+        new_card = create_transform_card(
+            old_card,
+            character_id=run_state.player.character_id,
+            rng=run_state.rng.niche,
+            generation_context=None,
+        )
         old_card.card_id = new_card.card_id
         old_card.cost = new_card.cost
         old_card.card_type = new_card.card_type
@@ -178,7 +159,7 @@ def _remove_selected_cards(cards: list, run_state: RunState) -> int:
     selected_ids = {id(card) for card in cards}
     new_deck = []
     for card in run_state.player.deck:
-        if id(card) in selected_ids:
+        if id(card) in selected_ids and card.is_removable:
             removed += 1
             continue
         new_deck.append(card)
@@ -349,7 +330,9 @@ class Bugslayer(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "exterminate":
+            run_state.player.add_card_to_deck("Exterminate")
             return EventResult(finished=True, description="Gained Exterminate card.")
+        run_state.player.add_card_to_deck("Squash")
         return EventResult(finished=True, description="Gained Squash card.")
 
 
@@ -363,6 +346,11 @@ class ByrdonisNest(EventModel):
 
     event_id = "ByrdonisNest"
 
+    def is_allowed(self, run_state: RunState) -> bool:
+        has_event_pet_relic = "BYRDPIP" in set(run_state.player.relics)
+        has_egg = any(card.card_id.name == "BYRDONIS_EGG" for card in run_state.player.deck)
+        return not has_event_pet_relic and not has_egg
+
     def generate_initial_options(self, run_state: RunState) -> list[EventOption]:
         return [
             EventOption("eat", "Eat", "+7 Max HP"),
@@ -373,6 +361,7 @@ class ByrdonisNest(EventModel):
         if option_id == "eat":
             run_state.player.gain_max_hp(7)
             return EventResult(finished=True, description="Gained 7 Max HP.")
+        run_state.player.add_card_to_deck("ByrdonisEgg")
         return EventResult(finished=True, description="Gained Byrdonis Egg card.")
 
 
@@ -505,9 +494,21 @@ class DenseVegetation(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "trudge_on":
-            run_state.player.lose_hp(11)
-            return EventResult(finished=True,
-                               description="Removed a card, took 11 damage.")
+            candidates = run_state.player.removable_deck_cards()
+            return self.request_card_choice(
+                prompt="Choose 1 card to remove",
+                cards=candidates,
+                source_pile="deck",
+                resolver=lambda selected: (
+                    _remove_selected_cards(selected, run_state),
+                    run_state.player.lose_hp(11),
+                    EventResult(finished=True, description="Removed a card, took 11 damage."),
+                )[-1],
+                allow_skip=False,
+                min_count=1,
+                max_count=1,
+                description="Choose a card to remove.",
+            )
         # Rest -> heal then fight
         heal_amount = int(run_state.player.max_hp * 0.3)
         run_state.player.heal(heal_amount)
@@ -533,8 +534,22 @@ class DoorsOfLightAndDark(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "light":
+            _upgrade_n_cards(run_state, 2)
             return EventResult(finished=True, description="Upgraded 2 cards.")
-        return EventResult(finished=True, description="Removed 1 card.")
+        candidates = run_state.player.removable_deck_cards()
+        return self.request_card_choice(
+            prompt="Choose 1 card to remove",
+            cards=candidates,
+            source_pile="deck",
+            resolver=lambda selected: EventResult(
+                finished=True,
+                description=f"Removed {_remove_selected_cards(selected, run_state)} card."
+            ),
+            allow_skip=False,
+            min_count=1,
+            max_count=1,
+            description="Choose a card to remove.",
+        )
 
 
 register_event(DoorsOfLightAndDark())
@@ -864,7 +879,7 @@ class SapphireSeed(EventModel):
             )
         return self.request_card_choice(
             prompt="Choose a card to enchant with Sown",
-            cards=list(run_state.player.deck),
+            cards=[card for card in run_state.player.deck if can_enchant_card(card, "Sown")],
             source_pile="deck",
             resolver=lambda selected: (
                 selected and selected[0].add_enchantment("Sown", 1),
@@ -905,6 +920,7 @@ class SelfHelpBook(EventModel):
             ("Swift", 2, "POWER", "Enchanted a Power with Swift +2."),
         )
         candidates = [card for card in run_state.player.deck if card.card_type.name == card_type_name]
+        candidates = [card for card in candidates if can_enchant_card(card, enchantment)]
         return self.request_card_choice(
             prompt=f"Choose a {card_type_name.title()} to enchant",
             cards=candidates,
@@ -940,11 +956,24 @@ class SpiritGrafter(EventModel):
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "let_it_in":
             run_state.player.heal(25)
+            run_state.player.add_card_instance_to_deck(make_metamorphosis())
             return EventResult(finished=True,
                                description="Healed 25 HP, gained Metamorphosis card.")
-        run_state.player.lose_hp(9)
-        return EventResult(finished=True,
-                           description="Removed a card, took 9 damage.")
+        candidates = run_state.player.removable_deck_cards()
+        return self.request_card_choice(
+            prompt="Choose 1 card to remove",
+            cards=candidates,
+            source_pile="deck",
+            resolver=lambda selected: (
+                _remove_selected_cards(selected, run_state),
+                run_state.player.lose_hp(9),
+                EventResult(finished=True, description="Removed a card, took 9 damage."),
+            )[-1],
+            allow_skip=False,
+            min_count=1,
+            max_count=1,
+            description="Choose a card to remove.",
+        )
 
 
 register_event(SpiritGrafter())
@@ -1462,9 +1491,26 @@ class Wellspring(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "bottle":
-            return EventResult(finished=True, description="Gained a random potion.")
-        return EventResult(finished=True,
-                           description="Removed a card, gained Guilty curse.")
+            return EventResult(
+                finished=True,
+                description="Gained a random potion.",
+                rewards={"reward_objects": [PotionReward(run_state.player.player_id)]},
+            )
+        candidates = run_state.player.removable_deck_cards()
+        return self.request_card_choice(
+            prompt="Choose 1 card to remove",
+            cards=candidates,
+            source_pile="deck",
+            resolver=lambda selected: (
+                _remove_selected_cards(selected, run_state),
+                run_state.player.add_card_instance_to_deck(make_guilty()),
+                EventResult(finished=True, description="Removed a card, gained Guilty curse."),
+            )[-1],
+            allow_skip=False,
+            min_count=1,
+            max_count=1,
+            description="Choose a card to remove.",
+        )
 
 
 register_event(Wellspring())

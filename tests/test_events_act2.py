@@ -5,10 +5,14 @@ import sts2_env.events.act2  # noqa: F401
 from sts2_env.cards.ironclad import create_ironclad_starter_deck
 from sts2_env.cards.status import make_spore_mind
 from sts2_env.events.act2 import (
+    DollRoom,
+    EndlessConveyor,
+    JungleMazeAdventure,
     LuminousChoir,
     MorphicGrove,
     PotionCourier,
     RanwidTheElder,
+    RelicTrader,
     WhisperingHollow,
 )
 from sts2_env.potions.base import create_potion
@@ -94,6 +98,19 @@ def test_event_added_card_triggers_run_level_relic_hook():
     assert run_state.player.gold == starting_gold + 15
 
 
+def test_event_gold_gain_triggers_run_level_relic_hook():
+    run_state = RunState(seed=34, character_id="Ironclad")
+    run_state.initialize_run()
+    run_state.player.obtain_relic("DRAGON_FRUIT")
+    starting_max_hp = run_state.player.max_hp
+
+    event = JungleMazeAdventure()
+    event.calculate_vars(run_state)
+    event.choose(run_state, "join")
+
+    assert run_state.player.max_hp == starting_max_hp + 1
+
+
 def test_whispering_hollow_hug_uses_pending_event_card_choice_in_run_manager():
     mgr = RunManager(seed=43, character_id="Ironclad")
     mgr.run_state.player.deck = create_ironclad_starter_deck()
@@ -111,3 +128,41 @@ def test_whispering_hollow_hug_uses_pending_event_card_choice_in_run_manager():
 
     final = mgr.take_action({"action": "choose", "index": 0})
     assert final["phase"] == RunManager.PHASE_MAP_CHOICE
+
+
+def test_doll_room_and_relic_trader_apply_real_relic_changes():
+    run_state = RunState(seed=51, character_id="Ironclad")
+    run_state.initialize_run()
+    run_state.current_act_index = 1
+    starting_relics = len(run_state.player.relics)
+
+    doll = DollRoom()
+    result = doll.choose(run_state, "random")
+    assert result.finished
+    assert len(run_state.player.relics) == starting_relics + 1
+
+    for relic_id in ("ANCHOR", "VAJRA", "PEAR", "JUZU_BRACELET", "LANTERN"):
+        run_state.player.obtain_relic(relic_id)
+    trader = RelicTrader()
+    options = trader.generate_initial_options(run_state)
+    result = trader.choose(run_state, options[0].option_id)
+    assert result.finished
+    assert len(run_state.player.relics) >= starting_relics + 5
+
+
+def test_endless_conveyor_observe_and_grab_apply_real_state_changes():
+    run_state = RunState(seed=52, character_id="Ironclad")
+    run_state.initialize_run()
+    run_state.player.deck = create_ironclad_starter_deck()
+    run_state.player.gold = 200
+
+    conveyor = EndlessConveyor()
+    conveyor.generate_initial_options(run_state)
+    observe = conveyor.choose(run_state, "observe")
+    assert observe.finished
+    assert any(card.upgraded for card in run_state.player.deck)
+
+    before_gold = run_state.player.gold
+    grab = conveyor.choose(run_state, "grab")
+    assert not grab.finished
+    assert run_state.player.gold <= before_gold

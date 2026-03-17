@@ -91,7 +91,7 @@ _UNTARGETED_TYPES = {TargetTypeName.SELF, TargetTypeName.NONE, TargetTypeName.AL
 **Root causes:**
 - Sparse reward: only +1 at run victory, -1 at death. No intermediate signal.
 - Long episodes: a full run spans thousands of steps.
-- Multi-phase action space: Discrete(100) covering 8 different game phases.
+- Multi-phase action space: `Discrete(157)` across combat, map, rewards, shop, rest, event, treasure, and player-selection slices.
 - Compounding decisions: bad deck choices early doom later combats.
 
 **Mitigation:** Reward shaping is available (`--reward-shaping` flag) but only provides small floor-progression bonuses. A fundamental redesign of the reward function or training approach (hierarchical RL, curriculum learning) is needed.
@@ -109,24 +109,26 @@ _UNTARGETED_TYPES = {TargetTypeName.SELF, TargetTypeName.NONE, TargetTypeName.AL
 
 **Workaround:** The simulator supports all 5 characters (cards, powers, monsters are all implemented). Training scripts need to be extended to support character selection.
 
-### 9. Potion actions not in combat action space
+### 9. Combat potion actions were missing from the RL action space
 
-**Severity:** Medium
+**Status:** Fixed
 
-**Problem:** The combat action space `Discrete(61)` only covers card plays and end turn. There are no actions for using potions during combat.
+**Problem:** The combat action space originally only covered card plays and end turn, so the agent could not use potions strategically during combat.
 
-**Impact:** The agent cannot use potions strategically. In the bridge mod, potions are not offered as an option.
+**Fix:** The combat action space now includes fixed-width potion actions, `CombatState` can execute potion uses directly, and the bridge path serializes and decodes potion actions as explicit `POTION` commands.
 
-**Fix needed:** Extend the action space to include potion usage: `play_potion(slot, target_index)`. This would increase the action space by `max_potion_slots * (1 + max_enemies)`.
+**Location:** `sts2_env/core/constants.py`, `sts2_env/core/combat.py`, `sts2_env/gym_env/action_space.py`, `sts2_env/gym_env/combat_env.py`, `sts2_env/bridge/state_adapter.py`, `bridge_mod/RlCombatHandler.cs`
 
 ### 10. Some card effects may not match the real game exactly
 
 **Severity:** Medium (simulator fidelity)
 
-**Problem:** The headless simulator reimplements card effects based on the decompiled C# source, but some effects are approximated:
-- `generate_card_to_hand()`, `auto_play_from_draw()`, and `generate_ethereal_cards()` are stub implementations that do nothing.
-- Osty (Necrobinder pet) mechanics are not implemented.
-- Some complex card interactions (particularly involving the play pile and card movement during effects) may differ from the real game.
+**Problem:** The headless simulator reimplements card effects based on the decompiled C# source, but exact parity is still broader than the currently audited test surface. The earlier helper-level gaps are fixed, but some card and relic interactions still need direct decompiled-backed regression tests before they should be treated as exact.
+
+**Examples of still-audited-not-proven-exact areas:**
+- selected colorless/event cards such as `Alchemize`, `BeatDown`, and `HandOfGreed`
+- selected Defect and Silent follow-up effects such as `Compact`, `WhiteNoise`, and `TheHunt`
+- wider relic-hook interactions outside the targeted parity suites
 
 **Impact:** The trained model may develop strategies that exploit simulator inaccuracies and fail to transfer to the real game. The bridge mod's real-game evaluation is the ground truth.
 
@@ -152,11 +154,11 @@ _UNTARGETED_TYPES = {TargetTypeName.SELF, TargetTypeName.NONE, TargetTypeName.AL
 
 **Location:** `sts2_env/core/hooks.py` lines 295-305
 
-### 13. run_env swallows simulation exceptions
+### 13. `run_env` exception handling used to hide simulation bugs
 
-**Severity:** Medium (debugging difficulty)
+**Status:** Fixed
 
-**Problem:** `STS2RunEnv.step()` wraps all RunManager actions in a bare `except Exception` that force-ends the run as a loss. This silently hides simulation bugs.
+**Problem:** `STS2RunEnv.step()` used to convert internal simulation exceptions into silent losses, which made debugging difficult.
 
 ```python
 try:
@@ -168,27 +170,16 @@ except Exception:
         self._mgr.run_state.lose_run()
 ```
 
-**Impact:** Bugs in the run manager, encounter setup, or card effects are converted into silent losses rather than visible errors. This makes debugging difficult.
+**Fix:** `STS2RunEnv.step()` now logs the exception before forcing the run to end, so failures are visible in logs instead of disappearing into episode outcomes.
 
-**Fix needed:** Add logging before swallowing the exception:
-```python
-except Exception as e:
-    logger.error("RunEnv step failed: %s", e, exc_info=True)
-    if not self._mgr.is_over:
-        self._mgr.run_state.lose_run()
-```
+**Location:** `sts2_env/gym_env/run_env.py`
 
-**Location:** `sts2_env/gym_env/run_env.py` lines 238-242
+### 14. Pile-summary distribution shift between simulator and bridge
 
-### 14. Pile summary distribution shift between simulator and bridge
+**Status:** Fixed
 
-**Severity:** Low
+**Problem:** The observation vector used to encode pile-composition features in simulator mode even though bridge mode could not provide them.
 
-**Problem:** The observation vector includes 3 pile-composition features (draw_attacks, draw_skills, discard_attacks) that are computed from full pile contents in the simulator but are always 0 in bridge mode (the game only sends pile counts, not composition).
+**Fix:** The simulator now keeps those three pile-composition slots zeroed as well, so simulator and bridge observations match on that segment without changing observation size.
 
-**Impact:** The trained model learns to use these features during training, but they are absent during real-game evaluation. This creates a distribution shift that may degrade bridge performance.
-
-**Fix options:**
-- Extend the C# serializer to send pile composition counts.
-- Remove these features from the observation space entirely (reduces obs from 131 to 128 dims).
-- Zero them out during training as well (easiest but wastes 3 dims).
+**Location:** `sts2_env/gym_env/observation.py`, `sts2_env/bridge/state_adapter.py`

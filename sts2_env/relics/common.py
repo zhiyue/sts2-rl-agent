@@ -26,9 +26,19 @@ class AmethystAubergine(RelicInstance):
     pool = RelicPool.SHARED
     GOLD = 10
 
-    def after_combat_victory(self, owner: Creature, combat: CombatState) -> None:
-        if not getattr(combat, "is_boss", False):
-            owner.gain_gold(self.GOLD)
+    def modify_rewards(
+        self,
+        owner: Creature,
+        rewards: list[object],
+        room: object | None,
+        run_state: object,
+    ) -> list[object]:
+        from sts2_env.core.enums import RoomType
+        from sts2_env.run.reward_objects import GoldReward
+
+        if room is not None and getattr(room, "room_type", None) in {RoomType.MONSTER, RoomType.ELITE}:
+            return [*rewards, GoldReward(owner.player_id, self.GOLD, self.GOLD)]
+        return rewards
 
 
 @register_relic
@@ -331,7 +341,9 @@ class RegalPillow(RelicInstance):
     rarity = RelicRarity.COMMON
     pool = RelicPool.SHARED
     HEAL = 15
-    # Rest site modification hook - no combat effect
+
+    def modify_rest_site_heal_amount(self, owner: Creature, amount: int, run_state: object) -> int:
+        return amount + self.HEAL
 
 
 @register_relic
@@ -383,7 +395,11 @@ class TinyMailbox(RelicInstance):
     relic_id = RelicId.TINY_MAILBOX
     rarity = RelicRarity.COMMON
     pool = RelicPool.SHARED
-    # Rest site modification hook
+
+    def modify_rest_site_heal_rewards(self, owner: Creature, rewards: list[object], run_state: object) -> list[object]:
+        from sts2_env.run.reward_objects import PotionReward
+
+        return [*rewards, PotionReward(owner.player_id)]
 
 
 @register_relic
@@ -429,6 +445,9 @@ class WarPaint(RelicInstance):
     CARDS = 2
 
     def after_obtained(self, owner: Creature) -> None:
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_upgrade_cards_reward(self.CARDS, cards=owner.upgradable_deck_cards(CardType.SKILL))
+            return
         owner.upgrade_random_cards(CardType.SKILL, self.CARDS)
 
 
@@ -441,6 +460,9 @@ class Whetstone(RelicInstance):
     CARDS = 2
 
     def after_obtained(self, owner: Creature) -> None:
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_upgrade_cards_reward(self.CARDS, cards=owner.upgradable_deck_cards(CardType.ATTACK))
+            return
         owner.upgrade_random_cards(CardType.ATTACK, self.CARDS)
 
 

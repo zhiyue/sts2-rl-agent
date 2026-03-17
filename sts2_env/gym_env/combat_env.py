@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import gymnasium
 import numpy as np
 from gymnasium import spaces
@@ -12,16 +14,23 @@ from sts2_env.core.combat import CombatState
 from sts2_env.core.constants import ACTION_END_TURN, ACTION_SPACE_SIZE, IRONCLAD_STARTING_HP
 from sts2_env.encounters.act1 import ALL_ACT1_ENCOUNTERS, EncounterSetup
 from sts2_env.core.rng import Rng
-from sts2_env.gym_env.action_space import action_to_card_and_target, get_action_mask
+from sts2_env.gym_env.action_space import (
+    action_to_card_and_target,
+    action_to_potion_and_target,
+    get_action_mask,
+    is_potion_action,
+)
 from sts2_env.gym_env.observation import OBS_SIZE, encode_observation
 from sts2_env.gym_env.reward import compute_reward
+
+logger = logging.getLogger(__name__)
 
 
 class STS2CombatEnv(gymnasium.Env):
     """Gymnasium environment for a single STS2 combat encounter.
 
     Observation: flat float32 vector encoding player state, hand, piles, enemies.
-    Action: Discrete(61) = EndTurn + 10 self-target + 50 targeted.
+    Action: fixed discrete combat action space including cards, end turn, and potions.
     """
 
     metadata = {"render_modes": ["ansi"]}
@@ -88,14 +97,21 @@ class STS2CombatEnv(gymnasium.Env):
             else:
                 self.combat.resolve_pending_choice(action - 1)
         else:
-            hand_idx, target_idx = action_to_card_and_target(action)
-
-            if hand_idx is None:
+            if action == ACTION_END_TURN:
                 self.combat.end_player_turn()
-            else:
-                success = self.combat.play_card(hand_idx, target_idx)
+            elif is_potion_action(action):
+                slot_idx, target_idx = action_to_potion_and_target(action)
+                success = (
+                    slot_idx is not None
+                    and self.combat.use_potion(slot_idx, target_index=target_idx)
+                )
                 if not success:
-                    pass
+                    logger.debug("Ignored invalid potion action %d", action)
+            else:
+                hand_idx, target_idx = action_to_card_and_target(action)
+                success = hand_idx is not None and self.combat.play_card(hand_idx, target_idx)
+                if not success:
+                    logger.debug("Ignored invalid card action %d", action)
 
         obs = encode_observation(self.combat)
         reward = compute_reward(self.combat, prev_hp)

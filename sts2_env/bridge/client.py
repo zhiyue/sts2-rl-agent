@@ -71,6 +71,7 @@ class STS2GameClient:
         self._sock: socket.socket | None = None
         self._buffer: bytes = b""
         self._connected: bool = False
+        self._last_request_id: str | None = None
 
     # ----------------------------------------------------------------
     # Connection management
@@ -164,6 +165,7 @@ class STS2GameClient:
                 logger.warning("Server error: %s", data)
                 continue
             else:
+                self._last_request_id = data.get("request_id")
                 # Return any game message (combat_action, map_select, card_reward, etc.)
                 return data
 
@@ -180,9 +182,13 @@ class STS2GameClient:
             raise ConnectionError("Not connected to STS2 bridge")
 
         try:
-            data = json.dumps(action, separators=(",", ":")).encode("utf-8") + b"\n"
+            payload = dict(action)
+            if "request_id" not in payload and self._last_request_id is not None:
+                payload["request_id"] = self._last_request_id
+            data = json.dumps(payload, separators=(",", ":")).encode("utf-8") + b"\n"
             self._sock.sendall(data)
-            logger.debug("Sent action: %s", action)
+            logger.debug("Sent action: %s", payload)
+            self._last_request_id = None
         except (BrokenPipeError, OSError) as e:
             self._connected = False
             raise ConnectionError(f"Lost connection while sending action: {e}") from e
@@ -209,6 +215,17 @@ class STS2GameClient:
             "action": "choose",
             "index": choice_index,
         })
+
+    def choose_many(self, indexes: list[int]) -> None:
+        """Make a multi-card selection choice."""
+        self.send_action({
+            "action": "choose",
+            "indexes": indexes,
+        })
+
+    def skip(self) -> None:
+        """Skip the current choice screen when the bridge supports it."""
+        self.send_action({"action": "skip"})
 
     def use_potion(self, slot: int, target_index: int = -1) -> None:
         """Use a potion.

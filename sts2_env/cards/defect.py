@@ -60,6 +60,14 @@ def _remove_orb_slot(combat: CombatState, count: int = 1) -> None:
         queue.capacity = max(0, queue.capacity - count)
 
 
+def _non_exhausted_status_cards(combat: CombatState, owner: Creature) -> list[CardInstance]:
+    return [
+        card
+        for card in combat._all_cards_for_creature(owner, include_exhausted=False)  # noqa: SLF001
+        if card.card_type == CardType.STATUS
+    ]
+
+
 # ---------------------------------------------------------------------------
 #  Status card creators used by Defect effects
 # ---------------------------------------------------------------------------
@@ -121,6 +129,11 @@ def zap(card: CardInstance, combat: CombatState, target: Creature | None) -> Non
 
 @register_effect(CardId.DUALCAST)
 def dualcast(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    queue = getattr(combat, 'orb_queue', None)
+    if queue is None or not queue.orbs:
+        return
+    # Dualcast evokes the front orb twice: once without dequeue, then once with dequeue.
+    queue.orbs[0].on_evoke(combat)
     _evoke_front(combat)
 
 
@@ -200,8 +213,8 @@ def compile_driver(card: CardInstance, combat: CombatState, target: Creature | N
 
 @register_effect(CardId.COOLHEADED)
 def coolheaded(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat._draw_cards(card.effect_vars.get("cards", 1))
     _channel_orb(combat, OrbType.FROST)
+    combat._draw_cards(card.effect_vars.get("cards", 1))
 
 
 @register_effect(CardId.FOCUSED_STRIKE_CARD)
@@ -449,10 +462,24 @@ def rocket_punch(card: CardInstance, combat: CombatState, target: Creature | Non
 
 @register_effect(CardId.SCAVENGE)
 def scavenge(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(_owner(card, combat), PowerId.ENERGY_NEXT_TURN, card.effect_vars.get("energy", 2))
-    if combat.hand:
-        c = combat.hand.pop()
-        combat.exhaust_pile.append(c)
+    owner = _owner(card, combat)
+    energy = card.effect_vars.get("energy", 2)
+    candidates = list(combat.hand)
+    if not candidates:
+        combat.apply_power_to(owner, PowerId.ENERGY_NEXT_TURN, energy)
+        return
+
+    def _resolver(selected: CardInstance | None) -> None:
+        if selected is not None:
+            combat.exhaust_card(selected)
+        combat.apply_power_to(owner, PowerId.ENERGY_NEXT_TURN, energy)
+
+    combat.request_card_choice(
+        prompt="Choose a hand card to exhaust",
+        cards=candidates,
+        source_pile="hand",
+        resolver=_resolver,
+    )
 
 
 @register_effect(CardId.SCRAPE)
@@ -616,18 +643,18 @@ def echo_form(card: CardInstance, combat: CombatState, target: Creature | None) 
 
 @register_effect(CardId.FLAK_CANNON)
 def flak_cannon(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Hits scale with orb count; exhaust a card from hand
-    hits = _get_orb_count(combat)
+    owner = _owner(card, combat)
+    statuses = _non_exhausted_status_cards(combat, owner)
+    hits = len(statuses)
+    for status in statuses:
+        combat.exhaust_card(status)
     for _ in range(hits):
         alive = combat.alive_enemies
         if not alive:
             break
         t = combat.rng.choice(alive)
-        dmg = calculate_damage(card.base_damage, _owner(card, combat), t, ValueProp.MOVE, combat)
-        apply_damage(t, dmg, ValueProp.MOVE, combat, _owner(card, combat))
-    if combat.hand:
-        c = combat.hand.pop()
-        combat.exhaust_pile.append(c)
+        dmg = calculate_damage(card.base_damage, owner, t, ValueProp.MOVE, combat)
+        apply_damage(t, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.GENETIC_ALGORITHM)

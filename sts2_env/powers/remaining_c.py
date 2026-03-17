@@ -290,8 +290,9 @@ class SandpitPower(PowerInstance):
                 combat.kill_creature(self.target)
                 for ally in combat.get_player_allies_of(self.target):
                     combat.kill_creature(ally)
-                if combat.osty is not None and combat.osty.is_alive and combat.osty.pet_owner is self.target:
-                    combat.kill_creature(combat.osty)
+                osty = combat.get_osty(self.target)
+                if osty is not None and osty.is_alive:
+                    combat.kill_creature(osty)
 
 
 # ---------------------------------------------------------------------------

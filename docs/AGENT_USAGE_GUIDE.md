@@ -97,7 +97,7 @@ python scripts/train_full_run.py \
 
 ### Key Differences from Combat Training
 
-- **Action space is larger:** Discrete(100) vs Discrete(61). Includes combat actions plus map choices, card rewards, shop, rest, and event decisions.
+- **Action space is larger:** `Discrete(157)` vs combat-only `Discrete(115)`. Includes combat actions plus map choices, card rewards, boss relics, shop, rest, event, treasure, and acting-player selection.
 - **Episodes are longer:** A full Act 1 run takes hundreds of steps.
 - **Gamma is higher:** 0.995 (default) vs 0.99, because long-term planning matters more.
 - **Entropy coefficient is higher:** 0.02 to encourage exploring different paths.

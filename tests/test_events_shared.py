@@ -3,10 +3,10 @@
 import sts2_env.events.shared  # noqa: F401
 
 from sts2_env.cards.ironclad import create_ironclad_starter_deck
-from sts2_env.cards.status import make_doubt, make_poor_sleep, make_regret
+from sts2_env.cards.status import make_doubt, make_exterminate, make_guilty, make_metamorphosis, make_poor_sleep, make_regret, make_squash
 from sts2_env.run.run_manager import RunManager
 from sts2_env.run.run_state import RunState
-from sts2_env.events.shared import BattlewornDummy, RoundTeaParty, Trial, TrashHeap, UnrestSite
+from sts2_env.events.shared import BattlewornDummy, Bugslayer, DenseVegetation, DoorsOfLightAndDark, RoundTeaParty, SpiritGrafter, Trial, TrashHeap, UnrestSite, Wellspring
 
 
 def test_round_tea_party_pick_fight_is_multi_page_and_grants_relic():
@@ -119,6 +119,37 @@ def test_battleworn_dummy_and_trash_heap_surface_real_rewards():
     assert rewards[0].reward_type.name == "RELIC"
 
 
+def test_battleworn_dummy_setting_two_upgrades_two_random_cards():
+    run_state = RunState(seed=191, character_id="Ironclad")
+    run_state.initialize_run()
+    run_state.player.deck = create_ironclad_starter_deck()
+    dummy = BattlewornDummy()
+
+    result = dummy.choose(run_state, "setting_2")
+
+    assert result.finished
+    assert sum(1 for card in run_state.player.deck if card.upgraded) >= 2
+
+
+def test_doors_of_light_and_dark_light_and_dark_apply_real_effects():
+    run_state = RunState(seed=192, character_id="Ironclad")
+    run_state.initialize_run()
+    run_state.player.deck = create_ironclad_starter_deck()
+    event = DoorsOfLightAndDark()
+    starting_deck = len(run_state.player.deck)
+
+    light = event.choose(run_state, "light")
+    assert light.finished
+    assert sum(1 for card in run_state.player.deck if card.upgraded) >= 2
+
+    dark = event.choose(run_state, "dark")
+    assert dark.finished is False
+    assert event.pending_choice is not None
+    resolved = event.resolve_pending_choice(0)
+    assert resolved.finished
+    assert len(run_state.player.deck) == starting_deck - 1
+
+
 def test_unrest_site_rest_adds_poor_sleep_curse():
     run_state = RunState(seed=23, character_id="Ironclad")
     run_state.initialize_run()
@@ -127,3 +158,60 @@ def test_unrest_site_rest_adds_poor_sleep_curse():
     result = event.choose(run_state, "rest")
     assert result.finished
     assert any(card.card_id == make_poor_sleep().card_id for card in run_state.player.deck)
+
+
+def test_bugslayer_adds_real_reward_cards_to_deck():
+    run_state = RunState(seed=29, character_id="Ironclad")
+    run_state.initialize_run()
+    event = Bugslayer()
+
+    exterminate = event.choose(run_state, "exterminate")
+    assert exterminate.finished
+    assert any(card.card_id == make_exterminate().card_id for card in run_state.player.deck)
+
+    squash = event.choose(run_state, "squash")
+    assert squash.finished
+    assert any(card.card_id == make_squash().card_id for card in run_state.player.deck)
+
+
+def test_dense_vegetation_spirit_grafter_and_wellspring_apply_real_state_changes():
+    run_state = RunState(seed=61, character_id="Ironclad")
+    run_state.initialize_run()
+    run_state.player.deck = create_ironclad_starter_deck()
+    starting_deck = len(run_state.player.deck)
+
+    vegetation = DenseVegetation()
+    result = vegetation.choose(run_state, "trudge_on")
+    assert not result.finished
+    result = vegetation.resolve_pending_choice(0)
+    assert result.finished
+    assert len(run_state.player.deck) == starting_deck - 1
+
+    grafter = SpiritGrafter()
+    healed_before = run_state.player.current_hp
+    result = grafter.choose(run_state, "let_it_in")
+    assert result.finished
+    assert any(card.card_id == make_metamorphosis().card_id for card in run_state.player.deck)
+    assert run_state.player.current_hp >= healed_before
+
+    result = grafter.choose(run_state, "rejection")
+    assert not result.finished
+    hp_before = run_state.player.current_hp
+    deck_before = len(run_state.player.deck)
+    result = grafter.resolve_pending_choice(0)
+    assert result.finished
+    assert len(run_state.player.deck) == deck_before - 1
+    assert run_state.player.current_hp == hp_before - 9
+
+    spring = Wellspring()
+    bottle = spring.choose(run_state, "bottle")
+    rewards = bottle.rewards["reward_objects"]
+    assert rewards and rewards[0].reward_type.name == "POTION"
+
+    deck_before = len(run_state.player.deck)
+    bathe = spring.choose(run_state, "bathe")
+    assert not bathe.finished
+    bathe = spring.resolve_pending_choice(0)
+    assert bathe.finished
+    assert len(run_state.player.deck) == deck_before
+    assert any(card.card_id == make_guilty().card_id for card in run_state.player.deck)

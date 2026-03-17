@@ -20,6 +20,10 @@ def _owner(card: CardInstance, combat: CombatState) -> Creature:
     return getattr(card, "owner", None) or combat.player
 
 
+def _osty(card: CardInstance, combat: CombatState) -> Creature | None:
+    return combat.get_osty(_owner(card, combat))
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -252,7 +256,8 @@ def wisp(card: CardInstance, combat: CombatState, target: Creature | None) -> No
 @register_effect(CardId.BONE_SHARDS)
 def bone_shards(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     """OstyAttack — deal damage to all enemies, gain block, kill minion."""
-    if combat.osty is None or not combat.osty.is_alive:
+    osty = _osty(card, combat)
+    if osty is None or not osty.is_alive:
         return
     _deal_damage_all(card, combat)
     _gain_block(card, combat)
@@ -403,7 +408,8 @@ def enfeebling_touch(card: CardInstance, combat: CombatState, target: Creature |
 @register_effect(CardId.FETCH)
 def fetch(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     """OstyAttack — draw cards."""
-    if combat.osty is None or not combat.osty.is_alive:
+    osty = _osty(card, combat)
+    if osty is None or not osty.is_alive:
         return
     assert target is not None
     _deal_damage_single(card, combat, target)
@@ -428,7 +434,8 @@ def haunt(card: CardInstance, combat: CombatState, target: Creature | None) -> N
 @register_effect(CardId.HIGH_FIVE)
 def high_five(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     """OstyAttack — deal damage to all, apply vulnerable."""
-    if combat.osty is None or not combat.osty.is_alive:
+    osty = _osty(card, combat)
+    if osty is None or not osty.is_alive:
         return
     _deal_damage_all(card, combat)
     vuln = card.effect_vars.get("vulnerable", 2)
@@ -438,7 +445,11 @@ def high_five(card: CardInstance, combat: CombatState, target: Creature | None) 
 
 @register_effect(CardId.LEGION_OF_BONE)
 def legion_of_bone(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.summon_osty(_owner(card, combat), card.effect_vars.get("summon", 6))
+    summon_amount = card.effect_vars.get("summon", 6)
+    for state in combat.combat_player_states:
+        owner = state.creature
+        if owner.is_alive and getattr(owner, "is_player", False):
+            combat.summon_osty(owner, summon_amount, source=card)
 
 
 @register_effect(CardId.LETHALITY_CARD)
@@ -502,11 +513,12 @@ def putrefy(card: CardInstance, combat: CombatState, target: Creature | None) ->
 @register_effect(CardId.RATTLE)
 def rattle(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     """OstyAttack — deal damage multiple times based on Osty's prior hits this turn."""
-    if combat.osty is None or not combat.osty.is_alive:
+    osty = _osty(card, combat)
+    if osty is None or not osty.is_alive:
         return
     assert target is not None
     owner = _owner(card, combat)
-    hits = 1 + combat.count_powered_hits_by_dealer_this_turn(combat.osty)
+    hits = 1 + combat.count_powered_hits_by_dealer_this_turn(osty)
     for _ in range(hits):
         damage = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
         apply_damage(target, damage, ValueProp.MOVE, combat, owner)
@@ -525,11 +537,15 @@ def right_hand_hand(card: CardInstance, combat: CombatState, target: Creature | 
 def right_hand_hand_late(watched: CardInstance, played: CardInstance, combat: CombatState) -> None:
     if watched is not played:
         return
-    if combat.energy < watched.effect_vars.get("energy", 2):
+    owner = getattr(watched, "owner", None) or combat.primary_player
+    owner_state = combat.combat_player_state_for(owner)
+    if owner_state is None:
         return
-    if watched not in combat.discard_pile:
+    if owner_state.energy < watched.effect_vars.get("energy", 2):
         return
-    combat.move_card_to_hand(watched)
+    if watched not in owner_state.discard:
+        return
+    combat.move_card_to_creature_hand(owner, watched)
 
 
 @register_effect(CardId.SEVERANCE)
@@ -553,7 +569,8 @@ def shroud(card: CardInstance, combat: CombatState, target: Creature | None) -> 
 @register_effect(CardId.SIC_EM)
 def sic_em(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     """OstyAttack — apply SicEm debuff."""
-    if combat.osty is None or not combat.osty.is_alive:
+    osty = _osty(card, combat)
+    if osty is None or not osty.is_alive:
         return
     assert target is not None
     _deal_damage_single(card, combat, target)
@@ -571,8 +588,9 @@ def sleight_of_flesh(card: CardInstance, combat: CombatState, target: Creature |
 def spur(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     heal = card.effect_vars.get("heal", 5)
     combat.summon_osty(_owner(card, combat), card.effect_vars.get("summon", 3))
-    if combat.osty is not None:
-        combat.osty.heal(heal)
+    osty = _osty(card, combat)
+    if osty is not None:
+        osty.heal(heal)
 
 
 @register_effect(CardId.VEILPIERCER)
@@ -696,7 +714,7 @@ def reaper_form(card: CardInstance, combat: CombatState, target: Creature | None
 @register_effect(CardId.SACRIFICE)
 def sacrifice(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     owner = _owner(card, combat)
-    osty = combat.osty
+    osty = combat.get_osty(owner)
     if osty is None or not osty.is_alive:
         return
     block_gain = osty.max_hp * 2
@@ -763,7 +781,8 @@ def spirit_of_ash(card: CardInstance, combat: CombatState, target: Creature | No
 @register_effect(CardId.SQUEEZE)
 def squeeze(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     """OstyAttack — scales with total cards."""
-    if combat.osty is None or not combat.osty.is_alive:
+    osty = _osty(card, combat)
+    if osty is None or not osty.is_alive:
         return
     assert target is not None
     owner = _owner(card, combat)
@@ -844,13 +863,14 @@ def forbidden_grimoire(card: CardInstance, combat: CombatState, target: Creature
 @register_effect(CardId.PROTECTOR)
 def protector(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     """OstyAttack — scales with total cards."""
-    if combat.osty is None or not combat.osty.is_alive:
+    osty = _osty(card, combat)
+    if osty is None or not osty.is_alive:
         return
     assert target is not None
     owner = _owner(card, combat)
     base = card.effect_vars.get("calc_base", card.base_damage or 10)
     extra = card.effect_vars.get("extra_damage", 1)
-    total_damage = base + extra * combat.osty.max_hp
+    total_damage = base + extra * osty.max_hp
     damage = calculate_damage(total_damage, owner, target, ValueProp.MOVE, combat)
     apply_damage(target, damage, ValueProp.MOVE, combat, owner)
 

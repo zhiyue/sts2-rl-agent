@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sts2_env.cards.enchantments import can_enchant_card
 from sts2_env.characters.all import ALL_CHARACTERS
 from sts2_env.core.enums import (
-    CardRarity, RelicRarity, CombatSide, CardType, PowerId, RoomType, ValueProp,
+    CardId, CardRarity, RelicRarity, CombatSide, CardType, PowerId, RoomType, ValueProp,
 )
 from sts2_env.relics.base import RelicId, RelicPool, RelicInstance
 from sts2_env.relics.registry import register_relic
@@ -155,6 +156,7 @@ class DingyRug(RelicInstance):
             character_ids=options.character_ids,
             forced_rarities=options.forced_rarities,
             include_colorless=True,
+            use_default_character_pool=options.use_default_character_pool,
         )
 
 
@@ -166,7 +168,11 @@ class DollysMirror(RelicInstance):
     pool = RelicPool.SHARED
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.duplicate_card_from_deck()
+        candidates = owner.duplicable_deck_cards()
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_duplicate_card_reward(1, cards=candidates)
+            return
+        owner.duplicate_card_from_deck(cards=candidates)
 
 
 @register_relic
@@ -201,7 +207,11 @@ class GnarledHammer(RelicInstance):
     SHARP = 3
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.enchant_cards("Sharp", self.SHARP, self.CARDS)
+        candidates = [card for card in owner.deck if can_enchant_card(card, "Sharp")]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_enchant_cards_reward("Sharp", self.SHARP, self.CARDS, cards=candidates)
+            return
+        owner.enchant_selected_cards("Sharp", self.SHARP, self.CARDS, cards=candidates)
 
 
 @register_relic
@@ -213,7 +223,11 @@ class Kifuda(RelicInstance):
     CARDS = 3
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.enchant_cards("Adroit", 3, self.CARDS)
+        candidates = [card for card in owner.deck if can_enchant_card(card, "Adroit")]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_enchant_cards_reward("Adroit", 3, self.CARDS, cards=candidates)
+            return
+        owner.enchant_selected_cards("Adroit", 3, self.CARDS, cards=candidates)
 
 
 @register_relic
@@ -360,7 +374,11 @@ class PunchDagger(RelicInstance):
     MOMENTUM = 5
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.enchant_cards("Momentum", self.MOMENTUM, 1)
+        candidates = [card for card in owner.deck if can_enchant_card(card, "Momentum")]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_enchant_cards_reward("Momentum", self.MOMENTUM, 1, cards=candidates)
+            return
+        owner.enchant_selected_cards("Momentum", self.MOMENTUM, 1, cards=candidates)
 
 
 @register_relic
@@ -384,7 +402,11 @@ class RoyalStamp(RelicInstance):
     pool = RelicPool.SHARED
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.enchant_cards("RoyallyApproved", 1, 1)
+        candidates = [card for card in owner.deck if can_enchant_card(card, "RoyallyApproved")]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_enchant_cards_reward("RoyallyApproved", 1, 1, cards=candidates)
+            return
+        owner.enchant_selected_cards("RoyallyApproved", 1, 1, cards=candidates)
 
 
 @register_relic
@@ -446,7 +468,37 @@ class Toolbox(RelicInstance):
     rarity = RelicRarity.SHOP
     pool = RelicPool.SHARED
     CARDS = 3
-    # BeforeHandDraw round 1 hook
+
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._used_this_combat: bool = False
+
+    def before_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        from sts2_env.cards.factory import create_cards_from_ids, eligible_registered_cards
+
+        if side != CombatSide.PLAYER or combat.round_number != 1 or self._used_this_combat:
+            return
+        ids = eligible_registered_cards(
+            module_name="sts2_env.cards.colorless",
+            generation_context="combat",
+        )
+        cards = create_cards_from_ids(ids, combat.rng, self.CARDS, distinct=True)
+        if not cards:
+            return
+        self._used_this_combat = True
+        combat.request_card_choice(
+            prompt="Choose a colorless card to add to your hand.",
+            cards=cards,
+            source_pile="generated",
+            resolver=lambda card: combat.move_card_to_creature_hand(owner, card),
+            allow_skip=False,
+        )
+
+    def before_combat_start(self, owner: Creature, combat: CombatState) -> None:
+        self._used_this_combat = False
+
+    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        self._used_this_combat = False
 
 
 @register_relic
@@ -507,7 +559,20 @@ class WingCharm(RelicInstance):
     rarity = RelicRarity.SHOP
     pool = RelicPool.SHARED
     SWIFT = 1
-    # TryModifyCardRewardOptionsLate hook
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        if not cards:
+            return cards
+        index = run_state.rng.rewards.next_int(0, len(cards) - 1)
+        cards[index].add_enchantment("Swift", self.SWIFT)
+        return cards
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -548,7 +613,19 @@ class ArchaicTooth(RelicInstance):
     pool = RelicPool.EVENT
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.transform_starter_card()
+        mapping = {
+            CardId.BASH: CardId.BREAK,
+            CardId.NEUTRALIZE: CardId.SUPPRESS,
+            CardId.UNLEASH: CardId.PROTECTOR,
+            CardId.FALLING_STAR: CardId.METEOR_SHOWER,
+            CardId.DUALCAST: CardId.QUADCAST,
+        }
+        cards = [card for card in owner.deck if card.card_id in mapping][:1]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_transform_cards_reward(1, cards=cards, mapping=mapping)
+            return
+        if cards:
+            owner.transform_specific_cards_with_mapping(cards, mapping)
 
 
 @register_relic
@@ -560,7 +637,11 @@ class Astrolabe(RelicInstance):
     CARDS = 3
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.transform_and_upgrade_cards(self.CARDS)
+        candidates = owner.transformable_deck_cards()
+        if getattr(owner.run_state, "enable_deck_choice_requests", False):
+            owner.offer_transform_cards_reward(self.CARDS, upgrade=True, cards=candidates)
+            return
+        owner.transform_and_upgrade_cards(self.CARDS, cards=candidates)
 
 
 @register_relic
@@ -573,7 +654,11 @@ class BeautifulBracelet(RelicInstance):
     SWIFT = 3
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.enchant_cards("Swift", self.SWIFT, self.CARDS)
+        candidates = [card for card in owner.deck if can_enchant_card(card, "Swift")]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_enchant_cards_reward("Swift", self.SWIFT, self.CARDS, cards=candidates)
+            return
+        owner.enchant_selected_cards("Swift", self.SWIFT, self.CARDS, cards=candidates)
 
 
 @register_relic
@@ -603,7 +688,11 @@ class BiiigHug(RelicInstance):
     CARDS = 4
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.remove_cards_from_deck(self.CARDS)
+        candidates = owner.removable_deck_cards()
+        if getattr(owner.run_state, "enable_deck_choice_requests", False):
+            owner.offer_remove_card_reward(self.CARDS, cards=candidates)
+            return
+        owner.remove_cards_from_deck(self.CARDS, cards=candidates)
 
     def after_shuffle(self, owner: Creature, combat: CombatState) -> None:
         combat.add_card_to_draw_pile(owner, "Soot")
@@ -759,7 +848,14 @@ class CallingBell(RelicInstance):
 
     def after_obtained(self, owner: Creature) -> None:
         owner.add_card_to_deck("CurseOfTheBell")
-        owner.offer_relic_rewards(self.RELICS)
+        owner.offer_relic_rewards(
+            self.RELICS,
+            rarities=(
+                RelicRarity.COMMON,
+                RelicRarity.UNCOMMON,
+                RelicRarity.RARE,
+            ),
+        )
 
 
 @register_relic
@@ -769,7 +865,43 @@ class ChoicesParadox(RelicInstance):
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     CARDS = 5
-    # AfterPlayerTurnStart hook
+
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._used_this_combat: bool = False
+
+    def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        from sts2_env.cards.factory import create_distinct_character_cards
+
+        if side != CombatSide.PLAYER or combat.round_number != 1 or self._used_this_combat:
+            return
+        state = combat.combat_player_state_for(owner)
+        if state is None:
+            return
+        cards = create_distinct_character_cards(
+            state.character_id,
+            combat.rng,
+            self.CARDS,
+            generation_context="combat",
+        )
+        if not cards:
+            return
+        for card in cards:
+            card.keywords = frozenset(set(card.keywords) | {"retain"})
+        self._used_this_combat = True
+        combat.request_card_choice(
+            prompt="Choose a retained card to add to your hand.",
+            cards=cards,
+            source_pile="generated",
+            resolver=lambda card: combat.move_card_to_creature_hand(owner, card),
+            allow_skip=False,
+        )
+
+    def before_combat_start(self, owner: Creature, combat: CombatState) -> None:
+        self._used_this_combat = False
+
+    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        self._used_this_combat = False
 
 
 @register_relic
@@ -793,7 +925,14 @@ class Claws(RelicInstance):
     CARDS = 6
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.transform_cards_to("Maul", self.CARDS)
+        owner.transform_cards_to(
+            "Maul",
+            self.CARDS,
+            cards=owner.transformable_deck_cards(),
+            preserve_upgrades=True,
+            preserve_enchantments=True,
+            min_count=0,
+        )
 
 
 @register_relic
@@ -964,7 +1103,11 @@ class ElectricShrymp(RelicInstance):
     pool = RelicPool.EVENT
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.enchant_cards("Imbued", 1, 1)
+        candidates = [card for card in owner.deck if can_enchant_card(card, "Imbued")]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_enchant_cards_reward("Imbued", 1, 1, cards=candidates)
+            return
+        owner.enchant_selected_cards("Imbued", 1, 1, cards=candidates)
 
 
 @register_relic
@@ -995,7 +1138,11 @@ class EmptyCage(RelicInstance):
     CARDS = 2
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.remove_cards_from_deck(self.CARDS)
+        candidates = owner.removable_deck_cards()
+        if getattr(owner.run_state, "enable_deck_choice_requests", False):
+            owner.offer_remove_card_reward(self.CARDS, cards=candidates)
+            return
+        owner.remove_cards_from_deck(self.CARDS, cards=candidates)
 
 
 @register_relic
@@ -1177,6 +1324,9 @@ class FragrantMushroom(RelicInstance):
 
     def after_obtained(self, owner: Creature) -> None:
         owner.take_damage(self.DAMAGE)
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_upgrade_cards_reward(self.CARDS, cards=owner.upgradable_deck_cards())
+            return
         owner.upgrade_random_cards(None, self.CARDS)
 
 
@@ -1342,7 +1492,19 @@ class JeweledMask(RelicInstance):
     relic_id = RelicId.JEWELED_MASK
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    # BeforeHandDraw hook
+
+    def before_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        if side != CombatSide.PLAYER or combat.round_number != 1:
+            return
+        state = combat.combat_player_state_for(owner)
+        if state is None:
+            return
+        candidates = [card for card in state.draw if card.card_type == CardType.POWER]
+        if not candidates:
+            return
+        selected = combat.rng.choice(candidates)
+        selected.set_temporary_cost_for_turn(0)
+        combat.move_card_to_creature_hand(owner, selected)
 
 
 @register_relic
@@ -1424,7 +1586,14 @@ class LeafyPoultice(RelicInstance):
 
     def after_obtained(self, owner: Creature) -> None:
         owner.lose_max_hp(self.MAX_HP_LOSS)
-        owner.transform_basic_cards(1, 1)
+        strike = next((card for card in owner.basic_strike_defend_cards() if "STRIKE" in card.card_id.name), None)
+        defend = next((card for card in owner.basic_strike_defend_cards() if "DEFEND" in card.card_id.name), None)
+        cards = [card for card in (strike, defend) if card is not None]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_transform_cards_reward(len(cards), cards=cards)
+            return
+        if cards:
+            owner.transform_specific_cards(cards)
 
 
 @register_relic
@@ -1579,7 +1748,11 @@ class NewLeaf(RelicInstance):
     pool = RelicPool.EVENT
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.transform_cards(1)
+        candidates = owner.transformable_deck_cards()
+        if getattr(owner.run_state, "enable_deck_choice_requests", False):
+            owner.offer_transform_cards_reward(1, cards=candidates)
+            return
+        owner.transform_cards(1, cards=candidates)
 
 
 @register_relic
@@ -1690,7 +1863,11 @@ class PaelsGrowth(RelicInstance):
     pool = RelicPool.EVENT
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.enchant_cards("Clone", 4, 1)
+        candidates = [card for card in owner.deck if can_enchant_card(card, "Clone")]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_enchant_cards_reward("Clone", 4, 1, cards=candidates)
+            return
+        owner.enchant_selected_cards("Clone", 4, 1, cards=candidates)
 
     def modify_rest_site_options(self, owner: Creature, options: list[object], run_state: RunState) -> list[object]:
         from sts2_env.run.rest_site import CloneOption
@@ -1783,7 +1960,12 @@ class PandorasBox(RelicInstance):
     pool = RelicPool.EVENT
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.transform_all_basic_cards()
+        cards = owner.basic_strike_defend_cards()
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_transform_cards_reward(len(cards), cards=cards)
+            return
+        if cards:
+            owner.transform_specific_cards(cards)
 
 
 @register_relic
@@ -1839,7 +2021,11 @@ class Pomander(RelicInstance):
     pool = RelicPool.EVENT
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.upgrade_random_cards(None, 1)
+        candidates = owner.upgradable_deck_cards()
+        if getattr(owner.run_state, "enable_deck_choice_requests", False):
+            owner.offer_upgrade_cards_reward(1, cards=candidates)
+            return
+        owner.upgrade_selected_cards(1, cards=candidates)
 
 
 @register_relic
@@ -1852,7 +2038,11 @@ class PrecariousShears(RelicInstance):
     DAMAGE = 13
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.remove_cards_from_deck(self.CARDS)
+        candidates = owner.removable_deck_cards()
+        if getattr(owner.run_state, "enable_deck_choice_requests", False):
+            owner.offer_remove_card_reward(self.CARDS, cards=candidates)
+        else:
+            owner.remove_cards_from_deck(self.CARDS, cards=candidates)
         owner.take_damage(self.DAMAGE)
 
 
@@ -1864,7 +2054,11 @@ class PreciseScissors(RelicInstance):
     pool = RelicPool.EVENT
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.remove_cards_from_deck(1)
+        candidates = owner.removable_deck_cards()
+        if getattr(owner.run_state, "enable_deck_choice_requests", False):
+            owner.offer_remove_card_reward(1, cards=candidates)
+            return
+        owner.remove_cards_from_deck(1, cards=candidates)
 
 
 @register_relic
@@ -1876,7 +2070,11 @@ class PreservedFog(RelicInstance):
     CARDS = 5
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.remove_cards_from_deck(self.CARDS)
+        candidates = owner.removable_deck_cards()
+        if getattr(owner.run_state, "enable_deck_choice_requests", False):
+            owner.offer_remove_card_reward(self.CARDS, cards=candidates)
+        else:
+            owner.remove_cards_from_deck(self.CARDS, cards=candidates)
         owner.add_card_to_deck("Folly")
 
 
@@ -1906,6 +2104,8 @@ class PrismaticGem(RelicInstance):
             num_cards=options.num_cards,
             character_ids=tuple(character.character_id for character in ALL_CHARACTERS),
             forced_rarities=options.forced_rarities,
+            include_colorless=options.include_colorless,
+            use_default_character_pool=options.use_default_character_pool,
         )
 
 
@@ -1989,6 +2189,9 @@ class SandCastle(RelicInstance):
     CARDS = 6
 
     def after_obtained(self, owner: Creature) -> None:
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_upgrade_cards_reward(self.CARDS, cards=owner.upgradable_deck_cards())
+            return
         owner.upgrade_random_cards(None, self.CARDS)
 
 
@@ -2011,6 +2214,25 @@ class SeaGlass(RelicInstance):
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     CARDS = 15
+
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._character_id: str | None = None
+
+    def after_obtained(self, owner: Creature) -> None:
+        if self._character_id is None:
+            self._character_id = owner.run_state.rng.rewards.choice(
+                [character.character_id for character in ALL_CHARACTERS]
+            )
+        owner.offer_custom_card_reward(
+            option_count=self.CARDS,
+            character_ids=(self._character_id,),
+            forced_rarities=(
+                (CardRarity.COMMON,) * 5
+                + (CardRarity.UNCOMMON,) * 5
+                + (CardRarity.RARE,) * 5
+            ),
+        )
 
 
 @register_relic
@@ -2072,22 +2294,6 @@ class SilverCrucible(RelicInstance):
         if self._times_used >= self.CARD_REWARDS and self._treasure_rooms_entered > 0:
             self.enabled = False
 
-    def modify_card_reward_options_late(
-        self,
-        owner: Creature,
-        cards: list[CardInstance],
-        reward: CardReward,
-        room: Room | None,
-        run_state: RunState,
-    ) -> list[CardInstance]:
-        if not self.enabled or self._times_used >= self.CARD_REWARDS:
-            return cards
-        for card in cards:
-            owner.upgrade_card_instance(card)
-        self._times_used += 1
-        self._refresh_enabled()
-        return cards
-
     def after_room_entered(self, owner: Creature, room_type: object) -> None:
         if hasattr(room_type, "room_type") and room_type.room_type.name == "TREASURE":
             self._treasure_rooms_entered += 1
@@ -2104,10 +2310,13 @@ class SilverCrucible(RelicInstance):
         room: Room | None,
         run_state: RunState,
     ) -> list[CardInstance]:
-        if getattr(reward, "_silver_crucible_upgraded", False) or self._times_used < 3:
+        if not self.enabled:
+            return cards
+        if getattr(reward, "_silver_crucible_upgraded", False) or self._times_used < self.CARD_REWARDS:
             if not getattr(reward, "_silver_crucible_upgraded", False):
                 reward._silver_crucible_upgraded = True
                 self._times_used += 1
+                self._refresh_enabled()
             for card in cards:
                 owner.upgrade_card_instance(card)
         return cards
@@ -2370,7 +2579,11 @@ class TriBoomerang(RelicInstance):
     CARDS = 3
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.enchant_cards("Instinct", 1, self.CARDS)
+        candidates = [card for card in owner.deck if can_enchant_card(card, "Instinct")]
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_enchant_cards_reward("Instinct", 1, self.CARDS, cards=candidates)
+            return
+        owner.enchant_selected_cards("Instinct", 1, self.CARDS, cards=candidates)
 
 
 @register_relic
@@ -2465,6 +2678,23 @@ class WongosMysteryTicket(RelicInstance):
         self._combats_finished: int = 0
         self._gave_relic: bool = False
 
+    def modify_rewards(
+        self,
+        owner: Creature,
+        rewards: list[Reward],
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[Reward]:
+        from sts2_env.core.enums import RoomType
+        from sts2_env.run.reward_objects import RelicReward
+
+        if self._gave_relic or self._combats_finished < self.COMBATS_NEEDED + 1:
+            return rewards
+        if room is None or room.room_type not in {RoomType.MONSTER, RoomType.ELITE, RoomType.BOSS}:
+            return rewards
+        self._gave_relic = True
+        return [*rewards, *(RelicReward(owner.player_id) for _ in range(self.RELICS))]
+
     def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
         if not self._gave_relic:
             self._combats_finished += 1
@@ -2479,7 +2709,11 @@ class YummyCookie(RelicInstance):
     CARDS = 4
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.upgrade_selected_cards(self.CARDS)
+        candidates = owner.upgradable_deck_cards()
+        if getattr(owner.run_state, "enable_deck_choice_requests", False):
+            owner.offer_upgrade_cards_reward(self.CARDS, cards=candidates)
+            return
+        owner.upgrade_selected_cards(self.CARDS, cards=candidates)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -4,8 +4,8 @@ Compact flat float32 vector (~131 dimensions):
   Player state:       hp/max_hp, block/50, energy, max_energy       (4)
   Player powers:      str, dex, vuln, weak, frail, artifact         (6)
   Hand (10 cards):    card_id_norm, cost, damage, block, is_attack  (50)
-  Pile sizes:         draw, discard, exhaust, draw_attacks,
-                      draw_skills, discard_attacks                  (6)
+  Pile sizes:         draw, discard, exhaust, reserved, reserved,
+                      reserved                                     (6)
   Enemies (5 slots):  alive, hp%, block, intent_onehot(5),
                       intent_dmg, intent_hits, vuln, weak, str      (13 * 5 = 65)
 Total: 4 + 6 + 50 + 6 + 65 = 131
@@ -46,7 +46,7 @@ CARD_FEATURES = 5  # card_id_norm, cost, damage, block, is_attack
 ENEMY_FEATURES = 1 + 1 + 1 + NUM_INTENT_TYPES + 1 + 1 + 1 + 1 + 1  # = 13
 
 # Pile summary features
-PILE_FEATURES = 6  # draw_size, discard_size, exhaust_size, draw_attacks, draw_skills, discard_attacks
+PILE_FEATURES = 6  # draw_size, discard_size, exhaust_size, reserved x3
 
 # Observation size
 OBS_SIZE = (
@@ -87,16 +87,15 @@ def encode_observation(combat: CombatState) -> np.ndarray:
         idx += CARD_FEATURES
 
     # --- Pile summaries (6) ---
-    draw_attacks = sum(1 for c in combat.draw_pile if c.is_attack)
-    draw_skills = sum(1 for c in combat.draw_pile if c.is_skill)
-    discard_attacks = sum(1 for c in combat.discard_pile if c.is_attack)
-
     obs[idx] = len(combat.draw_pile) / 20.0
     obs[idx + 1] = len(combat.discard_pile) / 20.0
     obs[idx + 2] = len(combat.exhaust_pile) / 20.0
-    obs[idx + 3] = draw_attacks / 10.0
-    obs[idx + 4] = draw_skills / 10.0
-    obs[idx + 5] = discard_attacks / 10.0
+    # Keep the last three pile-summary dimensions zeroed so simulator and
+    # bridge observations stay aligned even though the bridge only exposes
+    # aggregate pile counts.
+    obs[idx + 3] = 0.0
+    obs[idx + 4] = 0.0
+    obs[idx + 5] = 0.0
     idx += PILE_FEATURES
 
     # --- Enemies (5 * 13 = 65) ---

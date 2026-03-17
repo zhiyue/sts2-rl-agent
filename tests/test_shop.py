@@ -237,3 +237,14 @@ class TestShopDeterminism:
             assert c1.card_type == c2.card_type
             assert c1.on_sale == c2.on_sale
             assert c1.price == c2.price
+
+
+class TestShopConcreteItems:
+    def test_shop_entries_have_real_ids(self):
+        rs = RunState(42)
+        rs.initialize_run()
+        inv = generate_shop_inventory(rs)
+
+        assert all(entry.card_id for entry in inv.cards + inv.colorless_cards)
+        assert all(entry.relic_id for entry in inv.relics)
+        assert all(entry.potion_id for entry in inv.potions)

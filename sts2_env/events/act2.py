@@ -7,15 +7,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sts2_env.cards.status import make_spore_mind
+from sts2_env.cards.enchantments import can_enchant_card
+from sts2_env.cards.status import make_feeding_frenzy, make_spore_mind
 from sts2_env.events.shared import (
     _obtain_random_relics,
     _remove_n_cards,
     _remove_selected_cards,
     _transform_n_cards,
     _transform_selected_cards,
+    _upgrade_n_cards,
 )
 from sts2_env.potions.base import create_potion, normal_pool_models
+from sts2_env.run.reward_objects import RelicReward
 from sts2_env.run.events import EventModel, EventOption, EventResult, register_event
 
 if TYPE_CHECKING:
@@ -77,10 +80,20 @@ class DollRoom(EventModel):
 
     event_id = "DollRoom"
 
+    def __init__(self) -> None:
+        self._doll_choices: dict[str, str] = {}
+
+    _DOLLS = (
+        ("DAUGHTER_OF_THE_WIND", "Daughter of the Wind"),
+        ("MR_STRUGGLES", "Mr Struggles"),
+        ("BING_BONG", "Bing Bong"),
+    )
+
     def is_allowed(self, run_state: RunState) -> bool:
         return run_state.current_act_index == 1
 
     def generate_initial_options(self, run_state: RunState) -> list[EventOption]:
+        self._doll_choices = {}
         return [
             EventOption("random", "Random", "Get a random doll relic"),
             EventOption("take_time", "Take Some Time",
@@ -91,35 +104,40 @@ class DollRoom(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "random":
+            relic_id, _ = run_state.rng.up_front.choice(list(self._DOLLS))
+            run_state.player.obtain_relic(relic_id)
             return EventResult(finished=True,
                                description="Got a random doll relic.")
         if option_id == "take_time":
             run_state.player.lose_hp(5)
+            dolls = list(self._DOLLS)
+            run_state.rng.up_front.shuffle(dolls)
+            shown = dolls[:2]
+            self._doll_choices = {f"doll_{i + 1}": relic_id for i, (relic_id, _) in enumerate(shown)}
             return EventResult(
                 finished=False,
                 description="Took 5 damage, examining dolls.",
                 next_options=[
-                    EventOption("doll_1", "Daughter of the Wind",
-                                 "Gain Daughter of the Wind relic"),
-                    EventOption("doll_2", "Mr Struggles",
-                                 "Gain Mr Struggles relic"),
+                    EventOption(option_id, label, f"Gain {label} relic")
+                    for option_id, (relic_id, label) in zip(self._doll_choices, shown)
                 ],
             )
         if option_id == "examine":
             run_state.player.lose_hp(15)
+            dolls = list(self._DOLLS)
+            run_state.rng.up_front.shuffle(dolls)
+            self._doll_choices = {f"doll_{i + 1}": relic_id for i, (relic_id, _) in enumerate(dolls)}
             return EventResult(
                 finished=False,
                 description="Took 15 damage, all dolls revealed.",
                 next_options=[
-                    EventOption("doll_1", "Daughter of the Wind",
-                                 "Gain Daughter of the Wind relic"),
-                    EventOption("doll_2", "Mr Struggles",
-                                 "Gain Mr Struggles relic"),
-                    EventOption("doll_3", "Bing Bong",
-                                 "Gain Bing Bong relic"),
+                    EventOption(option_id, label, f"Gain {label} relic")
+                    for option_id, (relic_id, label) in zip(self._doll_choices, dolls)
                 ],
             )
-        # doll chosen
+        relic_id = self._doll_choices.get(option_id)
+        if relic_id is not None:
+            run_state.player.obtain_relic(relic_id)
         return EventResult(finished=True,
                            description="Obtained a doll relic.")
 
@@ -142,12 +160,14 @@ class EndlessConveyor(EventModel):
 
     def __init__(self) -> None:
         self._grabs = 0
+        self._current_dish: str = ""
 
     def is_allowed(self, run_state: RunState) -> bool:
         return run_state.player.gold >= 105
 
     def generate_initial_options(self, run_state: RunState) -> list[EventOption]:
         self._grabs = 0
+        self._roll_dish(run_state)
         return [
             EventOption("grab", "Grab Something (35g)",
                          "Random dish from the conveyor"),
@@ -157,6 +177,7 @@ class EndlessConveyor(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "observe":
+            _upgrade_n_cards(run_state, 1)
             return EventResult(finished=True,
                                description="Observed chef, upgraded a random card.")
         if option_id == "leave":
@@ -164,8 +185,11 @@ class EndlessConveyor(EventModel):
 
         # grab
         if run_state.player.gold >= 35:
-            run_state.player.lose_gold(35)
+            if self._current_dish != "golden_fysh":
+                run_state.player.lose_gold(35)
+            self._apply_dish(run_state)
             self._grabs += 1
+            self._roll_dish(run_state)
 
             can_grab = run_state.player.gold >= 35
             next_opts = []
@@ -180,6 +204,47 @@ class EndlessConveyor(EventModel):
                 next_options=next_opts,
             )
         return EventResult(finished=True, description="Cannot afford more food.")
+
+    def _roll_dish(self, run_state: RunState) -> None:
+        if (self._grabs + 1) % 5 == 0:
+            self._current_dish = "seapunk_salad"
+            return
+        weighted = [
+            ("caviar", 1.0),
+            ("clam_roll", 1.0),
+            ("spicy_snappy", 1.0),
+            ("jelly_liver", 1.0),
+            ("fried_eel", 1.0),
+            ("golden_fysh", 1.0),
+            ("suspicious_condiment", 1.0),
+        ]
+        total = sum(weight for _, weight in weighted)
+        roll = run_state.rng.up_front.next_float() * total
+        for dish, weight in weighted:
+            roll -= weight
+            if roll <= 0:
+                self._current_dish = dish
+                return
+        self._current_dish = weighted[-1][0]
+
+    def _apply_dish(self, run_state: RunState) -> None:
+        dish = self._current_dish
+        if dish == "caviar":
+            run_state.player.gain_max_hp(4)
+        elif dish == "clam_roll":
+            run_state.player.heal(10)
+        elif dish == "spicy_snappy":
+            _upgrade_n_cards(run_state, 1)
+        elif dish == "jelly_liver":
+            _transform_n_cards(run_state, 1)
+        elif dish == "fried_eel":
+            run_state.player.offer_colorless_cards(1)
+        elif dish == "golden_fysh":
+            run_state.player.gain_gold(75)
+        elif dish == "seapunk_salad":
+            run_state.player.add_card_instance_to_deck(make_feeding_frenzy())
+        elif dish == "suspicious_condiment":
+            run_state.player.offer_potion_reward()
 
 
 register_event(EndlessConveyor())
@@ -482,18 +547,43 @@ class RelicTrader(EventModel):
 
     event_id = "RelicTrader"
 
+    def __init__(self) -> None:
+        self._owned_relic_choices: list[str] = []
+        self._new_relic_choices: list[str] = []
+
     def is_allowed(self, run_state: RunState) -> bool:
-        return run_state.current_act_index > 0 and len(run_state.relics) >= 5
+        return run_state.current_act_index > 0 and len(run_state.player.relics) >= 5
 
     def generate_initial_options(self, run_state: RunState) -> list[EventOption]:
-        num_trades = min(3, len(run_state.relics))
+        owned = [relic_id for relic_id in run_state.player.relics if relic_id not in {
+            "BURNING_BLOOD", "RING_OF_THE_SNAKE", "CRACKED_CORE", "BOUND_PHYLACTERY", "DIVINE_RIGHT",
+            "BLACK_BLOOD", "RING_OF_THE_DRAKE", "INFUSED_CORE", "PHYLACTERY_UNBOUND", "DIVINE_DESTINY",
+        }]
+        run_state.rng.up_front.shuffle(owned)
+        self._owned_relic_choices = owned[:3]
+        self._new_relic_choices = []
+        for _ in self._owned_relic_choices:
+            reward = RelicReward(run_state.player.player_id)
+            reward.populate(run_state, None)
+            self._new_relic_choices.append(reward.relic_id or "CIRCLET")
         options = []
-        for i in range(num_trades):
+        for i in range(len(self._owned_relic_choices)):
             options.append(EventOption(f"trade_{i}", f"Trade Relic {i+1}",
                                         "Swap an owned relic for a new one"))
         return options
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
+        if option_id.startswith("trade_"):
+            index = int(option_id.split("_")[1])
+            if 0 <= index < len(self._owned_relic_choices):
+                old = self._owned_relic_choices[index]
+                new = self._new_relic_choices[index]
+                if old in run_state.player.relics:
+                    old_index = run_state.player.relics.index(old)
+                    run_state.player.relics.pop(old_index)
+                    if old_index < len(run_state.player.relic_objects):
+                        run_state.player.relic_objects.pop(old_index)
+                run_state.player.obtain_relic(new)
         return EventResult(finished=True,
                            description="Traded a relic for a new one.")
 
@@ -574,7 +664,7 @@ class SpiralingWhirlpool(EventModel):
         if option_id == "observe":
             return self.request_card_choice(
                 prompt="Choose a card to enchant with Spiral",
-                cards=list(run_state.player.deck),
+                cards=[card for card in run_state.player.deck if can_enchant_card(card, "Spiral")],
                 source_pile="deck",
                 resolver=lambda selected: (
                     selected and selected[0].add_enchantment("Spiral", 1),
@@ -621,7 +711,7 @@ class StoneOfAllTime(EventModel):
         run_state.player.lose_hp(6)
         return self.request_card_choice(
             prompt="Choose a card to enchant with Vigorous",
-            cards=list(run_state.player.deck),
+            cards=[card for card in run_state.player.deck if can_enchant_card(card, "Vigorous")],
             source_pile="deck",
             resolver=lambda selected: (
                 selected and selected[0].add_enchantment("Vigorous", 8),
@@ -657,7 +747,7 @@ class Symbiote(EventModel):
         if option_id == "approach":
             return self.request_card_choice(
                 prompt="Choose a card to enchant with Corrupted",
-                cards=list(run_state.player.deck),
+                cards=[card for card in run_state.player.deck if can_enchant_card(card, "Corrupted")],
                 source_pile="deck",
                 resolver=lambda selected: (
                     selected and selected[0].add_enchantment("Corrupted", 1),
@@ -733,7 +823,7 @@ class WaterloggedScriptorium(EventModel):
             run_state.player.lose_gold(65)
             return self.request_card_choice(
                 prompt="Choose a card to enchant with Steady",
-                cards=list(run_state.player.deck),
+                cards=[card for card in run_state.player.deck if can_enchant_card(card, "Steady")],
                 source_pile="deck",
                 resolver=lambda selected: (
                     selected and selected[0].add_enchantment("Steady", 1),
@@ -744,7 +834,7 @@ class WaterloggedScriptorium(EventModel):
         run_state.player.lose_gold(155)
         return self.request_card_choice(
             prompt="Choose 2 cards to enchant with Steady",
-            cards=list(run_state.player.deck),
+            cards=[card for card in run_state.player.deck if can_enchant_card(card, "Steady")],
             source_pile="deck",
             resolver=lambda selected: (
                 [card.add_enchantment("Steady", 1) for card in selected],

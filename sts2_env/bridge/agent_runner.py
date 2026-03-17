@@ -177,6 +177,11 @@ def run_agent(
 
                     if decoded["type"] == "END_TURN":
                         client.end_turn()
+                    elif decoded["type"] == "POTION" or decoded.get("out_of_hand"):
+                        client.use_potion(
+                            decoded.get("slot", decoded.get("potion_slot", -1)),
+                            decoded.get("target_index", -1),
+                        )
                     else:
                         client.play_card(
                             decoded["card_index"],
@@ -192,10 +197,34 @@ def run_agent(
 
                 elif phase == Phase.CARD_REWARD:
                     # ---- Card reward: pick best card ----
-                    choice = _pick_best_card(state)
-                    if verbose:
-                        logger.info("CARD_REWARD: choosing option %d", choice)
-                    client.choose(choice)
+                    if msg_type == "card_select":
+                        cards = state.get("cards", [])
+                        min_select = state.get("min_select", 1)
+                        max_select = state.get("max_select", 1)
+                        if max_select > 1 or min_select > 1:
+                            indexes = list(range(min(min_select, len(cards))))
+                            if verbose:
+                                logger.info("CARD_SELECT: choosing indexes %s", indexes)
+                            if indexes:
+                                client.choose_many(indexes)
+                            else:
+                                client.skip()
+                        else:
+                            choice = 0
+                            if verbose:
+                                logger.info("CARD_SELECT: choosing option %d", choice)
+                            if choice >= len(cards):
+                                client.skip()
+                            else:
+                                client.choose(choice)
+                    else:
+                        choice = _pick_best_card(state)
+                        if verbose:
+                            logger.info("CARD_REWARD: choosing option %d", choice)
+                        if choice >= len(state.get("cards", [])):
+                            client.skip()
+                        else:
+                            client.choose(choice)
 
                 elif phase == Phase.REST:
                     # ---- Rest: heal if low HP, otherwise upgrade ----
@@ -346,6 +375,26 @@ def _log_combat_action(
             player.get("max_hp", 0),
             player.get("energy", 0),
             combat.get("round", 0),
+        )
+    elif decoded["type"] == "POTION" or decoded.get("out_of_hand"):
+        slot = decoded.get("slot", decoded.get("potion_slot", -1))
+        ti = decoded.get("target_index", -1)
+        potions = combat.get("potions", [])
+        potion_name = "?"
+        for potion in potions:
+            if int(potion.get("slot", -1)) == slot:
+                potion_name = potion.get("id", "?")
+                break
+        target_name = enemies[ti].get("id", "?") if 0 <= ti < len(enemies) else "N/A"
+        logger.info(
+            "COMBAT [HP:%d/%d E:%d] -> POTION %s (slot=%d) -> %s (idx=%d)",
+            player.get("hp", 0),
+            player.get("max_hp", 0),
+            player.get("energy", 0),
+            potion_name,
+            slot,
+            target_name,
+            ti,
         )
     else:
         ci = decoded.get("card_index", -1)

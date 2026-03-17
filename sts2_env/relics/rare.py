@@ -14,8 +14,20 @@ from sts2_env.relics.base import RelicId, RelicPool, RelicInstance
 from sts2_env.relics.registry import register_relic
 
 if TYPE_CHECKING:
+    from sts2_env.cards.base import CardInstance
     from sts2_env.core.creature import Creature
     from sts2_env.core.combat import CombatState
+    from sts2_env.run.reward_objects import CardReward, Reward
+    from sts2_env.run.rewards import CardRewardGenerationOptions
+    from sts2_env.run.rooms import Room
+    from sts2_env.run.run_state import RunState
+
+
+def _upgrade_reward_cards(owner: Creature, cards: list[CardInstance], card_type: CardType) -> list[CardInstance]:
+    for card in cards:
+        if card.card_type == card_type:
+            owner.upgrade_card_instance(card)
+    return cards
 
 
 @register_relic
@@ -182,7 +194,33 @@ class FrozenEgg(RelicInstance):
     relic_id = RelicId.FROZEN_EGG
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
-    # Card reward / deck modification hooks
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        return _upgrade_reward_cards(owner, cards, CardType.POWER)
+
+    def modify_card_being_added_to_deck(self, owner: Creature, card: CardInstance) -> CardInstance:
+        if card.card_type == CardType.POWER:
+            owner.upgrade_card_instance(card)
+        return card
+
+    def modify_merchant_card_creation_results(
+        self,
+        owner: Creature,
+        card: CardInstance,
+        *,
+        is_colorless: bool,
+        run_state: RunState,
+    ) -> CardInstance:
+        if card.card_type == CardType.POWER:
+            owner.upgrade_card_instance(card)
+        return card
 
 
 @register_relic
@@ -228,6 +266,13 @@ class Girya(RelicInstance):
             self._times_lifted += 1
             return True
         return False
+
+    def modify_rest_site_options(self, owner: Creature, options: list[object], run_state: RunState) -> list[object]:
+        from sts2_env.run.rest_site import LiftOption
+
+        if not any(getattr(option, "option_id", "") == "LIFT" for option in options):
+            options = [*options, LiftOption(self._times_lifted)]
+        return options
 
 
 @register_relic
@@ -321,6 +366,33 @@ class LastingCandy(RelicInstance):
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)
         self._combats_seen: int = 0
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        from sts2_env.cards.factory import create_character_cards
+
+        if self._combats_seen <= 0 or self._combats_seen % 2 != 0:
+            return cards
+        if getattr(reward, "_lasting_candy_added", False):
+            return cards
+        generated = create_character_cards(
+            owner.character_id,
+            run_state.rng.rewards,
+            1,
+            card_type=CardType.POWER,
+            generation_context=None,
+            distinct=True,
+        )
+        if generated:
+            reward._lasting_candy_added = True
+            return [*cards, generated[0]]
+        return cards
 
     def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
         self._combats_seen += 1
@@ -441,7 +513,33 @@ class MoltenEgg(RelicInstance):
     relic_id = RelicId.MOLTEN_EGG
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
-    # Card reward / deck modification hooks
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        return _upgrade_reward_cards(owner, cards, CardType.ATTACK)
+
+    def modify_card_being_added_to_deck(self, owner: Creature, card: CardInstance) -> CardInstance:
+        if card.card_type == CardType.ATTACK:
+            owner.upgrade_card_instance(card)
+        return card
+
+    def modify_merchant_card_creation_results(
+        self,
+        owner: Creature,
+        card: CardInstance,
+        *,
+        is_colorless: bool,
+        run_state: RunState,
+    ) -> CardInstance:
+        if card.card_type == CardType.ATTACK:
+            owner.upgrade_card_instance(card)
+        return card
 
 
 @register_relic
@@ -532,7 +630,20 @@ class PrayerWheel(RelicInstance):
     relic_id = RelicId.PRAYER_WHEEL
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
-    # TryModifyRewards hook
+
+    def modify_rewards(
+        self,
+        owner: Creature,
+        rewards: list[Reward],
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[Reward]:
+        from sts2_env.core.enums import RoomType
+        from sts2_env.run.reward_objects import CardReward
+
+        if room is not None and room.room_type == RoomType.MONSTER:
+            return [*rewards, CardReward(owner.player_id, context="regular")]
+        return rewards
 
 
 @register_relic
@@ -603,7 +714,13 @@ class Shovel(RelicInstance):
     relic_id = RelicId.SHOVEL
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
-    # TryModifyRestSiteOptions hook
+
+    def modify_rest_site_options(self, owner: Creature, options: list[object], run_state: RunState) -> list[object]:
+        from sts2_env.run.rest_site import DigOption
+
+        if not any(getattr(option, "option_id", "") == "DIG" for option in options):
+            options = [*options, DigOption()]
+        return options
 
 
 @register_relic
@@ -674,7 +791,27 @@ class TheCourier(RelicInstance):
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
     DISCOUNT = 20
-    # ModifyMerchantPrice / ShouldRefillMerchantEntry hooks
+
+    def modify_merchant_price(
+        self,
+        owner: Creature,
+        price: int,
+        *,
+        item_kind: str,
+        item: object,
+        run_state: RunState,
+    ) -> int:
+        return max(0, int(round(price * (100 - self.DISCOUNT) / 100)))
+
+    def should_refill_merchant_entry(
+        self,
+        owner: Creature,
+        *,
+        item_kind: str,
+        item: object,
+        run_state: RunState,
+    ) -> bool | None:
+        return item_kind in {"card", "relic", "potion"}
 
 
 @register_relic
@@ -696,7 +833,33 @@ class ToxicEgg(RelicInstance):
     relic_id = RelicId.TOXIC_EGG
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
-    # Card reward / deck modification hooks
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        return _upgrade_reward_cards(owner, cards, CardType.SKILL)
+
+    def modify_card_being_added_to_deck(self, owner: Creature, card: CardInstance) -> CardInstance:
+        if card.card_type == CardType.SKILL:
+            owner.upgrade_card_instance(card)
+        return card
+
+    def modify_merchant_card_creation_results(
+        self,
+        owner: Creature,
+        card: CardInstance,
+        *,
+        is_colorless: bool,
+        run_state: RunState,
+    ) -> CardInstance:
+        if card.card_type == CardType.SKILL:
+            owner.upgrade_card_instance(card)
+        return card
 
 
 @register_relic
@@ -793,7 +956,20 @@ class WhiteStar(RelicInstance):
     relic_id = RelicId.WHITE_STAR
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
-    # TryModifyRewards hook
+
+    def modify_rewards(
+        self,
+        owner: Creature,
+        rewards: list[Reward],
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[Reward]:
+        from sts2_env.core.enums import RoomType
+        from sts2_env.run.reward_objects import CardReward
+
+        if room is not None and room.room_type == RoomType.ELITE:
+            return [*rewards, CardReward(owner.player_id, context="boss")]
+        return rewards
 
 
 @register_relic

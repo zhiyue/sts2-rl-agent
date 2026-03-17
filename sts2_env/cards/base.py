@@ -100,7 +100,13 @@ class CardInstance:
         return name in self.enchantments
 
     def add_enchantment(self, name: str, amount: int = 1) -> None:
-        self.enchantments[name] = amount
+        from sts2_env.cards.enchantments import apply_static_enchantment
+
+        apply_static_enchantment(self, name, amount)
+
+    @property
+    def is_removable(self) -> bool:
+        return "eternal" not in self.keywords
 
     @property
     def is_shiv(self) -> bool:

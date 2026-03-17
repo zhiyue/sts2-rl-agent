@@ -15,6 +15,11 @@ import math
 from decimal import Decimal
 from typing import TYPE_CHECKING, Iterator
 
+from sts2_env.cards.enchantments import (
+    enchant_block_additive,
+    enchant_damage_additive,
+    enchant_damage_multiplicative,
+)
 from sts2_env.core.enums import CombatSide, PowerId, ValueProp
 
 if TYPE_CHECKING:
@@ -67,6 +72,9 @@ def modify_damage(
     damage = float(base_damage)
     card_source = card_source if card_source is not None else getattr(combat, "active_card_source", None)
 
+    if card_source is not None and hasattr(card_source, "enchantments"):
+        damage += enchant_damage_additive(card_source, props)
+
     # Step 1: Additive modifiers
     for owner, power in _iter_power_listeners(combat):
         damage += power.modify_damage_additive(owner, dealer, target, props)
@@ -79,6 +87,8 @@ def modify_damage(
         damage *= mult
     for owner, relic in _iter_relic_listeners(combat):
         damage *= relic.modify_damage_multiplicative(owner, dealer, target, props, card_source)
+    if card_source is not None and hasattr(card_source, "enchantments"):
+        damage *= enchant_damage_multiplicative(card_source, props)
 
     # Step 3: Cap (usually no cap)
     cap = float("inf")
@@ -128,6 +138,9 @@ def modify_block(
     4. Floor and clamp to 0
     """
     block = float(base_block)
+
+    if card_source is not None and hasattr(card_source, "enchantments"):
+        block += enchant_block_additive(card_source, props)
 
     # Step 1: Additive
     for owner, power in _iter_power_listeners(combat):

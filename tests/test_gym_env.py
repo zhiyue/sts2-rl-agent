@@ -108,12 +108,11 @@ class TestStep:
 
 
 class TestActionMasks:
-    """Test action_masks() returns bool array of size 61."""
+    """Test action_masks() returns a binary vector sized to ACTION_SPACE_SIZE."""
 
     def test_action_mask_shape(self, seeded_env):
         mask = seeded_env.action_masks()
         assert mask.shape == (ACTION_SPACE_SIZE,)
-        assert mask.shape == (61,)
 
     def test_action_mask_dtype(self, seeded_env):
         mask = seeded_env.action_masks()
