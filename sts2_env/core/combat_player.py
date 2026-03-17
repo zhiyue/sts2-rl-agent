@@ -43,7 +43,11 @@ class CombatPlayerState:
 
     def __post_init__(self) -> None:
         if not self.relics:
-            self.relics = [create_relic_by_name(relic_id) for relic_id in self.player_state.relics]
+            get_relic_objects = getattr(self.player_state, "get_relic_objects", None)
+            if callable(get_relic_objects):
+                self.relics = get_relic_objects()
+            else:
+                self.relics = [create_relic_by_name(relic_id) for relic_id in self.player_state.relics]
         if not self.potions:
             self.potions = list(self.player_state.potions)
         if not self.starting_deck:

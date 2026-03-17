@@ -8,15 +8,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sts2_env.characters.all import ALL_CHARACTERS
 from sts2_env.core.enums import (
-    RelicRarity, CombatSide, CardType, PowerId, ValueProp,
+    CardRarity, RelicRarity, CombatSide, CardType, PowerId, RoomType, ValueProp,
 )
 from sts2_env.relics.base import RelicId, RelicPool, RelicInstance
 from sts2_env.relics.registry import register_relic
 
 if TYPE_CHECKING:
+    from sts2_env.cards.base import CardInstance
     from sts2_env.core.creature import Creature
     from sts2_env.core.combat import CombatState
+    from sts2_env.run.reward_objects import CardReward, Reward
+    from sts2_env.run.rewards import CardRewardGenerationOptions
+    from sts2_env.run.rooms import Room
+    from sts2_env.run.run_state import RunState
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -132,7 +138,24 @@ class DingyRug(RelicInstance):
     relic_id = RelicId.DINGY_RUG
     rarity = RelicRarity.SHOP
     pool = RelicPool.SHARED
-    # ModifyCardRewardCreationOptions hook
+
+    def modify_card_reward_creation_options(
+        self,
+        owner: Creature,
+        options: CardRewardGenerationOptions,
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> CardRewardGenerationOptions:
+        from sts2_env.run.rewards import CardRewardGenerationOptions
+
+        return CardRewardGenerationOptions(
+            context=options.context,
+            num_cards=options.num_cards,
+            character_ids=options.character_ids,
+            forced_rarities=options.forced_rarities,
+            include_colorless=True,
+        )
 
 
 @register_relic
@@ -214,6 +237,23 @@ class LavaLamp(RelicInstance):
     def before_combat_start(self, owner: Creature, combat: CombatState) -> None:
         self._took_damage = False
 
+    def after_room_entered(self, owner: Creature, room_type: object) -> None:
+        if getattr(room_type, "is_combat", False):
+            self._took_damage = False
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        if room is not None and getattr(room, "room_type", None) in {RoomType.MONSTER, RoomType.ELITE, RoomType.BOSS} and not self._took_damage:
+            for card in cards:
+                owner.upgrade_card_instance(card)
+        return cards
+
 
 @register_relic
 class LeesWaffle(RelicInstance):
@@ -235,7 +275,17 @@ class MembershipCard(RelicInstance):
     rarity = RelicRarity.SHOP
     pool = RelicPool.SHARED
     DISCOUNT = 50
-    # ModifyMerchantPrice hook
+
+    def modify_merchant_price(
+        self,
+        owner: Creature,
+        price: int,
+        *,
+        item_kind: str,
+        item: object,
+        run_state: RunState,
+    ) -> int:
+        return max(0, int(round(price * (100 - self.DISCOUNT) / 100)))
 
 
 @register_relic
@@ -244,7 +294,14 @@ class MiniatureTent(RelicInstance):
     relic_id = RelicId.MINIATURE_TENT
     rarity = RelicRarity.SHOP
     pool = RelicPool.SHARED
-    # ShouldDisableRemainingRestSiteOptions hook
+
+    def should_disable_remaining_rest_site_options(
+        self,
+        owner: Creature,
+        chosen_option: object,
+        run_state: RunState,
+    ) -> bool | None:
+        return False
 
 
 @register_relic
@@ -576,7 +633,20 @@ class BlackStar(RelicInstance):
     relic_id = RelicId.BLACK_STAR
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    # TryModifyRewards hook
+
+    def modify_rewards(
+        self,
+        owner: Creature,
+        rewards: list[Reward],
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[Reward]:
+        from sts2_env.core.enums import RoomType
+        from sts2_env.run.reward_objects import RelicReward
+
+        if room is not None and room.room_type == RoomType.ELITE:
+            return [*rewards, RelicReward(owner.player_id)]
+        return rewards
 
 
 @register_relic
@@ -836,7 +906,11 @@ class DreamCatcher(RelicInstance):
     relic_id = RelicId.DREAM_CATCHER
     rarity = RelicRarity.EVENT
     pool = RelicPool.EVENT
-    # TryModifyRestSiteHealRewards hook
+
+    def modify_rest_site_heal_rewards(self, owner: Creature, rewards: list[object], run_state: RunState) -> list[object]:
+        from sts2_env.run.reward_objects import CardReward
+
+        return [*rewards, CardReward(owner.player_id)]
 
 
 @register_relic
@@ -845,7 +919,15 @@ class Driftwood(RelicInstance):
     relic_id = RelicId.DRIFTWOOD
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    # TryModifyRewardsLate hook
+
+    def allow_card_reward_reroll(
+        self,
+        owner: Creature,
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> bool:
+        return True
 
 
 @register_relic
@@ -1105,7 +1187,33 @@ class FresnelLens(RelicInstance):
     rarity = RelicRarity.EVENT
     pool = RelicPool.EVENT
     NIMBLE = 2
-    # Card reward modification hooks
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        for card in cards:
+            card.add_enchantment("Nimble", self.NIMBLE)
+        return cards
+
+    def modify_card_being_added_to_deck(self, owner: Creature, card: CardInstance) -> CardInstance:
+        card.add_enchantment("Nimble", self.NIMBLE)
+        return card
+
+    def modify_merchant_card_creation_results(
+        self,
+        owner: Creature,
+        card: CardInstance,
+        *,
+        is_colorless: bool,
+        run_state: RunState,
+    ) -> CardInstance:
+        card.add_enchantment("Nimble", self.NIMBLE)
+        return card
 
 
 @register_relic
@@ -1126,8 +1234,22 @@ class GlassEye(RelicInstance):
     pool = RelicPool.EVENT
 
     def after_obtained(self, owner: Creature) -> None:
-        for _ in range(5):
-            owner.offer_card_reward()
+        from sts2_env.run.reward_objects import CardReward
+
+        for rarity in (
+            CardRarity.COMMON,
+            CardRarity.COMMON,
+            CardRarity.UNCOMMON,
+            CardRarity.UNCOMMON,
+            CardRarity.RARE,
+        ):
+            owner.run_state.pending_rewards.append(
+                CardReward(
+                    owner.player_id,
+                    option_count=3,
+                    forced_rarities=(rarity, rarity, rarity),
+                )
+            )
 
 
 @register_relic
@@ -1136,7 +1258,18 @@ class Glitter(RelicInstance):
     relic_id = RelicId.GLITTER
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    # TryModifyCardRewardOptionsLate hook
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        for card in cards:
+            card.add_enchantment("Glam", 1)
+        return cards
 
 
 @register_relic
@@ -1249,6 +1382,26 @@ class LavaRock(RelicInstance):
         super().__init__(relic_id)
         self._triggered: bool = False
 
+    def modify_rewards(
+        self,
+        owner: Creature,
+        rewards: list[Reward],
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[Reward]:
+        from sts2_env.core.enums import RoomType
+        from sts2_env.run.reward_objects import RelicReward
+
+        if not self.enabled or self._triggered:
+            return rewards
+        if room is None or room.room_type != RoomType.BOSS:
+            return rewards
+        if run_state.current_act_index != 0:
+            return rewards
+        self._triggered = True
+        self.enabled = False
+        return [*rewards, *(RelicReward(owner.player_id) for _ in range(self.RELICS))]
+
 
 @register_relic
 class LeadPaperweight(RelicInstance):
@@ -1358,7 +1511,14 @@ class MeatCleaver(RelicInstance):
     relic_id = RelicId.MEAT_CLEAVER
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    # TryModifyRestSiteOptions hook
+
+    def modify_rest_site_options(self, owner: Creature, options: list[object], run_state: RunState) -> list[object]:
+        from sts2_env.run.rest_site import CookOption
+
+        removable_count = sum(1 for card in getattr(owner, "deck", []) if card.rarity.name not in ("STATUS", "CURSE"))
+        if removable_count >= 2 and not any(getattr(option, "option_id", "") == "COOK" for option in options):
+            options = [*options, CookOption(has_enough_removable=True)]
+        return options
 
 
 @register_relic
@@ -1531,6 +1691,13 @@ class PaelsGrowth(RelicInstance):
 
     def after_obtained(self, owner: Creature) -> None:
         owner.enchant_cards("Clone", 4, 1)
+
+    def modify_rest_site_options(self, owner: Creature, options: list[object], run_state: RunState) -> list[object]:
+        from sts2_env.run.rest_site import CloneOption
+
+        if not any(getattr(option, "option_id", "") == "CLONE" for option in options):
+            options = [*options, CloneOption()]
+        return options
 
 
 @register_relic
@@ -1724,6 +1891,23 @@ class PrismaticGem(RelicInstance):
     def modify_max_energy(self, owner: Creature, energy: int) -> int:
         return energy + self.ENERGY
 
+    def modify_card_reward_creation_options(
+        self,
+        owner: Creature,
+        options: CardRewardGenerationOptions,
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> CardRewardGenerationOptions:
+        from sts2_env.run.rewards import CardRewardGenerationOptions
+
+        return CardRewardGenerationOptions(
+            context=options.context,
+            num_cards=options.num_cards,
+            character_ids=tuple(character.character_id for character in ALL_CHARACTERS),
+            forced_rarities=options.forced_rarities,
+        )
+
 
 @register_relic
 class PumpkinCandle(RelicInstance):
@@ -1877,10 +2061,56 @@ class SilverCrucible(RelicInstance):
     relic_id = RelicId.SILVER_CRUCIBLE
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
+    CARD_REWARDS = 3
 
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)
         self._times_used: int = 0
+        self._treasure_rooms_entered: int = 0
+
+    def _refresh_enabled(self) -> None:
+        if self._times_used >= self.CARD_REWARDS and self._treasure_rooms_entered > 0:
+            self.enabled = False
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        if not self.enabled or self._times_used >= self.CARD_REWARDS:
+            return cards
+        for card in cards:
+            owner.upgrade_card_instance(card)
+        self._times_used += 1
+        self._refresh_enabled()
+        return cards
+
+    def after_room_entered(self, owner: Creature, room_type: object) -> None:
+        if hasattr(room_type, "room_type") and room_type.room_type.name == "TREASURE":
+            self._treasure_rooms_entered += 1
+            self._refresh_enabled()
+
+    def should_generate_treasure(self, owner: Creature) -> bool | None:
+        return self._treasure_rooms_entered > 1
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        if getattr(reward, "_silver_crucible_upgraded", False) or self._times_used < 3:
+            if not getattr(reward, "_silver_crucible_upgraded", False):
+                reward._silver_crucible_upgraded = True
+                self._times_used += 1
+            for card in cards:
+                owner.upgrade_card_instance(card)
+        return cards
 
 
 @register_relic
@@ -1943,7 +2173,10 @@ class StoneHumidifier(RelicInstance):
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     MAX_HP = 5
-    # AfterRestSiteHeal hook
+
+    def after_rest_site_heal(self, owner: Creature, healed: int, run_state: RunState) -> None:
+        if healed > 0:
+            owner.gain_max_hp(self.MAX_HP)
 
 
 @register_relic
@@ -2101,6 +2334,31 @@ class ToyBox(RelicInstance):
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)
         self._combats_seen: int = 0
+
+    def after_obtained(self, owner: Creature) -> None:
+        from sts2_env.run.reward_objects import RelicReward
+
+        for _ in range(self.RELICS):
+            owner.run_state.pending_rewards.append(RelicReward(owner.player_id, is_wax=True))
+
+    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        if not self.enabled:
+            return
+        self._combats_seen += 1
+        if self._combats_seen % self.COMBATS_PER_MELT != 0:
+            return
+        player_state_ref = combat.combat_player_state_for(owner)
+        if player_state_ref is None:
+            return
+        for relic in player_state_ref.player_state.get_relic_objects():
+            if relic is self:
+                continue
+            if getattr(relic, "is_wax", False) and not getattr(relic, "is_melted", False):
+                relic.is_melted = True
+                relic.enabled = False
+                break
+        if self._combats_seen >= self.COMBATS_PER_MELT * self.RELICS:
+            self.enabled = False
 
 
 @register_relic

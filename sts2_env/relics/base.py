@@ -13,8 +13,15 @@ from typing import TYPE_CHECKING
 from sts2_env.core.enums import RelicRarity, ValueProp, CombatSide, CardType, PowerId
 
 if TYPE_CHECKING:
+    from sts2_env.cards.base import CardInstance
     from sts2_env.core.creature import Creature
     from sts2_env.core.combat import CombatState
+    from sts2_env.run.rest_site import RestSiteOption
+    from sts2_env.run.reward_objects import CardReward, Reward
+    from sts2_env.run.rewards import CardRewardGenerationOptions
+    from sts2_env.run.shop import ShopInventory
+    from sts2_env.run.rooms import Room
+    from sts2_env.run.run_state import RunState
 
 
 class RelicId(Enum):
@@ -592,6 +599,142 @@ class RelicInstance:
 
     def after_obtained(self, owner: Creature) -> None:
         pass
+
+    # ─── Reward Hooks ───────────────────────────────────────────────────
+
+    def modify_rewards(
+        self,
+        owner: Creature,
+        rewards: list[Reward],
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[Reward]:
+        return rewards
+
+    def modify_card_reward_creation_options(
+        self,
+        owner: Creature,
+        options: CardRewardGenerationOptions,
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> CardRewardGenerationOptions:
+        return options
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        return cards
+
+    def modify_card_being_added_to_deck(
+        self,
+        owner: Creature,
+        card: CardInstance,
+    ) -> CardInstance:
+        return card
+
+    def allow_card_reward_reroll(
+        self,
+        owner: Creature,
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> bool:
+        return False
+
+    def should_generate_treasure(self, owner: Creature) -> bool | None:
+        return None
+
+    # ─── Merchant Hooks ─────────────────────────────────────────────────
+
+    def modify_merchant_inventory(
+        self,
+        owner: Creature,
+        inventory: ShopInventory,
+        run_state: RunState,
+    ) -> ShopInventory:
+        return inventory
+
+    def modify_merchant_card_creation_results(
+        self,
+        owner: Creature,
+        card: CardInstance,
+        *,
+        is_colorless: bool,
+        run_state: RunState,
+    ) -> CardInstance:
+        return card
+
+    def modify_merchant_price(
+        self,
+        owner: Creature,
+        price: int,
+        *,
+        item_kind: str,
+        item: object,
+        run_state: RunState,
+    ) -> int:
+        return price
+
+    def should_refill_merchant_entry(
+        self,
+        owner: Creature,
+        *,
+        item_kind: str,
+        item: object,
+        run_state: RunState,
+    ) -> bool | None:
+        return None
+
+    def on_item_purchased(self, owner: Creature) -> None:
+        pass
+
+    # ─── Rest Site Hooks ────────────────────────────────────────────────
+
+    def modify_rest_site_options(
+        self,
+        owner: Creature,
+        options: list[RestSiteOption],
+        run_state: RunState,
+    ) -> list[RestSiteOption]:
+        return options
+
+    def modify_rest_site_heal_amount(
+        self,
+        owner: Creature,
+        amount: int,
+        run_state: RunState,
+    ) -> int:
+        return amount
+
+    def modify_rest_site_heal_rewards(
+        self,
+        owner: Creature,
+        rewards: list[Reward],
+        run_state: RunState,
+    ) -> list[Reward]:
+        return rewards
+
+    def after_rest_site_heal(
+        self,
+        owner: Creature,
+        healed: int,
+        run_state: RunState,
+    ) -> None:
+        pass
+
+    def should_disable_remaining_rest_site_options(
+        self,
+        owner: Creature,
+        chosen_option: object,
+        run_state: RunState,
+    ) -> bool | None:
+        return None
 
     # ─── Potion Hooks ───────────────────────────────────────────────────
 
