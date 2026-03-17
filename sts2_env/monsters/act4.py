@@ -28,10 +28,10 @@ if TYPE_CHECKING:
 
 def _deal_damage_to_player(combat: CombatState, creature: Creature, base_dmg: int, hits: int = 1) -> None:
     for _ in range(hits):
-        if combat.player.is_dead:
+        if combat.primary_player.is_dead:
             break
-        dmg = calculate_damage(base_dmg, creature, combat.player, ValueProp.MOVE, combat)
-        apply_damage(combat.player, dmg, ValueProp.MOVE, combat, creature)
+        dmg = calculate_damage(base_dmg, creature, combat.primary_player, ValueProp.MOVE, combat)
+        apply_damage(combat.primary_player, dmg, ValueProp.MOVE, combat, creature)
 
 
 def _gain_block(creature: Creature, amount: int) -> None:
@@ -57,7 +57,7 @@ def create_corpse_slug(rng: Rng, starter_idx: int = 0) -> tuple[Creature, Monste
         _deal_damage_to_player(combat, creature, glomp_dmg)
 
     def goop(combat: CombatState) -> None:
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 2)
 
     states: dict[str, MonsterState] = {
         "WHIP_SLAP": MoveState("WHIP_SLAP", whip_slap, [multi_attack_intent(whip_slap_dmg, 2)], follow_up_id="GLOMP"),
@@ -85,7 +85,7 @@ def create_seapunk(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def poison_spit(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, poison_spit_dmg)
-        combat.apply_power_to(combat.player, PowerId.POISON, 3)
+        combat.apply_power_to(combat.primary_player, PowerId.POISON, 3)
 
     states: dict[str, MonsterState] = {
         "JAB": MoveState("JAB", jab, [attack_intent(jab_dmg)], follow_up_id="POISON_SPIT"),
@@ -102,7 +102,7 @@ def create_sludge_spinner(rng: Rng) -> tuple[Creature, MonsterAI]:
     sludge_ball_dmg = 6
 
     def toxic_spray(combat: CombatState) -> None:
-        combat.apply_power_to(combat.player, PowerId.WEAK, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 2)
 
     def sludge_ball(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, sludge_ball_dmg)
@@ -197,7 +197,7 @@ def create_fossil_stalker(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def tackle(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, tackle_dmg)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 1)
 
     def latch(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, latch_dmg)
@@ -245,8 +245,7 @@ def create_fat_gremlin(rng: Rng) -> tuple[Creature, MonsterAI]:
         pass
 
     def flee(combat: CombatState) -> None:
-        # Escape from combat (simplified: kill self)
-        creature.lose_hp(creature.current_hp)
+        combat.escape_creature(creature)
 
     states: dict[str, MonsterState] = {
         "SPAWNED": MoveState("SPAWNED", spawned, [Intent(IntentType.STUN)], follow_up_id="FLEE"),
@@ -267,7 +266,7 @@ def create_gremlin_merc(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def double_smash(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, double_smash_dmg, hits=2)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 2)
 
     def hehe(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, hehe_dmg)
@@ -334,7 +333,7 @@ def create_living_fog(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def engulf(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, engulf_dmg)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     states: dict[str, MonsterState] = {
         "SPAWN": MoveState("SPAWN", spawn, [Intent(IntentType.SUMMON)], follow_up_id="ENGULF"),
@@ -344,25 +343,39 @@ def create_living_fog(rng: Rng) -> tuple[Creature, MonsterAI]:
 
 
 # ---- PunchConstruct (HP 55 / 60 asc) ----
-# C#: StrongPunch(14) <-> FastPunch(5x2) alternating
 
-def create_punch_construct(rng: Rng) -> tuple[Creature, MonsterAI]:
+def create_punch_construct(
+    rng: Rng,
+    *,
+    starts_with_strong_punch: bool = False,
+    starting_hp_reduction: int = 0,
+) -> tuple[Creature, MonsterAI]:
     hp = 55
     creature = Creature(max_hp=hp, monster_id="PUNCH_CONSTRUCT")
     strong_punch_dmg = 14
     fast_punch_dmg = 5
+    ready_block = 10
+
+    if starting_hp_reduction > 0:
+        creature.current_hp = max(1, creature.current_hp - starting_hp_reduction)
+    creature.apply_power(PowerId.ARTIFACT, 1)
+
+    def ready(combat: CombatState) -> None:
+        _gain_block(creature, ready_block)
 
     def strong_punch(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, strong_punch_dmg)
 
     def fast_punch(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, fast_punch_dmg, hits=2)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     states: dict[str, MonsterState] = {
+        "READY": MoveState("READY", ready, [defend_intent()], follow_up_id="STRONG_PUNCH"),
         "STRONG_PUNCH": MoveState("STRONG_PUNCH", strong_punch, [attack_intent(strong_punch_dmg)], follow_up_id="FAST_PUNCH"),
-        "FAST_PUNCH": MoveState("FAST_PUNCH", fast_punch, [multi_attack_intent(fast_punch_dmg, 2)], follow_up_id="STRONG_PUNCH"),
+        "FAST_PUNCH": MoveState("FAST_PUNCH", fast_punch, [multi_attack_intent(fast_punch_dmg, 2), debuff_intent()], follow_up_id="READY"),
     }
-    return creature, MonsterAI(states, "FAST_PUNCH")
+    return creature, MonsterAI(states, "STRONG_PUNCH" if starts_with_strong_punch else "READY")
 
 
 # ---- SewerClam (HP 50-54 / 53-57 asc) ----
@@ -382,7 +395,7 @@ def create_sewer_clam(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def pearl_spit(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, pearl_spit_dmg)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     states: dict[str, MonsterState] = {
         "SHELL": MoveState("SHELL", shell, [defend_intent()], follow_up_id="SNAP"),
@@ -434,7 +447,7 @@ def create_phantasmal_gardener(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def prune(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, prune_dmg)
-        combat.apply_power_to(combat.player, PowerId.VULNERABLE, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.VULNERABLE, 1)
 
     def uproot(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, uproot_dmg)
@@ -460,8 +473,8 @@ def create_skulking_colony(rng: Rng) -> tuple[Creature, MonsterAI]:
     devour_dmg = 20
 
     def skulk(combat: CombatState) -> None:
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 1)
 
     def lash(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, lash_dmg, hits=3)
@@ -488,7 +501,7 @@ def create_terror_eel(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def shock(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, shock_dmg)
-        combat.apply_power_to(combat.player, PowerId.VULNERABLE, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.VULNERABLE, 1)
 
     def coil(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, coil_dmg, hits=2)
@@ -519,8 +532,8 @@ def create_waterfall_giant(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def roar(combat: CombatState) -> None:
         creature.apply_power(PowerId.STRENGTH, 3)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
-        combat.apply_power_to(combat.player, PowerId.VULNERABLE, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.VULNERABLE, 1)
 
     def slam(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, slam_dmg)
@@ -595,7 +608,7 @@ def create_lagavulin_matriarch(rng: Rng) -> tuple[Creature, MonsterAI]:
         _gain_block(creature, slash2_block)
 
     def soul_siphon(combat: CombatState) -> None:
-        combat.apply_power_to(combat.player, PowerId.STRENGTH, -1)
+        combat.apply_power_to(combat.primary_player, PowerId.STRENGTH, -1)
         creature.apply_power(PowerId.STRENGTH, 1)
 
     # Sleep check

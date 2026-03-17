@@ -27,6 +27,7 @@ import numpy as np
 from sts2_env.bridge.client import STS2GameClient
 from sts2_env.bridge.protocol import Phase
 from sts2_env.bridge.state_adapter import StateAdapter
+from sts2_env.parity.bridge_replay import BridgeReplayRecorder
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,8 @@ def run_agent(
     port: int = 9002,
     deterministic: bool = True,
     verbose: bool = False,
+    record_replay_path: str | None = None,
+    replay_factory: str | None = None,
 ) -> None:
     """Main agent loop.
 
@@ -78,137 +81,155 @@ def run_agent(
 
     logger.info("Connecting to STS2 at %s:%d...", host, port)
 
-    with STS2GameClient(host=host, port=port) as client:
+    with STS2GameClient(host=host, port=port) as raw_client:
+        client: STS2GameClient | BridgeReplayRecorder
+        if record_replay_path is not None:
+            metadata = {
+                "model_path": model_path,
+                "host": host,
+                "port": port,
+            }
+            if replay_factory is not None:
+                metadata["scenario_factory"] = replay_factory
+            client = BridgeReplayRecorder(raw_client, metadata=metadata)
+            logger.info("Recording supported bridge states to %s", record_replay_path)
+        else:
+            client = raw_client
         logger.info("Connected. Starting agent loop.")
 
         step_count = 0
         combat_count = 0
 
-        while True:
-            try:
-                logger.info("Waiting for game state...")
-                state = client.receive_state()
-                logger.info("Received: type=%s", state.get("type", "?"))
-            except TimeoutError:
-                logger.warning("Timeout waiting for state. Sending ping...")
-                if client.ping():
-                    continue
-                else:
-                    logger.error("Lost connection. Attempting reconnect...")
+        try:
+            while True:
+                try:
+                    logger.info("Waiting for game state...")
+                    state = client.receive_state()
+                    logger.info("Received: type=%s", state.get("type", "?"))
+                except TimeoutError:
+                    logger.warning("Timeout waiting for state. Sending ping...")
+                    if client.ping():
+                        continue
+                    else:
+                        logger.error("Lost connection. Attempting reconnect...")
+                        _reconnect_with_retry(client)
+                        continue
+                except ConnectionError:
+                    logger.error("Connection lost. Attempting reconnect...")
                     _reconnect_with_retry(client)
                     continue
-            except ConnectionError:
-                logger.error("Connection lost. Attempting reconnect...")
-                _reconnect_with_retry(client)
-                continue
 
-            # Mod sends "type" field (e.g. "combat_action", "map_select", "card_reward")
-            # Map to our Phase constants
-            msg_type = state.get("type", "")
-            phase = {
-                "combat_action": Phase.COMBAT_PLAY,
-                "game_state": state.get("phase", "UNKNOWN"),
-                "map_select": Phase.MAP_SELECT,
-                "card_reward": Phase.CARD_REWARD,
-                "card_select": Phase.CARD_REWARD,
-                "rest_site": Phase.REST,
-                "shop": Phase.SHOP,
-                "event": Phase.EVENT,
-                "game_over": "GAME_OVER",
-                "pong": "PONG",
-                "error": "ERROR",
-            }.get(msg_type, state.get("phase", "UNKNOWN"))
-            step_count += 1
+                # Mod sends "type" field (e.g. "combat_action", "map_select", "card_reward")
+                # Map to our Phase constants
+                msg_type = state.get("type", "")
+                phase = {
+                    "combat_action": Phase.COMBAT_PLAY,
+                    "game_state": state.get("phase", "UNKNOWN"),
+                    "map_select": Phase.MAP_SELECT,
+                    "card_reward": Phase.CARD_REWARD,
+                    "card_select": Phase.CARD_REWARD,
+                    "rest_site": Phase.REST,
+                    "shop": Phase.SHOP,
+                    "event": Phase.EVENT,
+                    "game_over": "GAME_OVER",
+                    "pong": "PONG",
+                    "error": "ERROR",
+                }.get(msg_type, state.get("phase", "UNKNOWN"))
+                step_count += 1
 
-            if verbose and step_count % 10 == 1:
-                logger.info("Step %d: type=%s phase=%s", step_count, msg_type, phase)
+                if verbose and step_count % 10 == 1:
+                    logger.info("Step %d: type=%s phase=%s", step_count, msg_type, phase)
 
-            if verbose and msg_type:
-                logger.debug("Received: type=%s keys=%s", msg_type, list(state.keys()))
+                if verbose and msg_type:
+                    logger.debug("Received: type=%s keys=%s", msg_type, list(state.keys()))
 
-            if phase == "PONG":
-                continue
-            if phase == "GAME_OVER":
-                logger.info("Game over! Result: %s", state.get("result", "unknown"))
-                break
-            if phase == "ERROR":
-                logger.warning("Game error: %s", state.get("message", ""))
-                continue
-
-            if phase in Phase.COMBAT_PHASES:
-                # ---- Combat: use trained model ----
-                obs = adapter.encode_observation(state)
-                mask = adapter.compute_action_mask(state)
-
-                # Ensure at least one action is valid
-                if mask.sum() == 0:
-                    logger.warning("No valid actions! Defaulting to END_TURN.")
-                    client.end_turn()
+                if phase == "PONG":
+                    continue
+                if phase == "GAME_OVER":
+                    logger.info("Game over! Result: %s", state.get("result", "unknown"))
+                    break
+                if phase == "ERROR":
+                    logger.warning("Game error: %s", state.get("message", ""))
                     continue
 
-                action, _states = model.predict(
-                    obs,
-                    action_masks=mask,
-                    deterministic=deterministic,
-                )
-                action_int = int(action)
+                if phase in Phase.COMBAT_PHASES:
+                    # ---- Combat: use trained model ----
+                    obs = adapter.encode_observation(state)
+                    mask = adapter.compute_action_mask(state)
 
-                decoded = adapter.decode_action(action_int, state)
+                    # Ensure at least one action is valid
+                    if mask.sum() == 0:
+                        logger.warning("No valid actions! Defaulting to END_TURN.")
+                        client.end_turn()
+                        continue
 
-                if verbose:
-                    _log_combat_action(state, action_int, decoded)
-
-                if decoded["type"] == "END_TURN":
-                    client.end_turn()
-                else:
-                    client.play_card(
-                        decoded["card_index"],
-                        decoded.get("target_index", -1),
+                    action, _states = model.predict(
+                        obs,
+                        action_masks=mask,
+                        deterministic=deterministic,
                     )
+                    action_int = int(action)
 
-            elif phase == Phase.MAP_SELECT:
-                # ---- Map: pick path heuristically ----
-                choice = _pick_map_node(state)
-                if verbose:
-                    logger.info("MAP: choosing node %d", choice)
-                client.choose(choice)
+                    decoded = adapter.decode_action(action_int, state)
 
-            elif phase == Phase.CARD_REWARD:
-                # ---- Card reward: pick best card ----
-                choice = _pick_best_card(state)
-                if verbose:
-                    logger.info("CARD_REWARD: choosing option %d", choice)
-                client.choose(choice)
+                    if verbose:
+                        _log_combat_action(state, action_int, decoded)
 
-            elif phase == Phase.REST:
-                # ---- Rest: heal if low HP, otherwise upgrade ----
-                choice = _pick_rest_option(state)
-                if verbose:
-                    logger.info("REST: choosing option %d", choice)
-                client.choose(choice)
+                    if decoded["type"] == "END_TURN":
+                        client.end_turn()
+                    else:
+                        client.play_card(
+                            decoded["card_index"],
+                            decoded.get("target_index", -1),
+                        )
 
-            elif phase == Phase.SHOP:
-                # ---- Shop: skip for now ----
-                if verbose:
-                    logger.info("SHOP: skipping (choosing 0)")
-                client.choose(0)
+                elif phase == Phase.MAP_SELECT:
+                    # ---- Map: pick path heuristically ----
+                    choice = _pick_map_node(state)
+                    if verbose:
+                        logger.info("MAP: choosing node %d", choice)
+                    client.choose(choice)
 
-            elif phase == Phase.EVENT:
-                # ---- Event: choose first option ----
-                if verbose:
-                    logger.info("EVENT: choosing option 0")
-                client.choose(0)
+                elif phase == Phase.CARD_REWARD:
+                    # ---- Card reward: pick best card ----
+                    choice = _pick_best_card(state)
+                    if verbose:
+                        logger.info("CARD_REWARD: choosing option %d", choice)
+                    client.choose(choice)
 
-            elif phase == Phase.COMBAT_WAITING:
-                # Game is processing enemy turn / animations — just wait
-                pass
+                elif phase == Phase.REST:
+                    # ---- Rest: heal if low HP, otherwise upgrade ----
+                    choice = _pick_rest_option(state)
+                    if verbose:
+                        logger.info("REST: choosing option %d", choice)
+                    client.choose(choice)
 
-            else:
-                logger.debug("Unknown phase '%s', waiting...", phase)
+                elif phase == Phase.SHOP:
+                    # ---- Shop: skip for now ----
+                    if verbose:
+                        logger.info("SHOP: skipping (choosing 0)")
+                    client.choose(0)
 
-            # Log progress periodically
-            if step_count % 100 == 0:
-                logger.info("Step %d, combats seen: %d", step_count, combat_count)
+                elif phase == Phase.EVENT:
+                    # ---- Event: choose first option ----
+                    if verbose:
+                        logger.info("EVENT: choosing option 0")
+                    client.choose(0)
+
+                elif phase == Phase.COMBAT_WAITING:
+                    # Game is processing enemy turn / animations — just wait
+                    pass
+
+                else:
+                    logger.debug("Unknown phase '%s', waiting...", phase)
+
+                # Log progress periodically
+                if step_count % 100 == 0:
+                    logger.info("Step %d, combats seen: %d", step_count, combat_count)
+        finally:
+            if isinstance(client, BridgeReplayRecorder):
+                saved_path = client.save(record_replay_path)
+                logger.info("Saved bridge replay trace to %s", saved_path)
 
 
 # ----------------------------------------------------------------
@@ -392,6 +413,16 @@ def main() -> None:
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         help="Logging level.",
     )
+    parser.add_argument(
+        "--record-replay",
+        default=None,
+        help="Optional path to save a bridge replay trace JSON while the agent runs.",
+    )
+    parser.add_argument(
+        "--replay-factory",
+        default=None,
+        help="Optional module:function factory to store in replay metadata for later comparison.",
+    )
 
     args = parser.parse_args()
 
@@ -409,6 +440,8 @@ def main() -> None:
         port=args.port,
         deterministic=deterministic,
         verbose=args.verbose,
+        record_replay_path=args.record_replay,
+        replay_factory=args.replay_factory,
     )
 
 

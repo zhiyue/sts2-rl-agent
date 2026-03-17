@@ -21,6 +21,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sts2_env.core.enums import (
+    CardId,
     CardKeyword,
     CardType,
     CombatSide,
@@ -173,8 +174,19 @@ class HammerTimePower(PowerInstance):
     def __init__(self, amount: int = 1):
         super().__init__(PowerId.HAMMER_TIME, amount)
 
-    # Forge replication is handled by the combat/forge system checking
-    # owner.has_power(HAMMER_TIME).
+    def after_forge(
+        self,
+        owner: Creature,
+        amount: int,
+        forger: Creature,
+        source: object | None,
+        combat: CombatState,
+    ) -> None:
+        if source is self or forger is not owner or amount <= 0:
+            return
+        for teammate in combat.get_teammates_of(owner):
+            if getattr(teammate, "is_player", False) and teammate.is_alive:
+                combat.forge(teammate, amount, source=self)
 
 
 # ---------------------------------------------------------------------------
@@ -198,25 +210,12 @@ class HangPower(PowerInstance):
     def modify_damage_multiplicative(
         self, owner: Creature, dealer: Creature | None, target: Creature, props: ValueProp
     ) -> float:
-        # The multiplier only applies to damage from Hang cards.
-        # In the sim, the damage pipeline sets a card context; we check here.
-        # Without card context in the hook signature, this acts as a marker.
-        # The card-aware damage pipeline should call modify_damage_for_hang().
         if target is not owner:
             return 1.0
-        return 1.0
-
-    def modify_damage_multiplicative_for_card(
-        self, owner: Creature, dealer: Creature | None, target: Creature,
-        props: ValueProp, card: object
-    ) -> float:
-        """Extended hook called by card-aware damage pipeline."""
-        if target is not owner:
+        card_source = getattr(owner.combat_state, "active_card_source", None)
+        if getattr(card_source, "card_id", None) != CardId.HANG:
             return 1.0
-        card_id = getattr(card, "card_id", None)
-        if card_id is not None and card_id.name == "HANG":
-            return float(self.amount)
-        return 1.0
+        return float(self.amount)
 
 
 # ---------------------------------------------------------------------------
@@ -747,10 +746,9 @@ class MasterPlannerPower(PowerInstance):
             return
         if getattr(card, "card_type", None) != CardType.SKILL:
             return
-        # Apply Sly keyword -- card goes to top of draw pile instead of discard
-        keywords = getattr(card, "keywords", None)
-        if keywords is not None and hasattr(keywords, "add"):
-            keywords.add(CardKeyword.SLY)
+        combat_vars = getattr(card, "combat_vars", None)
+        if combat_vars is not None:
+            combat_vars["sly_this_turn"] = 1
 
 
 # ---------------------------------------------------------------------------
@@ -907,7 +905,11 @@ class NightmarePower(PowerInstance):
 
     def set_selected_card(self, card: object) -> None:
         """Store the card to be cloned next turn."""
-        self.selected_card = card
+        clone = getattr(card, "clone", None)
+        if callable(clone):
+            self.selected_card = clone(0)
+        else:
+            self.selected_card = card
 
     def before_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == owner.side and self.selected_card is not None:
@@ -1084,8 +1086,18 @@ class OutbreakPower(PowerInstance):
         super().__init__(PowerId.OUTBREAK, amount)
         self._times_poisoned: int = 0
 
-    def on_poison_applied(self, owner: Creature, combat: CombatState) -> None:
-        """Called by the power-application system when owner applies Poison."""
+    def after_power_amount_changed(
+        self,
+        owner: Creature,
+        target: Creature,
+        power_id: PowerId,
+        amount: int,
+        applier: Creature | None,
+        source: object | None,
+        combat: CombatState,
+    ) -> None:
+        if applier is not owner or power_id != PowerId.POISON or amount <= 0:
+            return
         self._times_poisoned += 1
         if self._times_poisoned >= self.POISON_THRESHOLD:
             for enemy in combat.get_enemies_of(owner):
@@ -1305,6 +1317,19 @@ class PossessSpeedPower(PowerInstance):
             self._stolen_dexterity[victim] = 0
         self._stolen_dexterity[victim] += stolen_amount
 
+    def after_power_amount_changed(
+        self,
+        owner: Creature,
+        target: Creature,
+        power_id: PowerId,
+        amount: int,
+        applier: Creature | None,
+        source: object | None,
+        combat: CombatState,
+    ) -> None:
+        if applier is owner and power_id == PowerId.DEXTERITY and amount < 0 and target.is_player:
+            self.track_stolen_dexterity(target, -amount)
+
     def on_owner_death(self, owner: Creature, combat: CombatState) -> bool:
         """Restore stolen Dexterity to victims when owner dies."""
         for victim, stolen in self._stolen_dexterity.items():
@@ -1341,6 +1366,19 @@ class PossessStrengthPower(PowerInstance):
         if victim not in self._stolen_strength:
             self._stolen_strength[victim] = 0
         self._stolen_strength[victim] += stolen_amount
+
+    def after_power_amount_changed(
+        self,
+        owner: Creature,
+        target: Creature,
+        power_id: PowerId,
+        amount: int,
+        applier: Creature | None,
+        source: object | None,
+        combat: CombatState,
+    ) -> None:
+        if applier is owner and power_id == PowerId.STRENGTH and amount < 0 and target.is_player:
+            self.track_stolen_strength(target, -amount)
 
     def on_owner_death(self, owner: Creature, combat: CombatState) -> bool:
         """Restore stolen Strength to victims when owner dies."""

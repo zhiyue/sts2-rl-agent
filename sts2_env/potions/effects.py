@@ -11,8 +11,9 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
+from sts2_env.cards.factory import create_cards_from_ids, create_character_cards, eligible_registered_cards
 from sts2_env.core.enums import (
-    CardType, PowerId, ValueProp, PotionTargetType,
+    CardType, PowerId, ValueProp, PotionTargetType, CardId,
 )
 from sts2_env.core.damage import calculate_damage, apply_damage
 from sts2_env.potions.base import register_potion_effect
@@ -46,12 +47,24 @@ def _deal_unpowered_damage_all(
 
 def _attack_potion(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Generate 3 random Attack cards; add one with cost 0 this turn to hand.
-
-    RL simplification: generate 1 random Attack card (cost 0) into hand.
     """
-    # Card generation requires the card factory subsystem; approximate
-    # by drawing 1 card as a stand-in.
-    combat._draw_cards(1)  # noqa: SLF001  # approximate card generation
+    generated = create_character_cards(
+        combat.character_id,
+        combat.rng,
+        3,
+        card_type=CardType.ATTACK,
+        distinct=True,
+    )
+    for generated_card in generated:
+        generated_card.set_temporary_cost_for_turn(0)
+    if generated:
+        combat.request_card_choice(
+            prompt="Choose an Attack card",
+            cards=generated,
+            source_pile="generated",
+            resolver=combat.move_card_to_hand,
+            allow_skip=True,
+        )
 
 
 def _block_potion(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -69,10 +82,19 @@ def _blood_potion(combat: CombatState, user: Creature, target: Creature | None) 
 
 def _colorless_potion(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Generate a random Colorless card (cost 0) in hand.
-
-    RL simplification: draw 1 card.
     """
-    combat._draw_cards(1)  # noqa: SLF001
+    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless")
+    generated = create_cards_from_ids(colorless_ids, combat.rng, 3, distinct=True)
+    for generated_card in generated:
+        generated_card.set_temporary_cost_for_turn(0)
+    if generated:
+        combat.request_card_choice(
+            prompt="Choose a Colorless card",
+            cards=generated,
+            source_pile="generated",
+            resolver=combat.move_card_to_hand,
+            allow_skip=True,
+        )
 
 
 def _dexterity_potion(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -122,18 +144,46 @@ def _potion_of_doom(combat: CombatState, user: Creature, target: Creature | None
 
 def _power_potion(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Generate a random Power card (cost 0) in hand.
-
-    RL simplification: draw 1 card.
     """
-    combat._draw_cards(1)  # noqa: SLF001
+    generated = create_character_cards(
+        combat.character_id,
+        combat.rng,
+        3,
+        card_type=CardType.POWER,
+        distinct=True,
+    )
+    for generated_card in generated:
+        generated_card.set_temporary_cost_for_turn(0)
+    if generated:
+        combat.request_card_choice(
+            prompt="Choose a Power card",
+            cards=generated,
+            source_pile="generated",
+            resolver=combat.move_card_to_hand,
+            allow_skip=True,
+        )
 
 
 def _skill_potion(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Generate a random Skill card (cost 0) in hand.
-
-    RL simplification: draw 1 card.
     """
-    combat._draw_cards(1)  # noqa: SLF001
+    generated = create_character_cards(
+        combat.character_id,
+        combat.rng,
+        3,
+        card_type=CardType.SKILL,
+        distinct=True,
+    )
+    for generated_card in generated:
+        generated_card.set_temporary_cost_for_turn(0)
+    if generated:
+        combat.request_card_choice(
+            prompt="Choose a Skill card",
+            cards=generated,
+            source_pile="generated",
+            resolver=combat.move_card_to_hand,
+            allow_skip=True,
+        )
 
 
 def _speed_potion(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -180,13 +230,18 @@ def _weak_potion(combat: CombatState, user: Creature, target: Creature | None) -
 
 def _ashwater(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Exhaust any number of cards from hand.
-
-    RL simplification: exhaust all cards currently in hand.
     """
-    exhausted = list(combat.hand)
-    for card in exhausted:
-        combat.hand.remove(card)
-        combat.exhaust_pile.append(card)
+    if not combat.hand:
+        return
+    combat.request_multi_card_choice(
+        prompt="Choose any number of hand cards to exhaust",
+        cards=list(combat.hand),
+        source_pile="hand",
+        resolver=lambda selected_cards: [combat.exhaust_card(selected) for selected in selected_cards],
+        min_count=0,
+        max_count=len(combat.hand),
+        allow_skip=True,
+    )
 
 
 def _blessing_of_the_forge(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -214,13 +269,11 @@ def _clarity(combat: CombatState, user: Creature, target: Creature | None) -> No
 
 def _cunning_potion(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Add 3 upgraded Shivs to hand.
-
-    Uses card generation if available; otherwise adds 3 draws as approximation.
     """
-    if hasattr(combat, "create_cards_in_hand"):
-        combat.create_cards_in_hand(user, "ShivUpgraded", 3)
-    else:
-        combat._draw_cards(3)  # noqa: SLF001
+    from sts2_env.cards.status import make_shiv
+
+    for _ in range(3):
+        combat.move_card_to_hand(make_shiv(upgraded=True))
 
 
 def _cure_all(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -249,14 +302,23 @@ def _fysh_oil(combat: CombatState, user: Creature, target: Creature | None) -> N
 
 def _gamblers_brew(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Discard any number of cards and draw that many.
-
-    RL simplification: discard entire hand and redraw the same count.
     """
-    count = len(combat.hand)
-    for card in list(combat.hand):
-        combat.hand.remove(card)
-        combat.discard_pile.append(card)
-    combat._draw_cards(count)  # noqa: SLF001
+    if not combat.hand:
+        return
+
+    def _resolver(selected_cards):
+        count = len(selected_cards)
+        combat.discard_cards(selected_cards, count)
+
+    combat.request_multi_card_choice(
+        prompt="Choose any number of hand cards to discard",
+        cards=list(combat.hand),
+        source_pile="hand",
+        resolver=_resolver,
+        min_count=0,
+        max_count=len(combat.hand),
+        allow_skip=True,
+    )
 
 
 def _heart_of_iron(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -272,7 +334,7 @@ def _kings_courage(combat: CombatState, user: Creature, target: Creature | None)
     """
     t = target if target is not None else user
     if hasattr(t, "gain_forge"):
-        t.gain_forge(15)
+        t.gain_forge(15, source="KingsCourage")
 
 
 def _liquid_bronze(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -324,13 +386,22 @@ def _stable_serum(combat: CombatState, user: Creature, target: Creature | None) 
 
 def _touch_of_insanity(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Choose a card from hand; it costs 0 for the rest of combat.
-
-    RL simplification: set first energy-costing card in hand to 0 cost.
     """
-    for card in combat.hand:
-        if hasattr(card, "cost") and card.cost > 0:
-            card.cost = 0
-            break
+    candidates = [c for c in combat.hand if c.cost > 0 or c.star_cost > 0]
+    if not candidates:
+        return
+
+    def _resolver(selected):
+        if selected is None:
+            return
+        selected.set_combat_cost(0)
+
+    combat.request_card_choice(
+        prompt="Choose a hand card to set to 0 cost",
+        cards=candidates,
+        source_pile="hand",
+        resolver=_resolver,
+    )
 
 
 # =====================================================================
@@ -354,58 +425,39 @@ def _bottled_potential(combat: CombatState, user: Creature, target: Creature | N
 
 def _cosmic_concoction(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Generate 3 upgraded Colorless cards in hand.
-
-    RL simplification: draw 3 cards and upgrade them.
     """
-    hand_before = len(combat.hand)
-    combat._draw_cards(3)  # noqa: SLF001
-    for card in combat.hand[hand_before:]:
-        if hasattr(card, "can_upgrade") and card.can_upgrade():
-            card.upgrade()
+    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless")
+    generated = create_cards_from_ids(colorless_ids, combat.rng, 3, distinct=True)
+    for generated_card in generated:
+        combat.upgrade_card(generated_card)
+        combat.move_card_to_hand(generated_card)
 
 
 def _distilled_chaos(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Auto-play top 3 cards from draw pile.
-
-    RL simplification: draw 3 cards and play each automatically.
     """
-    for _ in range(3):
-        combat._shuffle_if_needed()  # noqa: SLF001
-        if not combat.draw_pile:
-            break
-        card = combat.draw_pile.pop(0)
-        # Auto-play: apply effect then exhaust
-        from sts2_env.cards.registry import play_card_effect
-        auto_target = None
-        if hasattr(card, "target_type"):
-            from sts2_env.core.enums import TargetType
-            if card.target_type == TargetType.ANY_ENEMY:
-                alive = combat.alive_enemies
-                auto_target = alive[0] if alive else None
-            elif card.target_type in (TargetType.SELF, TargetType.NONE):
-                auto_target = user
-        play_card_effect(card, combat, auto_target)
-        combat.discard_pile.append(card)
+    combat.auto_play_from_draw(user, 3)
 
 
 def _droplet_of_precognition(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Choose a card from draw pile and add to hand.
-
-    RL simplification: move top card of draw pile to hand.
     """
     combat._shuffle_if_needed()  # noqa: SLF001
     if combat.draw_pile:
-        card = combat.draw_pile.pop(0)
-        combat.hand.append(card)
+        combat.request_card_choice(
+            prompt="Choose a draw pile card",
+            cards=list(combat.draw_pile),
+            source_pile="draw",
+            resolver=combat.move_card_to_hand,
+        )
 
 
 def _entropic_brew(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Fill all empty potion slots with random potions.
 
-    Requires potion-slot subsystem not yet available; this is a no-op placeholder.
+    Uses the combat's potion slots.
     """
-    # Potion slot management requires RunState.potion_slots; not yet modeled
-    pass
+    combat.fill_empty_potion_slots(in_combat=False)
 
 
 def _essence_of_darkness(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -432,7 +484,7 @@ def _fairy_in_a_bottle(combat: CombatState, user: Creature, target: Creature | N
 def _fruit_juice(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Target gains 5 max HP."""
     t = target if target is not None else user
-    t.gain_max_hp(5)
+    combat.gain_max_hp(t, 5)
 
 
 def _ghost_in_a_jar(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -449,14 +501,22 @@ def _gigantification_potion(combat: CombatState, user: Creature, target: Creatur
 
 def _liquid_memories(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Choose a card from discard pile, set cost to 0, add to hand.
-
-    RL simplification: move first discard pile card to hand with cost 0.
     """
-    if combat.discard_pile:
-        card = combat.discard_pile.pop(0)
-        if hasattr(card, "cost"):
-            card.cost = 0
-        combat.hand.append(card)
+    if not combat.discard_pile:
+        return
+
+    def _resolver(selected):
+        if selected is None:
+            return
+        selected.set_temporary_cost_for_turn(0)
+        combat.move_card_to_hand(selected)
+
+    combat.request_card_choice(
+        prompt="Choose a discard pile card",
+        cards=list(combat.discard_pile),
+        source_pile="discard",
+        resolver=_resolver,
+    )
 
 
 def _lucky_tonic(combat: CombatState, user: Creature, target: Creature | None) -> None:
@@ -473,14 +533,14 @@ def _mazaleths_gift(combat: CombatState, user: Creature, target: Creature | None
 
 def _orobic_acid(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Generate 1 random Attack, 1 Skill, 1 Power, each with cost 0, in hand.
-
-    RL simplification: draw 3 cards and set them to cost 0.
     """
-    hand_before = len(combat.hand)
-    combat._draw_cards(3)  # noqa: SLF001
-    for card in combat.hand[hand_before:]:
-        if hasattr(card, "cost"):
-            card.cost = 0
+    generated = []
+    generated.extend(create_character_cards(combat.character_id, combat.rng, 1, card_type=CardType.ATTACK, distinct=True))
+    generated.extend(create_character_cards(combat.character_id, combat.rng, 1, card_type=CardType.SKILL, distinct=True))
+    generated.extend(create_character_cards(combat.character_id, combat.rng, 1, card_type=CardType.POWER, distinct=True))
+    for generated_card in generated:
+        generated_card.set_temporary_cost_for_turn(0)
+        combat.move_card_to_hand(generated_card)
 
 
 def _pot_of_ghouls(combat: CombatState, user: Creature, target: Creature | None) -> None:

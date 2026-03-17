@@ -10,24 +10,31 @@ from sts2_env.core.creature import Creature
 from sts2_env.core.combat import CombatState
 
 
+def _owner(card: CardInstance, combat: CombatState) -> Creature:
+    return getattr(card, "owner", None) or combat.player
+
+
 @register_effect(CardId.STRIKE_IRONCLAD)
 def strike_ironclad(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    damage = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, damage, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    damage = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, damage, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.DEFEND_IRONCLAD)
 def defend_ironclad(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    block = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(block)
+    owner = _owner(card, combat)
+    block = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(block)
 
 
 @register_effect(CardId.BASH)
 def bash(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    damage = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, damage, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    damage = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, damage, ValueProp.MOVE, combat, owner)
     vuln_amount = card.effect_vars.get("vulnerable", 2)
     combat.apply_power_to(target, PowerId.VULNERABLE, vuln_amount)
 

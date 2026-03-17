@@ -136,6 +136,32 @@ class TestPlayerState:
         assert removed.potion_id == "FirePotion"
         assert len(p.held_potions()) == 0
 
+    def test_obtain_relic_applies_after_obtained_hook(self):
+        rs = RunState(seed=42, character_id="Ironclad")
+        rs.initialize_run()
+        starting_gold = rs.player.gold
+
+        assert rs.player.obtain_relic("OLD_COIN")
+        assert rs.player.gold == starting_gold + 300
+
+    def test_card_added_to_deck_notifies_relic_hooks(self):
+        rs = RunState(seed=42, character_id="Ironclad")
+        rs.initialize_run()
+        rs.player.obtain_relic("LUCKY_FYSH")
+        starting_gold = rs.player.gold
+
+        card = CardInstance(
+            card_id=CardId.STRIKE_IRONCLAD,
+            cost=1,
+            card_type=CardType.ATTACK,
+            target_type=TargetType.ANY_ENEMY,
+            rarity=CardRarity.BASIC,
+            base_damage=6,
+        )
+        rs.player.add_card_instance_to_deck(card)
+
+        assert rs.player.gold == starting_gold + 15
+
 
 class TestMapNavigation:
     def test_available_coords_at_start(self):

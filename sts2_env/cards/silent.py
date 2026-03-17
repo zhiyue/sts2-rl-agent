@@ -5,11 +5,15 @@ from __future__ import annotations
 from sts2_env.cards.base import CardInstance, _get_next_id
 from sts2_env.cards.registry import register_effect
 from sts2_env.core.enums import (
-    CardId, CardType, TargetType, CardRarity, ValueProp, PowerId,
+    CardId, CardTag, CardType, TargetType, CardRarity, ValueProp, PowerId, RoomType,
 )
 from sts2_env.core.damage import calculate_damage, apply_damage, calculate_block
 from sts2_env.core.creature import Creature
 from sts2_env.core.combat import CombatState
+
+
+def _owner(card: CardInstance, combat: CombatState) -> Creature:
+    return getattr(card, "owner", None) or combat.player
 
 
 # ---------------------------------------------------------------------------
@@ -19,32 +23,40 @@ from sts2_env.core.combat import CombatState
 @register_effect(CardId.STRIKE_SILENT)
 def strike_silent(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.DEFEND_SILENT)
 def defend_silent(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
 
 
 @register_effect(CardId.NEUTRALIZE)
 def neutralize(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat.apply_power_to(target, PowerId.WEAK, card.effect_vars.get("weak", 1))
 
 
 @register_effect(CardId.SURVIVOR)
 def survivor(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
-    # Discard 1 card (handled by action system; stub discards last card)
-    if combat.hand:
-        c = combat.hand.pop()
-        combat.discard_pile.append(c)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
+    if not combat.hand:
+        return
+    combat.request_card_choice(
+        prompt="Choose a hand card to discard",
+        cards=list(combat.hand),
+        source_pile="hand",
+        resolver=lambda selected: combat.discard_cards([selected] if selected is not None else []),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -65,13 +77,14 @@ def acrobatics(card: CardInstance, combat: CombatState, target: Creature | None)
 def anticipate(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     # Gain temporary Dexterity (Anticipate power — next turn only)
     amt = card.effect_vars.get("dexterity", 3)
-    combat.apply_power_to(combat.player, PowerId.DEXTERITY, amt)
+    combat.apply_power_to(_owner(card, combat), PowerId.DEXTERITY, amt)
 
 
 @register_effect(CardId.BACKFLIP)
 def backflip(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
     combat._draw_cards(card.effect_vars.get("cards", 2))
 
 
@@ -85,8 +98,9 @@ def blade_dance(card: CardInstance, combat: CombatState, target: Creature | None
 
 @register_effect(CardId.CLOAK_AND_DAGGER)
 def cloak_and_dagger(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
     count = card.effect_vars.get("cards", 1)
     for _ in range(count):
         combat.hand.append(_make_shiv())
@@ -94,17 +108,19 @@ def cloak_and_dagger(card: CardInstance, combat: CombatState, target: Creature |
 
 @register_effect(CardId.DAGGER_SPRAY)
 def dagger_spray(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    owner = _owner(card, combat)
     for _ in range(2):
         for enemy in combat.alive_enemies:
-            dmg = calculate_damage(card.base_damage, combat.player, enemy, ValueProp.MOVE, combat)
-            apply_damage(enemy, dmg, ValueProp.MOVE, combat, combat.player)
+            dmg = calculate_damage(card.base_damage, owner, enemy, ValueProp.MOVE, combat)
+            apply_damage(enemy, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.DAGGER_THROW)
 def dagger_throw(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat._draw_cards(1)
     if combat.hand:
         c = combat.hand.pop()
@@ -119,30 +135,33 @@ def deadly_poison(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.DEFLECT)
 def deflect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
 
 
 @register_effect(CardId.DODGE_AND_ROLL)
 def dodge_and_roll(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
-    # Also gain block next turn (BlockNextTurn power)
-    combat.apply_power_to(combat.player, PowerId.GENERIC, card.base_block)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
+    combat.apply_power_to(owner, PowerId.BLOCK_NEXT_TURN, card.base_block)
 
 
 @register_effect(CardId.FLICK_FLACK)
 def flick_flack(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    owner = _owner(card, combat)
     for enemy in combat.alive_enemies:
-        dmg = calculate_damage(card.base_damage, combat.player, enemy, ValueProp.MOVE, combat)
-        apply_damage(enemy, dmg, ValueProp.MOVE, combat, combat.player)
+        dmg = calculate_damage(card.base_damage, owner, enemy, ValueProp.MOVE, combat)
+        apply_damage(enemy, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.LEADING_STRIKE)
 def leading_strike(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat.hand.append(_make_shiv())
 
 
@@ -156,8 +175,9 @@ def piercing_wail(card: CardInstance, combat: CombatState, target: Creature | No
 @register_effect(CardId.POISONED_STAB)
 def poisoned_stab(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat.apply_power_to(target, PowerId.POISON, card.effect_vars.get("poison", 3))
 
 
@@ -172,21 +192,23 @@ def prepared(card: CardInstance, combat: CombatState, target: Creature | None) -
 
 @register_effect(CardId.RICOCHET)
 def ricochet(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    owner = _owner(card, combat)
     hits = card.effect_vars.get("hits", 3)
     for _ in range(hits):
         alive = combat.alive_enemies
         if not alive:
             break
         t = combat.rng.choice(alive)
-        dmg = calculate_damage(card.base_damage, combat.player, t, ValueProp.MOVE, combat)
-        apply_damage(t, dmg, ValueProp.MOVE, combat, combat.player)
+        dmg = calculate_damage(card.base_damage, owner, t, ValueProp.MOVE, combat)
+        apply_damage(t, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.SLICE)
 def slice_card(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.SNAKEBITE)
@@ -198,15 +220,17 @@ def snakebite(card: CardInstance, combat: CombatState, target: Creature | None) 
 @register_effect(CardId.SUCKER_PUNCH)
 def sucker_punch(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat.apply_power_to(target, PowerId.WEAK, card.effect_vars.get("weak", 1))
 
 
 @register_effect(CardId.UNTOUCHABLE)
 def untouchable(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
 
 
 # ---------------------------------------------------------------------------
@@ -215,21 +239,23 @@ def untouchable(card: CardInstance, combat: CombatState, target: Creature | None
 
 @register_effect(CardId.ACCURACY_CARD)
 def accuracy(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.ACCURACY, card.effect_vars.get("accuracy", 4))
+    combat.apply_power_to(_owner(card, combat), PowerId.ACCURACY, card.effect_vars.get("accuracy", 4))
 
 
 @register_effect(CardId.BACKSTAB)
 def backstab(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.BLUR_CARD)
 def blur(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
-    combat.apply_power_to(combat.player, PowerId.BLUR, card.effect_vars.get("blur", 1))
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
+    combat.apply_power_to(owner, PowerId.BLUR, card.effect_vars.get("blur", 1))
 
 
 @register_effect(CardId.BOUNCING_FLASK)
@@ -261,16 +287,18 @@ def calculated_gamble(card: CardInstance, combat: CombatState, target: Creature 
 @register_effect(CardId.DASH)
 def dash(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
 
 
 @register_effect(CardId.ESCAPE_PLAN)
 def escape_plan(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
     combat._draw_cards(1)
 
 
@@ -296,9 +324,10 @@ def finisher(card: CardInstance, combat: CombatState, target: Creature | None) -
     assert target is not None
     # Hits once per attack played this turn (tracked by combat.turn_attack_count or similar)
     hits = max(1, getattr(combat, 'attacks_played_this_turn', 1))
+    owner = _owner(card, combat)
     for _ in range(hits):
-        dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-        apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+        dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+        apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.FLANKING)
@@ -315,15 +344,16 @@ def flechettes(card: CardInstance, combat: CombatState, target: Creature | None)
     skill_count = sum(1 for c in combat.hand if c.is_skill)
     hits = max(0, skill_count)
     for _ in range(hits):
-        dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-        apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+        dmg = calculate_damage(card.base_damage, _owner(card, combat), target, ValueProp.MOVE, combat)
+        apply_damage(target, dmg, ValueProp.MOVE, combat, _owner(card, combat))
 
 
 @register_effect(CardId.FOLLOW_THROUGH)
 def follow_through(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    owner = _owner(card, combat)
     for enemy in combat.alive_enemies:
-        dmg = calculate_damage(card.base_damage, combat.player, enemy, ValueProp.MOVE, combat)
-        apply_damage(enemy, dmg, ValueProp.MOVE, combat, combat.player)
+        dmg = calculate_damage(card.base_damage, owner, enemy, ValueProp.MOVE, combat)
+        apply_damage(enemy, dmg, ValueProp.MOVE, combat, owner)
     weak = card.effect_vars.get("weak", 1)
     for enemy in combat.alive_enemies:
         combat.apply_power_to(enemy, PowerId.WEAK, weak)
@@ -331,14 +361,29 @@ def follow_through(card: CardInstance, combat: CombatState, target: Creature | N
 
 @register_effect(CardId.FOOTWORK)
 def footwork(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.DEXTERITY, card.effect_vars.get("dexterity", 2))
+    combat.apply_power_to(_owner(card, combat), PowerId.DEXTERITY, card.effect_vars.get("dexterity", 2))
 
 
 @register_effect(CardId.HAND_TRICK)
 def hand_trick(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
-    # Apply Sly keyword to a card in hand (stub)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
+    candidates = [c for c in combat.hand if c.card_type == CardType.SKILL and not c.combat_vars.get("sly_this_turn")]
+    if not candidates:
+        return
+
+    def _resolver(selected: CardInstance | None) -> None:
+        if selected is None:
+            return
+        selected.combat_vars["sly_this_turn"] = 1
+
+    combat.request_card_choice(
+        prompt="Choose a Skill to make Sly this turn",
+        cards=candidates,
+        source_pile="hand",
+        resolver=_resolver,
+    )
 
 
 @register_effect(CardId.HAZE)
@@ -361,14 +406,15 @@ def hidden_daggers(card: CardInstance, combat: CombatState, target: Creature | N
 @register_effect(CardId.INFINITE_BLADES_CARD)
 def infinite_blades(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     # Power: gain 1 Shiv at start of each turn
-    combat.apply_power_to(combat.player, PowerId.INFINITE_BLADES, 1)
+    combat.apply_power_to(_owner(card, combat), PowerId.INFINITE_BLADES, 1)
 
 
 @register_effect(CardId.LEG_SWEEP)
 def leg_sweep(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    blk = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
+    owner = _owner(card, combat)
+    blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
     combat.apply_power_to(target, PowerId.WEAK, card.effect_vars.get("weak", 2))
 
 
@@ -376,12 +422,13 @@ def leg_sweep(card: CardInstance, combat: CombatState, target: Creature | None) 
 def memento_mori(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     # Damage scales with exhaust pile size
+    owner = _owner(card, combat)
     base = card.effect_vars.get("calc_base", 8)
     extra = card.effect_vars.get("extra_damage", 4)
     exhaust_count = len(combat.exhaust_pile)
     total_dmg = base + extra * exhaust_count
-    dmg = calculate_damage(total_dmg, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    dmg = calculate_damage(total_dmg, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.MIRAGE)
@@ -392,59 +439,64 @@ def mirage(card: CardInstance, combat: CombatState, target: Creature | None) -> 
     )
     extra = card.effect_vars.get("calc_extra", 1)
     block_amt = total_poison * extra
-    blk = calculate_block(block_amt, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(blk)
+    owner = _owner(card, combat)
+    blk = calculate_block(block_amt, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(blk)
 
 
 @register_effect(CardId.NOXIOUS_FUMES_CARD)
 def noxious_fumes(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.NOXIOUS_FUMES, card.effect_vars.get("poison_per_turn", 2))
+    combat.apply_power_to(_owner(card, combat), PowerId.NOXIOUS_FUMES, card.effect_vars.get("poison_per_turn", 2))
 
 
 @register_effect(CardId.OUTBREAK_CARD)
 def outbreak(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.GENERIC, card.effect_vars.get("outbreak", 11))
+    combat.apply_power_to(_owner(card, combat), PowerId.OUTBREAK, card.effect_vars.get("outbreak", 11))
 
 
 @register_effect(CardId.PHANTOM_BLADES_CARD)
 def phantom_blades(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.PHANTOM_BLADES, card.effect_vars.get("phantom_blades", 9))
+    combat.apply_power_to(_owner(card, combat), PowerId.PHANTOM_BLADES, card.effect_vars.get("phantom_blades", 9))
 
 
 @register_effect(CardId.PINPOINT)
 def pinpoint(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.POUNCE)
 def pounce(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
-    combat.apply_power_to(combat.player, PowerId.FREE_SKILL, 1)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
+    combat.apply_power_to(owner, PowerId.FREE_SKILL, 1)
 
 
 @register_effect(CardId.PRECISE_CUT)
 def precise_cut(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     # Damage scales down with skills in hand
+    owner = _owner(card, combat)
     base = card.effect_vars.get("calc_base", 13)
     extra = card.effect_vars.get("extra_damage", 2)
     skill_count = sum(1 for c in combat.hand if c.is_skill)
     total_dmg = base - extra * skill_count
     total_dmg = max(0, total_dmg)
-    dmg = calculate_damage(total_dmg, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    dmg = calculate_damage(total_dmg, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.PREDATOR)
 def predator(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
-    combat.apply_power_to(combat.player, PowerId.DRAW_CARDS_NEXT_TURN, 2)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
+    combat.apply_power_to(owner, PowerId.DRAW_CARDS_NEXT_TURN, 2)
 
 
 @register_effect(CardId.REFLEX)
@@ -456,23 +508,25 @@ def reflex(card: CardInstance, combat: CombatState, target: Creature | None) -> 
 def skewer(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     # X-cost: hits X times
+    owner = _owner(card, combat)
     hits = combat.energy + card.cost  # energy was already spent
     for _ in range(max(0, hits)):
-        dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-        apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+        dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+        apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat.energy = 0
 
 
 @register_effect(CardId.SPEEDSTER_CARD)
 def speedster(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.GENERIC, card.effect_vars.get("speedster", 2))
+    combat.apply_power_to(_owner(card, combat), PowerId.SPEEDSTER, card.effect_vars.get("speedster", 2))
 
 
 @register_effect(CardId.STRANGLE)
 def strangle(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat.apply_power_to(target, PowerId.CONSTRICT, card.effect_vars.get("strangle", 2))
 
 
@@ -493,7 +547,7 @@ def up_my_sleeve(card: CardInstance, combat: CombatState, target: Creature | Non
 
 @register_effect(CardId.WELL_LAID_PLANS)
 def well_laid_plans(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.WELL_LAID_PLANS, card.effect_vars.get("retain", 1))
+    combat.apply_power_to(_owner(card, combat), PowerId.WELL_LAID_PLANS, card.effect_vars.get("retain", 1))
 
 
 # ---------------------------------------------------------------------------
@@ -502,13 +556,14 @@ def well_laid_plans(card: CardInstance, combat: CombatState, target: Creature | 
 
 @register_effect(CardId.ABRASIVE)
 def abrasive(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.DEXTERITY, card.effect_vars.get("dexterity", 1))
-    combat.apply_power_to(combat.player, PowerId.THORNS, card.effect_vars.get("thorns", 4))
+    owner = _owner(card, combat)
+    combat.apply_power_to(owner, PowerId.DEXTERITY, card.effect_vars.get("dexterity", 1))
+    combat.apply_power_to(owner, PowerId.THORNS, card.effect_vars.get("thorns", 4))
 
 
 @register_effect(CardId.ACCELERANT)
 def accelerant(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.GENERIC, card.effect_vars.get("accelerant", 1))
+    combat.apply_power_to(_owner(card, combat), PowerId.ACCELERANT, card.effect_vars.get("accelerant", 1))
 
 
 @register_effect(CardId.ADRENALINE)
@@ -519,60 +574,59 @@ def adrenaline(card: CardInstance, combat: CombatState, target: Creature | None)
 
 @register_effect(CardId.AFTERIMAGE_CARD)
 def afterimage(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.AFTERIMAGE, card.effect_vars.get("afterimage", 1))
+    combat.apply_power_to(_owner(card, combat), PowerId.AFTERIMAGE, card.effect_vars.get("afterimage", 1))
 
 
 @register_effect(CardId.ASSASSINATE)
 def assassinate(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat.apply_power_to(target, PowerId.VULNERABLE, card.effect_vars.get("vulnerable", 1))
 
 
 @register_effect(CardId.BLADE_OF_INK)
 def blade_of_ink(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Apply BladeOfInk power (gain Strength when discard)
-    combat.apply_power_to(combat.player, PowerId.GENERIC, card.effect_vars.get("strength", 2))
+    combat.apply_power_to(_owner(card, combat), PowerId.BLADE_OF_INK, card.effect_vars.get("strength", 2))
 
 
 @register_effect(CardId.BULLET_TIME)
 def bullet_time(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     # NoDraw + all cards in hand cost 0 this turn
-    combat.apply_power_to(combat.player, PowerId.NO_DRAW, 1)
+    combat.apply_power_to(_owner(card, combat), PowerId.NO_DRAW, 1)
     for c in combat.hand:
         c.set_temporary_cost_for_turn(0)
 
 
 @register_effect(CardId.BURST)
 def burst(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Next skill played this turn is played twice
-    combat.apply_power_to(combat.player, PowerId.GENERIC, card.effect_vars.get("skills", 1))
+    combat.apply_power_to(_owner(card, combat), PowerId.BURST, card.effect_vars.get("skills", 1))
 
 
 @register_effect(CardId.CORROSIVE_WAVE)
 def corrosive_wave(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Apply CorrosiveWave power (Poison on card play)
-    combat.apply_power_to(combat.player, PowerId.GENERIC, card.effect_vars.get("corrosive_wave", 3))
+    combat.apply_power_to(_owner(card, combat), PowerId.CORROSIVE_WAVE, card.effect_vars.get("corrosive_wave", 3))
 
 
 @register_effect(CardId.ECHOING_SLASH)
 def echoing_slash(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     # Deal non-attack damage to all enemies
     dmg_val = card.effect_vars.get("damage", 10)
+    owner = _owner(card, combat)
     for enemy in combat.alive_enemies:
-        apply_damage(enemy, dmg_val, ValueProp.NONE, combat, combat.player)
+        apply_damage(enemy, dmg_val, ValueProp.NONE, combat, owner)
 
 
 @register_effect(CardId.ENVENOM_CARD)
 def envenom(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.ENVENOM, card.effect_vars.get("envenom", 1))
+    combat.apply_power_to(_owner(card, combat), PowerId.ENVENOM, card.effect_vars.get("envenom", 1))
 
 
 @register_effect(CardId.FAN_OF_KNIVES_CARD)
 def fan_of_knives(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     # Power: create Shivs + gain FanOfKnives power
-    combat.apply_power_to(combat.player, PowerId.FAN_OF_KNIVES, 1)
+    combat.apply_power_to(_owner(card, combat), PowerId.FAN_OF_KNIVES, 1)
     for _ in range(card.effect_vars.get("shivs", 2)):
         combat.hand.append(_make_shiv())
 
@@ -581,21 +635,23 @@ def fan_of_knives(card: CardInstance, combat: CombatState, target: Creature | No
 def grand_finale(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     # Only playable when draw pile is empty
     if len(combat.draw_pile) == 0:
+        owner = _owner(card, combat)
         for enemy in combat.alive_enemies:
-            dmg = calculate_damage(card.base_damage, combat.player, enemy, ValueProp.MOVE, combat)
-            apply_damage(enemy, dmg, ValueProp.MOVE, combat, combat.player)
+            dmg = calculate_damage(card.base_damage, owner, enemy, ValueProp.MOVE, combat)
+            apply_damage(enemy, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.KNIFE_TRAP)
 def knife_trap(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     # Create Shivs based on exhaust pile size and auto-play them
     exhaust_count = len(combat.exhaust_pile)
+    owner = _owner(card, combat)
     for _ in range(exhaust_count):
         shiv = _make_shiv()
         # Auto-play the shiv at target
         if target is not None and target.is_alive:
-            dmg = calculate_damage(shiv.base_damage, combat.player, target, ValueProp.MOVE, combat)
-            apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+            dmg = calculate_damage(shiv.base_damage, owner, target, ValueProp.MOVE, combat)
+            apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.MALAISE)
@@ -610,49 +666,64 @@ def malaise(card: CardInstance, combat: CombatState, target: Creature | None) ->
 
 @register_effect(CardId.MASTER_PLANNER)
 def master_planner(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.GENERIC, 1)
+    combat.apply_power_to(_owner(card, combat), PowerId.MASTER_PLANNER, 1)
 
 
 @register_effect(CardId.MURDER)
 def murder(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     # Damage = 1 per card exhausted this combat
+    owner = _owner(card, combat)
     exhaust_count = len(combat.exhaust_pile)
     base = card.effect_vars.get("calc_base", 1)
     extra = card.effect_vars.get("extra_damage", 1)
     total_dmg = base * exhaust_count * extra
-    dmg = calculate_damage(total_dmg, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    dmg = calculate_damage(total_dmg, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
 
 @register_effect(CardId.NIGHTMARE)
 def nightmare(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Select a card, add 3 copies to draw next turn (stub: apply power)
-    combat.apply_power_to(combat.player, PowerId.GENERIC, 1)
+    if not combat.hand:
+        return
+
+    def _resolver(selected: CardInstance | None) -> None:
+        if selected is None:
+            return
+        owner = _owner(card, combat)
+        combat.apply_power_to(owner, PowerId.NIGHTMARE, 3)
+        power = owner.powers.get(PowerId.NIGHTMARE)
+        if power is not None and hasattr(power, "set_selected_card"):
+            power.set_selected_card(selected)
+
+    combat.request_card_choice(
+        prompt="Choose a card for Nightmare",
+        cards=list(combat.hand),
+        source_pile="hand",
+        resolver=_resolver,
+    )
 
 
 @register_effect(CardId.SERPENT_FORM_CARD)
 def serpent_form(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.SERPENT_FORM, card.effect_vars.get("serpent_form", 4))
+    combat.apply_power_to(_owner(card, combat), PowerId.SERPENT_FORM, card.effect_vars.get("serpent_form", 4))
 
 
 @register_effect(CardId.SHADOW_STEP)
 def shadow_step(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Apply ShadowStep power; discard 3 cards
-    combat.apply_power_to(combat.player, PowerId.GENERIC, 1)
-    for _ in range(min(card.effect_vars.get("cards", 3), len(combat.hand))):
-        c = combat.hand.pop()
-        combat.discard_pile.append(c)
+    cards = list(combat.hand)
+    combat.discard_cards(cards, 0)
+    combat.apply_power_to(_owner(card, combat), PowerId.SHADOW_STEP, 1)
 
 
 @register_effect(CardId.SHADOWMELD)
 def shadowmeld(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.GENERIC, card.effect_vars.get("power", 1))
+    combat.apply_power_to(_owner(card, combat), PowerId.SHADOWMELD, card.effect_vars.get("power", 1))
 
 
 @register_effect(CardId.SNEAKY_CARD)
 def sneaky(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.SNEAKY, card.effect_vars.get("sneaky", 1))
+    combat.apply_power_to(_owner(card, combat), PowerId.SNEAKY, card.effect_vars.get("sneaky", 1))
 
 
 @register_effect(CardId.STORM_OF_STEEL)
@@ -668,19 +739,33 @@ def storm_of_steel(card: CardInstance, combat: CombatState, target: Creature | N
 @register_effect(CardId.THE_HUNT)
 def the_hunt(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
-    # TheHunt power + extra combat reward (stub)
+    from sts2_env.run.reward_objects import CardReward
+
+    owner = _owner(card, combat)
+    should_trigger_fatal = combat.should_owner_death_trigger_fatal(target)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
+    if should_trigger_fatal and target.is_dead:
+        room = getattr(combat, "room", None)
+        if room is not None and hasattr(room, "add_extra_reward"):
+            context = "boss" if getattr(room, "room_type", None) == RoomType.BOSS else "elite" if getattr(room, "room_type", None) == RoomType.ELITE else "regular"
+            room.add_extra_reward(
+                combat.player_id,
+                CardReward(combat.player_id, context=context),
+            )
+        else:
+            combat.extra_card_rewards += 1
+        combat.apply_power_to(owner, PowerId.THE_HUNT, 1)
 
 
 @register_effect(CardId.TOOLS_OF_THE_TRADE)
 def tools_of_the_trade(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.GENERIC, 1)
+    combat.apply_power_to(_owner(card, combat), PowerId.TOOLS_OF_THE_TRADE, 1)
 
 
 @register_effect(CardId.TRACKING)
 def tracking(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.GENERIC, 1)
+    combat.apply_power_to(_owner(card, combat), PowerId.TRACKING, 1)
 
 
 # ---------------------------------------------------------------------------
@@ -690,16 +775,17 @@ def tracking(card: CardInstance, combat: CombatState, target: Creature | None) -
 @register_effect(CardId.SUPPRESS)
 def suppress(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    dmg = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, dmg, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
     combat.apply_power_to(target, PowerId.WEAK, card.effect_vars.get("weak", 3))
 
 
 @register_effect(CardId.WRAITH_FORM)
 def wraith_form(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.INTANGIBLE, card.effect_vars.get("intangible", 2))
-    # WraithForm power: lose 1 Dex per turn
-    combat.apply_power_to(combat.player, PowerId.GENERIC, card.effect_vars.get("wraith_form", 1))
+    owner = _owner(card, combat)
+    combat.apply_power_to(owner, PowerId.INTANGIBLE, card.effect_vars.get("intangible", 2))
+    combat.apply_power_to(owner, PowerId.WRAITH_FORM, card.effect_vars.get("wraith_form", 1))
 
 
 # ---------------------------------------------------------------------------
@@ -714,6 +800,7 @@ def _make_shiv() -> CardInstance:
         target_type=TargetType.ANY_ENEMY,
         rarity=CardRarity.COMMON,
         base_damage=4,
+        tags=frozenset({CardTag.SHIV}),
         keywords=frozenset({"exhaust"}),
         instance_id=_get_next_id(),
     )

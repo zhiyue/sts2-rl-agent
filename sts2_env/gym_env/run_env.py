@@ -23,7 +23,7 @@ for the current game phase are unmasked:
  83-87        REST      Rest-site option 0-4
  88-91        EVENT     Event option 0-3
  92           TREASURE  Take and continue
- 93-99        --        Reserved
+ 93-99        COMBAT    Select acting player 0-6
 ===========  ========  ====================================================
 
 Observation space
@@ -105,6 +105,10 @@ _EVENT_SIZE = 4
 # Treasure
 _TREASURE_START = 92
 _TREASURE_SIZE = 1
+
+# Multiplayer combat player selection
+_PLAYER_SELECT_START = 93
+_PLAYER_SELECT_SIZE = 7
 
 # ---------------------------------------------------------------------------
 # Phase index for one-hot encoding (8 phases)
@@ -275,9 +279,24 @@ class STS2RunEnv(gymnasium.Env):
         if phase == RunManager.PHASE_COMBAT:
             combat = self._mgr.get_combat_state()
             if combat is not None:
-                combat_mask = get_action_mask(combat)
+                selected_action = next(
+                    (a for a in actions if a.get("action") == "select_player" and a.get("selected")),
+                    None,
+                )
+                selected_owner = combat.primary_player
+                if selected_action is not None:
+                    for state in combat.combat_player_states:
+                        if state.player_state.player_id == selected_action.get("player_id"):
+                            selected_owner = state.creature
+                            break
+                combat_mask = get_action_mask(combat, owner=selected_owner)
                 n = min(len(combat_mask), _COMBAT_SIZE)
                 mask[_COMBAT_START: _COMBAT_START + n] = combat_mask[:n]
+                select_actions = [
+                    a for a in actions if a.get("action") == "select_player"
+                ]
+                for i in range(min(len(select_actions), _PLAYER_SELECT_SIZE)):
+                    mask[_PLAYER_SELECT_START + i] = 1
             else:
                 mask[_COMBAT_START] = 1  # end turn fallback
 
@@ -287,13 +306,19 @@ class STS2RunEnv(gymnasium.Env):
                 mask[_MAP_START + i] = 1
 
         elif phase == RunManager.PHASE_CARD_REWARD:
-            # skip is always available
-            mask[_CARD_RWD_START + 3] = 1
-            n_cards = sum(
-                1 for a in actions if a.get("action") == "pick_card"
-            )
-            for i in range(min(n_cards, 3)):
-                mask[_CARD_RWD_START + i] = 1
+            if any(a.get("action") == "pick_potion" for a in actions):
+                mask[_CARD_RWD_START] = 1
+                mask[_CARD_RWD_START + 3] = 1
+            elif any(a.get("action") == "pick_relic_reward" for a in actions):
+                mask[_CARD_RWD_START] = 1
+                mask[_CARD_RWD_START + 3] = 1
+            else:
+                mask[_CARD_RWD_START + 3] = 1
+                n_cards = sum(
+                    1 for a in actions if a.get("action") == "pick_card"
+                )
+                for i in range(min(n_cards, 3)):
+                    mask[_CARD_RWD_START + i] = 1
 
         elif phase == RunManager.PHASE_BOSS_RELIC:
             n = min(
@@ -316,11 +341,18 @@ class STS2RunEnv(gymnasium.Env):
                 mask[_REST_START + i] = 1
 
         elif phase == RunManager.PHASE_EVENT:
-            event_actions = [
-                a for a in actions if a.get("action") == "event_choice"
-            ]
-            for i in range(min(len(event_actions), _EVENT_SIZE)):
-                mask[_EVENT_START + i] = 1
+            if any(a.get("action") in {"choose", "confirm_choice"} for a in actions):
+                if any(a.get("action") == "confirm_choice" for a in actions):
+                    mask[_COMBAT_START] = 1
+                choose_actions = [a for a in actions if a.get("action") == "choose"]
+                for i in range(min(len(choose_actions), _COMBAT_SIZE - 1)):
+                    mask[_COMBAT_START + 1 + i] = 1
+            else:
+                event_actions = [
+                    a for a in actions if a.get("action") == "event_choice"
+                ]
+                for i in range(min(len(event_actions), _EVENT_SIZE)):
+                    mask[_EVENT_START + i] = 1
 
         elif phase == RunManager.PHASE_TREASURE:
             mask[_TREASURE_START] = 1
@@ -343,26 +375,40 @@ class STS2RunEnv(gymnasium.Env):
         if combat is None or combat.is_over:
             return
 
-        local = max(0, min(action - _COMBAT_START, _COMBAT_SIZE - 1))
-        hand_idx, target_idx = action_to_card_and_target(local)
+        if _PLAYER_SELECT_START <= action < _PLAYER_SELECT_START + _PLAYER_SELECT_SIZE:
+            select_actions = [
+                a for a in mgr.get_available_actions()
+                if a.get("action") == "select_player"
+            ]
+            idx = action - _PLAYER_SELECT_START
+            if 0 <= idx < len(select_actions):
+                mgr.take_action(select_actions[idx])
+            return
 
-        if hand_idx is None:
-            mgr.take_action({"action": "end_turn"})
+        local = max(0, min(action - _COMBAT_START, _COMBAT_SIZE - 1))
+        if combat.pending_choice is not None:
+            if local == 0:
+                mgr.take_action({"action": "confirm_choice"})
+            else:
+                mgr.take_action({"action": "choose", "index": local - 1})
         else:
-            act: dict[str, Any] = {
-                "action": "play_card",
-                "hand_index": hand_idx,
-            }
-            if target_idx is not None:
-                act["target_index"] = target_idx
-            result = mgr.take_action(act)
-            # If the card play was invalid (e.g. bad index), fall back to
-            # ending the turn so the episode keeps progressing.
-            if not result.get("success", True) and not mgr.is_over:
-                if mgr.phase == RunManager.PHASE_COMBAT:
-                    combat2 = mgr.get_combat_state()
-                    if combat2 is not None and not combat2.is_over:
-                        mgr.take_action({"action": "end_turn"})
+            hand_idx, target_idx = action_to_card_and_target(local)
+
+            if hand_idx is None:
+                mgr.take_action({"action": "end_turn"})
+            else:
+                act: dict[str, Any] = {
+                    "action": "play_card",
+                    "hand_index": hand_idx,
+                }
+                if target_idx is not None:
+                    act["target_index"] = target_idx
+                result = mgr.take_action(act)
+                if not result.get("success", True) and not mgr.is_over:
+                    if mgr.phase == RunManager.PHASE_COMBAT:
+                        combat2 = mgr.get_combat_state()
+                        if combat2 is not None and not combat2.is_over:
+                            mgr.take_action({"action": "end_turn"})
 
         # Force-end combat if it exceeds the turn limit.
         if mgr.phase == RunManager.PHASE_COMBAT:
@@ -387,6 +433,22 @@ class STS2RunEnv(gymnasium.Env):
     def _step_card_reward(self, action: int) -> None:
         mgr = self._mgr
         assert mgr is not None
+        actions = mgr.get_available_actions()
+        if any(a.get("action") == "pick_potion" for a in actions):
+            local = action - _CARD_RWD_START
+            if local == 0:
+                mgr.take_action({"action": "pick_potion"})
+            else:
+                mgr.take_action({"action": "skip_potion"})
+            return
+        if any(a.get("action") == "pick_relic_reward" for a in actions):
+            local = action - _CARD_RWD_START
+            if local == 0:
+                mgr.take_action({"action": "pick_relic_reward"})
+            else:
+                mgr.take_action({"action": "skip_relic"})
+            return
+
         local = action - _CARD_RWD_START
 
         if local == 3 or local < 0 or local > 3:
@@ -436,8 +498,17 @@ class STS2RunEnv(gymnasium.Env):
     def _step_event(self, action: int) -> None:
         mgr = self._mgr
         assert mgr is not None
+        actions = mgr.get_available_actions()
+        if any(a.get("action") in {"choose", "confirm_choice"} for a in actions):
+            local = max(0, min(action - _COMBAT_START, _COMBAT_SIZE - 1))
+            if local == 0:
+                mgr.take_action({"action": "confirm_choice"})
+            else:
+                mgr.take_action({"action": "choose", "index": local - 1})
+            return
+
         actions = [
-            a for a in mgr.get_available_actions()
+            a for a in actions
             if a.get("action") == "event_choice"
         ]
         if not actions:

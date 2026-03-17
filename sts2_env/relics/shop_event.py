@@ -805,7 +805,7 @@ class DiamondDiadem(RelicInstance):
 
     def before_turn_end(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.PLAYER and self._cards_this_turn <= self.CARD_THRESHOLD:
-            owner.apply_power(PowerId.GENERIC, 1)
+            owner.apply_power(PowerId.DIAMOND_DIADEM, 1)
 
     def before_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.PLAYER:
@@ -1634,6 +1634,11 @@ class PhilosophersStone(RelicInstance):
     def before_combat_start(self, owner: Creature, combat: CombatState) -> None:
         for enemy in combat.get_alive_enemies():
             enemy.apply_power(PowerId.STRENGTH, self.ENEMY_STRENGTH)
+
+    def after_creature_added_to_combat(self, owner: Creature, creature: Creature, combat: CombatState) -> None:
+        if creature.side == owner.side:
+            return
+        creature.apply_power(PowerId.STRENGTH, self.ENEMY_STRENGTH)
 
 
 @register_relic

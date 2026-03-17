@@ -30,6 +30,7 @@ class Creature:
     __slots__ = (
         "max_hp", "current_hp", "block", "powers", "side",
         "is_player", "monster_id", "combat_id", "stars",
+        "is_pet", "pet_owner", "is_osty", "owner", "combat_state", "escaped",
     )
 
     def __init__(
@@ -50,14 +51,29 @@ class Creature:
         self.monster_id = monster_id
         self.combat_id = combat_id
         self.stars: int = 0
+        self.is_pet: bool = False
+        self.pet_owner: Creature | None = None
+        self.is_osty: bool = False
+        self.owner: Creature | None = None
+        self.combat_state = None
+        self.escaped: bool = False
 
     @property
     def is_alive(self) -> bool:
-        return self.current_hp > 0
+        return self.current_hp > 0 and not self.escaped
 
     @property
     def is_dead(self) -> bool:
         return self.current_hp <= 0
+
+    @property
+    def creature(self) -> Creature:
+        """Compatibility shim for code paths that expect owner.creature."""
+        return self
+
+    @property
+    def is_pet_of(self) -> Creature | None:
+        return self.pet_owner
 
     def gain_block(self, amount: int, unpowered: bool = False) -> None:
         if amount <= 0:
@@ -112,7 +128,14 @@ class Creature:
     def has_power(self, power_id: PowerId) -> bool:
         return power_id in self.powers and self.powers[power_id].amount != 0
 
-    def apply_power(self, power_id: PowerId, amount: int) -> None:
+    def apply_power(
+        self,
+        power_id: PowerId,
+        amount: int,
+        *,
+        applier: Creature | None = None,
+        source: object | None = None,
+    ) -> None:
         """Apply or stack a power. Handles Artifact blocking for debuffs."""
         if amount == 0:
             return
@@ -131,14 +154,23 @@ class Creature:
                 return
 
         existing = self.powers.get(power_id)
+        applied_delta = 0
         if existing is not None:
             existing.amount += amount
+            applied_delta = amount
             if existing.amount == 0 and not existing.allow_negative:
                 del self.powers[power_id]
         else:
             if cls is not None:
                 power = cls(amount)
                 self.powers[power_id] = power
+                applied_delta = amount
+
+        combat = self.combat_state
+        if applied_delta != 0 and combat is not None:
+            after_change = getattr(combat, "after_power_amount_changed", None)
+            if callable(after_change):
+                after_change(self, power_id, applied_delta, applier=applier, source=source)
 
     def tick_down_power(self, power_id: PowerId) -> None:
         """Decrement a duration power by 1, remove if <= 0."""
@@ -157,6 +189,44 @@ class Creature:
         self.max_hp = max(1, self.max_hp - amount)
         self.current_hp = min(self.current_hp, self.max_hp)
 
+    def gain_gold(self, amount: int) -> int:
+        combat = self.combat_state
+        gain_gold = getattr(combat, "gain_gold", None) if combat is not None else None
+        if callable(gain_gold):
+            return gain_gold(self, amount)
+        return 0
+
+    def lose_gold(self, amount: int) -> int:
+        combat = self.combat_state
+        lose_gold = getattr(combat, "lose_gold", None) if combat is not None else None
+        if callable(lose_gold):
+            return lose_gold(self, amount)
+        return 0
+
+    def gain_potion_slots(self, amount: int) -> None:
+        combat = self.combat_state
+        state = getattr(combat, "combat_player_state_for", lambda *_: None)(self) if combat is not None else None
+        if state is not None:
+            state.max_potion_slots += max(0, amount)
+
+    def upgrade_random_cards(self, card_type: object | None, count: int) -> int:
+        combat = self.combat_state
+        state = getattr(combat, "combat_player_state_for", lambda *_: None)(self) if combat is not None else None
+        if state is not None:
+            candidates = [card for card in state.starting_deck if not card.upgraded and (card_type is None or card.card_type == card_type)]
+            getattr(combat, "rng", None).shuffle(candidates)
+            upgraded = 0
+            for card in candidates[:count]:
+                if getattr(combat, "upgrade_card", None) is not None:
+                    combat.upgrade_card(card)
+                    upgraded += 1
+            return upgraded
+        run_state = getattr(self, "run_state", None)
+        player_state = getattr(run_state, "player", None)
+        if player_state is not None and hasattr(player_state, "upgrade_random_cards"):
+            return player_state.upgrade_random_cards(card_type, count)
+        return 0
+
     def gain_stars(self, amount: int) -> int:
         if amount <= 0:
             return 0
@@ -169,6 +239,12 @@ class Creature:
         lost = min(self.stars, amount)
         self.stars -= lost
         return lost
+
+    def gain_forge(self, amount: int, source: object | None = None) -> None:
+        combat = self.combat_state
+        forge = getattr(combat, "forge", None) if combat is not None else None
+        if callable(forge):
+            forge(self, amount, source=source)
 
     def __repr__(self) -> str:
         powers_str = ", ".join(str(p) for p in self.powers.values()) if self.powers else ""

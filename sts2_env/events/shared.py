@@ -9,6 +9,11 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
+from sts2_env.cards.factory import create_character_cards
+from sts2_env.cards.status import make_doubt, make_poor_sleep, make_regret, make_shame, make_spore_mind
+from sts2_env.potions.base import create_potion
+from sts2_env.relics.base import RelicId
+from sts2_env.run.reward_objects import CardReward, PotionReward, RelicReward
 from sts2_env.run.events import EventModel, EventOption, EventResult, register_event
 
 if TYPE_CHECKING:
@@ -23,6 +28,162 @@ def _hp_ge(run_state: RunState, threshold: int) -> bool:
 
 def _gold_ge(run_state: RunState, threshold: int) -> bool:
     return run_state.player.gold >= threshold
+
+
+def _obtain_random_relics(run_state: RunState, count: int) -> list[str]:
+    obtained: list[str] = []
+    for _ in range(max(0, count)):
+        reward = RelicReward(run_state.player.player_id)
+        reward.populate(run_state, None)
+        if reward.relic_id is not None:
+            run_state.player.obtain_relic(reward.relic_id)
+            obtained.append(reward.relic_id)
+    return obtained
+
+
+def _upgrade_n_cards(run_state: RunState, count: int) -> int:
+    upgraded = 0
+    for card in run_state.player.deck:
+        if upgraded >= count:
+            break
+        if not card.upgraded:
+            from sts2_env.cards.factory import create_card
+
+            try:
+                upgraded_card = create_card(card.card_id, upgraded=True)
+            except KeyError:
+                continue
+            if not upgraded_card.upgraded:
+                continue
+            card.cost = upgraded_card.cost
+            card.card_type = upgraded_card.card_type
+            card.target_type = upgraded_card.target_type
+            card.rarity = upgraded_card.rarity
+            card.base_damage = upgraded_card.base_damage
+            card.base_block = upgraded_card.base_block
+            card.upgraded = upgraded_card.upgraded
+            card.keywords = upgraded_card.keywords
+            card.tags = upgraded_card.tags
+            card.can_be_generated_in_combat = upgraded_card.can_be_generated_in_combat
+            card.can_be_generated_by_modifiers = upgraded_card.can_be_generated_by_modifiers
+            card.effect_vars = dict(upgraded_card.effect_vars)
+            card.original_cost = upgraded_card.original_cost
+            upgraded += 1
+    return upgraded
+
+
+def _transform_n_cards(run_state: RunState, count: int) -> int:
+    transformed = 0
+    candidates = [card for card in run_state.player.deck if card.rarity.name not in {"QUEST"}]
+    replacements = create_character_cards(
+        run_state.player.character_id,
+        run_state.rng.niche,
+        count,
+        distinct=False,
+        generation_context=None,
+    )
+    for old_card, new_card in zip(candidates, replacements):
+        old_card.card_id = new_card.card_id
+        old_card.cost = new_card.cost
+        old_card.card_type = new_card.card_type
+        old_card.target_type = new_card.target_type
+        old_card.rarity = new_card.rarity
+        old_card.base_damage = new_card.base_damage
+        old_card.base_block = new_card.base_block
+        old_card.upgraded = new_card.upgraded
+        old_card.keywords = new_card.keywords
+        old_card.tags = new_card.tags
+        old_card.can_be_generated_in_combat = new_card.can_be_generated_in_combat
+        old_card.can_be_generated_by_modifiers = new_card.can_be_generated_by_modifiers
+        old_card.effect_vars = dict(new_card.effect_vars)
+        old_card.original_cost = new_card.original_cost
+        transformed += 1
+        if transformed >= count:
+            break
+    return transformed
+
+
+def _remove_n_cards(run_state: RunState, count: int) -> int:
+    removed = 0
+    remaining = []
+    for card in run_state.player.deck:
+        if removed < count and card.rarity.name != "QUEST":
+            removed += 1
+            continue
+        remaining.append(card)
+    run_state.player.deck = remaining
+    return removed
+
+
+def _upgrade_selected_cards(cards: list, run_state: RunState) -> int:
+    upgraded = 0
+    for card in cards:
+        if card.upgraded:
+            continue
+        from sts2_env.cards.factory import create_card
+
+        try:
+            upgraded_card = create_card(card.card_id, upgraded=True)
+        except KeyError:
+            continue
+        if not upgraded_card.upgraded:
+            continue
+        card.cost = upgraded_card.cost
+        card.card_type = upgraded_card.card_type
+        card.target_type = upgraded_card.target_type
+        card.rarity = upgraded_card.rarity
+        card.base_damage = upgraded_card.base_damage
+        card.base_block = upgraded_card.base_block
+        card.upgraded = upgraded_card.upgraded
+        card.keywords = upgraded_card.keywords
+        card.tags = upgraded_card.tags
+        card.can_be_generated_in_combat = upgraded_card.can_be_generated_in_combat
+        card.can_be_generated_by_modifiers = upgraded_card.can_be_generated_by_modifiers
+        card.effect_vars = dict(upgraded_card.effect_vars)
+        card.original_cost = upgraded_card.original_cost
+        upgraded += 1
+    return upgraded
+
+
+def _transform_selected_cards(cards: list, run_state: RunState) -> int:
+    replacements = create_character_cards(
+        run_state.player.character_id,
+        run_state.rng.niche,
+        len(cards),
+        distinct=False,
+        generation_context=None,
+    )
+    transformed = 0
+    for old_card, new_card in zip(cards, replacements):
+        old_card.card_id = new_card.card_id
+        old_card.cost = new_card.cost
+        old_card.card_type = new_card.card_type
+        old_card.target_type = new_card.target_type
+        old_card.rarity = new_card.rarity
+        old_card.base_damage = new_card.base_damage
+        old_card.base_block = new_card.base_block
+        old_card.upgraded = new_card.upgraded
+        old_card.keywords = new_card.keywords
+        old_card.tags = new_card.tags
+        old_card.can_be_generated_in_combat = new_card.can_be_generated_in_combat
+        old_card.can_be_generated_by_modifiers = new_card.can_be_generated_by_modifiers
+        old_card.effect_vars = dict(new_card.effect_vars)
+        old_card.original_cost = new_card.original_cost
+        transformed += 1
+    return transformed
+
+
+def _remove_selected_cards(cards: list, run_state: RunState) -> int:
+    removed = 0
+    selected_ids = {id(card) for card in cards}
+    new_deck = []
+    for card in run_state.player.deck:
+        if id(card) in selected_ids:
+            removed += 1
+            continue
+        new_deck.append(card)
+    run_state.player.deck = new_deck
+    return removed
 
 
 # ── AbyssalBaths ─────────────────────────────────────────────────────
@@ -155,10 +316,19 @@ class BattlewornDummy(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "setting_1":
-            return EventResult(finished=True, description="Fought dummy (easy), gained a potion.")
+            return EventResult(
+                finished=True,
+                description="Fought dummy (easy), gained a potion.",
+                rewards={"reward_objects": [PotionReward(run_state.player.player_id)]},
+            )
         if option_id == "setting_2":
+            _upgrade_n_cards(run_state, 2)
             return EventResult(finished=True, description="Fought dummy (medium), upgraded 2 cards.")
-        return EventResult(finished=True, description="Fought dummy (hard), gained a relic.")
+        return EventResult(
+            finished=True,
+            description="Fought dummy (hard), gained a relic.",
+            rewards={"reward_objects": [RelicReward(run_state.player.player_id)]},
+        )
 
 
 register_event(BattlewornDummy())
@@ -645,10 +815,17 @@ class RoundTeaParty(EventModel):
         if option_id == "enjoy_tea":
             missing = run_state.player.max_hp - run_state.player.current_hp
             run_state.player.heal(missing)
+            run_state.player.obtain_relic(RelicId.ROYAL_POISON.name)
             return EventResult(finished=True,
                                description="Gained Royal Poison relic, healed to full.")
-        # pick_fight -> multi-page in C#, simplified
+        if option_id == "pick_fight":
+            return EventResult(
+                finished=False,
+                description="The table overturns and the room turns hostile.",
+                next_options=[EventOption("continue_fight", "Continue Fight", "Take 11 damage, gain a relic")],
+            )
         run_state.player.lose_hp(11)
+        _obtain_random_relics(run_state, 1)
         return EventResult(finished=True,
                            description="Took 11 damage, gained a relic.")
 
@@ -672,8 +849,29 @@ class SapphireSeed(EventModel):
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "eat":
             run_state.player.heal(9)
-            return EventResult(finished=True, description="Healed 9 HP, upgraded a card.")
-        return EventResult(finished=True, description="Enchanted a card with Sown.")
+            candidates = [card for card in run_state.player.deck if not card.upgraded]
+            if not candidates:
+                return EventResult(finished=True, description="Healed 9 HP.")
+            return self.request_card_choice(
+                prompt="Choose a card to upgrade",
+                cards=candidates,
+                source_pile="deck",
+                resolver=lambda selected: (
+                    _upgrade_selected_cards(selected, run_state),
+                    EventResult(finished=True, description="Healed 9 HP, upgraded a card."),
+                )[1],
+                description="Choose a card to upgrade.",
+            )
+        return self.request_card_choice(
+            prompt="Choose a card to enchant with Sown",
+            cards=list(run_state.player.deck),
+            source_pile="deck",
+            resolver=lambda selected: (
+                selected and selected[0].add_enchantment("Sown", 1),
+                EventResult(finished=True, description="Enchanted a card with Sown."),
+            )[-1],
+            description="Choose a card to enchant.",
+        )
 
 
 register_event(SapphireSeed())
@@ -697,11 +895,26 @@ class SelfHelpBook(EventModel):
         ]
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
-        if option_id == "read_back":
-            return EventResult(finished=True, description="Enchanted an Attack with Sharp +2.")
-        if option_id == "read_passage":
-            return EventResult(finished=True, description="Enchanted a Skill with Nimble +2.")
-        return EventResult(finished=True, description="Enchanted a Power with Swift +2.")
+        mapping = {
+            "read_back": ("Sharp", 2, "ATTACK", "Enchanted an Attack with Sharp +2."),
+            "read_passage": ("Nimble", 2, "SKILL", "Enchanted a Skill with Nimble +2."),
+            "read_entire": ("Swift", 2, "POWER", "Enchanted a Power with Swift +2."),
+        }
+        enchantment, amount, card_type_name, description = mapping.get(
+            option_id,
+            ("Swift", 2, "POWER", "Enchanted a Power with Swift +2."),
+        )
+        candidates = [card for card in run_state.player.deck if card.card_type.name == card_type_name]
+        return self.request_card_choice(
+            prompt=f"Choose a {card_type_name.title()} to enchant",
+            cards=candidates,
+            source_pile="deck",
+            resolver=lambda selected: (
+                selected and selected[0].add_enchantment(enchantment, amount),
+                EventResult(finished=True, description=description),
+            )[-1],
+            description="Choose a card to enchant.",
+        )
 
 
 register_event(SelfHelpBook())
@@ -1034,10 +1247,17 @@ class TrashHeap(EventModel):
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "dive_in":
             run_state.player.lose_hp(8)
-            return EventResult(finished=True,
-                               description="Took 8 damage, gained a relic.")
+            return EventResult(
+                finished=True,
+                description="Took 8 damage, gained a relic.",
+                rewards={"reward_objects": [RelicReward(run_state.player.player_id)]},
+            )
         run_state.player.gain_gold(100)
-        return EventResult(finished=True, description="Gained 100 gold and a card.")
+        return EventResult(
+            finished=True,
+            description="Gained 100 gold and a card.",
+            rewards={"reward_objects": [CardReward(run_state.player.player_id, option_count=1)]},
+        )
 
 
 register_event(TrashHeap())
@@ -1058,7 +1278,11 @@ class Trial(EventModel):
 
     event_id = "Trial"
 
+    def __init__(self) -> None:
+        self._trial_variant: str | None = None
+
     def generate_initial_options(self, run_state: RunState) -> list[EventOption]:
+        self._trial_variant = None
         return [
             EventOption("accept", "Accept the Trial", "Judge a defendant"),
             EventOption("reject", "Reject", "Reconsider (or abandon run)"),
@@ -1071,23 +1295,94 @@ class Trial(EventModel):
                 description="You hesitate.",
                 next_options=[
                     EventOption("accept", "Accept", "Fine, accept the trial"),
-                    EventOption("leave", "Leave", "Abandon the trial"),
+                    EventOption("double_down", "Double Down", "Abandon the run"),
                 ],
             )
-        if option_id == "leave":
-            return EventResult(finished=True, description="Left the trial.")
+        if option_id == "double_down":
+            run_state.lose_run()
+            return EventResult(finished=True, description="Abandoned the run.")
 
-        # Accept -> random trial type (simplified: always merchant)
-        return EventResult(
-            finished=False,
-            description="A merchant stands before you.",
-            next_options=[
-                EventOption("guilty", "Guilty",
-                             "Regret curse + 2 relics"),
-                EventOption("innocent", "Innocent",
-                             "Shame curse + upgrade 2 cards"),
-            ],
-        )
+        if option_id == "accept":
+            variant_roll = run_state.rng.niche.next_int(0, 2)
+            self._trial_variant = ("merchant", "noble", "nondescript")[variant_roll]
+            if self._trial_variant == "merchant":
+                return EventResult(
+                    finished=False,
+                    description="A merchant stands accused before you.",
+                    next_options=[
+                        EventOption("merchant_guilty", "Guilty", "Regret curse + 2 relics"),
+                        EventOption("merchant_innocent", "Innocent", "Shame curse + upgrade 2 cards"),
+                    ],
+                )
+            if self._trial_variant == "noble":
+                return EventResult(
+                    finished=False,
+                    description="A noble presents a polished defense.",
+                    next_options=[
+                        EventOption("noble_guilty", "Guilty", "Heal 10 HP"),
+                        EventOption("noble_innocent", "Innocent", "Regret curse + 300 gold"),
+                    ],
+                )
+            return EventResult(
+                finished=False,
+                description="A nondescript drifter waits for your verdict.",
+                next_options=[
+                    EventOption("nondescript_guilty", "Guilty", "Doubt curse + 2 card rewards"),
+                    EventOption("nondescript_innocent", "Innocent", "Doubt curse + transform 2 cards"),
+                ],
+            )
+
+        if option_id == "merchant_guilty":
+            run_state.player.add_card_instance_to_deck(make_regret())
+            _obtain_random_relics(run_state, 2)
+            return EventResult(finished=True, description="Condemned the merchant, gained two relics and Regret.")
+        if option_id == "merchant_innocent":
+            run_state.player.add_card_instance_to_deck(make_shame())
+            candidates = [card for card in run_state.player.deck if not card.upgraded]
+            if not candidates:
+                return EventResult(finished=True, description="Spared the merchant and gained Shame.")
+            return self.request_card_choice(
+                prompt="Choose 2 cards to upgrade",
+                cards=candidates,
+                source_pile="deck",
+                resolver=lambda selected: (
+                    _upgrade_selected_cards(selected, run_state),
+                    EventResult(finished=True, description="Spared the merchant, gained Shame and upgraded 2 cards."),
+                )[1],
+                min_count=min(2, len(candidates)),
+                max_count=min(2, len(candidates)),
+                description="Choose 2 cards to upgrade.",
+            )
+        if option_id == "noble_guilty":
+            run_state.player.heal(10)
+            return EventResult(finished=True, description="Condemned the noble and healed 10 HP.")
+        if option_id == "noble_innocent":
+            run_state.player.add_card_instance_to_deck(make_regret())
+            run_state.player.gain_gold(300)
+            return EventResult(finished=True, description="Freed the noble, gained 300 gold and Regret.")
+        if option_id == "nondescript_guilty":
+            run_state.player.add_card_instance_to_deck(make_doubt())
+            return EventResult(
+                finished=True,
+                description="Condemned the drifter, gained Doubt and two card rewards.",
+                rewards={"reward_objects": [CardReward(run_state.player.player_id), CardReward(run_state.player.player_id)]},
+            )
+        if option_id == "nondescript_innocent":
+            run_state.player.add_card_instance_to_deck(make_doubt())
+            candidates = list(run_state.player.deck)
+            return self.request_card_choice(
+                prompt="Choose 2 cards to transform",
+                cards=candidates,
+                source_pile="deck",
+                resolver=lambda selected: (
+                    _transform_selected_cards(selected, run_state),
+                    EventResult(finished=True, description="Freed the drifter, gained Doubt and transformed 2 cards."),
+                )[1],
+                min_count=min(2, len(candidates)),
+                max_count=min(2, len(candidates)),
+                description="Choose 2 cards to transform.",
+            )
+        return EventResult(finished=True, description="The trial ends.")
 
 
 register_event(Trial())
@@ -1117,11 +1412,15 @@ class UnrestSite(EventModel):
         if option_id == "rest":
             heal_amount = run_state.player.max_hp - run_state.player.current_hp
             run_state.player.heal(heal_amount)
+            run_state.player.add_card_instance_to_deck(make_poor_sleep())
             return EventResult(finished=True,
                                description=f"Healed {heal_amount} HP, gained Poor Sleep curse.")
         run_state.player.lose_max_hp(8)
-        return EventResult(finished=True,
-                           description="Lost 8 Max HP, gained a relic.")
+        return EventResult(
+            finished=True,
+            description="Lost 8 Max HP, gained a relic.",
+            rewards={"reward_objects": [RelicReward(run_state.player.player_id)]},
+        )
 
 
 register_event(UnrestSite())

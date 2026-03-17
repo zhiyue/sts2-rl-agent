@@ -31,6 +31,7 @@ from sts2_env.monsters.act3 import (
     create_test_subject,
 )
 from sts2_env.monsters.act1 import create_cubex_construct
+from sts2_env.monsters.act4 import create_punch_construct
 
 EncounterSetup = Callable[..., None]
 
@@ -69,10 +70,12 @@ def setup_axebots_normal(combat: CombatState, rng: Rng) -> None:
 
 
 def setup_construct_menagerie_normal(combat: CombatState, rng: Rng) -> None:
-    c1, a1 = create_cubex_construct(rng)
+    c1, a1 = create_punch_construct(rng)
     combat.add_enemy(c1, a1)
-    c2, a2 = create_axebot(rng, start_with_boot_up=True)
+    c2, a2 = create_cubex_construct(rng)
     combat.add_enemy(c2, a2)
+    c3, a3 = create_cubex_construct(rng)
+    combat.add_enemy(c3, a3)
 
 
 def setup_fabricator_normal(combat: CombatState, rng: Rng) -> None:

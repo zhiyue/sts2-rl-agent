@@ -9,7 +9,7 @@ from gymnasium import spaces
 from sts2_env.cards.base import reset_instance_counter
 from sts2_env.cards.ironclad import create_ironclad_starter_deck
 from sts2_env.core.combat import CombatState
-from sts2_env.core.constants import ACTION_SPACE_SIZE, IRONCLAD_STARTING_HP
+from sts2_env.core.constants import ACTION_END_TURN, ACTION_SPACE_SIZE, IRONCLAD_STARTING_HP
 from sts2_env.encounters.act1 import ALL_ACT1_ENCOUNTERS, EncounterSetup
 from sts2_env.core.rng import Rng
 from sts2_env.gym_env.action_space import action_to_card_and_target, get_action_mask
@@ -63,6 +63,7 @@ class STS2CombatEnv(gymnasium.Env):
             player_max_hp=self.player_max_hp,
             deck=deck,
             rng_seed=rng_seed,
+            character_id="Ironclad",
         )
 
         # Setup encounter
@@ -81,16 +82,20 @@ class STS2CombatEnv(gymnasium.Env):
         assert self.combat is not None, "Must call reset() first"
 
         prev_hp = self.combat.player.current_hp
-        hand_idx, target_idx = action_to_card_and_target(action)
-
-        if hand_idx is None:
-            # End turn
-            self.combat.end_player_turn()
+        if self.combat.pending_choice is not None:
+            if action == ACTION_END_TURN:
+                self.combat.resolve_pending_choice(None)
+            else:
+                self.combat.resolve_pending_choice(action - 1)
         else:
-            success = self.combat.play_card(hand_idx, target_idx)
-            if not success:
-                # Invalid action — do nothing, let agent try again
-                pass
+            hand_idx, target_idx = action_to_card_and_target(action)
+
+            if hand_idx is None:
+                self.combat.end_player_turn()
+            else:
+                success = self.combat.play_card(hand_idx, target_idx)
+                if not success:
+                    pass
 
         obs = encode_observation(self.combat)
         reward = compute_reward(self.combat, prev_hp)

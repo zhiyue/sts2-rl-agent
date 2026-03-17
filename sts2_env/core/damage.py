@@ -45,7 +45,17 @@ def calculate_damage(
 
     # If given a CombatState, use the hook system
     if hasattr(combat_or_creatures, 'all_creatures'):
-        return modify_damage(base_damage, dealer, target, props, combat_or_creatures)
+        combat = combat_or_creatures
+        if dealer is not None:
+            combat._ensure_pending_attack_context(dealer, target, props)
+        return modify_damage(
+            base_damage,
+            dealer,
+            target,
+            props,
+            combat,
+            card_source=getattr(combat, "active_card_source", None),
+        )
 
     # Legacy path: iterate creature list directly
     all_creatures: list[Creature] = combat_or_creatures
@@ -110,6 +120,10 @@ def apply_damage(
         fire_after_damage_given, modify_hp_lost,
     )
 
+    attack = None
+    if combat is not None:
+        attack = combat.active_attack or combat.pending_auto_attack
+
     # Fire before-damage hooks (Thorns)
     if combat is not None:
         fire_before_damage_received(target, dealer, damage, props, combat)
@@ -136,9 +150,19 @@ def apply_damage(
         unblocked_damage=remaining,
     )
 
+    if attack is not None:
+        attack.results.append(result)
+
     # Fire after-damage hooks
     if combat is not None:
+        combat.record_damage_event(dealer, target, props, remaining)
         fire_after_damage_received(target, dealer, remaining, props, combat)
+        if blocked > 0:
+            for owner in combat.all_creatures:
+                for power in owner.powers.values():
+                    on_damage_blocked = getattr(power, "on_damage_blocked", None)
+                    if callable(on_damage_blocked):
+                        on_damage_blocked(owner, blocked, dealer, props, combat)
         if dealer is not None:
             fire_after_damage_given(dealer, target, remaining, props, combat)
 

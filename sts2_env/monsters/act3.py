@@ -29,10 +29,10 @@ if TYPE_CHECKING:
 
 def _deal_damage_to_player(combat: CombatState, creature: Creature, base_dmg: int, hits: int = 1) -> None:
     for _ in range(hits):
-        if combat.player.is_dead:
+        if combat.primary_player.is_dead:
             break
-        dmg = calculate_damage(base_dmg, creature, combat.player, ValueProp.MOVE, combat)
-        apply_damage(combat.player, dmg, ValueProp.MOVE, combat, creature)
+        dmg = calculate_damage(base_dmg, creature, combat.primary_player, ValueProp.MOVE, combat)
+        apply_damage(combat.primary_player, dmg, ValueProp.MOVE, combat, creature)
 
 
 def _gain_block(creature: Creature, amount: int) -> None:
@@ -124,8 +124,8 @@ def create_axebot(rng: Rng, start_with_boot_up: bool = False) -> tuple[Creature,
 
     def hammer_uppercut(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, hammer_uppercut_dmg)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 1)
 
     rand = RandomBranchState("RAND")
     rand.add_branch("ONE_TWO", MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
@@ -276,7 +276,7 @@ def create_frog_knight(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def tongue_lash(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, tongue_lash_dmg)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 2)
 
     def strike_down_evil(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, strike_down_evil_dmg)
@@ -319,7 +319,7 @@ def create_globe_head(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def shocking_slap(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, shocking_slap_dmg)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 2)
 
     def thunder_strike(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, thunder_strike_dmg, hits=3)
@@ -348,7 +348,7 @@ def create_owl_magistrate(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def judgement(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, judgement_dmg)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     def sentence(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, sentence_dmg)
@@ -414,7 +414,7 @@ def create_the_forgotten(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def haunt(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, haunt_dmg)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     def wail_of_sorrow(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, wail_dmg)
@@ -426,8 +426,7 @@ def create_the_forgotten(rng: Rng) -> tuple[Creature, MonsterAI]:
     return creature, MonsterAI(states, "HAUNT")
 
 
-# ---- ConstructMenagerie (mixed normal encounter placeholder) ----
-# Uses CubexConstruct from act1 in a different configuration
+# ---- ConstructMenagerie ----
 
 
 # ========================================================================
@@ -765,7 +764,7 @@ def create_queen(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def royal_strike(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, royal_strike_dmg)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     def guillotine(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, guillotine_dmg)

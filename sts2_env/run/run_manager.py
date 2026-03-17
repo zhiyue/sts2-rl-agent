@@ -25,16 +25,17 @@ from typing import Any, TYPE_CHECKING
 from sts2_env.cards.base import CardInstance, reset_instance_counter
 from sts2_env.core.combat import CombatState
 from sts2_env.core.enums import (
-    CardRarity,
     MapPointType,
     RoomType,
 )
 from sts2_env.core.rng import Rng
 from sts2_env.map.map_point import MapCoord
+from sts2_env.potions.base import PotionInstance, create_potion, roll_random_potion_model
 from sts2_env.run.events import EventModel, EventOption, EventResult, pick_event
+from sts2_env.run.reward_objects import CardReward, GoldReward, PotionReward, RelicReward, Reward, RewardsSet
 from sts2_env.run.rest_site import RestSiteOption, generate_rest_site_options
-from sts2_env.run.rewards import generate_combat_card_rewards
-from sts2_env.run.rooms import create_room
+from sts2_env.run.rewards import generate_combat_reward_cards
+from sts2_env.run.rooms import CombatRoom, Room, create_room
 from sts2_env.run.run_state import RunState
 from sts2_env.run.shop import ShopInventory, generate_shop_inventory
 
@@ -192,7 +193,7 @@ class RunManager:
         # Starter deck and relic
         reset_instance_counter()
         self._run_state.player.deck = _get_starter_deck(character_id)
-        self._run_state.relics.append(config["starter_relic"])
+        self._run_state.player.obtain_relic(config["starter_relic"])
         self._heal_after_combat: int = config["heal_after_combat"]
 
         # Initialize the run (ascension effects + first map)
@@ -201,11 +202,21 @@ class RunManager:
         # Phase tracking
         self._phase: str = self.PHASE_MAP_CHOICE
         self._combat: CombatState | None = None
+        self._current_room: Room | None = None
         self._current_room_type: RoomType | None = None
 
         # Scratch state for each phase
         self._available_coords: list[MapCoord] = []
-        self._offered_cards: list[tuple[CardRarity, bool]] = []
+        self._offered_cards: list[CardInstance] = []
+        self._pending_card_reward_screens: list[list[CardInstance]] = []
+        self._offered_potion: PotionInstance | None = None
+        self._pending_potion_reward: PotionInstance | None = None
+        self._offered_relic: str | None = None
+        self._pending_relic_reward: str | None = None
+        self._current_rewards: RewardsSet | None = None
+        self._pending_rewards: list[Reward] = []
+        self._current_reward: Reward | None = None
+        self._selected_combat_player_id: int | None = None
         self._rest_options: list[RestSiteOption] = []
         self._shop_inventory: ShopInventory | None = None
         self._event_model: EventModel | None = None
@@ -286,12 +297,26 @@ class RunManager:
             return self._do_map_move(action)
         if self._phase == self.PHASE_COMBAT and action_type == "play_card":
             return self._do_combat_play_card(action)
+        if self._phase == self.PHASE_COMBAT and action_type == "select_player":
+            return self._do_combat_select_player(action)
+        if self._phase == self.PHASE_COMBAT and action_type == "choose":
+            return self._do_combat_choose(action)
+        if self._phase == self.PHASE_COMBAT and action_type == "confirm_choice":
+            return self._do_combat_confirm_choice()
         if self._phase == self.PHASE_COMBAT and action_type == "end_turn":
             return self._do_combat_end_turn()
         if self._phase == self.PHASE_CARD_REWARD and action_type == "pick_card":
             return self._do_card_reward_pick(action)
         if self._phase == self.PHASE_CARD_REWARD and action_type == "skip":
             return self._do_card_reward_skip()
+        if self._phase == self.PHASE_CARD_REWARD and action_type == "pick_potion":
+            return self._do_potion_reward_pick()
+        if self._phase == self.PHASE_CARD_REWARD and action_type == "skip_potion":
+            return self._do_potion_reward_skip()
+        if self._phase == self.PHASE_CARD_REWARD and action_type == "pick_relic_reward":
+            return self._do_relic_reward_pick()
+        if self._phase == self.PHASE_CARD_REWARD and action_type == "skip_relic":
+            return self._do_relic_reward_skip()
         if self._phase == self.PHASE_BOSS_RELIC and action_type == "pick_relic":
             return self._do_boss_relic_pick(action)
         if self._phase == self.PHASE_SHOP and action_type in (
@@ -302,6 +327,10 @@ class RunManager:
             return self._do_rest_site(action)
         if self._phase == self.PHASE_EVENT and action_type == "event_choice":
             return self._do_event_choice(action)
+        if self._phase == self.PHASE_EVENT and action_type == "choose":
+            return self._do_event_choose(action)
+        if self._phase == self.PHASE_EVENT and action_type == "confirm_choice":
+            return self._do_event_confirm_choice()
         if self._phase == self.PHASE_TREASURE and action_type == "collect":
             return self._do_treasure_collect()
 
@@ -309,6 +338,21 @@ class RunManager:
             "phase": self.phase,
             "description": f"Invalid action '{action_type}' for phase '{self._phase}'.",
         }
+
+    def _consume_run_pending_rewards(self) -> None:
+        pending = list(self._run_state.pending_rewards)
+        if not pending:
+            return
+        self._run_state.pending_rewards.clear()
+        rewards_set = RewardsSet(self._run_state.player.player_id).with_custom_rewards(pending)
+        generated = rewards_set.generate_without_offering(self._run_state)
+        if self._phase == self.PHASE_CARD_REWARD and (self._current_reward is not None or self._pending_rewards):
+            self._pending_rewards.extend(generated)
+            return
+        self._current_rewards = rewards_set
+        self._pending_rewards = list(generated)
+        self._phase = self.PHASE_CARD_REWARD
+        self._advance_post_combat_rewards()
 
     def get_combat_state(self) -> CombatState | None:
         """Return the active CombatState, or None if not in combat."""
@@ -324,6 +368,16 @@ class RunManager:
         """Transition to MAP_CHOICE."""
         self._phase = self.PHASE_MAP_CHOICE
         self._combat = None
+        self._current_room = None
+        self._current_rewards = None
+        self._pending_rewards = []
+        self._current_reward = None
+        self._offered_cards = []
+        self._offered_potion = None
+        self._pending_potion_reward = None
+        self._offered_relic = None
+        self._pending_relic_reward = None
+        self._selected_combat_player_id = None
         self._available_coords = self._run_state.get_available_next_coords()
 
         # If no nodes are reachable check for boss
@@ -340,6 +394,7 @@ class RunManager:
         """Set up a combat encounter for the given room type."""
         self._phase = self.PHASE_COMBAT
         self._current_room_type = room_type
+        self._current_room = create_room(room_type)
         reset_instance_counter()
 
         player = self._run_state.player
@@ -351,7 +406,13 @@ class RunManager:
             rng_seed=combat_seed,
             relics=list(self._run_state.relics),
             gold=player.gold,
+            character_id=self._run_state.player.character_id,
+            potions=list(player.potions),
+            max_potion_slots=player.max_potion_slots,
+            player_state=player,
+            room=self._current_room,
         )
+        self._selected_combat_player_id = player.player_id
 
         # Select encounter from appropriate pool
         pools = _get_encounter_pools(self._run_state.current_act_index)
@@ -371,12 +432,74 @@ class RunManager:
 
         self._combat.start_combat()
 
-    def _enter_card_reward(self, context: str) -> None:
-        """Transition to CARD_REWARD after combat."""
-        self._phase = self.PHASE_CARD_REWARD
-        self._offered_cards = generate_combat_card_rewards(
-            self._run_state, context=context, num_cards=3,
+    def _prime_next_card_reward(self) -> None:
+        reward = self._current_reward
+        self._offered_cards = reward.cards if isinstance(reward, CardReward) else []
+        self._offered_potion = None
+        self._offered_relic = None
+
+    def _prime_next_potion_reward(self) -> None:
+        self._offered_cards = []
+        reward = self._current_reward
+        self._offered_potion = (
+            create_potion(reward.potion_id)
+            if isinstance(reward, PotionReward) and reward.potion_id is not None
+            else None
         )
+        self._offered_relic = None
+
+    def _prime_next_relic_reward(self) -> None:
+        reward = self._current_reward
+        self._offered_cards = []
+        self._offered_potion = None
+        self._offered_relic = reward.relic_id if isinstance(reward, RelicReward) else None
+
+    def _advance_post_combat_rewards(self) -> None:
+        self._offered_cards = []
+        self._offered_potion = None
+        self._offered_relic = None
+        self._current_reward = None
+
+        remaining: list[Reward] = []
+        for reward in self._pending_rewards:
+            if isinstance(reward, GoldReward):
+                reward.select(self)
+            else:
+                remaining.append(reward)
+        self._pending_rewards = remaining
+
+        for reward_type in (CardReward, PotionReward, RelicReward):
+            for index, reward in enumerate(self._pending_rewards):
+                if isinstance(reward, reward_type):
+                    self._current_reward = self._pending_rewards.pop(index)
+                    self._phase = self.PHASE_CARD_REWARD
+                    if isinstance(self._current_reward, CardReward):
+                        self._prime_next_card_reward()
+                    elif isinstance(self._current_reward, PotionReward):
+                        self._prime_next_potion_reward()
+                    elif isinstance(self._current_reward, RelicReward):
+                        self._prime_next_relic_reward()
+                    return
+        self._after_card_reward()
+
+    def _enter_card_reward(
+        self,
+        context: str,
+        reward_count: int = 1,
+        potion_reward: PotionInstance | None = None,
+    ) -> None:
+        """Transition to CARD_REWARD after combat."""
+        rewards: list[Reward] = [
+            CardReward(self._run_state.player.player_id, context=context)
+            for _ in range(max(1, reward_count))
+        ]
+        if potion_reward is not None:
+            rewards.append(PotionReward(self._run_state.player.player_id, potion_id=potion_reward.potion_id))
+        self._current_rewards = RewardsSet(self._run_state.player.player_id, room=self._current_room)
+        self._current_rewards.with_custom_rewards(rewards)
+        self._pending_rewards = self._current_rewards.generate_without_offering(self._run_state)
+        self._phase = self.PHASE_CARD_REWARD
+        self._advance_post_combat_rewards()
 
     def _enter_boss_relic(self) -> None:
         """Offer three boss relics after defeating a boss."""
@@ -454,25 +577,73 @@ class RunManager:
         if combat is None or combat.is_over:
             return actions
 
-        # End turn is always available
+        if combat.pending_choice is not None:
+            if combat.pending_choice.can_confirm():
+                actions.append({
+                    "action": "confirm_choice",
+                    "prompt": combat.pending_choice.prompt,
+                    "selected_count": len(combat.pending_choice.selected_indices),
+                })
+            for i, option in enumerate(combat.pending_choice.options):
+                actions.append({
+                    "action": "choose",
+                    "index": i,
+                    "card_id": option.card.card_id.name,
+                    "cost": option.card.cost,
+                    "source_pile": option.source_pile,
+                    "prompt": combat.pending_choice.prompt,
+                    "selected": i in combat.pending_choice.selected_indices,
+                })
+            return actions
+
         actions.append({"action": "end_turn"})
 
+        controllable_states = [
+            state for state in combat.combat_player_states
+            if state.creature.is_alive and getattr(state.creature, "is_player", False)
+        ]
+        if not controllable_states:
+            return actions
+        selected_state = next(
+            (
+                state for state in controllable_states
+                if state.player_state.player_id == self._selected_combat_player_id
+            ),
+            controllable_states[0],
+        )
+        self._selected_combat_player_id = selected_state.player_state.player_id
+
+        if len(controllable_states) > 1:
+            for idx, state in enumerate(controllable_states):
+                actions.append({
+                    "action": "select_player",
+                    "player_id": state.player_state.player_id,
+                    "player_index": idx,
+                    "character_id": state.player_state.character_id,
+                    "selected": state is selected_state,
+                })
+
         # Playable cards in hand
-        for i, card in enumerate(combat.hand):
+        for i, card in enumerate(selected_state.hand):
             if combat.can_play_card(card):
                 card_action: dict[str, Any] = {
                     "action": "play_card",
+                    "player_id": selected_state.player_state.player_id,
                     "hand_index": i,
                     "card_id": card.card_id.name,
                     "cost": card.cost,
                 }
-                if card.target_type.name == "ANY_ENEMY":
-                    # One action per alive enemy target
-                    for j, enemy in enumerate(combat.enemies):
-                        if enemy.is_alive:
+                if card.target_type.name in {"ANY_ENEMY", "ANY_ALLY"}:
+                    targets = (
+                        combat.enemies
+                        if card.target_type.name == "ANY_ENEMY"
+                        else combat.get_player_allies_of(selected_state.creature)
+                    )
+                    for j, creature in enumerate(targets):
+                        if creature.is_alive:
                             targeted = dict(card_action)
                             targeted["target_index"] = j
-                            targeted["target_name"] = getattr(enemy, "name", f"Enemy_{j}")
+                            targeted["target_name"] = getattr(creature, "name", f"Target_{j}")
                             actions.append(targeted)
                 else:
                     # Self-targeted / all-enemies / none
@@ -481,13 +652,25 @@ class RunManager:
         return actions
 
     def _actions_card_reward(self) -> list[dict]:
+        if self._offered_potion is not None:
+            return [
+                {"action": "skip_potion", "potion_id": self._offered_potion.potion_id},
+                {"action": "pick_potion", "potion_id": self._offered_potion.potion_id},
+            ]
+        if self._offered_relic is not None:
+            return [
+                {"action": "skip_relic", "relic_id": self._offered_relic},
+                {"action": "pick_relic_reward", "relic_id": self._offered_relic},
+            ]
+
         actions: list[dict] = [{"action": "skip"}]
-        for i, (rarity, upgraded) in enumerate(self._offered_cards):
+        for i, card in enumerate(self._offered_cards):
             actions.append({
                 "action": "pick_card",
                 "index": i,
-                "rarity": rarity.name,
-                "upgraded": upgraded,
+                "card_id": card.card_id.name,
+                "rarity": card.rarity.name,
+                "upgraded": card.upgraded,
             })
         return actions
 
@@ -567,6 +750,24 @@ class RunManager:
         ]
 
     def _actions_event(self) -> list[dict]:
+        if self._event_model is not None and self._event_model.pending_choice is not None:
+            choice = self._event_model.pending_choice
+            actions: list[dict] = []
+            if choice.can_confirm():
+                actions.append({
+                    "action": "confirm_choice",
+                    "prompt": choice.prompt,
+                    "selected_count": len(choice.selected_indices),
+                })
+            for i, option in enumerate(choice.options):
+                actions.append({
+                    "action": "choose",
+                    "index": i,
+                    "card_id": option.card.card_id.name,
+                    "source_pile": option.source_pile,
+                    "selected": i in choice.selected_indices,
+                })
+            return actions
         if not self._event_options:
             return [{"action": "event_choice", "option_id": "leave", "label": "Leave"}]
         return [
@@ -624,7 +825,15 @@ class RunManager:
 
         hand_index = action.get("hand_index", 0)
         target_index = action.get("target_index")
-        success = combat.play_card(hand_index, target_index)
+        player_id = action.get("player_id", self._selected_combat_player_id)
+        owner = combat.primary_player
+        if player_id is not None:
+            for state in combat.combat_player_states:
+                if state.player_state.player_id == player_id:
+                    owner = state.creature
+                    self._selected_combat_player_id = player_id
+                    break
+        success = combat.play_card_from_creature(owner, hand_index, target_index)
 
         result: dict[str, Any] = {
             "phase": self.phase,
@@ -636,6 +845,36 @@ class RunManager:
         if combat.is_over:
             result.update(self._resolve_combat_end())
 
+        return result
+
+    def _do_combat_choose(self, action: dict) -> dict:
+        combat = self._combat
+        if combat is None or combat.is_over:
+            return {"phase": self.phase, "description": "No active combat."}
+
+        success = combat.resolve_pending_choice(action.get("index"))
+        result: dict[str, Any] = {
+            "phase": self.phase,
+            "description": "Resolved combat choice." if success else "Failed to resolve combat choice.",
+            "success": success,
+        }
+        if combat.is_over:
+            result.update(self._resolve_combat_end())
+        return result
+
+    def _do_combat_confirm_choice(self) -> dict:
+        combat = self._combat
+        if combat is None or combat.is_over:
+            return {"phase": self.phase, "description": "No active combat."}
+
+        success = combat.resolve_pending_choice(None)
+        result: dict[str, Any] = {
+            "phase": self.phase,
+            "description": "Confirmed combat choice." if success else "Failed to confirm combat choice.",
+            "success": success,
+        }
+        if combat.is_over:
+            result.update(self._resolve_combat_end())
         return result
 
     def _do_combat_end_turn(self) -> dict:
@@ -654,6 +893,27 @@ class RunManager:
             result.update(self._resolve_combat_end())
 
         return result
+
+    def _do_combat_select_player(self, action: dict) -> dict:
+        combat = self._combat
+        if combat is None or combat.is_over:
+            return {"phase": self.phase, "description": "No active combat.", "success": False}
+
+        player_id = action.get("player_id")
+        valid = {
+            state.player_state.player_id
+            for state in combat.combat_player_states
+            if state.creature.is_alive and getattr(state.creature, "is_player", False)
+        }
+        if player_id not in valid:
+            return {"phase": self.phase, "description": "Invalid combat player.", "success": False}
+        self._selected_combat_player_id = player_id
+        return {
+            "phase": self.phase,
+            "description": f"Selected player {player_id} for combat actions.",
+            "success": True,
+            "player_id": player_id,
+        }
 
     def _resolve_combat_end(self) -> dict:
         """Handle post-combat bookkeeping and transition to the next phase."""
@@ -676,75 +936,107 @@ class RunManager:
 
         # --- Victory path ---
         # Sync HP from combat back to run state
+        player.max_hp = combat.player.max_hp
         player.current_hp = combat.player.current_hp
+        player.potions = list(combat.potions)
+        player.max_potion_slots = combat.max_potion_slots
 
         # Post-combat heal (BurningBlood-style)
         healed = 0
         if self._heal_after_combat > 0 and player.current_hp > 0:
             healed = player.heal(self._heal_after_combat)
 
-        # Gold reward
-        low, high = _GOLD_REWARDS.get(room_type, (10, 20))
-        gold_earned = self._rng.next_int(low, high)
-        player.gain_gold(gold_earned)
+        if self._current_room is None:
+            self._current_room = create_room(room_type)
 
-        # Potion drop chance
-        potion_dropped = False
-        is_elite = room_type == RoomType.ELITE
-        if self._run_state.potion_reward_odds.roll(
-            self._rng, is_elite=is_elite,
-        ):
-            potion_dropped = True
-            # Simplified: just note the drop; full implementation would
-            # generate a specific potion and add it.
+        context = "boss" if room_type == RoomType.BOSS else "elite" if room_type == RoomType.ELITE else "regular"
+        if isinstance(self._current_room, CombatRoom):
+            existing_extra_cards = sum(
+                1
+                for reward in self._current_room.extra_rewards.get(player.player_id, [])
+                if isinstance(reward, CardReward)
+            )
+            for _ in range(max(0, combat.extra_card_rewards - existing_extra_cards)):
+                self._current_room.add_extra_reward(
+                    player.player_id,
+                    CardReward(player.player_id, context=context),
+                )
+
+        self._current_rewards = RewardsSet(player.player_id).with_rewards_from_room(self._current_room, self._run_state)
+        generated_rewards = self._current_rewards.generate_without_offering(self._run_state)
+        gold_reward = next((reward for reward in generated_rewards if isinstance(reward, GoldReward)), None)
+        potion_reward = next((reward for reward in generated_rewards if isinstance(reward, PotionReward)), None)
+        self._pending_rewards = list(generated_rewards)
+        self._phase = self.PHASE_CARD_REWARD
+        self._advance_post_combat_rewards()
 
         info: dict[str, Any] = {
             "player_won": True,
-            "gold_earned": gold_earned,
+            "gold_earned": gold_reward.amount if gold_reward is not None else 0,
             "healed": healed,
-            "potion_dropped": potion_dropped,
+            "potion_dropped": potion_reward is not None,
+            "potion_reward": potion_reward.potion_id if potion_reward is not None else None,
         }
-
-        # Determine the reward context
-        if room_type == RoomType.BOSS:
-            context = "boss"
-        elif room_type == RoomType.ELITE:
-            context = "elite"
-        else:
-            context = "regular"
-
-        # Transition: card reward first, then boss relic if applicable
-        self._enter_card_reward(context)
 
         info["phase"] = self.phase
         info["description"] = (
-            f"Victory! Gained {gold_earned} gold"
+            f"Victory! Gained {info['gold_earned']} gold"
             + (f", healed {healed} HP" if healed else "")
             + "."
         )
         return info
 
     def _do_card_reward_pick(self, action: dict) -> dict:
-        index = action.get("index", 0)
-        if 0 <= index < len(self._offered_cards):
-            rarity, upgraded = self._offered_cards[index]
-            # For the real implementation this would look up a concrete card
-            # from the character's pool. We record the pick metadata.
-            info = {
-                "description": f"Picked card (rarity={rarity.name}, upgraded={upgraded}).",
-                "rarity": rarity.name,
-                "upgraded": upgraded,
-            }
+        reward = self._current_reward
+        if isinstance(reward, CardReward):
+            info = reward.select(self, index=action.get("index", 0))
         else:
-            info = {"description": "Invalid card index."}
+            info = {"description": "No card reward."}
 
-        self._after_card_reward()
+        self._advance_post_combat_rewards()
         info["phase"] = self.phase
         return info
 
     def _do_card_reward_skip(self) -> dict:
-        self._after_card_reward()
+        if self._current_reward is not None:
+            self._current_reward.skip(self)
+        self._advance_post_combat_rewards()
         return {"phase": self.phase, "description": "Skipped card reward."}
+
+    def _do_potion_reward_pick(self) -> dict:
+        reward = self._current_reward
+        if not isinstance(reward, PotionReward):
+            return {"phase": self.phase, "description": "No potion reward."}
+        info = reward.select(self)
+        self._offered_potion = None
+        self._advance_post_combat_rewards()
+        info["phase"] = self.phase
+        return info
+
+    def _do_potion_reward_skip(self) -> dict:
+        if self._current_reward is not None:
+            self._current_reward.skip(self)
+        self._offered_potion = None
+        self._advance_post_combat_rewards()
+        return {"phase": self.phase, "description": "Skipped potion reward."}
+
+    def _do_relic_reward_pick(self) -> dict:
+        reward = self._current_reward
+        if not isinstance(reward, RelicReward):
+            return {"phase": self.phase, "description": "No relic reward."}
+        info = reward.select(self)
+        self._offered_relic = None
+        self._consume_run_pending_rewards()
+        self._advance_post_combat_rewards()
+        info["phase"] = self.phase
+        return info
+
+    def _do_relic_reward_skip(self) -> dict:
+        if self._current_reward is not None:
+            self._current_reward.skip(self)
+        self._offered_relic = None
+        self._advance_post_combat_rewards()
+        return {"phase": self.phase, "description": "Skipped relic reward."}
 
     def _after_card_reward(self) -> None:
         """Transition after the card reward screen."""
@@ -758,9 +1050,12 @@ class RunManager:
         relic_id = ""
         if 0 <= index < len(self._boss_relics):
             relic_id = self._boss_relics[index]
-            self._run_state.relics.append(relic_id)
+            self._run_state.player.obtain_relic(relic_id)
 
         description = f"Picked boss relic '{relic_id}'."
+        if self._run_state.pending_rewards:
+            self._consume_run_pending_rewards()
+            return {"phase": self.phase, "description": description, "relic_id": relic_id}
         self._transition_next_act()
         return {"phase": self.phase, "description": description, "relic_id": relic_id}
 
@@ -798,10 +1093,10 @@ class RunManager:
                 entry = inv.relics[index]
                 if player.gold >= entry.price:
                     player.lose_gold(entry.price)
-                    self._run_state.relics.append(
-                        f"ShopRelic_{entry.relic_rarity.name}_{index}"
-                    )
+                    if entry.relic_id:
+                        player.obtain_relic(entry.relic_id)
                     entry.price = 999999
+                    self._consume_run_pending_rewards()
                     return {
                         "phase": self.phase,
                         "description": f"Bought relic ({entry.relic_rarity.name}).",
@@ -875,23 +1170,69 @@ class RunManager:
 
         if event is not None and option_id != "leave":
             result = event.choose(self._run_state, option_id)
-            if not result.finished and result.next_options:
-                # Multi-page event -- stay in EVENT phase with new options
-                self._event_options = result.next_options
-                return {
-                    "phase": self.phase,
-                    "description": result.description,
-                    "finished": False,
-                }
-            description = result.description
-        else:
-            description = "Left the event."
+            return self._apply_event_result(event, result)
+        self._enter_map_choice()
+        return {"phase": self.phase, "description": "Left the event."}
 
-        # Check for death from event
+    def _do_event_choose(self, action: dict) -> dict:
+        event = self._event_model
+        if event is None or event.pending_choice is None:
+            return {"phase": self.phase, "description": "No pending event choice.", "success": False}
+        result = event.resolve_pending_choice(action.get("index"))
+        return self._apply_event_result(event, result)
+
+    def _do_event_confirm_choice(self) -> dict:
+        event = self._event_model
+        if event is None or event.pending_choice is None:
+            return {"phase": self.phase, "description": "No pending event choice.", "success": False}
+        result = event.resolve_pending_choice(None)
+        return self._apply_event_result(event, result)
+
+    def _apply_event_result(self, event: EventModel, result: EventResult) -> dict:
+        if event.pending_choice is not None:
+            self._event_options = []
+            return {
+                "phase": self.phase,
+                "description": result.description,
+                "finished": False,
+            }
+        if not result.finished and result.next_options:
+            self._event_options = result.next_options
+            return {
+                "phase": self.phase,
+                "description": result.description,
+                "finished": False,
+            }
+
+        description = result.description
+
+        if self._run_state.is_over:
+            self._phase = self.PHASE_RUN_OVER
+            return {"phase": self.PHASE_RUN_OVER, "description": description}
         if self._run_state.player.is_dead:
             self._run_state.lose_run()
             self._phase = self.PHASE_RUN_OVER
             return {"phase": self.PHASE_RUN_OVER, "description": description}
+
+        reward_objects = result.rewards.get("reward_objects", [])
+        if reward_objects:
+            self._current_rewards = RewardsSet(self._run_state.player.player_id).with_custom_rewards(reward_objects)
+            self._pending_rewards = self._current_rewards.generate_without_offering(self._run_state)
+            self._phase = self.PHASE_CARD_REWARD
+            self._advance_post_combat_rewards()
+            return {
+                "phase": self.phase,
+                "description": description,
+                "finished": True,
+            }
+
+        if self._run_state.pending_rewards:
+            self._consume_run_pending_rewards()
+            return {
+                "phase": self.phase,
+                "description": description,
+                "finished": True,
+            }
 
         self._enter_map_choice()
         return {"phase": self.phase, "description": description}

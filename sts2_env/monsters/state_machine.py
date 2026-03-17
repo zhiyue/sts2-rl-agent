@@ -66,7 +66,14 @@ class MoveState(MonsterState):
 
     def perform(self, combat: CombatState) -> None:
         self._performed_at_least_once = True
-        self.effect_fn(combat)
+        flush_pending = getattr(combat, "flush_pending_attack_context", None)
+        if callable(flush_pending):
+            flush_pending()
+        try:
+            self.effect_fn(combat)
+        finally:
+            if callable(flush_pending):
+                flush_pending()
 
     def on_exit_state(self) -> None:
         self._performed_at_least_once = False

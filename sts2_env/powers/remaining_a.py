@@ -10,6 +10,7 @@ import random
 from typing import TYPE_CHECKING
 
 from sts2_env.core.enums import (
+    CardId,
     CardKeyword,
     CardTag,
     CardType,
@@ -490,21 +491,14 @@ class ConquerorPower(PowerInstance):
     def modify_damage_multiplicative(
         self, owner: Creature, dealer: Creature | None, target: Creature, props: ValueProp
     ) -> float:
+        card_source = getattr(owner.combat_state, "active_card_source", None)
+        if getattr(card_source, "card_id", None) != CardId.SOVEREIGN_BLADE:
+            return 1.0
         if target is not owner:
             return 1.0
         if not props.is_powered():
             return 1.0
-        # In the full engine, only SovereignBlade cards trigger this.
-        # The card system should set a flag. We expose a helper.
-        return 1.0  # Default; see modify_damage_for_card below
-
-    def modify_damage_for_sovereign_blade(
-        self, owner: Creature, target: Creature, props: ValueProp
-    ) -> float:
-        """Called by the damage pipeline when the card source is Sovereign Blade."""
-        if target is owner and props.is_powered():
-            return 2.0
-        return 1.0
+        return 2.0
 
     def after_turn_end(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == owner.side:
@@ -1362,7 +1356,7 @@ class FurnacePower(PowerInstance):
             return
         forge = getattr(combat, "forge", None)
         if forge is not None:
-            forge(owner, self.amount)
+            forge(owner, self.amount, source=self)
 
 
 # =====================================================================

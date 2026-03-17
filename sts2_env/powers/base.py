@@ -177,14 +177,87 @@ class PowerInstance:
     ) -> None:
         pass
 
+    # ─── Attack Command Hooks ───────────────────────────────────────────
+
+    def before_attack(self, owner: Creature, attack: object, combat: CombatState) -> None:
+        pass
+
+    def after_attack(self, owner: Creature, attack: object, combat: CombatState) -> None:
+        pass
+
     # ─── Block Event Hooks ──────────────────────────────────────────────
 
     def after_block_gained(self, owner: Creature, creature: Creature, amount: int, combat: CombatState) -> None:
         pass
 
+    def after_power_amount_changed(
+        self,
+        owner: Creature,
+        target: Creature,
+        power_id: PowerId,
+        amount: int,
+        applier: Creature | None,
+        source: object | None,
+        combat: CombatState,
+    ) -> None:
+        pass
+
     # ─── Combat Lifecycle ───────────────────────────────────────────────
 
     def after_combat_victory(self, owner: Creature, combat: CombatState) -> None:
+        pass
+
+    def after_creature_added_to_combat(
+        self,
+        owner: Creature,
+        creature: Creature,
+        combat: CombatState,
+    ) -> None:
+        pass
+
+    def after_forge(
+        self,
+        owner: Creature,
+        amount: int,
+        forger: Creature,
+        source: object | None,
+        combat: CombatState,
+    ) -> None:
+        pass
+
+    def on_stars_gained(self, owner: Creature, stars: int, combat: CombatState) -> None:
+        pass
+
+    def on_stars_spent(self, owner: Creature, stars: int, combat: CombatState) -> None:
+        pass
+
+    def should_owner_death_trigger_fatal(
+        self,
+        owner: Creature,
+        combat: CombatState,
+    ) -> bool:
+        return True
+
+    def modify_summon_amount(
+        self,
+        owner: Creature,
+        summoner: Creature,
+        amount: int,
+        source: object | None,
+        combat: CombatState,
+    ) -> int:
+        return amount
+
+    def after_summon(
+        self,
+        owner: Creature,
+        summoner: Creature,
+        amount: int,
+        combat: CombatState,
+    ) -> None:
+        pass
+
+    def after_osty_revived(self, owner: Creature, osty: Creature, combat: CombatState) -> None:
         pass
 
     # ─── Display ────────────────────────────────────────────────────────

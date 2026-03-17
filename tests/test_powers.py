@@ -3,8 +3,9 @@
 import pytest
 
 from sts2_env.core.creature import Creature
-from sts2_env.core.enums import CombatSide, PowerId, ValueProp
-from sts2_env.core.damage import calculate_block
+from sts2_env.core.enums import CardId, CombatSide, PowerId, ValueProp
+from sts2_env.core.damage import calculate_block, calculate_damage
+from sts2_env.powers.remaining_c import SandpitPower
 
 
 class TestPowerApplication:
@@ -126,6 +127,132 @@ class TestDebuffTickTiming:
         # End turn 2: now ticks 2->1
         simple_combat.end_player_turn()
         assert player.get_power_amount(PowerId.VULNERABLE) == 1
+
+
+class TestDamageModifierInteractions:
+    def test_cruelty_increases_vulnerable_multiplier(self, simple_combat):
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        player.apply_power(PowerId.CRUELTY, 25)
+        enemy.apply_power(PowerId.VULNERABLE, 1)
+
+        damage = calculate_damage(10, player, enemy, ValueProp.MOVE, simple_combat)
+        assert damage == 17
+
+    def test_debilitate_modifies_weak_and_vulnerable_excess(self, simple_combat):
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+
+        enemy.apply_power(PowerId.DEBILITATE, 1)
+        enemy.apply_power(PowerId.VULNERABLE, 1)
+        assert calculate_damage(10, player, enemy, ValueProp.MOVE, simple_combat) == 20
+
+        enemy.powers.pop(PowerId.DEBILITATE, None)
+        enemy.powers.pop(PowerId.VULNERABLE, None)
+        player.apply_power(PowerId.DEBILITATE, 1)
+        player.apply_power(PowerId.WEAK, 1)
+        assert calculate_damage(10, player, enemy, ValueProp.MOVE, simple_combat) == 5
+
+
+class TestSandpitPower:
+    def test_sandpit_kills_target_player_when_count_reaches_zero(self, simple_combat):
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        sandpit = SandpitPower(1)
+        sandpit.target = player
+        enemy.powers[PowerId.SANDPIT] = sandpit
+
+        sandpit.after_side_turn_start(enemy, CombatSide.ENEMY, simple_combat)
+
+        assert player.is_dead
+
+
+class TestPowerAmountChangedHooks:
+    def test_shroud_gains_block_when_owner_applies_doom(self, simple_combat):
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        player.apply_power(PowerId.SHROUD, 3)
+
+        simple_combat.apply_power_to(enemy, PowerId.DOOM, 2)
+
+        assert player.block == 3
+
+    def test_vicious_draws_when_owner_applies_vulnerable(self, simple_combat):
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        player.apply_power(PowerId.VICIOUS, 2)
+        simple_combat.hand.clear()
+
+        simple_combat.apply_power_to(enemy, PowerId.VULNERABLE, 1)
+
+        assert len(simple_combat.hand) == 2
+
+    def test_outbreak_triggers_every_third_poison_application(self, simple_combat):
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        player.apply_power(PowerId.OUTBREAK, 4)
+        starting_hp = enemy.current_hp
+
+        simple_combat.apply_power_to(enemy, PowerId.POISON, 1)
+        simple_combat.apply_power_to(enemy, PowerId.POISON, 1)
+        assert enemy.current_hp == starting_hp
+
+        simple_combat.apply_power_to(enemy, PowerId.POISON, 1)
+        assert enemy.current_hp == starting_hp - 4
+
+    def test_painful_stabs_adds_wounds_to_player_discard_on_unblocked_hit(self, simple_combat):
+        enemy = simple_combat.enemies[0]
+        player = simple_combat.player
+        enemy.apply_power(PowerId.PAINFUL_STABS, 2)
+
+        simple_combat.deal_damage(
+            dealer=enemy,
+            target=player,
+            amount=5,
+            props=ValueProp.MOVE,
+        )
+
+        wounds = [card for card in simple_combat.discard_pile if card.card_id == CardId.WOUND]
+        assert len(wounds) == 2
+
+    def test_poison_triggers_multiple_times_with_opponent_accelerant(self, simple_combat):
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        player.apply_power(PowerId.ACCELERANT, 2)
+        enemy.apply_power(PowerId.POISON, 3)
+
+        poison = enemy.powers[PowerId.POISON]
+        starting_hp = enemy.current_hp
+        poison.after_side_turn_start(enemy, CombatSide.ENEMY, simple_combat)
+
+        assert enemy.current_hp == starting_hp - 6
+        assert not enemy.has_power(PowerId.POISON)
+
+    def test_reflect_deals_blocked_damage_back_to_attacker(self, simple_combat):
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        player.apply_power(PowerId.REFLECT, 1)
+        player.block = 3
+        starting_enemy_hp = enemy.current_hp
+
+        simple_combat.deal_damage(
+            dealer=enemy,
+            target=player,
+            amount=5,
+            props=ValueProp.MOVE,
+        )
+
+        assert enemy.current_hp == starting_enemy_hp - 3
+
+    def test_no_block_only_blocks_card_sourced_block(self, simple_combat):
+        player = simple_combat.player
+        player.apply_power(PowerId.NO_BLOCK, 1)
+
+        card_block = calculate_block(8, player, ValueProp.MOVE, simple_combat, card_source=object())
+        non_card_block = calculate_block(8, player, ValueProp.MOVE, simple_combat, card_source=None)
+
+        assert card_block == 0
+        assert non_card_block == 8
 
 
 class TestDexterityBlock:

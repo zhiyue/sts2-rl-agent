@@ -78,10 +78,8 @@ class BoneFlute(RelicInstance):
     pool = RelicPool.NECROBINDER
     BLOCK = 2
 
-    def after_damage_given(
-        self, owner: Creature, dealer: Creature, target: Creature,
-        damage: int, props: ValueProp, combat: CombatState
-    ) -> None:
+    def after_attack(self, owner: Creature, attack: object, combat: CombatState) -> None:
+        dealer = getattr(attack, "attacker", None)
         if getattr(dealer, "is_osty", False) and getattr(dealer, "owner", None) is owner:
             owner.gain_block(self.BLOCK, unpowered=True)
 
@@ -144,7 +142,7 @@ class FencingManual(RelicInstance):
 
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.PLAYER and combat.round_number == 1:
-            owner.gain_forge(self.FORGE)
+            owner.gain_forge(self.FORGE, source=self)
 
 
 @register_relic

@@ -52,6 +52,13 @@ class MinionPower(PowerInstance):
     def __init__(self, amount: int = 1):
         super().__init__(PowerId.MINION, amount)
 
+    def should_owner_death_trigger_fatal(
+        self,
+        owner: Creature,
+        combat: CombatState,
+    ) -> bool:
+        return False
+
 
 # ---------------------------------------------------------------------------
 # SlipperyPower

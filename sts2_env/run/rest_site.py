@@ -124,7 +124,8 @@ class CloneOption(RestSiteOption):
         )
 
     def execute(self, player: PlayerState, **kwargs: Any) -> str:
-        return "Cloned enchanted cards"
+        cloned = player.clone_enchanted_cards("Clone")
+        return f"Cloned {cloned} card(s)"
 
 
 class HatchOption(RestSiteOption):

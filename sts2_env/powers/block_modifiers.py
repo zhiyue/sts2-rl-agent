@@ -69,9 +69,6 @@ class NoBlockPower(PowerInstance):
       - cardSource is not None (i.e. block came from a card)
 
     Ticks down at end of enemy turn.
-
-    In our simplified sim, cards always set the MOVE prop, so checking
-    ``is_powered()`` covers the "from a card source" requirement.
     """
 
     power_type = PowerType.DEBUFF
@@ -88,9 +85,7 @@ class NoBlockPower(PowerInstance):
             return 1.0
         if bool(props & ValueProp.UNPOWERED):
             return 1.0
-        # C# checks cardSource != null; in our sim, MOVE flag indicates
-        # card/monster-move origin.
-        if not bool(props & ValueProp.MOVE):
+        if card_source is None:
             return 1.0
         return 0.0
 

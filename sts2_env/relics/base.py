@@ -465,6 +465,14 @@ class RelicInstance:
     ) -> None:
         pass
 
+    # ─── Attack Command Hooks ───────────────────────────────────────────
+
+    def before_attack(self, owner: Creature, attack: object, combat: CombatState) -> None:
+        pass
+
+    def after_attack(self, owner: Creature, attack: object, combat: CombatState) -> None:
+        pass
+
     # ─── Block Event Hooks ──────────────────────────────────────────────
 
     def after_block_gained(self, owner: Creature, creature: Creature, amount: int, combat: CombatState) -> None:
@@ -478,10 +486,56 @@ class RelicInstance:
     def before_combat_start(self, owner: Creature, combat: CombatState) -> None:
         pass
 
+    def after_creature_added_to_combat(
+        self,
+        owner: Creature,
+        creature: Creature,
+        combat: CombatState,
+    ) -> None:
+        pass
+
     def after_combat_victory(self, owner: Creature, combat: CombatState) -> None:
         pass
 
     def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        pass
+
+    def after_forge(
+        self,
+        owner: Creature,
+        amount: int,
+        forger: Creature,
+        source: object | None,
+        combat: CombatState,
+    ) -> None:
+        pass
+
+    def on_stars_gained(self, owner: Creature, amount: int, combat: CombatState) -> None:
+        pass
+
+    def on_stars_spent(self, owner: Creature, amount: int, combat: CombatState) -> None:
+        pass
+
+    def modify_summon_amount(
+        self,
+        owner: Creature,
+        summoner: Creature,
+        amount: int,
+        source: object | None,
+        combat: CombatState,
+    ) -> int:
+        return amount
+
+    def after_summon(
+        self,
+        owner: Creature,
+        summoner: Creature,
+        amount: int,
+        combat: CombatState,
+    ) -> None:
+        pass
+
+    def after_osty_revived(self, owner: Creature, osty: Creature, combat: CombatState) -> None:
         pass
 
     # ─── Death Hooks ────────────────────────────────────────────────────

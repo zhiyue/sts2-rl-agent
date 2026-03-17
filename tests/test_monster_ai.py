@@ -2,8 +2,14 @@
 
 import pytest
 
+from sts2_env.cards.ironclad import create_ironclad_starter_deck
+from sts2_env.core.combat import CombatState
+from sts2_env.core.enums import CardId, PowerId
 from sts2_env.core.enums import MoveRepeatType
 from sts2_env.core.rng import Rng
+from sts2_env.encounters.act3 import setup_construct_menagerie_normal
+from sts2_env.monsters.act4 import create_fat_gremlin, create_punch_construct
+from sts2_env.monsters.act2 import create_the_insatiable
 from sts2_env.monsters.intents import attack_intent, buff_intent, debuff_intent
 from sts2_env.monsters.state_machine import (
     MonsterAI, MoveState, RandomBranchState, ConditionalBranchState,
@@ -82,6 +88,88 @@ class TestFixedRotation:
         ai = MonsterAI(states, "A")
         moves = _run_ai(ai, rng, 5)
         assert moves == ["A", "A", "A", "A", "A"]
+
+    def test_the_insatiable_follows_liquify_to_fixed_cycle(self):
+        rng = Rng(7)
+        _, ai = create_the_insatiable(rng)
+
+        moves = _run_ai(ai, rng, 6)
+        assert moves == [
+            "LIQUIFY_GROUND",
+            "THRASH_1",
+            "LUNGING_BITE",
+            "SALIVATE",
+            "THRASH_2",
+            "THRASH_1",
+        ]
+
+    def test_the_insatiable_liquify_applies_sandpit_and_frantic_escape(self):
+        rng = Rng(7)
+        combat = CombatState(
+            player_hp=80,
+            player_max_hp=80,
+            deck=create_ironclad_starter_deck(),
+            rng_seed=7,
+            character_id="Ironclad",
+        )
+        creature, ai = create_the_insatiable(rng)
+        combat.add_enemy(creature, ai)
+
+        ai.current_move.perform(combat)
+        ai.on_move_performed()
+
+        sandpit = creature.powers.get(PowerId.SANDPIT)
+        assert sandpit is not None
+        assert getattr(sandpit, "target", None) is combat.player
+        draw_frantic = [card for card in combat.draw_pile if card.card_id == CardId.FRANTIC_ESCAPE]
+        discard_frantic = [card for card in combat.discard_pile if card.card_id == CardId.FRANTIC_ESCAPE]
+        assert len(draw_frantic) == 3
+        assert len(discard_frantic) == 3
+
+    def test_construct_menagerie_uses_punch_and_two_cubex_constructs(self):
+        combat = CombatState(
+            player_hp=80,
+            player_max_hp=80,
+            deck=create_ironclad_starter_deck(),
+            rng_seed=9,
+            character_id="Ironclad",
+        )
+
+        setup_construct_menagerie_normal(combat, Rng(9))
+
+        ids = [enemy.monster_id for enemy in combat.enemies]
+        assert ids.count("PUNCH_CONSTRUCT") == 1
+        assert ids.count("CUBEX_CONSTRUCT") == 2
+
+    def test_fat_gremlin_flee_escapes_without_dying(self):
+        combat = CombatState(
+            player_hp=80,
+            player_max_hp=80,
+            deck=create_ironclad_starter_deck(),
+            rng_seed=5,
+            character_id="Ironclad",
+        )
+        creature, ai = create_fat_gremlin(Rng(5))
+        combat.add_enemy(creature, ai)
+
+        ai.current_move.perform(combat)
+        ai.on_move_performed()
+        ai.roll_move(Rng(5))
+        ai.current_move.perform(combat)
+
+        assert creature.escaped
+        assert not creature.is_alive
+        assert not creature.is_dead
+
+    def test_punch_construct_supports_strong_punch_start_and_hp_reduction(self):
+        creature, ai = create_punch_construct(
+            Rng(5),
+            starts_with_strong_punch=True,
+            starting_hp_reduction=7,
+        )
+
+        assert creature.current_hp == creature.max_hp - 7
+        assert ai.current_move.state_id == "STRONG_PUNCH"
 
 
 # ========================================================================

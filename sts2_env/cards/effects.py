@@ -18,6 +18,13 @@ if TYPE_CHECKING:
     from sts2_env.core.creature import Creature
 
 
+def current_owner(combat: CombatState, card: CardInstance | None = None) -> Creature:
+    owner = getattr(card, "owner", None) if card is not None else None
+    if owner is None:
+        owner = getattr(getattr(combat, "active_card_source", None), "owner", None)
+    return owner or combat.player
+
+
 # ─── Damage ─────────────────────────────────────────────────────────────
 
 def deal_damage(
@@ -30,12 +37,13 @@ def deal_damage(
 ) -> list[DamageResult]:
     """Deal powered damage to a single target, potentially multiple hits."""
     results = []
-    for _ in range(hits):
-        if target.is_dead:
-            break
-        dmg = calculate_damage(base_damage, dealer, target, props, combat)
-        result = apply_damage(target, dmg, props, combat, dealer)
-        results.append(result)
+    with combat.attack_context(dealer, target, props):
+        for _ in range(hits):
+            if target.is_dead:
+                break
+            dmg = calculate_damage(base_damage, dealer, target, props, combat)
+            result = apply_damage(target, dmg, props, combat, dealer)
+            results.append(result)
     combat._check_combat_end()
     return results
 
@@ -49,13 +57,14 @@ def deal_damage_to_all_enemies(
 ) -> list[DamageResult]:
     """Deal powered damage to all alive enemies."""
     results = []
-    for _ in range(hits):
-        for enemy in list(combat.alive_enemies):
-            if enemy.is_dead:
-                continue
-            dmg = calculate_damage(base_damage, dealer, enemy, props, combat)
-            result = apply_damage(enemy, dmg, props, combat, dealer)
-            results.append(result)
+    with combat.attack_context(dealer, None, props):
+        for _ in range(hits):
+            for enemy in list(combat.alive_enemies):
+                if enemy.is_dead:
+                    continue
+                dmg = calculate_damage(base_damage, dealer, enemy, props, combat)
+                result = apply_damage(enemy, dmg, props, combat, dealer)
+                results.append(result)
     combat._check_combat_end()
     return results
 
@@ -69,14 +78,15 @@ def deal_damage_to_random_enemy(
 ) -> list[DamageResult]:
     """Deal powered damage to random enemies (re-rolls target each hit)."""
     results = []
-    for _ in range(hits):
-        alive = combat.alive_enemies
-        if not alive:
-            break
-        target = combat.rng.choice(alive)
-        dmg = calculate_damage(base_damage, dealer, target, props, combat)
-        result = apply_damage(target, dmg, props, combat, dealer)
-        results.append(result)
+    with combat.attack_context(dealer, None, props):
+        for _ in range(hits):
+            alive = combat.alive_enemies
+            if not alive:
+                break
+            target = combat.rng.choice(alive)
+            dmg = calculate_damage(base_damage, dealer, target, props, combat)
+            result = apply_damage(target, dmg, props, combat, dealer)
+            results.append(result)
     combat._check_combat_end()
     return results
 
@@ -138,25 +148,29 @@ def apply_power_to_all_enemies(
 
 def draw_cards(combat: CombatState, count: int) -> None:
     """Draw cards from draw pile."""
-    combat._draw_cards(count)
+    combat._draw_cards_for_creature(current_owner(combat), count)
 
 
 def discard_card(combat: CombatState, card: CardInstance) -> None:
     """Move a card to discard pile."""
-    if card in combat.hand:
-        combat.hand.remove(card)
-    combat.discard_pile.append(card)
+    owner = getattr(card, "owner", None) or current_owner(combat, card)
+    zones = combat._zones_for_creature(owner)  # noqa: SLF001
+    if card in zones["hand"]:
+        zones["hand"].remove(card)
+    zones["discard"].append(card)
 
 
 def exhaust_card(combat: CombatState, card: CardInstance) -> None:
     """Exhaust a card (move to exhaust pile)."""
-    if card in combat.hand:
-        combat.hand.remove(card)
-    elif card in combat.discard_pile:
-        combat.discard_pile.remove(card)
-    elif card in combat.draw_pile:
-        combat.draw_pile.remove(card)
-    combat.exhaust_pile.append(card)
+    owner = getattr(card, "owner", None) or current_owner(combat, card)
+    zones = combat._zones_for_creature(owner)  # noqa: SLF001
+    if card in zones["hand"]:
+        zones["hand"].remove(card)
+    elif card in zones["discard"]:
+        zones["discard"].remove(card)
+    elif card in zones["draw"]:
+        zones["draw"].remove(card)
+    zones["exhaust"].append(card)
     from sts2_env.core.hooks import fire_after_card_exhausted
     fire_after_card_exhausted(card, combat)
 
@@ -171,22 +185,24 @@ def add_card_to_pile(
 
     position: "top", "bottom", "random" (for draw pile only)
     """
+    owner = getattr(card, "owner", None) or current_owner(combat, card)
+    zones = combat._zones_for_creature(owner)  # noqa: SLF001
     if pile_type == PileType.HAND:
         from sts2_env.core.constants import MAX_HAND_SIZE
-        if len(combat.hand) < MAX_HAND_SIZE:
-            combat.hand.append(card)
+        if len(zones["hand"]) < MAX_HAND_SIZE:
+            zones["hand"].append(card)
     elif pile_type == PileType.DISCARD:
-        combat.discard_pile.append(card)
+        zones["discard"].append(card)
     elif pile_type == PileType.DRAW:
         if position == "top":
-            combat.draw_pile.insert(0, card)
+            zones["draw"].insert(0, card)
         elif position == "bottom":
-            combat.draw_pile.append(card)
+            zones["draw"].append(card)
         else:
-            idx = combat.rng.next_int(0, max(0, len(combat.draw_pile)))
-            combat.draw_pile.insert(idx, card)
+            idx = combat.rng.next_int(0, max(0, len(zones["draw"])))
+            zones["draw"].insert(idx, card)
     elif pile_type == PileType.EXHAUST:
-        combat.exhaust_pile.append(card)
+        zones["exhaust"].append(card)
 
 
 def add_card_to_hand(combat: CombatState, card: CardInstance) -> None:
@@ -205,12 +221,12 @@ def move_card_to_top_of_draw(combat: CombatState, card: CardInstance) -> None:
 
 def gain_energy(combat: CombatState, amount: int) -> None:
     """Gain energy this turn."""
-    combat.energy += amount
+    combat.gain_energy(current_owner(combat), amount)
 
 
 def lose_energy(combat: CombatState, amount: int) -> None:
     """Lose energy."""
-    combat.energy = max(0, combat.energy - amount)
+    combat.lose_energy(current_owner(combat), amount)
 
 
 # ─── HP ──────────────────────────────────────────────────────────────────
@@ -241,44 +257,52 @@ def gain_max_hp(target: Creature, amount: int) -> None:
 
 def gain_stars(combat: CombatState, amount: int) -> None:
     """Gain stars (Regent resource)."""
-    if hasattr(combat, 'stars'):
-        combat.stars += amount
+    gain = getattr(combat, "gain_stars", None)
+    if callable(gain):
+        gain(current_owner(combat), amount)
 
 
 # ─── Orbs (Defect) ───────────────────────────────────────────────────────
 
 def channel_orb(combat: CombatState, orb_type: str) -> None:
-    """Channel an orb (placeholder — full orb system TBD)."""
-    if hasattr(combat, 'orb_queue'):
-        combat.orb_queue.channel(orb_type)
+    """Channel an orb through CombatState so evoke-on-overflow resolves correctly."""
+    channel = getattr(combat, "channel_orb", None)
+    if callable(channel):
+        channel(current_owner(combat), orb_type)
 
 
 # ─── Osty (Necrobinder) ─────────────────────────────────────────────────
 
 def summon_osty(combat: CombatState, amount: int) -> None:
-    """Summon/grow Osty pet (placeholder — full pet system TBD)."""
-    pass
+    """Summon or revive Osty through CombatState."""
+    summon = getattr(combat, "summon_osty", None)
+    if callable(summon):
+        summon(current_owner(combat), amount)
 
 
 # ─── Utility ─────────────────────────────────────────────────────────────
 
 def resolve_x_cost(combat: CombatState) -> int:
     """Resolve X-cost: spend all energy, return amount spent."""
-    x = combat.energy
-    combat.energy = 0
+    owner = current_owner(combat)
+    state = combat.combat_player_state_for(owner)
+    x = state.energy if state is not None else combat.energy
+    combat.lose_energy(owner, x)
     return x
 
 
 def random_card_from_hand(combat: CombatState) -> CardInstance | None:
     """Pick a random card from hand (for TrueGrit-style effects)."""
-    if not combat.hand:
+    hand = combat._zones_for_creature(current_owner(combat))["hand"]  # noqa: SLF001
+    if not hand:
         return None
-    return combat.rng.choice(combat.hand)
+    return combat.rng.choice(hand)
 
 
 def get_playable_cards(combat: CombatState) -> list[CardInstance]:
     """Get all playable cards in hand."""
-    return [c for c in combat.hand if combat.can_play_card(c)]
+    hand = combat._zones_for_creature(current_owner(combat))["hand"]  # noqa: SLF001
+    return [c for c in hand if combat.can_play_card(c)]
 
 
 def any_target_killed(results: list[DamageResult]) -> bool:

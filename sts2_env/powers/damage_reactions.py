@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sts2_env.core.enums import (
+    CardId,
     CombatSide,
     PowerId,
     PowerType,
@@ -52,9 +53,15 @@ class ThornsPower(PowerInstance):
         props: ValueProp,
         combat: CombatState,
     ) -> None:
-        if target is owner and dealer is not None and props.is_powered():
-            from sts2_env.core.damage import apply_damage as _apply_dmg
-            _apply_dmg(dealer, self.amount, ValueProp.UNPOWERED | ValueProp.SKIP_HURT_ANIM)
+        card_source = getattr(combat, "active_card_source", None)
+        is_omnislice = getattr(card_source, "card_id", None) == CardId.OMNISLICE
+        if target is owner and dealer is not None and (props.is_powered() or is_omnislice):
+            combat.deal_damage(
+                dealer=owner,
+                target=dealer,
+                amount=self.amount,
+                props=ValueProp.UNPOWERED | ValueProp.SKIP_HURT_ANIM,
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -197,8 +204,6 @@ class ReflectPower(PowerInstance):
     - AfterSideTurnStart: decrement on owner's side.
     StackType.Counter.
 
-    NOTE: The simulator's damage pipeline must provide the blocked amount
-    for this to work accurately. We approximate via a custom hook.
     """
 
     power_type = PowerType.BUFF
@@ -225,7 +230,7 @@ class ReflectPower(PowerInstance):
                 props=ValueProp.UNPOWERED,
             )
 
-    def before_side_turn_start(
+    def after_side_turn_start(
         self, owner: Creature, side: CombatSide, combat: CombatState
     ) -> None:
         if side == owner.side:

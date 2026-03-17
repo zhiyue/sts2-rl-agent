@@ -62,7 +62,14 @@ class VulnerablePower(PowerInstance):
         self, owner: Creature, dealer: Creature | None, target: Creature, props: ValueProp
     ) -> float:
         if target is owner and props.is_powered():
-            return VULNERABLE_MULTIPLIER
+            multiplier = VULNERABLE_MULTIPLIER
+            if dealer is not None:
+                cruelty = dealer.powers.get(PowerId.CRUELTY)
+                if cruelty is not None:
+                    multiplier += cruelty.amount / 100.0
+            if owner.has_power(PowerId.DEBILITATE):
+                multiplier += multiplier - 1.0
+            return multiplier
         return 1.0
 
     def on_turn_end_enemy_side(self, owner: Creature) -> None:
@@ -85,7 +92,10 @@ class WeakPower(PowerInstance):
         self, owner: Creature, dealer: Creature | None, target: Creature, props: ValueProp
     ) -> float:
         if dealer is owner and props.is_powered():
-            return WEAK_MULTIPLIER
+            multiplier = WEAK_MULTIPLIER
+            if owner.has_power(PowerId.DEBILITATE):
+                multiplier -= 1.0 - multiplier
+            return multiplier
         return 1.0
 
     def on_turn_end_enemy_side(self, owner: Creature) -> None:

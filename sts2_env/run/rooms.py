@@ -34,6 +34,8 @@ class CombatRoom(Room):
     encounter_id: str = ""
     is_elite: bool = False
     is_boss: bool = False
+    gold_proportion: float = 1.0
+    extra_rewards: dict[int, list[Any]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.is_boss:
@@ -42,6 +44,9 @@ class CombatRoom(Room):
             self.room_type = RoomType.ELITE
         else:
             self.room_type = RoomType.MONSTER
+
+    def add_extra_reward(self, player_id: int, reward: Any) -> None:
+        self.extra_rewards.setdefault(player_id, []).append(reward)
 
 
 @dataclass

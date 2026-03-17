@@ -125,6 +125,13 @@ class OrbQueue:
             if orb.orb_type == OrbType.PLASMA:
                 orb.on_passive(combat)
 
+    def trigger_first_passive(self, combat: CombatState) -> None:
+        """Trigger the passive of the first orb only."""
+        if not self.orbs:
+            return
+        orb = self.orbs[0]
+        orb.on_passive(combat)
+
     def add_capacity(self, amount: int) -> None:
         self.capacity = min(self.capacity + amount, self.MAX_CAPACITY)
 

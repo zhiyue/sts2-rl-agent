@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from sts2_env.core.enums import CardId, CardType, TargetType, CardRarity
+from sts2_env.core.enums import CardId, CardTag, CardType, TargetType, CardRarity
 
 
 @dataclass
@@ -21,6 +21,9 @@ class CardInstance:
     upgraded: bool = False
     keywords: frozenset[str] = frozenset()
     tags: frozenset[str] = frozenset()
+    can_be_generated_in_combat: bool = True
+    can_be_generated_by_modifiers: bool = True
+    enchantments: dict[str, int] = field(default_factory=dict)
     effect_vars: dict[str, int] = field(default_factory=dict)
     instance_id: int = 0
     # X-cost and Star-cost support
@@ -32,6 +35,7 @@ class CardInstance:
     original_cost: int | None = None
     single_turn_retain: bool = False
     bound: bool = False
+    base_replay_count: int = 0
 
     def __post_init__(self):
         if self.original_cost is None:
@@ -78,11 +82,29 @@ class CardInstance:
         return "retain" in self.keywords
 
     @property
+    def is_sly(self) -> bool:
+        return "sly" in self.keywords or bool(self.combat_vars.get("sly_this_turn"))
+
+    @property
     def has_tag(self) -> bool:
         return len(self.tags) > 0
 
+    @property
+    def is_enchanted(self) -> bool:
+        return bool(self.enchantments)
+
     def has_card_tag(self, tag: str) -> bool:
         return tag in self.tags
+
+    def has_enchantment(self, name: str) -> bool:
+        return name in self.enchantments
+
+    def add_enchantment(self, name: str, amount: int = 1) -> None:
+        self.enchantments[name] = amount
+
+    @property
+    def is_shiv(self) -> bool:
+        return self.card_id == CardId.SHIV or CardTag.SHIV in self.tags
 
     def clone(self, new_id: int) -> CardInstance:
         """Create a copy with a new instance_id."""
@@ -97,6 +119,9 @@ class CardInstance:
             upgraded=self.upgraded,
             keywords=self.keywords,
             tags=self.tags,
+            can_be_generated_in_combat=self.can_be_generated_in_combat,
+            can_be_generated_by_modifiers=self.can_be_generated_by_modifiers,
+            enchantments=dict(self.enchantments),
             effect_vars=dict(self.effect_vars),
             instance_id=new_id,
             has_energy_cost_x=self.has_energy_cost_x,
@@ -105,6 +130,7 @@ class CardInstance:
             original_cost=self.original_cost,
             single_turn_retain=self.single_turn_retain,
             bound=self.bound,
+            base_replay_count=self.base_replay_count,
         )
 
     @property
@@ -126,9 +152,14 @@ class CardInstance:
     def set_combat_cost(self, cost: int) -> None:
         self.cost = cost
 
+    def after_forged(self) -> None:
+        """Card lifecycle hook fired after a forge increases this card's damage."""
+        return
+
     def end_of_turn_cleanup(self) -> None:
         self.single_turn_retain = False
         self.bound = False
+        self.combat_vars.pop("sly_this_turn", None)
         if "_turn_cost_override" in self.combat_vars:
             self.combat_vars.pop("_turn_cost_override", None)
             self.cost = self.original_cost if self.original_cost is not None else self.cost

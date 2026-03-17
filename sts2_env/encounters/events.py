@@ -89,20 +89,18 @@ def setup_mysterious_knight(combat: CombatState, rng: Rng) -> None:
 # so we apply the modifiers after creation.
 
 def setup_punch_off(combat: CombatState, rng: Rng) -> None:
-    # First construct: starts with strong punch + HP reduction
-    c1, a1 = create_punch_construct(rng)
-    hp_reduction_1 = rng.next_int(2, 10)
-    c1.current_hp = max(1, c1.current_hp - hp_reduction_1)
-    # Override initial state to HEAVY_PUNCH (closest to "strong punch" in
-    # the simplified state machine used by the simulator)
-    a1._current_state_id = "HEAVY_PUNCH"
-    a1._resolve_to_move(rng)
+    c1, a1 = create_punch_construct(
+        rng,
+        starts_with_strong_punch=True,
+        starting_hp_reduction=rng.next_int(2, 10),
+    )
     combat.add_enemy(c1, a1)
 
-    # Second construct: normal start + HP reduction
-    c2, a2 = create_punch_construct(rng)
-    hp_reduction_2 = rng.next_int(2, 10)
-    c2.current_hp = max(1, c2.current_hp - hp_reduction_2)
+    c2, a2 = create_punch_construct(
+        rng,
+        starts_with_strong_punch=False,
+        starting_hp_reduction=rng.next_int(2, 10),
+    )
     combat.add_enemy(c2, a2)
 
 

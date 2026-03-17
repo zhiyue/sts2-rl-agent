@@ -77,6 +77,18 @@ class ReattachPower(PowerInstance):
             return True  # Prevent removal, allow reattach
         return False  # All segments dead, allow true death
 
+    def should_owner_death_trigger_fatal(
+        self,
+        owner: Creature,
+        combat: CombatState,
+    ) -> bool:
+        teammates = combat.get_teammates_of(owner) if hasattr(combat, "get_teammates_of") else []
+        other_segments = [
+            creature for creature in teammates
+            if creature is not owner and creature.has_power(PowerId.REATTACH)
+        ]
+        return all(not creature.is_alive for creature in other_segments)
+
     def do_reattach(self, owner: Creature) -> None:
         """Called by encounter system to heal the segment."""
         self.is_reviving = False
@@ -261,8 +273,7 @@ class SandpitPower(PowerInstance):
     - AfterRemoved: if target alive, kill target player and pets.
     StackType.Counter. Instanced.
 
-    Simplified: We decrement and signal removal. The kill is delegated to
-    the combat pipeline when this power's amount reaches 0.
+    The power lives on the sandpit enemy and tracks a specific target player.
     """
 
     power_type = PowerType.BUFF
@@ -270,15 +281,17 @@ class SandpitPower(PowerInstance):
 
     def __init__(self, amount: int):
         super().__init__(PowerId.SANDPIT, amount)
+        self.target: Creature | None = None
 
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.ENEMY:
             self.amount -= 1
-            if self.amount <= 0:
-                # Signal to combat: The Insatiable devours the target
-                kill_fn = getattr(combat, "kill_creature", None)
-                if kill_fn is not None:
-                    kill_fn(owner)
+            if self.amount <= 0 and self.target is not None and self.target.is_alive:
+                combat.kill_creature(self.target)
+                for ally in combat.get_player_allies_of(self.target):
+                    combat.kill_creature(ally)
+                if combat.osty is not None and combat.osty.is_alive and combat.osty.pet_owner is self.target:
+                    combat.kill_creature(combat.osty)
 
 
 # ---------------------------------------------------------------------------
@@ -391,7 +404,6 @@ class ShroudPower(PowerInstance):
       gain block.
     StackType.Counter.
 
-    Simplified: Triggers when owner applies Doom via the power pipeline.
     """
 
     power_type = PowerType.BUFF
@@ -400,12 +412,17 @@ class ShroudPower(PowerInstance):
     def __init__(self, amount: int):
         super().__init__(PowerId.SHROUD, amount)
 
-    def on_power_applied(
-        self, owner: Creature, target: Creature, power_id: PowerId,
-        power_amount: int, combat: CombatState
+    def after_power_amount_changed(
+        self,
+        owner: Creature,
+        target: Creature,
+        power_id: PowerId,
+        amount: int,
+        applier: Creature | None,
+        source: object | None,
+        combat: CombatState,
     ) -> None:
-        """Called by power pipeline when a power is applied."""
-        if power_id == PowerId.DOOM and power_amount > 0:
+        if applier is owner and power_id == PowerId.DOOM and amount > 0:
             owner.gain_block(self.amount)
 
 
@@ -503,8 +520,6 @@ class SleightOfFleshPower(PowerInstance):
       deal damage.
     StackType.Counter.
 
-    Simplified: The combat pipeline calls on_debuff_applied when a debuff
-    is applied by the owner.
     """
 
     power_type = PowerType.BUFF
@@ -513,17 +528,20 @@ class SleightOfFleshPower(PowerInstance):
     def __init__(self, amount: int):
         super().__init__(PowerId.SLEIGHT_OF_FLESH, amount)
 
-    def on_power_applied(
-        self, owner: Creature, target: Creature, power_id: PowerId,
-        power_amount: int, combat: CombatState
+    def after_power_amount_changed(
+        self,
+        owner: Creature,
+        target: Creature,
+        power_id: PowerId,
+        amount: int,
+        applier: Creature | None,
+        source: object | None,
+        combat: CombatState,
     ) -> None:
-        """Called when a power is applied. Deals damage if it's a debuff on an enemy."""
-        if power_amount == 0:
+        if applier is not owner or amount == 0:
             return
-        # Check if the target is an enemy of the owner
         if target.side == owner.side:
             return
-        # The power pipeline should flag whether it's a debuff
         target_power = target.powers.get(power_id)
         if target_power is not None and target_power.power_type == PowerType.DEBUFF:
             combat.deal_damage(

@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 
 from sts2_env.core.enums import CardRarity, PotionRarity, RelicRarity
 from sts2_env.core.rng import Rng
+from sts2_env.relics.base import RelicPool
+from sts2_env.relics.registry import RELIC_REGISTRY, load_all_relics
 
 if TYPE_CHECKING:
     from sts2_env.run.run_state import RunState
@@ -100,6 +102,7 @@ class ShopCardEntry:
 @dataclass
 class ShopRelicEntry:
     relic_rarity: RelicRarity
+    relic_id: str = ""
     price: int = 0
 
 
@@ -159,17 +162,43 @@ def generate_shop_inventory(run_state: RunState) -> ShopInventory:
         ))
 
     # ── Relics ────────────────────────────────────────────────────────
+    load_all_relics()
+    desired_pool = getattr(RelicPool, run_state.player.character_id.upper(), None)
+    owned = set(run_state.player.relics)
+
+    def _pick_relic_id(relic_rarity: RelicRarity) -> str:
+        candidates: list[str] = []
+        for relic_id, relic_cls in RELIC_REGISTRY.items():
+            if relic_id.name in owned or relic_id.name in SHOP_BLACKLISTED_RELICS:
+                continue
+            if relic_cls.pool in {RelicPool.EVENT, RelicPool.FALLBACK, RelicPool.DEPRECATED}:
+                continue
+            if relic_rarity == RelicRarity.SHOP:
+                if relic_cls.rarity is not RelicRarity.SHOP:
+                    continue
+            elif relic_cls.rarity is not relic_rarity:
+                continue
+            if desired_pool is not None and relic_cls.pool not in {RelicPool.SHARED, desired_pool} and relic_cls.rarity is not RelicRarity.SHOP:
+                continue
+            candidates.append(relic_id.name)
+        if not candidates:
+            return ""
+        chosen = rng.choice(candidates)
+        owned.add(chosen)
+        return chosen
+
     for _ in range(2):
         rr = roll_relic_rarity(rng)
         # Price would come from the relic model's MerchantCost
         # For now use a base cost by rarity
         base_costs = {RelicRarity.COMMON: 150, RelicRarity.UNCOMMON: 250, RelicRarity.RARE: 300}
         price = relic_price(base_costs.get(rr, 200), rng)
-        inv.relics.append(ShopRelicEntry(relic_rarity=rr, price=price))
+        inv.relics.append(ShopRelicEntry(relic_rarity=rr, relic_id=_pick_relic_id(rr), price=price))
 
     # Shop-rarity relic
     inv.relics.append(ShopRelicEntry(
         relic_rarity=RelicRarity.SHOP,
+        relic_id=_pick_relic_id(RelicRarity.SHOP),
         price=relic_price(150, rng),
     ))
 

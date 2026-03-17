@@ -33,10 +33,18 @@ def _iter_power_listeners(combat: CombatState) -> Iterator[tuple[Creature, Power
 
 def _iter_relic_listeners(combat: CombatState) -> Iterator[tuple[Creature, RelicInstance]]:
     """Yield `(owner_creature, relic)` listeners after powers."""
-    owner = combat.player
-    for relic in getattr(combat, "relics", ()):
-        if getattr(relic, "enabled", True):
-            yield owner, relic
+    player_states = getattr(combat, "combat_player_states", None)
+    if player_states is None:
+        owner = combat.player
+        for relic in getattr(combat, "relics", ()):
+            if getattr(relic, "enabled", True):
+                yield owner, relic
+        return
+
+    for state in player_states:
+        for relic in getattr(state, "relics", ()):
+            if getattr(relic, "enabled", True):
+                yield state.creature, relic
 
 
 # ─── Damage Modification ───────────────────────────────────────────────
@@ -47,6 +55,7 @@ def modify_damage(
     target: Creature,
     props: ValueProp,
     combat: CombatState,
+    card_source: object | None = None,
 ) -> int:
     """Full damage pipeline matching Hook.ModifyDamageInternal (Hook.cs:1902).
 
@@ -56,19 +65,20 @@ def modify_damage(
     4. Floor and clamp to 0
     """
     damage = float(base_damage)
+    card_source = card_source if card_source is not None else getattr(combat, "active_card_source", None)
 
     # Step 1: Additive modifiers
     for owner, power in _iter_power_listeners(combat):
         damage += power.modify_damage_additive(owner, dealer, target, props)
     for owner, relic in _iter_relic_listeners(combat):
-        damage += relic.modify_damage_additive(owner, dealer, target, props)
+        damage += relic.modify_damage_additive(owner, dealer, target, props, card_source)
 
     # Step 2: Multiplicative modifiers
     for owner, power in _iter_power_listeners(combat):
         mult = power.modify_damage_multiplicative(owner, dealer, target, props)
         damage *= mult
     for owner, relic in _iter_relic_listeners(combat):
-        damage *= relic.modify_damage_multiplicative(owner, dealer, target, props)
+        damage *= relic.modify_damage_multiplicative(owner, dealer, target, props, card_source)
 
     # Step 3: Cap (usually no cap)
     cap = float("inf")
@@ -84,6 +94,20 @@ def modify_damage(
         damage = cap
 
     return max(0, math.floor(damage))
+
+
+def fire_before_attack(attack: object, combat: CombatState) -> None:
+    for owner, power in _iter_power_listeners(combat):
+        power.before_attack(owner, attack, combat)
+    for owner, relic in _iter_relic_listeners(combat):
+        relic.before_attack(owner, attack, combat)
+
+
+def fire_after_attack(attack: object, combat: CombatState) -> None:
+    for owner, power in _iter_power_listeners(combat):
+        power.after_attack(owner, attack, combat)
+    for owner, relic in _iter_relic_listeners(combat):
+        relic.after_attack(owner, attack, combat)
 
 
 # ─── Block Modification ────────────────────────────────────────────────
@@ -182,6 +206,38 @@ def modify_max_energy(
     for owner, relic in _iter_relic_listeners(combat):
         energy = relic.modify_max_energy(owner, energy)
     return max(0, energy)
+
+
+def modify_summon_amount(
+    summoner: Creature,
+    amount: int,
+    source: object | None,
+    combat: CombatState,
+) -> int:
+    result = amount
+    for owner, power in _iter_power_listeners(combat):
+        result = power.modify_summon_amount(owner, summoner, result, source, combat)
+    for owner, relic in _iter_relic_listeners(combat):
+        result = relic.modify_summon_amount(owner, summoner, result, source, combat)
+    return max(0, result)
+
+
+def fire_after_summon(
+    summoner: Creature,
+    amount: int,
+    combat: CombatState,
+) -> None:
+    for owner, power in _iter_power_listeners(combat):
+        power.after_summon(owner, summoner, amount, combat)
+    for owner, relic in _iter_relic_listeners(combat):
+        relic.after_summon(owner, summoner, amount, combat)
+
+
+def fire_after_osty_revived(osty: Creature, combat: CombatState) -> None:
+    for owner, power in _iter_power_listeners(combat):
+        power.after_osty_revived(owner, osty, combat)
+    for owner, relic in _iter_relic_listeners(combat):
+        relic.after_osty_revived(owner, osty, combat)
 
 
 # ─── Card Play Count ───────────────────────────────────────────────────
@@ -361,6 +417,13 @@ def fire_after_block_cleared(creature: Creature, combat: CombatState) -> None:
         relic.after_block_cleared(owner, creature, combat)
 
 
+def fire_after_creature_added_to_combat(creature: Creature, combat: CombatState) -> None:
+    for owner, power in _iter_power_listeners(combat):
+        power.after_creature_added_to_combat(owner, creature, combat)
+    for owner, relic in _iter_relic_listeners(combat):
+        relic.after_creature_added_to_combat(owner, creature, combat)
+
+
 def fire_before_combat_start(combat: CombatState) -> None:
     for owner, relic in _iter_relic_listeners(combat):
         relic.before_combat_start(owner, combat)
@@ -423,6 +486,18 @@ def fire_after_combat_victory(combat: CombatState) -> None:
         power.after_combat_victory(owner, combat)
     for owner, relic in _iter_relic_listeners(combat):
         relic.after_combat_victory(owner, combat)
+
+
+def fire_after_forge(
+    combat: CombatState,
+    amount: int,
+    forger: Creature,
+    source: object | None,
+) -> None:
+    for owner, power in _iter_power_listeners(combat):
+        power.after_forge(owner, amount, forger, source, combat)
+    for owner, relic in _iter_relic_listeners(combat):
+        relic.after_forge(owner, amount, forger, source, combat)
 
 
 def fire_after_combat_end(combat: CombatState) -> None:

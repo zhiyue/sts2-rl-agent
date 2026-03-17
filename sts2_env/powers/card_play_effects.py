@@ -15,6 +15,7 @@ import random
 from typing import TYPE_CHECKING
 
 from sts2_env.core.enums import (
+    CardTag,
     CardType,
     CombatSide,
     PowerId,
@@ -386,24 +387,13 @@ class PhantomBladesPower(PowerInstance):
         target: Creature,
         props: ValueProp,
     ) -> int:
-        if (
-            dealer is owner
-            and props.is_powered()
-            and not self._shiv_played_this_turn
-        ):
-            # The card system must tag the card source; for now we rely on
-            # external code setting _current_card_is_shiv on the combat state.
-            # This additive is only relevant when the card system confirms
-            # it's a Shiv. We return self.amount here; the damage pipeline
-            # is responsible for checking if the card is a Shiv.
+        if dealer is not owner or not props.is_powered() or self._shiv_played_this_turn:
             return 0
-        return 0
-
-    def on_shiv_damage_additive(self, owner: Creature) -> int:
-        """Called by damage pipeline when dealing damage with a Shiv card."""
-        if not self._shiv_played_this_turn:
-            return self.amount
-        return 0
+        card = getattr(owner.combat_state, "active_card_source", None)
+        tags = getattr(card, "tags", set())
+        if CardTag.SHIV not in tags:
+            return 0
+        return self.amount
 
     def after_card_played(
         self, owner: Creature, card: object, combat: CombatState

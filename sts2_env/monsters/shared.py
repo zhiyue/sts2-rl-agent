@@ -41,10 +41,10 @@ if TYPE_CHECKING:
 
 def _deal_damage_to_player(combat: CombatState, creature: Creature, base_dmg: int, hits: int = 1) -> None:
     for _ in range(hits):
-        if combat.player.is_dead:
+        if combat.primary_player.is_dead:
             break
-        dmg = calculate_damage(base_dmg, creature, combat.player, ValueProp.MOVE, combat)
-        apply_damage(combat.player, dmg, ValueProp.MOVE, combat, creature)
+        dmg = calculate_damage(base_dmg, creature, combat.primary_player, ValueProp.MOVE, combat)
+        apply_damage(combat.primary_player, dmg, ValueProp.MOVE, combat, creature)
 
 
 def _gain_block(creature: Creature, amount: int) -> None:
@@ -127,7 +127,7 @@ def create_fake_merchant_monster(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def throw_relic(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, throw_relic_dmg)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 1)
 
     def enrage(combat: CombatState) -> None:
         creature.apply_power(PowerId.STRENGTH, enrage_str)

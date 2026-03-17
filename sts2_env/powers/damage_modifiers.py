@@ -31,19 +31,28 @@ if TYPE_CHECKING:
 
 # ── VigorPower ───────────────────────────────────────────────────────────
 class VigorPower(PowerInstance):
-    """Adds Amount to the *first* powered attack each card play, then consumed.
-
-    In the full engine the Vigor tracks which AttackCommand it is modifying so
-    it only applies once per card play.  In the simplified sim we add the
-    bonus to every powered attack the owner deals (the attack pipeline is
-    responsible for calling ``consume_vigor`` after the first hit of a card).
-    """
+    """Adds Amount to the tracked powered attack command, then consumes it."""
 
     power_type = PowerType.BUFF
     stack_type = PowerStackType.COUNTER
 
     def __init__(self, amount: int):
         super().__init__(PowerId.VIGOR, amount)
+        self._command_to_modify: object | None = None
+        self._amount_when_attack_started: int = 0
+
+    def before_attack(self, owner: Creature, attack: object, combat: CombatState) -> None:
+        if getattr(attack, "attacker", None) is not owner:
+            return
+        if not getattr(attack, "damage_props", ValueProp.NONE).is_powered():
+            return
+        if self._command_to_modify is not None:
+            return
+        model_source = getattr(attack, "model_source", None)
+        if model_source is not None and not hasattr(model_source, "card_id"):
+            return
+        self._command_to_modify = attack
+        self._amount_when_attack_started = self.amount
 
     def modify_damage_additive(
         self, owner: Creature, dealer: Creature | None, target: Creature, props: ValueProp
@@ -52,7 +61,24 @@ class VigorPower(PowerInstance):
             return 0
         if not props.is_powered():
             return 0
+        active_attack = getattr(owner.combat_state, "active_attack", None)
+        active_card_source = getattr(owner.combat_state, "active_card_source", None)
+        if self._command_to_modify is not None:
+            tracked_source = getattr(self._command_to_modify, "model_source", None)
+            if active_card_source is not None and tracked_source is not active_card_source:
+                return 0
+            if active_attack is not None and active_attack is not self._command_to_modify:
+                return 0
         return self.amount
+
+    def after_attack(self, owner: Creature, attack: object, combat: CombatState) -> None:
+        if attack is not self._command_to_modify:
+            return
+        self.amount -= self._amount_when_attack_started
+        self._command_to_modify = None
+        self._amount_when_attack_started = 0
+        if self.amount <= 0 and not self.allow_negative:
+            owner.powers.pop(self.power_id, None)
 
 
 # ── DoubleDamagePower ────────────────────────────────────────────────────
@@ -72,12 +98,12 @@ class DoubleDamagePower(PowerInstance):
     def modify_damage_multiplicative(
         self, owner: Creature, dealer: Creature | None, target: Creature, props: ValueProp
     ) -> float:
-        if dealer is not owner:
+        if dealer is not owner and getattr(dealer, "pet_owner", None) is not owner:
             return 1.0
         if not props.is_powered():
             return 1.0
-        # In C#, returns 1.0 if cardSource is None; in our sim card-sourced
-        # attacks always have MOVE set, so the check is effectively covered.
+        if getattr(owner.combat_state, "active_card_source", None) is None:
+            return 1.0
         return 2.0
 
     def after_turn_end(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
@@ -151,28 +177,6 @@ class DebilitatePower(PowerInstance):
     def __init__(self, amount: int):
         super().__init__(PowerId.DEBILITATE, amount)
 
-    def extra_vulnerable_multiplier_on_self(self, base_mult: float, owner: Creature, props: ValueProp) -> float:
-        """Return modified Vulnerable multiplier when owner IS the target."""
-        if owner is not self._get_owner_ref():
-            return base_mult
-        if not props.is_powered():
-            return base_mult
-        # amount + (amount - 1)  e.g. 1.5 -> 2.0
-        return base_mult + (base_mult - 1.0)
-
-    def extra_weak_multiplier_on_self(self, base_mult: float, owner: Creature, props: ValueProp) -> float:
-        """Return modified Weak multiplier when owner IS the dealer."""
-        if owner is not self._get_owner_ref():
-            return base_mult
-        if not props.is_powered():
-            return base_mult
-        # amount - (1 - amount)  e.g. 0.75 -> 0.50
-        return base_mult - (1.0 - base_mult)
-
-    def _get_owner_ref(self) -> object:
-        """Helper -- we don't store owner; rely on the power dict lookup."""
-        return None  # placeholder; callers pass owner explicitly
-
     def on_turn_end_enemy_side(self, owner: Creature) -> None:
         """Ticks down at end of owner's side turn (C#: side == owner.Side)."""
         if self.skip_next_tick:
@@ -189,8 +193,6 @@ class PainfulStabsPower(PowerInstance):
     C#: For each player hit with unblocked damage, adds ``Amount`` Wound cards
     per hit that dealt unblocked damage, into that player's discard pile.
 
-    In the simplified sim this is an after_damage_given trigger.  The card
-    generation part (adding Wounds) is handled by the combat pipeline.
     """
 
     power_type = PowerType.BUFF
@@ -214,12 +216,8 @@ class PainfulStabsPower(PowerInstance):
             return
         if damage <= 0:
             return
-        # In the full engine, Wound cards are added to discard.
-        # The combat pipeline should handle the actual card creation.
-        # We signal via combat state:
-        add_wounds = getattr(combat, "add_status_cards_to_discard", None)
-        if add_wounds is not None:
-            add_wounds(target, "WOUND", self.amount)
+        if getattr(target, "is_player", False):
+            combat.add_status_cards_to_discard(target, "WOUND", self.amount)
 
 
 # ── LethalityPower ───────────────────────────────────────────────────────
@@ -279,22 +277,7 @@ class AccuracyPower(PowerInstance):
             return 0
         if not props.is_powered():
             return 0
-        # The card context is not passed into modify_damage_additive in our
-        # hook signature.  In the simplified sim, we check a thread-local or
-        # combat-state "current card" attribute.  For now this returns 0;
-        # the attack pipeline is expected to set a flag when a shiv is being
-        # played.  A more direct approach: override with card-aware hook.
-        return 0
-
-    def modify_damage_additive_for_card(
-        self, owner: Creature, dealer: Creature | None, target: Creature,
-        props: ValueProp, card: object
-    ) -> int:
-        """Extended hook called by card-aware damage pipeline."""
-        if dealer is not owner:
-            return 0
-        if not props.is_powered():
-            return 0
+        card = getattr(owner.combat_state, "active_card_source", None)
         if card is None:
             return 0
         tags = getattr(card, "tags", set())
@@ -343,8 +326,6 @@ class ViciousPower(PowerInstance):
     C#: AfterPowerAmountChanged checks if the changed power is
     VulnerablePower, amount > 0, and applier == owner, then draws.
 
-    In our simplified sim, this is a trigger power -- the combat pipeline
-    should call its hook after applying vulnerable.
     """
 
     power_type = PowerType.BUFF
@@ -352,6 +333,19 @@ class ViciousPower(PowerInstance):
 
     def __init__(self, amount: int):
         super().__init__(PowerId.VICIOUS, amount)
+
+    def after_power_amount_changed(
+        self,
+        owner: Creature,
+        target: Creature,
+        power_id: PowerId,
+        amount: int,
+        applier: Creature | None,
+        source: object | None,
+        combat: CombatState,
+    ) -> None:
+        if amount > 0 and applier is owner and power_id == PowerId.VULNERABLE:
+            combat.draw_cards(owner, self.amount)
 
 
 # ── CalamityPower ────────────────────────────────────────────────────────
@@ -361,8 +355,6 @@ class CalamityPower(PowerInstance):
     C#: BeforeCardPlayed records the card; AfterCardPlayed generates random
     Attack cards from the character pool into Hand.
 
-    In the simplified sim, the card generation is handled by the combat
-    pipeline.  This power signals the intent via after_card_played.
     """
 
     power_type = PowerType.BUFF
@@ -370,15 +362,25 @@ class CalamityPower(PowerInstance):
 
     def __init__(self, amount: int):
         super().__init__(PowerId.CALAMITY, amount)
+        self._played_attack_ids: set[int] = set()
 
-    def after_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
+    def before_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
+        card_owner = getattr(card, "owner", None)
         card_type = getattr(card, "card_type", None) or getattr(card, "type", None)
+        if card_owner is not owner:
+            return
         if card_type != CardType.ATTACK:
             return
-        # Signal to combat pipeline to generate random attack cards.
-        gen = getattr(combat, "generate_random_cards_to_hand", None)
-        if gen is not None:
-            gen(owner, CardType.ATTACK, self.amount)
+        instance_id = getattr(card, "instance_id", None)
+        if instance_id is not None:
+            self._played_attack_ids.add(instance_id)
+
+    def after_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
+        instance_id = getattr(card, "instance_id", None)
+        if instance_id is None or instance_id not in self._played_attack_ids:
+            return
+        self._played_attack_ids.discard(instance_id)
+        combat.generate_random_cards_to_hand(owner, CardType.ATTACK, count=self.amount)
 
 
 # ── AggressionPower ──────────────────────────────────────────────────────
@@ -399,8 +401,6 @@ class AggressionPower(PowerInstance):
     def before_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side != owner.side:
             return
-        # In the simplified sim, card retrieval from discard is delegated
-        # to the combat pipeline.
         retrieve = getattr(combat, "retrieve_attacks_from_discard", None)
         if retrieve is not None:
             retrieve(owner, self.amount, upgrade=True)

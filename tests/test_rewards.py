@@ -6,12 +6,14 @@ scaling, and blacklist handling.
 
 import pytest
 
-from sts2_env.core.enums import CardRarity
+from sts2_env.cards.factory import eligible_character_cards, eligible_registered_cards
+from sts2_env.core.enums import CardId, CardRarity, CardType
 from sts2_env.core.rng import Rng
 from sts2_env.run.odds import CardRarityOdds
 from sts2_env.run.rewards import (
     generate_card_reward,
     generate_combat_card_rewards,
+    generate_combat_reward_cards,
     roll_for_upgrade,
 )
 from sts2_env.run.run_state import RunState
@@ -241,3 +243,38 @@ class TestCombatCardRewards:
         for rarity, upgraded in results:
             assert isinstance(rarity, CardRarity)
             assert isinstance(upgraded, bool)
+
+
+class TestConcreteCombatRewardCards:
+    def test_returns_real_card_instances(self):
+        rs = RunState(42, character_id="Ironclad")
+        rs.initialize_run()
+        rewards = generate_combat_reward_cards(rs, "regular", 3)
+
+        assert len(rewards) == 3
+        assert all(card.card_id in eligible_character_cards("Ironclad", generation_context=None) for card in rewards)
+
+
+class TestCombatGenerationEligibility:
+    def test_character_combat_generation_excludes_noncombat_cards(self):
+        silent_attacks = eligible_character_cards("Silent", card_type=CardType.ATTACK)
+        silent_attacks_all = eligible_character_cards(
+            "Silent",
+            card_type=CardType.ATTACK,
+            generation_context=None,
+        )
+
+        assert CardId.THE_HUNT not in silent_attacks
+        assert CardId.THE_HUNT in silent_attacks_all
+
+    def test_colorless_combat_generation_excludes_blacklisted_cards(self):
+        colorless_combat = eligible_registered_cards(module_name="sts2_env.cards.colorless")
+        colorless_all = eligible_registered_cards(
+            module_name="sts2_env.cards.colorless",
+            generation_context=None,
+        )
+
+        assert CardId.ALCHEMIZE not in colorless_combat
+        assert CardId.HAND_OF_GREED not in colorless_combat
+        assert CardId.ALCHEMIZE in colorless_all
+        assert CardId.HAND_OF_GREED in colorless_all

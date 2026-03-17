@@ -20,6 +20,10 @@ class Rng:
         """Return random int in [low, high] inclusive."""
         return self._rng.randint(low, high)
 
+    def random_int(self, low: int, high: int) -> int:
+        """Backward-compatible alias for ``next_int``."""
+        return self.next_int(low, high)
+
     def next_float(self, upper: float = 1.0) -> float:
         """Return random float in [0, upper)."""
         return self._rng.random() * upper

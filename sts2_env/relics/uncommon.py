@@ -544,8 +544,7 @@ class SelfFormingClay(RelicInstance):
         damage: int, props: ValueProp, combat: CombatState
     ) -> None:
         if target is owner and damage > 0:
-            # Apply power that grants block next turn
-            owner.apply_power(PowerId.GENERIC, self.BLOCK_NEXT_TURN)
+            owner.apply_power(PowerId.BLOCK_NEXT_TURN, self.BLOCK_NEXT_TURN)
 
 
 @register_relic

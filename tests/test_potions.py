@@ -13,6 +13,7 @@ from sts2_env.potions.base import (
     create_potion,
     get_potion_model,
     normal_pool_models,
+    roll_random_potion_model,
 )
 import sts2_env.potions.all  # noqa: F401 -- register all potions
 
@@ -29,6 +30,26 @@ class TestPotionRegistry:
     def test_normal_pool_count(self):
         """63 total - 2 Event (FoulPotion, GlowwaterPotion) - 1 Token (PotionShapedRock) = 60."""
         assert len(normal_pool_models()) == 60
+
+    def test_character_filtered_pool_excludes_other_character_potions(self):
+        ironclad_pool = {model.potion_id for model in normal_pool_models(character_id="Ironclad")}
+        assert "BloodPotion" in ironclad_pool
+        assert "SoldiersStew" in ironclad_pool
+        assert "FocusPotion" not in ironclad_pool
+        assert "StarPotion" not in ironclad_pool
+
+    def test_in_combat_pool_excludes_out_of_combat_only_potions(self):
+        in_combat_pool = {model.potion_id for model in normal_pool_models(in_combat=True)}
+        assert "FairyInABottle" not in in_combat_pool
+        assert "FruitJuice" not in in_combat_pool
+        assert "RegenPotion" not in in_combat_pool
+
+    def test_combat_pool_excludes_noncombat_generation_potions(self):
+        combat_pool_ids = {m.potion_id for m in normal_pool_models(in_combat=True)}
+        assert len(combat_pool_ids) == 57
+        assert "FairyInABottle" not in combat_pool_ids
+        assert "FruitJuice" not in combat_pool_ids
+        assert "RegenPotion" not in combat_pool_ids
 
     def test_lookup_by_id(self):
         model = get_potion_model("FirePotion")
@@ -198,3 +219,25 @@ class TestPotionModelBehavior:
     def test_slot_index_assigned(self):
         p = create_potion("FirePotion", slot=2)
         assert p.slot_index == 2
+
+
+class _StubPotionRng:
+    def __init__(self, roll: float):
+        self._roll = roll
+
+    def next_float(self) -> float:
+        return self._roll
+
+    def choice(self, items):
+        return items[0]
+
+
+class TestPotionGenerationRolls:
+    def test_roll_random_potion_model_uses_rarity_bands(self):
+        rare = roll_random_potion_model(_StubPotionRng(0.05), character_id="Ironclad", in_combat=True)
+        uncommon = roll_random_potion_model(_StubPotionRng(0.20), character_id="Ironclad", in_combat=True)
+        common = roll_random_potion_model(_StubPotionRng(0.90), character_id="Ironclad", in_combat=True)
+
+        assert rare is not None and rare.rarity == PotionRarity.RARE
+        assert uncommon is not None and uncommon.rarity == PotionRarity.UNCOMMON
+        assert common is not None and common.rarity == PotionRarity.COMMON

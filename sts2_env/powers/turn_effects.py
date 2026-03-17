@@ -478,8 +478,8 @@ class PoisonPower(PowerInstance):
     """Deal Amount unblockable damage at start of owner's turn, then decrement.
 
     C# hook: AfterSideTurnStart (side == Owner.Side).
-    Deals damage = Amount, then decrements by 1. Repeats once per turn
-    (Accelerant can increase trigger count, but simplified here to 1).
+    Deals damage = Amount, then decrements by 1. Repeats according to
+    opposing Accelerant stacks, capped by current poison amount.
     """
 
     power_type = PowerType.DEBUFF
@@ -491,16 +491,24 @@ class PoisonPower(PowerInstance):
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side != owner.side:
             return
-        # Deal poison damage (unblockable, unpowered)
         if owner.is_alive and self.amount > 0:
-            combat.deal_damage(
-                dealer=None,
-                target=owner,
-                amount=self.amount,
-                props=ValueProp.UNBLOCKABLE | ValueProp.UNPOWERED,
+            opponents = [creature for creature in combat.get_enemies_of(owner) if creature.is_alive]
+            trigger_count = min(
+                self.amount,
+                1 + sum(opponent.get_power_amount(PowerId.ACCELERANT) for opponent in opponents),
             )
-            if owner.is_alive:
-                self.amount -= 1
+            for _ in range(trigger_count):
+                if not owner.is_alive or self.amount <= 0:
+                    break
+                current_amount = self.amount
+                combat.deal_damage(
+                    dealer=None,
+                    target=owner,
+                    amount=current_amount,
+                    props=ValueProp.UNBLOCKABLE | ValueProp.UNPOWERED,
+                )
+                if owner.is_alive:
+                    self.amount -= 1
 
 
 class ConstrictPower(PowerInstance):

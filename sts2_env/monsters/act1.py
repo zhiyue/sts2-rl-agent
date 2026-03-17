@@ -41,10 +41,10 @@ from sts2_env.monsters.act1_weak import (  # noqa: F401
 
 def _deal_damage_to_player(combat: CombatState, creature: Creature, base_dmg: int, hits: int = 1) -> None:
     for _ in range(hits):
-        if combat.player.is_dead:
+        if combat.primary_player.is_dead:
             break
-        dmg = calculate_damage(base_dmg, creature, combat.player, ValueProp.MOVE, combat)
-        apply_damage(combat.player, dmg, ValueProp.MOVE, combat, creature)
+        dmg = calculate_damage(base_dmg, creature, combat.primary_player, ValueProp.MOVE, combat)
+        apply_damage(combat.primary_player, dmg, ValueProp.MOVE, combat, creature)
 
 
 def _gain_block(creature: Creature, amount: int) -> None:
@@ -103,11 +103,11 @@ def create_flyconid(rng: Rng) -> tuple[Creature, MonsterAI]:
     spore_dmg = 8
 
     def vulnerable_spores(combat: CombatState) -> None:
-        combat.apply_power_to(combat.player, PowerId.VULNERABLE, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.VULNERABLE, 2)
 
     def frail_spores(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, spore_dmg)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 2)
 
     def smash(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, smash_dmg)
@@ -231,7 +231,7 @@ def create_mawler(rng: Rng) -> tuple[Creature, MonsterAI]:
         _deal_damage_to_player(combat, creature, rip_dmg)
 
     def roar(combat: CombatState) -> None:
-        combat.apply_power_to(combat.player, PowerId.VULNERABLE, 3)
+        combat.apply_power_to(combat.primary_player, PowerId.VULNERABLE, 3)
 
     def claw(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, claw_dmg, hits=2)
@@ -261,7 +261,7 @@ def create_vine_shambler(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def vine_whip(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, vine_whip_dmg)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     def tangle(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, tangle_dmg)
@@ -296,7 +296,7 @@ def create_slithering_strangler(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def strangle(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, strangle_dmg)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     states: dict[str, MonsterState] = {
         "SQUEEZE": MoveState("SQUEEZE", squeeze, [multi_attack_intent(squeeze_dmg, 2)], follow_up_id="STRANGLE"),
@@ -324,7 +324,7 @@ def create_snapping_jaxfruit(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def seed_spit(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, seed_spit_dmg, hits=seed_spit_hits)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 1)
 
     def burrow(combat: CombatState) -> None:
         creature.apply_power(PowerId.STRENGTH, 2)
@@ -429,7 +429,7 @@ def create_tracker_ruby_raider(rng: Rng) -> tuple[Creature, MonsterAI]:
     hounds_hits = 8
 
     def track(combat: CombatState) -> None:
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 2)
 
     def hounds(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, hounds_dmg, hits=hounds_hits)
@@ -545,7 +545,7 @@ def create_parafright(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def haunt(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, haunt_dmg)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 1)
 
     states: dict[str, MonsterState] = {
         "HAUNT": MoveState("HAUNT", haunt, [attack_intent(haunt_dmg), debuff_intent()], follow_up_id="HAUNT"),
@@ -574,8 +574,8 @@ def create_vantom(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def wail(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, wail_dmg, hits=3)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 1)
 
     rand = RandomBranchState("RAND")
     rand.add_branch("CHOMP", MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=2)
@@ -617,7 +617,7 @@ def create_ceremonial_beast(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def beast_cry(combat: CombatState) -> None:
         # Apply 1 debuff (Ringing/Weak equivalent)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     def stomp(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, stomp_dmg)
@@ -674,7 +674,7 @@ def create_kin_follower(rng: Rng, slot: str = "first") -> tuple[Creature, Monste
 
     def bite(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, bite_dmg, hits=2)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     states: dict[str, MonsterState] = {
         "BASH": MoveState("BASH", bash, [attack_intent(bash_dmg)], follow_up_id="BITE"),

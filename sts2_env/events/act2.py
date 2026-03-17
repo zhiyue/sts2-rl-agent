@@ -7,6 +7,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sts2_env.cards.status import make_spore_mind
+from sts2_env.events.shared import (
+    _obtain_random_relics,
+    _remove_n_cards,
+    _remove_selected_cards,
+    _transform_n_cards,
+    _transform_selected_cards,
+)
+from sts2_env.potions.base import create_potion, normal_pool_models
 from sts2_env.run.events import EventModel, EventOption, EventResult, register_event
 
 if TYPE_CHECKING:
@@ -319,9 +328,22 @@ class LuminousChoir(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "reach":
-            return EventResult(finished=True,
-                               description="Removed 2 cards, gained Spore Mind curse.")
+            candidates = list(run_state.player.deck)
+            return self.request_card_choice(
+                prompt="Choose 2 cards to remove",
+                cards=candidates,
+                source_pile="deck",
+                resolver=lambda selected: (
+                    _remove_selected_cards(selected, run_state),
+                    run_state.player.add_card_instance_to_deck(make_spore_mind()),
+                    EventResult(finished=True, description="Removed 2 cards, gained Spore Mind curse."),
+                )[-1],
+                min_count=min(2, len(candidates)),
+                max_count=min(2, len(candidates)),
+                description="Choose 2 cards to remove.",
+            )
         run_state.player.lose_gold(self._cost)
+        _obtain_random_relics(run_state, 1)
         return EventResult(finished=True,
                            description=f"Paid {self._cost}g, gained a relic.")
 
@@ -349,8 +371,19 @@ class MorphicGrove(EventModel):
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "group":
             run_state.player.lose_gold(100)
-            return EventResult(finished=True,
-                               description="Lost 100g, transformed 2 cards.")
+            candidates = list(run_state.player.deck)
+            return self.request_card_choice(
+                prompt="Choose 2 cards to transform",
+                cards=candidates,
+                source_pile="deck",
+                resolver=lambda selected: (
+                    _transform_selected_cards(selected, run_state),
+                    EventResult(finished=True, description="Lost 100g, transformed 2 cards."),
+                )[-1],
+                min_count=min(2, len(candidates)),
+                max_count=min(2, len(candidates)),
+                description="Choose 2 cards to transform.",
+            )
         run_state.player.gain_max_hp(5)
         return EventResult(finished=True, description="Gained 5 Max HP.")
 
@@ -376,7 +409,13 @@ class PotionCourier(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "grab":
+            for _ in range(3):
+                run_state.player.add_potion(create_potion("FoulPotion"))
             return EventResult(finished=True, description="Gained 3 Foul Potions.")
+        uncommon_models = [model for model in normal_pool_models(in_combat=False, character_id=run_state.player.character_id) if model.rarity.name == "UNCOMMON"]
+        if uncommon_models:
+            model = run_state.rng.rewards.choice(uncommon_models)
+            run_state.player.add_potion(create_potion(model.potion_id))
         return EventResult(finished=True, description="Gained an uncommon potion.")
 
 
@@ -415,12 +454,20 @@ class RanwidTheElder(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "potion":
+            held = run_state.player.held_potions()
+            if held:
+                run_state.player.remove_potion(held[0].slot_index)
+            _obtain_random_relics(run_state, 1)
             return EventResult(finished=True,
                                description="Gave a potion, gained a relic.")
         if option_id == "gold":
             run_state.player.lose_gold(100)
+            _obtain_random_relics(run_state, 1)
             return EventResult(finished=True,
                                description="Paid 100g, gained a relic.")
+        if run_state.player.relics:
+            run_state.player.relics.pop(0)
+        _obtain_random_relics(run_state, 2)
         return EventResult(finished=True,
                            description="Gave a relic, gained 2 relics.")
 
@@ -525,8 +572,16 @@ class SpiralingWhirlpool(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "observe":
-            return EventResult(finished=True,
-                               description="Enchanted a card with Spiral.")
+            return self.request_card_choice(
+                prompt="Choose a card to enchant with Spiral",
+                cards=list(run_state.player.deck),
+                source_pile="deck",
+                resolver=lambda selected: (
+                    selected and selected[0].add_enchantment("Spiral", 1),
+                    EventResult(finished=True, description="Enchanted a card with Spiral."),
+                )[-1],
+                description="Choose a card to enchant.",
+            )
         heal = int(run_state.player.max_hp * 0.33)
         run_state.player.heal(heal)
         return EventResult(finished=True, description=f"Healed {heal} HP.")
@@ -564,8 +619,16 @@ class StoneOfAllTime(EventModel):
             return EventResult(finished=True,
                                description="Discarded a potion, gained 10 Max HP.")
         run_state.player.lose_hp(6)
-        return EventResult(finished=True,
-                           description="Took 6 damage, enchanted a card with Vigorous +8.")
+        return self.request_card_choice(
+            prompt="Choose a card to enchant with Vigorous",
+            cards=list(run_state.player.deck),
+            source_pile="deck",
+            resolver=lambda selected: (
+                selected and selected[0].add_enchantment("Vigorous", 8),
+                EventResult(finished=True, description="Took 6 damage, enchanted a card with Vigorous +8."),
+            )[-1],
+            description="Choose a card to enchant.",
+        )
 
 
 register_event(StoneOfAllTime())
@@ -592,8 +655,16 @@ class Symbiote(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "approach":
-            return EventResult(finished=True,
-                               description="Enchanted a card with Corrupted.")
+            return self.request_card_choice(
+                prompt="Choose a card to enchant with Corrupted",
+                cards=list(run_state.player.deck),
+                source_pile="deck",
+                resolver=lambda selected: (
+                    selected and selected[0].add_enchantment("Corrupted", 1),
+                    EventResult(finished=True, description="Enchanted a card with Corrupted."),
+                )[-1],
+                description="Choose a card to enchant.",
+            )
         return EventResult(finished=True, description="Transformed 1 card.")
 
 
@@ -660,11 +731,29 @@ class WaterloggedScriptorium(EventModel):
             return EventResult(finished=True, description="Gained 6 Max HP.")
         if option_id == "tentacle_quill":
             run_state.player.lose_gold(65)
-            return EventResult(finished=True,
-                               description="Paid 65g, enchanted 1 card with Steady.")
+            return self.request_card_choice(
+                prompt="Choose a card to enchant with Steady",
+                cards=list(run_state.player.deck),
+                source_pile="deck",
+                resolver=lambda selected: (
+                    selected and selected[0].add_enchantment("Steady", 1),
+                    EventResult(finished=True, description="Paid 65g, enchanted 1 card with Steady."),
+                )[-1],
+                description="Choose a card to enchant.",
+            )
         run_state.player.lose_gold(155)
-        return EventResult(finished=True,
-                           description="Paid 155g, enchanted 2 cards with Steady.")
+        return self.request_card_choice(
+            prompt="Choose 2 cards to enchant with Steady",
+            cards=list(run_state.player.deck),
+            source_pile="deck",
+            resolver=lambda selected: (
+                [card.add_enchantment("Steady", 1) for card in selected],
+                EventResult(finished=True, description="Paid 155g, enchanted 2 cards with Steady."),
+            )[-1],
+            min_count=min(2, len(run_state.player.deck)),
+            max_count=min(2, len(run_state.player.deck)),
+            description="Choose 2 cards to enchant.",
+        )
 
 
 register_event(WaterloggedScriptorium())
@@ -737,11 +826,23 @@ class WhisperingHollow(EventModel):
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "gold":
             run_state.player.lose_gold(50)
+            for _ in range(2):
+                model = run_state.rng.rewards.choice(normal_pool_models(in_combat=False, character_id=run_state.player.character_id))
+                run_state.player.add_potion(create_potion(model.potion_id))
             return EventResult(finished=True,
                                description="Paid 50g, gained 2 potions.")
         run_state.player.lose_hp(9)
-        return EventResult(finished=True,
-                           description="Took 9 damage, transformed 1 card.")
+        candidates = list(run_state.player.deck)
+        return self.request_card_choice(
+            prompt="Choose a card to transform",
+            cards=candidates,
+            source_pile="deck",
+            resolver=lambda selected: (
+                _transform_selected_cards(selected, run_state),
+                EventResult(finished=True, description="Took 9 damage, transformed 1 card."),
+            )[-1],
+            description="Choose a card to transform.",
+        )
 
 
 register_event(WhisperingHollow())

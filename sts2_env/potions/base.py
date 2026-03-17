@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, TYPE_CHECKING
 
 from sts2_env.core.enums import PotionRarity, PotionUsageType, PotionTargetType
+from sts2_env.core.rng import Rng
 
 if TYPE_CHECKING:
     from sts2_env.core.creature import Creature
@@ -26,13 +27,23 @@ class PotionModel:
     target_type: PotionTargetType
     is_character_specific: bool = False
     character_pool: str | None = None
+    can_be_generated_in_combat: bool = True
 
-    def is_in_normal_pool(self) -> bool:
-        return self.rarity not in (
+    def is_in_normal_pool(self, *, in_combat: bool = False) -> bool:
+        if self.rarity in (
             PotionRarity.EVENT,
             PotionRarity.TOKEN,
             PotionRarity.NONE,
-        )
+        ):
+            return False
+        if in_combat and not self.can_be_generated_in_combat:
+            return False
+        return True
+
+    def is_available_for_character(self, character_id: str | None) -> bool:
+        if character_id is None or not self.is_character_specific:
+            return True
+        return self.character_pool == character_id
 
 
 @dataclass
@@ -102,9 +113,42 @@ def all_potion_models() -> list[PotionModel]:
     return list(_POTION_MODELS.values())
 
 
-def normal_pool_models() -> list[PotionModel]:
+def normal_pool_models(
+    *,
+    in_combat: bool = False,
+    character_id: str | None = None,
+) -> list[PotionModel]:
     """All potions eligible for random generation (excludes Event/Token/None)."""
-    return [m for m in _POTION_MODELS.values() if m.is_in_normal_pool()]
+    return [
+        model
+        for model in _POTION_MODELS.values()
+        if model.is_in_normal_pool(in_combat=in_combat)
+        and model.is_available_for_character(character_id)
+    ]
+
+
+def roll_random_potion_model(
+    rng: Rng,
+    *,
+    character_id: str | None = None,
+    in_combat: bool,
+) -> PotionModel | None:
+    models = normal_pool_models(in_combat=in_combat, character_id=character_id)
+    if not models:
+        return None
+
+    roll = rng.next_float()
+    if roll <= 0.10:
+        rarity = PotionRarity.RARE
+    elif roll <= 0.35:
+        rarity = PotionRarity.UNCOMMON
+    else:
+        rarity = PotionRarity.COMMON
+
+    rarity_models = [model for model in models if model.rarity == rarity]
+    if not rarity_models:
+        rarity_models = models
+    return rng.choice(rarity_models)
 
 
 def create_potion(potion_id: str, slot: int = -1) -> PotionInstance:

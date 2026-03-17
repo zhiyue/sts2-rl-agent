@@ -8,6 +8,12 @@ observation invariants.
 import pytest
 import numpy as np
 
+from sts2_env.cards.factory import create_card
+from sts2_env.cards.ironclad import create_ironclad_starter_deck
+from sts2_env.cards.ironclad_basic import make_strike_ironclad
+from sts2_env.core.combat import CombatState
+from sts2_env.core.enums import CardId
+from sts2_env.core.rng import Rng
 from sts2_env.gym_env.run_env import (
     STS2RunEnv,
     RUN_OBS_SIZE,
@@ -27,10 +33,15 @@ from sts2_env.gym_env.run_env import (
     _EVENT_SIZE,
     _TREASURE_START,
     _TREASURE_SIZE,
+    _PLAYER_SELECT_START,
+    _PLAYER_SELECT_SIZE,
     _BOSS_RELIC_START,
     _BOSS_RELIC_SIZE,
 )
+from sts2_env.cards.regent import make_gather_light
+from sts2_env.monsters.act1_weak import create_shrinker_beetle
 from sts2_env.run.run_manager import RunManager
+from sts2_env.run.run_state import PlayerState
 
 
 # ---------------------------------------------------------------------------
@@ -263,6 +274,34 @@ class TestActionMasksPerPhase:
         mask_info = info["action_mask"]
         np.testing.assert_array_equal(mask_method, mask_info)
 
+    def test_pending_choice_action_zero_confirms_choice(self, env):
+        env.reset(seed=42)
+
+        mgr = RunManager(seed=1, character_id="Ironclad")
+        mgr._phase = RunManager.PHASE_COMBAT
+        combat = CombatState(
+            player_hp=80,
+            player_max_hp=80,
+            deck=create_ironclad_starter_deck(),
+            rng_seed=7,
+            character_id="Ironclad",
+        )
+        creature, ai = create_shrinker_beetle(Rng(7))
+        combat.add_enemy(creature, ai)
+        strike = make_strike_ironclad()
+        combat.hand = [create_card(CardId.PURITY), strike]
+        combat.energy = 1
+        mgr._combat = combat
+        env._mgr = mgr
+
+        assert combat.play_card(0)
+        assert combat.pending_choice is not None
+
+        env._step_combat(_COMBAT_START)
+
+        assert combat.pending_choice is None
+        assert strike in combat.hand
+
     def test_card_reward_mask(self, env):
         """Force into CARD_REWARD phase and verify mask."""
         obs, info = env.reset(seed=42)
@@ -282,6 +321,34 @@ class TestActionMasksPerPhase:
                 assert np.sum(mask[_CARD_RWD_START: _CARD_RWD_START + _CARD_RWD_SIZE]) >= 2
                 return
         pytest.skip("CARD_REWARD phase not reached with this seed")
+
+    def test_multiplayer_combat_mask_exposes_player_select_actions(self, env):
+        env.reset(seed=42)
+        mgr = RunManager(seed=4, character_id="Ironclad")
+        mgr._phase = RunManager.PHASE_COMBAT
+        combat = CombatState(
+            player_hp=80,
+            player_max_hp=80,
+            deck=create_ironclad_starter_deck(),
+            rng_seed=21,
+            character_id="Ironclad",
+        )
+        creature, ai = create_shrinker_beetle(Rng(21))
+        combat.add_enemy(creature, ai)
+        ally_state = PlayerState(player_id=2, character_id="Regent", max_hp=60, current_hp=60)
+        ally = combat.add_ally_player(ally_state)
+        ally_combat_state = combat.combat_player_state_for(ally)
+        assert ally_combat_state is not None
+        card = make_gather_light()
+        card.owner = ally
+        ally_combat_state.hand = [card]
+        ally_combat_state.zone_map["hand"] = ally_combat_state.hand
+        ally_combat_state.energy = 1
+        mgr._combat = combat
+        env._mgr = mgr
+
+        mask = env.action_masks()
+        assert np.sum(mask[_PLAYER_SELECT_START:_PLAYER_SELECT_START + _PLAYER_SELECT_SIZE]) >= 2
 
     def test_rest_site_mask(self, env):
         """Force into REST_SITE phase and verify mask."""

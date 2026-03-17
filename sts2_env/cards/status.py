@@ -6,13 +6,18 @@ Status (11), Curse (18), Event (27), Token (14), Quest (3).
 from __future__ import annotations
 
 from sts2_env.cards.base import CardInstance, _get_next_id
+from sts2_env.cards.factory import create_character_cards
 from sts2_env.cards.registry import register_effect
 from sts2_env.core.enums import (
-    CardId, CardType, TargetType, CardRarity, ValueProp, PowerId,
+    CardId, CardTag, CardType, TargetType, CardRarity, ValueProp, PowerId,
 )
 from sts2_env.core.damage import calculate_damage, apply_damage, calculate_block
 from sts2_env.core.creature import Creature
 from sts2_env.core.combat import CombatState
+
+
+def _owner(card: CardInstance, combat: CombatState) -> Creature:
+    return getattr(card, "owner", None) or combat.player
 
 
 # ===========================================================================
@@ -20,19 +25,22 @@ from sts2_env.core.combat import CombatState
 # ===========================================================================
 
 def _deal_damage_single(card: CardInstance, combat: CombatState, target: Creature) -> None:
-    damage = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-    apply_damage(target, damage, ValueProp.MOVE, combat, combat.player)
+    owner = _owner(card, combat)
+    damage = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+    apply_damage(target, damage, ValueProp.MOVE, combat, owner)
 
 
 def _deal_damage_all(card: CardInstance, combat: CombatState) -> None:
+    owner = _owner(card, combat)
     for enemy in list(combat.alive_enemies):
-        damage = calculate_damage(card.base_damage, combat.player, enemy, ValueProp.MOVE, combat)
-        apply_damage(enemy, damage, ValueProp.MOVE, combat, combat.player)
+        damage = calculate_damage(card.base_damage, owner, enemy, ValueProp.MOVE, combat)
+        apply_damage(enemy, damage, ValueProp.MOVE, combat, owner)
 
 
 def _gain_block(card: CardInstance, combat: CombatState) -> None:
-    block = calculate_block(card.base_block, combat.player, ValueProp.MOVE, combat, card_source=card)
-    combat.player.gain_block(block)
+    owner = _owner(card, combat)
+    block = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(block)
 
 
 # ===========================================================================
@@ -89,8 +97,8 @@ def make_void() -> CardInstance:
 
 @register_effect(CardId.BECKON)
 def beckon_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Beckon: deals HP loss when drawn
-    pass
+    """Turn-end-in-hand HP loss is handled by combat hooks."""
+    return
 
 
 def make_beckon() -> CardInstance:
@@ -324,6 +332,7 @@ def make_writhe() -> CardInstance:
 def rip_and_tear_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     if target is None:
         return
+    owner = _owner(card, combat)
     for _ in range(2):
         t = target if target.is_alive else None
         if t is None:
@@ -331,8 +340,8 @@ def rip_and_tear_effect(card: CardInstance, combat: CombatState, target: Creatur
             if not alive:
                 break
             t = combat.rng.choice(alive)
-        damage = calculate_damage(card.base_damage, combat.player, t, ValueProp.MOVE, combat)
-        apply_damage(t, damage, ValueProp.MOVE, combat, combat.player)
+        damage = calculate_damage(card.base_damage, owner, t, ValueProp.MOVE, combat)
+        apply_damage(t, damage, ValueProp.MOVE, combat, owner)
 
 
 def make_rip_and_tear(upgraded: bool = False) -> CardInstance:
@@ -346,8 +355,10 @@ def make_rip_and_tear(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.APOTHEOSIS)
 def apotheosis_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Upgrade all cards — handled by hook system
-    pass
+    owner = _owner(card, combat)
+    for candidate in combat._all_cards_for_creature(owner):
+        if candidate is not card:
+            combat.upgrade_card(candidate)
 
 
 def make_apotheosis(upgraded: bool = False) -> CardInstance:
@@ -362,7 +373,7 @@ def make_apotheosis(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.APPARITION)
 def apparition_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.INTANGIBLE, 1)
+    combat.apply_power_to(_owner(card, combat), PowerId.INTANGIBLE, 1)
 
 
 def make_apparition(upgraded: bool = False) -> CardInstance:
@@ -376,12 +387,12 @@ def make_apparition(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.BRIGHTEST_FLAME)
 def brightest_flame_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    owner = _owner(card, combat)
     cards = card.effect_vars.get("cards", 2)
     energy = card.effect_vars.get("energy", 2)
-    combat._draw_cards(cards)
-    combat.energy += energy
-    # Lose Max HP — handled at run level
-    pass
+    combat._draw_cards_for_creature(owner, cards)
+    combat.gain_energy(owner, energy)
+    combat.lose_max_hp(owner, card.effect_vars.get("max_hp_loss", 1))
 
 
 def make_brightest_flame(upgraded: bool = False) -> CardInstance:
@@ -390,6 +401,7 @@ def make_brightest_flame(upgraded: bool = False) -> CardInstance:
         target_type=TargetType.SELF, rarity=CardRarity.ANCIENT,
         upgraded=upgraded,
         effect_vars={
+            "max_hp_loss": 1,
             "cards": 3 if upgraded else 2,
             "energy": 3 if upgraded else 2,
         },
@@ -424,8 +436,12 @@ def make_maul(upgraded: bool = False) -> CardInstance:
 def neows_fury_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     _deal_damage_single(card, combat, target)
-    # Add card to hand — stub
-    pass
+    count = card.effect_vars.get("cards", 2)
+    candidates = list(combat.discard_pile)
+    if not candidates:
+        return
+    for selected in combat.rng.sample(candidates, min(count, len(candidates))):
+        combat.move_card_to_hand(selected)
 
 
 def make_neows_fury(upgraded: bool = False) -> CardInstance:
@@ -443,8 +459,8 @@ def relax_effect(card: CardInstance, combat: CombatState, target: Creature | Non
     _gain_block(card, combat)
     cards = card.effect_vars.get("cards", 2)
     energy = card.effect_vars.get("energy", 2)
-    combat.apply_power_to(combat.player, PowerId.DRAW_CARDS_NEXT_TURN, cards)
-    combat.apply_power_to(combat.player, PowerId.ENERGY_NEXT_TURN, energy)
+    combat.apply_power_to(_owner(card, combat), PowerId.DRAW_CARDS_NEXT_TURN, cards)
+    combat.apply_power_to(_owner(card, combat), PowerId.ENERGY_NEXT_TURN, energy)
 
 
 def make_relax(upgraded: bool = False) -> CardInstance:
@@ -465,8 +481,7 @@ def make_relax(upgraded: bool = False) -> CardInstance:
 def whistle_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     _deal_damage_single(card, combat, target)
-    # Stun enemy — stub
-    pass
+    combat.stun_enemy(target)
 
 
 def make_whistle(upgraded: bool = False) -> CardInstance:
@@ -480,8 +495,15 @@ def make_whistle(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.WISH)
 def wish_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Choose from grid and add to hand — stub
-    pass
+    ordered = sorted(combat.draw_pile, key=lambda c: (c.rarity.value, c.card_id.value))
+    if not ordered:
+        return
+    combat.request_card_choice(
+        prompt="Choose a card from draw pile",
+        cards=ordered,
+        source_pile="draw",
+        resolver=combat.move_card_to_hand,
+    )
 
 
 def make_wish(upgraded: bool = False) -> CardInstance:
@@ -511,7 +533,7 @@ def make_byrd_swoop(upgraded: bool = False) -> CardInstance:
 @register_effect(CardId.CALTROPS)
 def caltrops_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     thorns = card.effect_vars.get("thorns", 3)
-    combat.apply_power_to(combat.player, PowerId.THORNS, thorns)
+    combat.apply_power_to(_owner(card, combat), PowerId.THORNS, thorns)
 
 
 def make_caltrops(upgraded: bool = False) -> CardInstance:
@@ -540,8 +562,16 @@ def make_clash(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.DISTRACTION)
 def distraction_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Set card cost to 0, add to hand — stub
-    pass
+    generated = create_character_cards(
+        combat.character_id,
+        combat.rng,
+        1,
+        card_type=CardType.SKILL,
+    )
+    if not generated:
+        return
+    generated[0].set_temporary_cost_for_turn(0)
+    combat.move_card_to_hand(generated[0])
 
 
 def make_distraction(upgraded: bool = False) -> CardInstance:
@@ -555,8 +585,23 @@ def make_distraction(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.DUAL_WIELD)
 def dual_wield_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Add copies of selected card to hand — stub
-    pass
+    candidates = [c for c in combat.hand if c.card_type in (CardType.ATTACK, CardType.POWER)]
+    if not candidates:
+        return
+
+    def _resolver(selected: CardInstance | None) -> None:
+        if selected is None:
+            return
+        copies = card.effect_vars.get("cards", 1)
+        clones = [selected.clone(combat.rng.next_int(1, 2**31 - 1)) for _ in range(max(0, copies))]
+        combat._add_generated_cards_to_hand(clones)  # noqa: SLF001
+
+    combat.request_card_choice(
+        prompt="Choose an Attack or Power to copy",
+        cards=candidates,
+        source_pile="hand",
+        resolver=_resolver,
+    )
 
 
 def make_dual_wield(upgraded: bool = False) -> CardInstance:
@@ -571,8 +616,17 @@ def make_dual_wield(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.ENLIGHTENMENT)
 def enlightenment_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Reduce cost of cards in hand — handled by hook
-    pass
+    owner = _owner(card, combat)
+    state = combat.combat_player_state_for(owner)
+    if state is None:
+        return
+    for held in state.hand:
+        if card.upgraded:
+            if not held.has_energy_cost_x:
+                held.set_combat_cost(min(held.cost, 1))
+        else:
+            if not held.has_energy_cost_x:
+                held.set_temporary_cost_for_turn(min(held.cost, 1))
 
 
 def make_enlightenment(upgraded: bool = False) -> CardInstance:
@@ -587,7 +641,8 @@ def make_enlightenment(upgraded: bool = False) -> CardInstance:
 @register_effect(CardId.ENTRENCH)
 def entrench_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     # Double current block
-    combat.player.gain_block(combat.player.block)
+    owner = _owner(card, combat)
+    owner.gain_block(owner.block)
 
 
 def make_entrench(upgraded: bool = False) -> CardInstance:
@@ -618,7 +673,7 @@ def make_exterminate(upgraded: bool = False) -> CardInstance:
 @register_effect(CardId.FEEDING_FRENZY_CARD)
 def feeding_frenzy_card_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     strength = card.effect_vars.get("strength", 5)
-    combat.apply_power_to(combat.player, PowerId.FEEDING_FRENZY, strength)
+    combat.apply_power_to(_owner(card, combat), PowerId.FEEDING_FRENZY, strength)
 
 
 def make_feeding_frenzy(upgraded: bool = False) -> CardInstance:
@@ -633,7 +688,7 @@ def make_feeding_frenzy(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.HELLO_WORLD_CARD)
 def hello_world_card_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(combat.player, PowerId.HELLO_WORLD, 1)
+    combat.apply_power_to(_owner(card, combat), PowerId.HELLO_WORLD, 1)
 
 
 def make_hello_world(upgraded: bool = False) -> CardInstance:
@@ -663,8 +718,16 @@ def make_mad_science(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.METAMORPHOSIS)
 def metamorphosis_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Set cards to cost 0, add to draw pile — stub
-    pass
+    generated = create_character_cards(
+        combat.character_id,
+        combat.rng,
+        card.effect_vars.get("cards", 3),
+        card_type=CardType.ATTACK,
+        distinct=False,
+    )
+    for generated_card in generated:
+        generated_card.set_combat_cost(0)
+        combat.insert_card_into_draw_pile(generated_card, random_position=True)
 
 
 def make_metamorphosis(upgraded: bool = False) -> CardInstance:
@@ -680,7 +743,7 @@ def make_metamorphosis(upgraded: bool = False) -> CardInstance:
 @register_effect(CardId.OUTMANEUVER)
 def outmaneuver_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     energy = card.effect_vars.get("energy", 2)
-    combat.apply_power_to(combat.player, PowerId.ENERGY_NEXT_TURN, energy)
+    combat.apply_power_to(_owner(card, combat), PowerId.ENERGY_NEXT_TURN, energy)
 
 
 def make_outmaneuver(upgraded: bool = False) -> CardInstance:
@@ -696,10 +759,11 @@ def make_outmaneuver(upgraded: bool = False) -> CardInstance:
 @register_effect(CardId.PECK)
 def peck_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
+    owner = _owner(card, combat)
     hits = card.effect_vars.get("hits", 3)
     for _ in range(hits):
-        damage = calculate_damage(card.base_damage, combat.player, target, ValueProp.MOVE, combat)
-        apply_damage(target, damage, ValueProp.MOVE, combat, combat.player)
+        damage = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+        apply_damage(target, damage, ValueProp.MOVE, combat, owner)
         if target.is_dead:
             break
 
@@ -718,7 +782,7 @@ def make_peck(upgraded: bool = False) -> CardInstance:
 def rebound_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     _deal_damage_single(card, combat, target)
-    combat.apply_power_to(combat.player, PowerId.REBOUND, 1)
+    combat.apply_power_to(_owner(card, combat), PowerId.REBOUND, 1)
 
 
 def make_rebound(upgraded: bool = False) -> CardInstance:
@@ -751,7 +815,13 @@ def make_squash(upgraded: bool = False) -> CardInstance:
 @register_effect(CardId.STACK)
 def stack_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     """Block scales with discard pile size."""
-    _gain_block(card, combat)
+    owner = _owner(card, combat)
+    state = combat.combat_player_state_for(owner)
+    discard_count = len(state.discard) if state is not None else 0
+    base = card.base_block if card.base_block is not None else 0
+    total_block = base + discard_count
+    block = calculate_block(total_block, owner, ValueProp.MOVE, combat, card_source=card)
+    owner.gain_block(block)
 
 
 def make_stack(upgraded: bool = False) -> CardInstance:
@@ -767,7 +837,7 @@ def make_stack(upgraded: bool = False) -> CardInstance:
 def toric_toughness_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     _gain_block(card, combat)
     turns = card.effect_vars.get("turns", 2)
-    combat.apply_power_to(combat.player, PowerId.TORIC_TOUGHNESS, turns)
+    combat.apply_power_to(_owner(card, combat), PowerId.TORIC_TOUGHNESS, turns)
 
 
 def make_toric_toughness(upgraded: bool = False) -> CardInstance:
@@ -891,7 +961,7 @@ def make_shiv(upgraded: bool = False) -> CardInstance:
         card_id=CardId.SHIV, cost=0, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.STATUS,
         base_damage=6 if upgraded else 4, upgraded=upgraded,
-        keywords=frozenset({"exhaust"}), instance_id=_get_next_id(),
+        keywords=frozenset({"exhaust"}), tags=frozenset({CardTag.SHIV}), instance_id=_get_next_id(),
     )
 
 
@@ -913,8 +983,28 @@ def make_soul(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.SOVEREIGN_BLADE)
 def sovereign_blade_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    """Scales with SeekingEdge stacks — deal damage to all enemies."""
-    _deal_damage_all(card, combat)
+    """Regent token attack; all-target only while Seeking Edge is active."""
+    owner = _owner(card, combat)
+    repeats = 1
+    cost_increase = 0
+    for power in owner.powers.values():
+        get_repeats = getattr(power, "get_sovereign_blade_repeats", None)
+        if callable(get_repeats):
+            repeats = max(repeats, get_repeats())
+        get_cost_increase = getattr(power, "get_sovereign_blade_cost_increase", None)
+        if callable(get_cost_increase):
+            cost_increase = max(cost_increase, get_cost_increase())
+
+    if cost_increase:
+        card.cost = (card.original_cost or card.cost) + cost_increase
+
+    if owner.has_power(PowerId.SEEKING_EDGE):
+        for _ in range(max(1, repeats)):
+            _deal_damage_all(card, combat)
+        return
+    if target is not None:
+        for _ in range(max(1, repeats)):
+            _deal_damage_single(card, combat, target)
 
 
 def make_sovereign_blade(upgraded: bool = False) -> CardInstance:
@@ -1066,9 +1156,13 @@ def debris_effect(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.FRANTIC_ESCAPE)
 def frantic_escape_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    """Playable (cost 1). Increases Sandpit counter by 1, then raises
-    its own energy cost by 1 for the rest of combat.
-    Full Sandpit interaction is stub — cost increase tracked via combat_vars."""
+    """Increase the matching Sandpit countdown, then raise this card's cost."""
+    owner = _owner(card, combat)
+    for enemy in combat.enemies:
+        sandpit = enemy.powers.get(PowerId.SANDPIT)
+        if sandpit is not None and getattr(sandpit, "target", None) is owner:
+            sandpit.amount += 1
+            break
     increase = card.combat_vars.get("cost_increase", 0) + 1
     card.combat_vars["cost_increase"] = increase
     card.cost = (card.original_cost or 1) + increase

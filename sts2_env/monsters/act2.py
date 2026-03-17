@@ -19,7 +19,8 @@ from sts2_env.monsters.intents import (
 from sts2_env.monsters.state_machine import (
     ConditionalBranchState, MonsterAI, MonsterState, MoveState, RandomBranchState,
 )
-from sts2_env.cards.status import make_dazed, make_parasite, make_void
+from sts2_env.cards.status import make_dazed, make_frantic_escape, make_parasite, make_void
+from sts2_env.powers.remaining_c import SandpitPower
 
 if TYPE_CHECKING:
     from sts2_env.core.combat import CombatState
@@ -29,10 +30,10 @@ if TYPE_CHECKING:
 
 def _deal_damage_to_player(combat: CombatState, creature: Creature, base_dmg: int, hits: int = 1) -> None:
     for _ in range(hits):
-        if combat.player.is_dead:
+        if combat.primary_player.is_dead:
             break
-        dmg = calculate_damage(base_dmg, creature, combat.player, ValueProp.MOVE, combat)
-        apply_damage(combat.player, dmg, ValueProp.MOVE, combat, creature)
+        dmg = calculate_damage(base_dmg, creature, combat.primary_player, ValueProp.MOVE, combat)
+        apply_damage(combat.primary_player, dmg, ValueProp.MOVE, combat, creature)
 
 
 def _gain_block(creature: Creature, amount: int) -> None:
@@ -153,7 +154,7 @@ def create_bowlbug_silk(rng: Rng) -> tuple[Creature, MonsterAI]:
     thrash_dmg = 4
 
     def toxic_spit(combat: CombatState) -> None:
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     def thrash(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, thrash_dmg, hits=2)
@@ -238,7 +239,7 @@ def create_hunter_killer(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def hunt(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, hunt_dmg, hits=2)
-        combat.apply_power_to(combat.player, PowerId.VULNERABLE, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.VULNERABLE, 1)
 
     def kill(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, kill_dmg)
@@ -422,8 +423,8 @@ def create_the_obscura(rng: Rng) -> tuple[Creature, MonsterAI]:
     strike_dmg = 13
 
     def darkness(combat: CombatState) -> None:
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 2)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 2)
 
     def chomp(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, chomp_dmg, hits=2)
@@ -462,7 +463,7 @@ def create_decimillipede_segment(rng: Rng, starter_idx: int = 0) -> tuple[Creatu
 
     def constrict(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, constrict_dmg)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 1)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 1)
 
     def bulk(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, bulk_dmg)
@@ -591,41 +592,69 @@ def create_infested_prism(rng: Rng, slot: str = "first") -> tuple[Creature, Mons
 # ---- TheInsatiable (HP 242 / 256 asc) ----
 
 def create_the_insatiable(rng: Rng) -> tuple[Creature, MonsterAI]:
-    hp = 242
+    hp = 321
     creature = Creature(max_hp=hp, monster_id="THE_INSATIABLE")
-    chomp_dmg = 17
-    devouring_maw_dmg = 7
-    acid_blast_dmg = 23
+    thrash_dmg = 8
+    bite_dmg = 28
+    salivate_str = 2
 
-    _state = {"evolved": False}
+    def _player_targets(combat: CombatState) -> list[Creature]:
+        return [
+            state.creature
+            for state in combat.combat_player_states
+            if state.creature.is_alive
+        ]
 
-    def chomp(combat: CombatState) -> None:
-        _deal_damage_to_player(combat, creature, chomp_dmg)
+    def liquify_ground(combat: CombatState) -> None:
+        for target in _player_targets(combat):
+            sandpit = SandpitPower(4)
+            sandpit.target = target
+            creature.powers[PowerId.SANDPIT] = sandpit
+            combat.add_status_cards_to_draw(target, "FRANTIC_ESCAPE", 3, random_position=True)
+            combat.add_status_cards_to_discard(target, "FRANTIC_ESCAPE", 3)
 
-    def devouring_maw(combat: CombatState) -> None:
-        _deal_damage_to_player(combat, creature, devouring_maw_dmg, hits=3)
+    def thrash(combat: CombatState) -> None:
+        _deal_damage_to_player(combat, creature, thrash_dmg, hits=2)
 
-    def acid_blast(combat: CombatState) -> None:
-        _deal_damage_to_player(combat, creature, acid_blast_dmg)
+    def lunging_bite(combat: CombatState) -> None:
+        _deal_damage_to_player(combat, creature, bite_dmg)
 
-    def evolve(combat: CombatState) -> None:
-        _state["evolved"] = True
-        creature.apply_power(PowerId.STRENGTH, 5)
-        creature.heal(30)
-
-    # Check for evolution at half HP
-    evolve_check = ConditionalBranchState("EVOLVE_CHECK")
-    evolve_check.add_branch(lambda: not _state["evolved"] and creature.current_hp <= creature.max_hp // 2, "EVOLVE")
-    evolve_check.add_branch(lambda: True, "CHOMP")
+    def salivate(combat: CombatState) -> None:
+        creature.apply_power(PowerId.STRENGTH, salivate_str, applier=creature)
 
     states: dict[str, MonsterState] = {
-        "CHOMP": MoveState("CHOMP", chomp, [attack_intent(chomp_dmg)], follow_up_id="DEVOURING_MAW"),
-        "DEVOURING_MAW": MoveState("DEVOURING_MAW", devouring_maw, [multi_attack_intent(devouring_maw_dmg, 3)], follow_up_id="ACID_BLAST"),
-        "ACID_BLAST": MoveState("ACID_BLAST", acid_blast, [attack_intent(acid_blast_dmg)], follow_up_id="EVOLVE_CHECK"),
-        "EVOLVE_CHECK": evolve_check,
-        "EVOLVE": MoveState("EVOLVE", evolve, [buff_intent()], follow_up_id="CHOMP"),
+        "LIQUIFY_GROUND": MoveState(
+            "LIQUIFY_GROUND",
+            liquify_ground,
+            [buff_intent(), status_intent()],
+            follow_up_id="THRASH_1",
+        ),
+        "THRASH_1": MoveState(
+            "THRASH_1",
+            thrash,
+            [multi_attack_intent(thrash_dmg, 2)],
+            follow_up_id="LUNGING_BITE",
+        ),
+        "LUNGING_BITE": MoveState(
+            "LUNGING_BITE",
+            lunging_bite,
+            [attack_intent(bite_dmg)],
+            follow_up_id="SALIVATE",
+        ),
+        "SALIVATE": MoveState(
+            "SALIVATE",
+            salivate,
+            [buff_intent()],
+            follow_up_id="THRASH_2",
+        ),
+        "THRASH_2": MoveState(
+            "THRASH_2",
+            thrash,
+            [multi_attack_intent(thrash_dmg, 2)],
+            follow_up_id="THRASH_1",
+        ),
     }
-    return creature, MonsterAI(states, "CHOMP")
+    return creature, MonsterAI(states, "LIQUIFY_GROUND")
 
 
 # ---- KnowledgeDemon (HP 379 / 399 asc) ----
@@ -692,8 +721,8 @@ def create_crusher(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def bug_sting(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, bug_sting_dmg, hits=2)
-        combat.apply_power_to(combat.player, PowerId.WEAK, 2)
-        combat.apply_power_to(combat.player, PowerId.FRAIL, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.WEAK, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.FRAIL, 2)
 
     def adapt(combat: CombatState) -> None:
         creature.apply_power(PowerId.STRENGTH, 2)
@@ -724,7 +753,7 @@ def create_rocket(rng: Rng) -> tuple[Creature, MonsterAI]:
 
     def targeting_reticle(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, targeting_dmg)
-        combat.apply_power_to(combat.player, PowerId.VULNERABLE, 2)
+        combat.apply_power_to(combat.primary_player, PowerId.VULNERABLE, 2)
 
     def precision_beam(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, precision_dmg)
