@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,7 +49,20 @@ public class RlCardRewardScreenHandler : IScreenHandler, IHandler
         var cards = new List<Dictionary<string, object>>();
         for (int i = 0; i < holders.Count; i++)
         {
-            cards.Add(new Dictionary<string, object> { ["index"] = i });
+            var cardData = new Dictionary<string, object>
+            {
+                ["index"] = i,
+            };
+            var card = holders[i].CardModel;
+            if (card != null)
+            {
+                cardData["id"] = card.Id.Entry;
+                cardData["type"] = card.Type.ToString();
+                cardData["cost"] = card.EnergyCost.Canonical;
+                if (card.IsUpgraded)
+                    cardData["upgraded"] = true;
+            }
+            cards.Add(cardData);
         }
 
         var stateMsg = new Dictionary<string, object>
@@ -65,8 +79,8 @@ public class RlCardRewardScreenHandler : IScreenHandler, IHandler
             try
             {
                 string stateJson = JsonSerializer.Serialize(stateMsg);
-                BridgeServer.Instance.SendState(stateJson);
-                string responseJson = await BridgeServer.Instance.WaitForActionAsync(
+                string responseJson = await BridgeServer.Instance.SendStateAndWaitForActionAsync(
+                    stateJson,
                     AgentTimeout, ct);
 
                 if (responseJson != null)
@@ -78,8 +92,8 @@ public class RlCardRewardScreenHandler : IScreenHandler, IHandler
                     if (action == "skip")
                     {
                         Logger.Log("[RlCardReward] Agent chose to skip");
-                        // Click the skip/close button if available
-                        // The screen will close via the drain loop
+                        if (!TrySkipCardReward())
+                            Logger.Log("[RlCardReward] Skip action could not be executed");
                         return;
                     }
 
@@ -87,6 +101,13 @@ public class RlCardRewardScreenHandler : IScreenHandler, IHandler
                         root.TryGetProperty("index", out var idxProp))
                     {
                         int idx = idxProp.GetInt32();
+                        if (idx >= holders.Count)
+                        {
+                            Logger.Log("[RlCardReward] Agent chose to skip via out-of-range choose");
+                            if (!TrySkipCardReward())
+                                Logger.Log("[RlCardReward] Out-of-range skip action could not be executed");
+                            return;
+                        }
                         if (idx >= 0 && idx < holders.Count)
                         {
                             chosenHolder = holders[idx];
@@ -114,5 +135,57 @@ public class RlCardRewardScreenHandler : IScreenHandler, IHandler
             ct, TimeSpan.FromSeconds(10),
             "Card reward screen did not close after selection");
         Logger.Log("[RlCardReward] Card reward screen handled");
+    }
+
+    private static bool TrySkipCardReward()
+    {
+        try
+        {
+            Type rewardType = FindGameType("RewardScreen") ?? FindGameType("CardRewardManager");
+            dynamic rs = rewardType?.GetProperty("Instance")?.GetValue(null);
+            if (rs == null)
+                return false;
+
+            try
+            {
+                rs.Skip();
+                return true;
+            }
+            catch { }
+
+            try
+            {
+                rs.Dismiss();
+                return true;
+            }
+            catch { }
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[RlCardReward] Skip helper error: {ex.Message}");
+        }
+
+        return false;
+    }
+
+    private static Type? FindGameType(string typeName)
+    {
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            Type? found = null;
+            try
+            {
+                found = assembly.GetTypes().FirstOrDefault(t => t.Name == typeName);
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                found = ex.Types.FirstOrDefault(t => t?.Name == typeName);
+            }
+
+            if (found != null)
+                return found;
+        }
+
+        return null;
     }
 }

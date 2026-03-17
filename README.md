@@ -23,7 +23,7 @@ A reinforcement learning agent for **Slay the Spire 2**, built on a high-perform
            v                                             v
 +---------------------+                  +--------------------------+
 | Training Pipeline   |                  | Bridge to Real Game      |
-| MaskablePPO (SB3)   |                  | bridge_mod_v2/ (C#/Godot)|
+| MaskablePPO (SB3)   |                  | bridge_mod/ (C#/Godot)|
 | train_combat.py     |------model------>| agent_runner.py (Python) |
 | train_full_run.py   |                  | TCP JSON protocol        |
 +---------------------+                  +--------------------------+
@@ -220,7 +220,7 @@ sts2-rl-agent/
 |       |-- state_adapter.py       # Game JSON -> observation vector
 |       +-- agent_runner.py        # Main agent loop
 |
-|-- bridge_mod_v2/                 # C# Bridge Mod (Godot project)
+|-- bridge_mod/                    # C# Bridge Mod (Godot project)
 |   |-- STS2BridgeMod.csproj       # Build config (Godot.NET.Sdk/4.5.1)
 |   |-- MainFile.cs                # Entry point, Harmony patches
 |   |-- BridgeServer.cs            # TCP server
@@ -230,7 +230,6 @@ sts2-rl-agent/
 |   |-- RlCardSelector.cs          # Card selection handler
 |   +-- RlCardRewardScreenHandler.cs
 |
-|-- bridge_mod/                    # Legacy bridge mod (v1, TCP + hooks)
 |-- tests/                         # 14 test files, 408 test functions
 |-- docs/                          # Documentation
 |   |-- GAME_BRIDGE_REFERENCE.md   # Bridge architecture and protocol

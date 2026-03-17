@@ -40,7 +40,7 @@ sts2_env/           Python package (headless simulator + gym envs + bridge)
   encounters/       Encounter definitions
   gym_env/          Gymnasium environments
   bridge/           Real-game connection
-bridge_mod_v2/      C# bridge mod (Godot project)
+bridge_mod/         C# bridge mod (Godot project)
 scripts/            Training and benchmark scripts
 tests/              Test suite (16 test files, 408 test functions)
 docs/               Documentation
@@ -271,9 +271,9 @@ Fix any failures caused by changed game mechanics.
 ### 7. Update bridge mod
 
 If the game's C# API changed:
-- Update Harmony patch targets in `bridge_mod_v2/MainFile.cs`
+- Update Harmony patch targets in `bridge_mod/MainFile.cs`
 - Update state serialization if new fields are needed
-- Rebuild with: `dotnet build bridge_mod_v2/ -c Release`
+- Rebuild with: `dotnet build bridge_mod/ -c Release`
 
 ---
 

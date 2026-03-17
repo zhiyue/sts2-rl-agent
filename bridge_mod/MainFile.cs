@@ -23,6 +23,7 @@ public partial class MainFile : Node
     public const string ModId = "STS2BridgeMod";
 
     private static Harmony? _harmony;
+    private static RlAutoSlayer? _autoSlayer;
 
     public static void Initialize()
     {
@@ -75,6 +76,19 @@ public partial class MainFile : Node
 
         // Phase 3: Launch AutoSlay with RL handlers on Godot main thread.
         TaskHelper.RunSafely(LaunchRlAutoSlayAsync());
+        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+        {
+            try
+            {
+                _autoSlayer?.Stop();
+            }
+            catch { }
+            try
+            {
+                BridgeServer.Instance.Stop();
+            }
+            catch { }
+        };
 
         Logger.Log("=== STS2 RL Bridge Mod Ready ===");
     }
@@ -100,10 +114,10 @@ public partial class MainFile : Node
         Logger.Log("[RlAutoSlay] Main menu visible. Creating RL AutoSlayer...");
 
         // Create and start the RL-driven AutoSlayer
-        var autoSlayer = new RlAutoSlayer();
+        _autoSlayer = new RlAutoSlayer();
         string seed = SeedHelper.GetRandomSeed();
         Logger.Log($"[RlAutoSlay] Starting RL run with seed: {seed}");
-        autoSlayer.Start(seed);
+        _autoSlayer.Start(seed);
     }
 }
 

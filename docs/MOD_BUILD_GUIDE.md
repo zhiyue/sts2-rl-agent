@@ -2,11 +2,7 @@
 
 Step-by-step guide to building and installing the STS2 RL Bridge Mod. This mod connects the trained Python RL agent to the real Slay the Spire 2 game via TCP.
 
-The project contains two versions of the bridge mod:
-- **bridge_mod_v2/** (recommended) -- AutoSlay-based, uses the game's built-in automation framework
-- **bridge_mod/** (legacy) -- Direct Harmony hooks + TCP, lower-level but more manual
-
-This guide covers bridge_mod_v2.
+This guide covers the current `bridge_mod/` implementation, which is based on the game's built-in AutoSlay automation framework.
 
 ---
 
@@ -73,10 +69,10 @@ dotnet new alchyrsts2mod -n MyModName --ModAuthor "yourname"
 
 ### Build Only (DLL)
 
-From the `bridge_mod_v2/` directory:
+From the `bridge_mod/` directory:
 
 ```bash
-cd bridge_mod_v2
+cd bridge_mod
 dotnet build
 ```
 
@@ -101,7 +97,7 @@ Slay the Spire 2/
 ### Publish (DLL + PCK)
 
 ```bash
-cd bridge_mod_v2
+cd bridge_mod
 dotnet publish
 ```
 
@@ -240,16 +236,9 @@ Combined, these patches achieve approximately 5-10x faster gameplay compared to 
 
 ---
 
-## Architecture Note: bridge_mod vs bridge_mod_v2
+## Architecture Note
 
-**bridge_mod/** (v1):
-- Direct Harmony hooks on `CombatManager`, `PlayCardAction`, `ActionQueueSet`
-- Manual state serialization via `StateSerializer.cs`
-- Manual action injection via `ActionInjector.cs`
-- Manual UI handling for every screen
-- ~2,500 lines of C#
-
-**bridge_mod_v2/** (v2, recommended):
+**bridge_mod/**:
 - Patches `NGame.IsReleaseGame()` to unlock the built-in `AutoSlay` system
 - Replaces AutoSlay's random decision handlers with RL agent handlers
 - AutoSlay handles all UI navigation, screen transitions, and error recovery

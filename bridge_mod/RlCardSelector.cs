@@ -70,10 +70,9 @@ public class RlCardSelector : ICardSelector
             try
             {
                 string stateJson = JsonSerializer.Serialize(stateMsg);
-                BridgeServer.Instance.SendState(stateJson);
-
                 using var cts = new CancellationTokenSource(AgentTimeout);
-                string responseJson = await BridgeServer.Instance.WaitForActionAsync(
+                string responseJson = await BridgeServer.Instance.SendStateAndWaitForActionAsync(
+                    stateJson,
                     AgentTimeout, cts.Token);
 
                 if (responseJson != null)
@@ -132,11 +131,9 @@ public class RlCardSelector : ICardSelector
             try
             {
                 string stateJson = JsonSerializer.Serialize(stateMsg);
-                BridgeServer.Instance.SendState(stateJson);
-
                 using var cts = new CancellationTokenSource(AgentTimeout);
-                // We must block here since the interface method is not async
-                string responseJson = BridgeServer.Instance.WaitForActionAsync(
+                string responseJson = BridgeServer.Instance.SendStateAndWaitForActionAsync(
+                    stateJson,
                     AgentTimeout, cts.Token).GetAwaiter().GetResult();
 
                 if (responseJson != null)
@@ -155,6 +152,11 @@ public class RlCardSelector : ICardSelector
                         root.TryGetProperty("index", out var idxProp))
                     {
                         int idx = idxProp.GetInt32();
+                        if (idx >= options.Count)
+                        {
+                            Logger.Log("[RlCardSelector] Agent chose to skip card reward via out-of-range choose");
+                            return null;
+                        }
                         if (idx >= 0 && idx < options.Count)
                         {
                             Logger.Log(
@@ -204,10 +206,22 @@ public class RlCardSelector : ICardSelector
                 if (root.TryGetProperty("index", out var idxProp))
                 {
                     int idx = idxProp.GetInt32();
+                    if (idx >= cardList.Count && minSelect <= 0)
+                    {
+                        Logger.Log("[RlCardSelector] Agent chose to skip via out-of-range single index");
+                        return Array.Empty<CardModel>();
+                    }
                     if (idx >= 0 && idx < cardList.Count)
                     {
-                        Logger.Log($"[RlCardSelector] Agent chose card: {cardList[idx].Id.Entry}");
-                        return new[] { cardList[idx] };
+                        if (minSelect > 1)
+                        {
+                            Logger.Log("[RlCardSelector] Single index response rejected because min_select > 1");
+                        }
+                        else
+                        {
+                            Logger.Log($"[RlCardSelector] Agent chose card: {cardList[idx].Id.Entry}");
+                            return new[] { cardList[idx] };
+                        }
                     }
                 }
 
@@ -223,6 +237,11 @@ public class RlCardSelector : ICardSelector
                         {
                             selected.Add(cardList[idx]);
                         }
+                    }
+                    if (selected.Count == 0 && minSelect <= 0)
+                    {
+                        Logger.Log("[RlCardSelector] Agent chose to skip via empty indexes array");
+                        return Array.Empty<CardModel>();
                     }
                     if (selected.Count >= minSelect && selected.Count <= maxSelect)
                     {

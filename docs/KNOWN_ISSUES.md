@@ -18,7 +18,7 @@ var playAction = new PlayCardAction(card, target);
 RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(playAction);
 ```
 
-**Location:** `bridge_mod_v2/RlCombatHandler.cs` line 187-188
+**Location:** `bridge_mod/RlCombatHandler.cs` line 187-188
 
 ### 2. EchoForm / modify_card_play_count was missing
 
@@ -68,7 +68,7 @@ _UNTARGETED_TYPES = {TargetTypeName.SELF, TargetTypeName.NONE, TargetTypeName.AL
 
 **Workaround:** None currently. The animation patch needs to be updated when the game's `MegaAnimationState` API changes.
 
-**Location:** `bridge_mod_v2/MainFile.cs` `AnimationSpeedPatch` class
+**Location:** `bridge_mod/MainFile.cs` `AnimationSpeedPatch` class
 
 ### 6. Mod abandon-run popup path may not match all versions
 
@@ -80,7 +80,7 @@ _UNTARGETED_TYPES = {TargetTypeName.SELF, TargetTypeName.NONE, TargetTypeName.AL
 
 **Workaround:** Manually abandon the run from the main menu before starting the agent.
 
-**Location:** `bridge_mod_v2/RlAutoSlayer.cs` `PlayMainMenuAsync()` lines 455-472
+**Location:** `bridge_mod/RlAutoSlayer.cs` `PlayMainMenuAsync()` lines 455-472
 
 ### 7. Full-run training needs significantly more steps and better reward shaping
 

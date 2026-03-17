@@ -196,7 +196,7 @@ ActionQueueSynchronizer.RequestEnqueue(
 );
 ```
 
-The `RlCombatHandler` in bridge_mod_v2 uses `PlayCardAction` through the AutoSlay combat handler interface, which correctly processes energy costs.
+The `RlCombatHandler` in `bridge_mod` uses `PlayCardAction` through the AutoSlay combat handler interface, which correctly processes energy costs.
 
 ---
 

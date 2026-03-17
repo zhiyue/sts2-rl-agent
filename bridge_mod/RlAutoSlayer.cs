@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Godot;
@@ -59,6 +60,7 @@ public class RlAutoSlayer
     private Rng? _random;
     private Watchdog? _watchdog;
     private IDisposable? _cardSelectorScope;
+    private bool _completionSignalSent;
 
     public static bool IsActive { get; private set; }
 
@@ -155,14 +157,19 @@ public class RlAutoSlayer
             IsActive = false;
             SetAutoSlayerActive(false);
             CurrentWatchdog = null;
+            SetSharedCurrentWatchdog(null);
             _watchdog = null;
             _cardSelectorScope?.Dispose();
             _cardSelectorScope = null;
             AutoSlayLog.CloseLogFile();
 
             // Notify Python that the run is over
-            BridgeServer.Instance.SendState(
-                "{\"type\":\"run_complete\",\"message\":\"Run finished\"}");
+            if (!_completionSignalSent)
+            {
+                BridgeServer.Instance.SendState(
+                    "{\"type\":\"run_complete\",\"result\":\"terminated\"}");
+                _completionSignalSent = true;
+            }
         }
     }
 
@@ -192,6 +199,7 @@ public class RlAutoSlayer
 
         _watchdog = new Watchdog();
         CurrentWatchdog = _watchdog;
+        SetSharedCurrentWatchdog(_watchdog);
         _watchdog.Reset("Playing main menu");
 
         await PlayMainMenuAsync(ct);
@@ -276,6 +284,7 @@ public class RlAutoSlayer
                     // Notify Python of victory
                     BridgeServer.Instance.SendState(
                         "{\"type\":\"run_complete\",\"result\":\"victory\"}");
+                    _completionSignalSent = true;
                     return;
                 }
 
@@ -561,6 +570,21 @@ public class RlAutoSlayer
             root,
             "/root/Game/RootSceneContainer/Run/GlobalUi/OverlayScreensContainer/GameOverScreen/UI/ProceedButton",
             ct));
+    }
+
+    private static void SetSharedCurrentWatchdog(Watchdog? watchdog)
+    {
+        try
+        {
+            PropertyInfo? property = typeof(AutoSlayer).GetProperty(
+                "CurrentWatchdog",
+                BindingFlags.Public | BindingFlags.Static);
+            property?.SetValue(null, watchdog);
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[RlAutoSlayer] Could not mirror watchdog: {ex.Message}");
+        }
     }
 }
 

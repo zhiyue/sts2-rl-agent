@@ -99,8 +99,8 @@ class StateAdapter:
         obs = np.zeros(OBS_SIZE, dtype=np.float32)
 
         # Support both formats:
-        # Old: state["combat_state"]["player"] (from StateSerializer)
-        # New: state["player"] (from RlCombatHandler)
+        # Legacy nested payload: state["combat_state"]["player"]
+        # Current v2 payload: state["player"]
         combat = state.get("combat_state") or state
         if "player" not in combat:
             return obs

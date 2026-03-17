@@ -33,7 +33,7 @@ MSG_TYPE_PONG = "pong"
 
 
 class Phase:
-    """Game phase constants matching StateSerializer.cs DetectCurrentPhase()."""
+    """Game phase constants used by the bridge protocol."""
 
     COMBAT_PLAY = "COMBAT_PLAY"
     COMBAT_WAITING = "COMBAT_WAITING"
@@ -82,7 +82,7 @@ class ActionType:
 
 
 class IntentName:
-    """Intent type string constants as serialized by StateSerializer.cs."""
+    """Intent type string constants as serialized by the bridge."""
 
     ATTACK = "ATTACK"
     MULTI_ATTACK = "MULTI_ATTACK"

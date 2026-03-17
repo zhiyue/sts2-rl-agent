@@ -1,8 +1,6 @@
 {
-    "pck_name": "STS2BridgeMod",
-    "name": "STS2 Bridge",
-    "description": "TCP bridge for connecting RL agents to Slay the Spire 2. Exposes game state as JSON and accepts action commands.",
-    "version": "0.1.0",
-    "author": "sts2-rl-agent",
-    "dependencies": []
+  "pck_name": "STS2BridgeMod",
+  "name": "STS2 Bridge",
+  "author": "sts2-rl-agent",
+  "version": "0.1.0"
 }

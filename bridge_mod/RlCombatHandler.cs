@@ -99,9 +99,9 @@ public class RlCombatHandler : IRoomHandler, IHandler
                 {
                     try
                     {
-                        BridgeServer.Instance.SendState(stateJson);
                         Logger.Log("[RlCombat] State sent, waiting for agent response...");
-                        responseJson = await BridgeServer.Instance.WaitForActionAsync(
+                        responseJson = await BridgeServer.Instance.SendStateAndWaitForActionAsync(
+                            stateJson,
                             AgentTimeout, ct);
                         Logger.Log($"[RlCombat] Agent response: {responseJson ?? "null"}");
                     }
@@ -181,27 +181,14 @@ public class RlCombatHandler : IRoomHandler, IHandler
                     }
 
                     Creature target = ResolveTarget(card, targetIndex);
+                    if (card.TargetType == TargetType.AnyEnemy && target == null)
+                    {
+                        Logger.Log($"[RlCombat] Invalid target_index {targetIndex} for {card.Id.Entry}");
+                        return false;
+                    }
                     Logger.Log($"[RlCombat] Playing card: {card.Id.Entry} -> target_index {targetIndex}");
 
-                    // Use PlayCardAction (spends energy) instead of CardCmd.AutoPlay (doesn't)
-                    var playAction = new PlayCardAction(card, target);
-                    RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(playAction);
-
-                    // Wait for action to execute and energy to update
-                    int energyBefore = player.PlayerCombatState?.Energy ?? -1;
-                    int handBefore = PileType.Hand.GetPile(player).Cards.Count;
-                    int waitMs = 0;
-                    while (waitMs < 3000)
-                    {
-                        int energyNow = player.PlayerCombatState?.Energy ?? -1;
-                        int handNow = PileType.Hand.GetPile(player).Cards.Count;
-                        if (energyNow != energyBefore || handNow != handBefore
-                            || !CombatManager.Instance.IsPlayPhase
-                            || !CombatManager.Instance.IsInProgress)
-                            break;
-                        await Task.Delay(50, ct);
-                        waitMs += 50;
-                    }
+                    await PlayCardAndWaitAsync(player, card, target, ct);
                     return false;
                 }
 
@@ -243,8 +230,7 @@ public class RlCombatHandler : IRoomHandler, IHandler
             CardModel card = random.NextItem(playable);
             Creature target = GetRandomTarget(card, random);
             Logger.Log($"[RlCombat] Random fallback: playing {card.Id.Entry}");
-            await CardCmd.AutoPlay(
-                new BlockingPlayerChoiceContext(), card, target);
+            await PlayCardAndWaitAsync(player, card, target, ct);
             return false;
         }
         else
@@ -267,15 +253,19 @@ public class RlCombatHandler : IRoomHandler, IHandler
         if (combatState == null)
             return null;
 
-        List<Creature> hittable = combatState.HittableEnemies.ToList();
-        if (hittable.Count == 0)
+        List<Creature> allEnemies = combatState.Enemies.ToList();
+        if (allEnemies.Count == 0)
             return null;
 
-        if (targetIndex >= 0 && targetIndex < hittable.Count)
-            return hittable[targetIndex];
+        if (targetIndex >= 0)
+        {
+            if (targetIndex >= allEnemies.Count)
+                return null;
+            Creature indexedEnemy = allEnemies[targetIndex];
+            return indexedEnemy.IsHittable ? indexedEnemy : null;
+        }
 
-        // Default to first hittable enemy
-        return hittable[0];
+        return combatState.HittableEnemies.FirstOrDefault();
     }
 
     private static Creature? GetRandomTarget(CardModel card, Rng random)
@@ -289,6 +279,28 @@ public class RlCombatHandler : IRoomHandler, IHandler
         if (hittable.Count == 0)
             return null;
         return random.NextItem(hittable);
+    }
+
+    private static async Task PlayCardAndWaitAsync(
+        Player player, CardModel card, Creature? target, CancellationToken ct)
+    {
+        var playAction = new PlayCardAction(card, target);
+        RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(playAction);
+
+        int energyBefore = player.PlayerCombatState?.Energy ?? -1;
+        int handBefore = PileType.Hand.GetPile(player).Cards.Count;
+        int waitMs = 0;
+        while (waitMs < 3000)
+        {
+            int energyNow = player.PlayerCombatState?.Energy ?? -1;
+            int handNow = PileType.Hand.GetPile(player).Cards.Count;
+            if (energyNow != energyBefore || handNow != handBefore
+                || !CombatManager.Instance.IsPlayPhase
+                || !CombatManager.Instance.IsInProgress)
+                break;
+            await Task.Delay(50, ct);
+            waitMs += 50;
+        }
     }
 
     // ----------------------------------------------------------------

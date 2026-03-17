@@ -108,8 +108,8 @@ public class RlMapHandler : IScreenHandler, IHandler
             try
             {
                 string stateJson = JsonSerializer.Serialize(stateMsg);
-                BridgeServer.Instance.SendState(stateJson);
-                string responseJson = await BridgeServer.Instance.WaitForActionAsync(
+                string responseJson = await BridgeServer.Instance.SendStateAndWaitForActionAsync(
+                    stateJson,
                     AgentTimeout, ct);
 
                 if (responseJson != null)

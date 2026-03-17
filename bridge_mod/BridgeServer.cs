@@ -1,27 +1,30 @@
-// BridgeServer.cs — TCP server for RL agent communication.
+// BridgeServer.cs -- TCP server for RL agent communication.
 //
 // Protocol: newline-delimited JSON over TCP (one JSON object per line).
-//   Game → Agent:  state messages (sent when game is idle / awaiting input)
-//   Agent → Game:  action messages (PLAY, END_TURN, CHOOSE, POTION)
+//   Game -> Agent:  state messages (combat_action, map_select, card_reward, etc.)
+//   Agent -> Game:  action messages (play, end_turn, choose, skip)
 //
 // Threading model:
 //   - TCP accept/read loop runs on a background thread (Task.Run)
-//   - Game state serialization happens on the main thread via StabilityDetector
-//   - Action injection is dispatched to the main thread via Godot's CallDeferred
+//   - Game handlers call SendState() and WaitForActionAsync() from the game thread
+//   - WaitForActionAsync() blocks the calling async context until a response arrives
 //
 // The server accepts exactly one client at a time. If the client disconnects,
 // it goes back to listening for a new connection.
 
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace STS2BridgeMod;
 
 public class BridgeServer
 {
-    // Singleton instance — created once, lives for the lifetime of the game process.
     public static readonly BridgeServer Instance = new();
 
     private TcpListener? _listener;
@@ -31,9 +34,16 @@ public class BridgeServer
     private bool _running;
     private CancellationTokenSource? _cts;
 
-    // Buffer for reading newline-delimited messages from the client.
     private readonly byte[] _readBuffer = new byte[8192];
     private string _readRemainder = "";
+
+    // Pending action response mechanism: when a handler sends state and waits
+    // for a response, it sets _pendingAction. The read loop sets the result
+    // when a complete line arrives.
+    private TaskCompletionSource<string>? _pendingAction;
+    private string? _pendingRequestId;
+    private readonly object _pendingLock = new();
+    private long _requestCounter;
 
     /// <summary>
     /// Whether a Python client is currently connected.
@@ -53,7 +63,6 @@ public class BridgeServer
 
     /// <summary>
     /// Start listening for client connections on the given port.
-    /// Called once from BridgeMod.Initialize().
     /// </summary>
     public void Start(int port)
     {
@@ -65,8 +74,6 @@ public class BridgeServer
         _listener.Start();
         Logger.Log($"[BridgeServer] Listening on 127.0.0.1:{port}");
 
-        // Run the accept loop on a background thread so we don't block
-        // the game's main thread.
         Task.Run(() => AcceptLoopAsync(_cts.Token));
     }
 
@@ -77,35 +84,138 @@ public class BridgeServer
     {
         _running = false;
         _cts?.Cancel();
+        CancelPendingAction("Server stopped");
         DisconnectClient();
         _listener?.Stop();
         Logger.Log("[BridgeServer] Server stopped.");
     }
 
     /// <summary>
-    /// Send a game state JSON to the connected client.
-    /// Called from the main thread (via StabilityDetector) when the game
-    /// is idle and waiting for player input.
+    /// Send a state JSON message to the connected client.
+    /// Thread-safe; can be called from any thread.
     /// </summary>
     public void SendState(string stateJson)
+    {
+        SendStateInternal(stateJson);
+    }
+
+    private bool SendStateInternal(string stateJson)
     {
         lock (_lock)
         {
             if (_stream == null || _client?.Connected != true)
-                return;
+                return false;
 
             try
             {
-                // Protocol: each message is a single JSON line terminated by \n
                 byte[] data = Encoding.UTF8.GetBytes(stateJson + "\n");
                 _stream.Write(data, 0, data.Length);
                 _stream.Flush();
+                return true;
             }
             catch (Exception ex)
             {
                 Logger.Log($"[BridgeServer] Error sending state: {ex.Message}");
                 DisconnectClient();
+                return false;
             }
+        }
+    }
+
+    public async Task<string?> SendStateAndWaitForActionAsync(
+        string stateJson, TimeSpan timeout, CancellationToken ct)
+    {
+        string requestId = Interlocked.Increment(ref _requestCounter).ToString();
+        TaskCompletionSource<string> tcs;
+        lock (_pendingLock)
+        {
+            _pendingAction?.TrySetCanceled();
+            tcs = new TaskCompletionSource<string>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            _pendingAction = tcs;
+            _pendingRequestId = requestId;
+        }
+
+        try
+        {
+            string payload = AttachRequestId(stateJson, requestId);
+            if (!SendStateInternal(payload))
+            {
+                return null;
+            }
+            return await WaitForPendingActionAsync(tcs, timeout, ct);
+        }
+        finally
+        {
+            lock (_pendingLock)
+            {
+                if (_pendingAction == tcs)
+                {
+                    _pendingAction = null;
+                    _pendingRequestId = null;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Wait for the next action message from the Python client.
+    /// This is the primary mechanism for handlers to receive agent decisions.
+    ///
+    /// Returns the raw JSON string of the action message, or null on timeout.
+    /// </summary>
+    public async Task<string?> WaitForActionAsync(
+        TimeSpan timeout, CancellationToken ct)
+    {
+        TaskCompletionSource<string> tcs = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        try
+        {
+            lock (_pendingLock)
+            {
+                _pendingAction?.TrySetCanceled();
+                _pendingAction = tcs;
+                _pendingRequestId = null;
+            }
+            return await WaitForPendingActionAsync(tcs, timeout, ct);
+        }
+        finally
+        {
+            lock (_pendingLock)
+            {
+                if (_pendingAction == tcs)
+                {
+                    _pendingAction = null;
+                    _pendingRequestId = null;
+                }
+            }
+        }
+    }
+
+    private static async Task<string?> WaitForPendingActionAsync(
+        TaskCompletionSource<string> tcs, TimeSpan timeout, CancellationToken ct)
+    {
+        try
+        {
+            using var timeoutCts = new CancellationTokenSource(timeout);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                ct, timeoutCts.Token);
+
+            using var reg = linkedCts.Token.Register(() =>
+            {
+                tcs.TrySetCanceled();
+            });
+
+            return await tcs.Task;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[BridgeServer] WaitForAction error: {ex.Message}");
+            return null;
         }
     }
 
@@ -113,10 +223,6 @@ public class BridgeServer
     // Background thread methods
     // ----------------------------------------------------------------
 
-    /// <summary>
-    /// Accepts client connections in a loop. Only one client is served
-    /// at a time. When a client disconnects, we go back to accepting.
-    /// </summary>
     private async Task AcceptLoopAsync(CancellationToken ct)
     {
         while (_running && !ct.IsCancellationRequested)
@@ -125,16 +231,20 @@ public class BridgeServer
             {
                 Logger.Log("[BridgeServer] Waiting for client connection...");
                 var client = await _listener!.AcceptTcpClientAsync(ct);
-                Logger.Log($"[BridgeServer] Client connected from {client.Client.RemoteEndPoint}");
+                Logger.Log(
+                    $"[BridgeServer] Client connected from {client.Client.RemoteEndPoint}");
 
                 lock (_lock)
                 {
+                    client.SendTimeout = 5000;
+                    client.ReceiveTimeout = 5000;
                     _client = client;
                     _stream = client.GetStream();
+                    _stream.WriteTimeout = 5000;
+                    _stream.ReadTimeout = 5000;
                     _readRemainder = "";
                 }
 
-                // Handle this client until it disconnects
                 await HandleClientAsync(ct);
             }
             catch (OperationCanceledException)
@@ -149,11 +259,6 @@ public class BridgeServer
         }
     }
 
-    /// <summary>
-    /// Read loop for the connected client. Reads newline-delimited JSON
-    /// action messages and dispatches them to ActionInjector on the
-    /// main thread.
-    /// </summary>
     private async Task HandleClientAsync(CancellationToken ct)
     {
         try
@@ -167,7 +272,8 @@ public class BridgeServer
                 }
                 if (stream == null) break;
 
-                int bytesRead = await stream.ReadAsync(_readBuffer, 0, _readBuffer.Length, ct);
+                int bytesRead = await stream.ReadAsync(
+                    _readBuffer, 0, _readBuffer.Length, ct);
                 if (bytesRead == 0)
                 {
                     Logger.Log("[BridgeServer] Client disconnected (read 0 bytes).");
@@ -176,7 +282,6 @@ public class BridgeServer
 
                 _readRemainder += Encoding.UTF8.GetString(_readBuffer, 0, bytesRead);
 
-                // Process all complete lines (newline-delimited JSON messages)
                 while (_readRemainder.Contains('\n'))
                 {
                     int idx = _readRemainder.IndexOf('\n');
@@ -186,7 +291,7 @@ public class BridgeServer
                     if (string.IsNullOrEmpty(line))
                         continue;
 
-                    ProcessActionMessage(line);
+                    ProcessIncomingMessage(line);
                 }
             }
         }
@@ -197,63 +302,95 @@ public class BridgeServer
         }
         finally
         {
+            CancelPendingAction("Client disconnected");
             DisconnectClient();
         }
     }
 
     /// <summary>
-    /// Parse an action JSON message and dispatch it to ActionInjector
-    /// on the Godot main thread.
+    /// Process an incoming message from the Python client.
+    /// If there's a pending WaitForActionAsync, deliver the message to it.
+    /// Otherwise handle special messages (PING).
     /// </summary>
-    private void ProcessActionMessage(string json)
+    private void ProcessIncomingMessage(string json)
     {
         try
         {
+            // Check for PING
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            string actionType = root.GetProperty("type").GetString() ?? "";
-
-            // All game actions must execute on the Godot main thread.
-            // We use CallDeferred to schedule execution on the next
-            // main thread frame.
-            switch (actionType.ToUpperInvariant())
+            if (root.TryGetProperty("action", out var actionProp))
             {
-                case "PLAY":
-                    int cardIndex = root.GetProperty("card_index").GetInt32();
-                    int targetIndex = root.TryGetProperty("target_index", out var ti) ? ti.GetInt32() : -1;
-                    Godot.Callable.From(() => ActionInjector.InjectPlayCard(cardIndex, targetIndex)).CallDeferred();
-                    break;
-
-                case "END_TURN":
-                    Godot.Callable.From(() => ActionInjector.InjectEndTurn()).CallDeferred();
-                    break;
-
-                case "CHOOSE":
-                    int choiceIndex = root.GetProperty("choice_index").GetInt32();
-                    Godot.Callable.From(() => ActionInjector.InjectChoice(choiceIndex)).CallDeferred();
-                    break;
-
-                case "POTION":
-                    int potionSlot = root.GetProperty("slot").GetInt32();
-                    int potionTarget = root.TryGetProperty("target_index", out var pt) ? pt.GetInt32() : -1;
-                    Godot.Callable.From(() => ActionInjector.InjectPotionUse(potionSlot, potionTarget)).CallDeferred();
-                    break;
-
-                case "PING":
-                    // Health check — respond with PONG immediately
+                string action = actionProp.GetString() ?? "";
+                if (action.Equals("ping", StringComparison.OrdinalIgnoreCase))
+                {
                     SendState("{\"type\":\"pong\"}");
-                    break;
+                    return;
+                }
+            }
 
-                default:
-                    Logger.Log($"[BridgeServer] Unknown action type: {actionType}");
-                    break;
+            // Also support legacy "type" field for ping
+            if (root.TryGetProperty("type", out var typeProp))
+            {
+                string type = typeProp.GetString() ?? "";
+                if (type.Equals("PING", StringComparison.OrdinalIgnoreCase))
+                {
+                    SendState("{\"type\":\"pong\"}");
+                    return;
+                }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Logger.Log($"[BridgeServer] Error parsing action JSON: {ex.Message}");
-            Logger.Log($"[BridgeServer] Raw message: {json}");
+            // If we can't parse, still deliver it to the pending action
+        }
+
+        // Deliver to pending WaitForActionAsync
+        lock (_pendingLock)
+        {
+            if (_pendingAction != null)
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+                    string? requestId = root.TryGetProperty("request_id", out var requestProp)
+                        ? requestProp.GetString()
+                        : null;
+                    if (_pendingRequestId != null && requestId != _pendingRequestId)
+                    {
+                        Logger.Log(
+                            $"[BridgeServer] Dropping stale action for request_id={requestId ?? "null"}, expected {_pendingRequestId}");
+                        return;
+                    }
+                }
+                catch
+                {
+                    if (_pendingRequestId != null)
+                    {
+                        Logger.Log("[BridgeServer] Dropping unparsable action while waiting for a correlated request.");
+                        return;
+                    }
+                }
+                _pendingAction.TrySetResult(json);
+                _pendingAction = null;
+                _pendingRequestId = null;
+                return;
+            }
+        }
+
+        // No pending action -- log and discard
+        Logger.Log($"[BridgeServer] Received action with no handler waiting: {json}");
+    }
+
+    private void CancelPendingAction(string reason)
+    {
+        lock (_pendingLock)
+        {
+            _pendingAction?.TrySetCanceled();
+            _pendingAction = null;
+            _pendingRequestId = null;
         }
     }
 
@@ -265,6 +402,22 @@ public class BridgeServer
             _stream = null;
             _client?.Close();
             _client = null;
+        }
+    }
+
+    private static string AttachRequestId(string stateJson, string requestId)
+    {
+        try
+        {
+            Dictionary<string, object?> payload =
+                JsonSerializer.Deserialize<Dictionary<string, object?>>(stateJson)
+                ?? new Dictionary<string, object?>();
+            payload["request_id"] = requestId;
+            return JsonSerializer.Serialize(payload);
+        }
+        catch
+        {
+            return stateJson;
         }
     }
 }
