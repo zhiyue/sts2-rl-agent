@@ -11,7 +11,11 @@ from sts2_env.core.combat import CombatState
 
 
 def _owner(card: CardInstance, combat: CombatState) -> Creature:
-    return getattr(card, "owner", None) or combat.player
+    return (
+        getattr(card, "owner", None)
+        or getattr(getattr(combat, "active_card_source", None), "owner", None)
+        or combat.primary_player
+    )
 
 
 @register_effect(CardId.STRIKE_IRONCLAD)

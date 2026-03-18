@@ -7,14 +7,17 @@ from sts2_env.cards.status import make_spore_mind
 from sts2_env.events.act2 import (
     DollRoom,
     EndlessConveyor,
+    FieldOfManSizedHoles,
     JungleMazeAdventure,
     LuminousChoir,
     MorphicGrove,
     PotionCourier,
     RanwidTheElder,
     RelicTrader,
+    Symbiote,
     WhisperingHollow,
 )
+from sts2_env.run.reward_objects import EnchantCardsReward, RemoveCardReward, TransformCardsReward
 from sts2_env.potions.base import create_potion
 from sts2_env.run.run_manager import RunManager
 from sts2_env.run.run_state import RunState
@@ -29,6 +32,10 @@ def test_luminous_choir_and_morphic_grove_apply_real_deck_changes():
 
     choir = LuminousChoir()
     choir.calculate_vars(run_state)
+    assert choir.is_allowed(run_state) is True
+    choir_options = choir.generate_initial_options(run_state)
+    assert [option.option_id for option in choir_options] == ["reach", "tribute"]
+    assert all(option.enabled for option in choir_options)
     result = choir.choose(run_state, "reach")
     assert not result.finished
     choir.resolve_pending_choice(0)
@@ -98,6 +105,22 @@ def test_event_added_card_triggers_run_level_relic_hook():
     assert run_state.player.gold == starting_gold + 15
 
 
+def test_luminous_choir_blocks_event_entry_and_tribute_when_gold_is_too_low():
+    blocked = RunState(seed=2901, character_id="Ironclad")
+    blocked.initialize_run()
+    blocked.player.deck = create_ironclad_starter_deck()
+    blocked.player.gold = 148
+    choir = LuminousChoir()
+
+    assert choir.is_allowed(blocked) is False
+
+    blocked.player.gold = 149
+    blocked.rng.up_front.next_int = lambda low, high: 0
+    options = choir.generate_initial_options(blocked)
+    assert [option.option_id for option in options] == ["reach", "tribute"]
+    assert [option.enabled for option in options] == [True, True]
+
+
 def test_event_gold_gain_triggers_run_level_relic_hook():
     run_state = RunState(seed=34, character_id="Ironclad")
     run_state.initialize_run()
@@ -111,7 +134,7 @@ def test_event_gold_gain_triggers_run_level_relic_hook():
     assert run_state.player.max_hp == starting_max_hp + 1
 
 
-def test_whispering_hollow_hug_uses_pending_event_card_choice_in_run_manager():
+def test_whispering_hollow_hug_uses_run_level_transform_reward_in_run_manager():
     mgr = RunManager(seed=43, character_id="Ironclad")
     mgr.run_state.player.deck = create_ironclad_starter_deck()
     mgr._phase = RunManager.PHASE_EVENT
@@ -121,13 +144,60 @@ def test_whispering_hollow_hug_uses_pending_event_card_choice_in_run_manager():
     mgr.run_state.player.gold = 200
 
     result = mgr._do_event_choice({"option_id": "hug"})
-    assert result["phase"] == RunManager.PHASE_EVENT
+    assert result["phase"] == RunManager.PHASE_CARD_REWARD
+    assert isinstance(mgr._current_reward, TransformCardsReward)
 
     actions = mgr.get_available_actions()
     assert any(action["action"] == "choose" for action in actions)
 
     final = mgr.take_action({"action": "choose", "index": 0})
     assert final["phase"] == RunManager.PHASE_MAP_CHOICE
+
+
+def test_luminous_choir_reach_uses_run_level_remove_reward_in_run_manager():
+    mgr = RunManager(seed=44, character_id="Ironclad")
+    mgr.run_state.player.deck = create_ironclad_starter_deck()
+    mgr._phase = RunManager.PHASE_EVENT
+    event = LuminousChoir()
+    mgr._event_model = event
+    mgr._event_options = event.generate_initial_options(mgr.run_state)
+    starting_deck = len(mgr.run_state.player.deck)
+
+    result = mgr._do_event_choice({"option_id": "reach"})
+    assert result["phase"] == RunManager.PHASE_CARD_REWARD
+    assert isinstance(mgr._current_reward, RemoveCardReward)
+    assert any(action["action"] == "choose" for action in mgr.get_available_actions())
+
+    mgr.take_action({"action": "choose", "index": 0})
+    mgr.take_action({"action": "choose", "index": 1})
+    final = mgr.take_action({"action": "confirm_choice"})
+    assert final["phase"] == RunManager.PHASE_MAP_CHOICE
+    assert len(mgr.run_state.player.deck) == starting_deck - 1
+    assert any(card.card_id == make_spore_mind().card_id for card in mgr.run_state.player.deck)
+
+
+def test_act2_enchant_events_use_run_level_enchant_rewards_in_run_manager():
+    mgr = RunManager(seed=45, character_id="Ironclad")
+    mgr.run_state.player.deck = create_ironclad_starter_deck()
+    mgr._phase = RunManager.PHASE_EVENT
+
+    field = FieldOfManSizedHoles()
+    mgr._event_model = field
+    mgr._event_options = field.generate_initial_options(mgr.run_state)
+    result = mgr._do_event_choice({"option_id": "enter"})
+    assert result["phase"] == RunManager.PHASE_CARD_REWARD
+    assert isinstance(mgr._current_reward, EnchantCardsReward)
+    mgr.take_action({"action": "choose", "index": 0})
+    final = mgr.take_action({"action": "confirm_choice"})
+    assert final["phase"] == RunManager.PHASE_MAP_CHOICE
+
+    mgr._phase = RunManager.PHASE_EVENT
+    symbiote = Symbiote()
+    mgr._event_model = symbiote
+    mgr._event_options = symbiote.generate_initial_options(mgr.run_state)
+    result = mgr._do_event_choice({"option_id": "approach"})
+    assert result["phase"] == RunManager.PHASE_CARD_REWARD
+    assert isinstance(mgr._current_reward, EnchantCardsReward)
 
 
 def test_doll_room_and_relic_trader_apply_real_relic_changes():

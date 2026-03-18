@@ -81,6 +81,9 @@ class AdaptablePower(PowerInstance):
     def should_stop_combat_ending(self) -> bool:
         return True
 
+    def should_allow_hitting(self, owner: Creature, combat: CombatState) -> bool:
+        return not self.is_reviving
+
 
 # =====================================================================
 #  3. AnticipatePower  (TemporaryDexterity variant)

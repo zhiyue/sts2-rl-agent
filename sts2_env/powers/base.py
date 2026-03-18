@@ -238,6 +238,9 @@ class PowerInstance:
     ) -> bool:
         return True
 
+    def should_allow_hitting(self, owner: Creature, combat: CombatState) -> bool:
+        return True
+
     def modify_summon_amount(
         self,
         owner: Creature,

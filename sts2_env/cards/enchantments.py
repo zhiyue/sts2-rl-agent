@@ -156,7 +156,11 @@ def modify_shuffle_order(cards: list[CardInstance], *, is_initial_shuffle: bool)
 
 
 def on_card_played(card: CardInstance, combat: CombatState) -> None:
-    owner = getattr(card, "owner", None) or combat.player
+    owner = (
+        getattr(card, "owner", None)
+        or getattr(getattr(combat, "active_card_source", None), "owner", None)
+        or combat.primary_player
+    )
     if card.has_enchantment("Adroit"):
         block = calculate_block(card.enchantments["Adroit"], owner, ValueProp.MOVE, combat, card_source=card)
         owner.gain_block(block)

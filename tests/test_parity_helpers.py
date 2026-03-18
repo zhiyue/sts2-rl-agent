@@ -143,9 +143,11 @@ from sts2_env.core.enums import CardId, CardRarity, CardType, CombatSide, PowerI
 from sts2_env.gym_env.action_space import get_action_mask
 from sts2_env.core.rng import Rng
 from sts2_env.monsters.act3 import create_soul_nexus
-from sts2_env.monsters.act1_weak import create_shrinker_beetle
+from sts2_env.monsters.act1_weak import create_shrinker_beetle, create_twig_slime_s
 from sts2_env.potions.base import create_potion
 from sts2_env.powers.base import PowerInstance
+from sts2_env.powers.monster import CrabRagePower, DoorRevivalPower, IllusionPower, RavenousPower
+from sts2_env.powers.monster import DoorRevivalPower, SurprisePower
 
 
 def _make_combat(deck, character_id: str) -> CombatState:
@@ -412,6 +414,88 @@ class TestOstySummon:
         assert combat.osty.current_hp == 6
         assert watcher.summoned_amounts == [7, 6]
         assert watcher.revives == 1
+
+
+class TestMonsterDeathPrevention:
+    def test_surprise_power_blocks_combat_end_when_last_enemy_dies(self):
+        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
+        enemy = combat.enemies[0]
+        enemy.powers[PowerId.SURPRISE] = SurprisePower()
+        combat.start_combat()
+
+        assert combat.kill_creature(enemy)
+        assert enemy.current_hp == 0
+        assert combat.is_over is False
+        assert combat.player_won is False
+
+    def test_door_revival_power_marks_enemy_half_dead_and_blocks_combat_end(self):
+        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
+        enemy = combat.enemies[0]
+        power = DoorRevivalPower()
+        enemy.powers[PowerId.DOOR_REVIVAL] = power
+        combat.start_combat()
+
+        assert combat.kill_creature(enemy)
+        assert enemy.current_hp == 0
+        assert power.is_half_dead is True
+        assert combat.is_over is False
+        assert combat.player_won is False
+
+
+class TestMonsterDeathBroadcast:
+    def test_ravenous_power_gains_strength_when_ally_dies(self):
+        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
+        owner = combat.enemies[0]
+        ally, ally_ai = create_twig_slime_s(Rng(99))
+        combat.add_enemy(ally, ally_ai)
+        owner.powers[PowerId.RAVENOUS] = RavenousPower(3)
+        combat.start_combat()
+
+        assert combat.kill_creature(ally)
+        assert owner.get_power_amount(PowerId.STRENGTH) == 3
+
+    def test_crab_rage_triggers_once_when_ally_dies(self):
+        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
+        owner = combat.enemies[0]
+        ally, ally_ai = create_twig_slime_s(Rng(100))
+        combat.add_enemy(ally, ally_ai)
+        owner.powers[PowerId.CRAB_RAGE] = CrabRagePower()
+        combat.start_combat()
+
+        assert combat.kill_creature(ally)
+        assert owner.get_power_amount(PowerId.STRENGTH) == 5
+        assert owner.block == 99
+        assert PowerId.CRAB_RAGE not in owner.powers
+
+
+class TestUntargetableReviveStates:
+    def test_reviving_illusion_enemy_is_not_hittable_or_targetable(self):
+        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
+        enemy = combat.enemies[0]
+        power = IllusionPower()
+        power.is_reviving = True
+        enemy.powers[PowerId.ILLUSION] = power
+        combat.start_combat()
+
+        strike = make_headbutt()
+        strike.owner = combat.player
+
+        assert enemy not in combat.hittable_enemies
+        assert combat._resolve_target(strike, 0) is None  # noqa: SLF001
+
+    def test_half_dead_enemy_ignores_damage(self):
+        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
+        enemy = combat.enemies[0]
+        power = DoorRevivalPower()
+        power.is_half_dead = True
+        enemy.powers[PowerId.DOOR_REVIVAL] = power
+        combat.start_combat()
+
+        hp_before = enemy.current_hp
+        result = combat.deal_damage(combat.player, enemy, 10, ValueProp.MOVE)
+        assert result
+        assert result[0].hp_lost == 0
+        assert enemy.current_hp == hp_before
 
     def test_summon_osty_respects_zero_modified_amount(self):
         class NullSummon(PowerInstance):

@@ -4,7 +4,15 @@ from sts2_env.core.combat import CombatState
 from sts2_env.cards.factory import create_card
 from sts2_env.characters.all import ALL_CHARACTERS, get_character
 from sts2_env.core.enums import CardId, CardRarity, RelicRarity, RoomType
-from sts2_env.run.reward_objects import CardReward, GoldReward, PotionReward, RelicReward, RewardsSet
+from sts2_env.run.reward_objects import (
+    AddCardsReward,
+    CardReward,
+    GoldReward,
+    ObtainRelicsReward,
+    PotionReward,
+    RelicReward,
+    RewardsSet,
+)
 from sts2_env.run.rooms import create_room
 from sts2_env.run.shop import generate_shop_inventory
 from sts2_env.run.run_state import RunState
@@ -368,6 +376,60 @@ def test_calling_bell_enqueues_common_uncommon_rare_relic_rewards():
     assert any(card.card_id.name == "CURSE_OF_THE_BELL" for card in run_state.player.deck)
 
 
+def test_calling_bell_deferred_followups_queue_curse_reward_before_relic_rewards():
+    run_state = RunState(seed=224, character_id="Ironclad")
+    run_state.defer_followup_rewards = True
+
+    assert run_state.player.obtain_relic("CALLING_BELL")
+
+    assert len(run_state.pending_rewards) == 4
+    assert isinstance(run_state.pending_rewards[0], AddCardsReward)
+    assert [card.card_id.name for card in run_state.pending_rewards[0].cards] == ["CURSE_OF_THE_BELL"]
+    relic_rewards = [reward for reward in run_state.pending_rewards[1:] if isinstance(reward, RelicReward)]
+    assert [reward.rarity for reward in relic_rewards] == [
+        RelicRarity.COMMON,
+        RelicRarity.UNCOMMON,
+        RelicRarity.RARE,
+    ]
+    assert not any(card.card_id.name == "CURSE_OF_THE_BELL" for card in run_state.player.deck)
+
+
+def test_cursed_pearl_deferred_followups_queue_greed_reward_and_gain_gold_immediately():
+    run_state = RunState(seed=225, character_id="Ironclad")
+    starting_gold = run_state.player.gold
+    run_state.defer_followup_rewards = True
+
+    assert run_state.player.obtain_relic("CURSED_PEARL")
+
+    assert run_state.player.gold == starting_gold + 333
+    assert len(run_state.pending_rewards) == 1
+    assert isinstance(run_state.pending_rewards[0], AddCardsReward)
+    assert [card.card_id.name for card in run_state.pending_rewards[0].cards] == ["GREED"]
+    assert not any(card.card_id.name == "GREED" for card in run_state.player.deck)
+
+
+def test_large_capsule_deferred_followups_queue_strike_and_defend_reward():
+    run_state = RunState(seed=226, character_id="Ironclad")
+    run_state.defer_followup_rewards = True
+
+    assert run_state.player.obtain_relic("LARGE_CAPSULE")
+
+    obtain_rewards = [reward for reward in run_state.pending_rewards if isinstance(reward, ObtainRelicsReward)]
+    assert len(obtain_rewards) == 1
+    assert len(obtain_rewards[0].relic_ids) == 2
+    assert len(set(obtain_rewards[0].relic_ids)) == 2
+
+    strike_defend_rewards = [
+        reward
+        for reward in run_state.pending_rewards
+        if isinstance(reward, AddCardsReward)
+        and len(reward.cards) == 2
+        and any("STRIKE" in card.card_id.name for card in reward.cards)
+        and any("DEFEND" in card.card_id.name for card in reward.cards)
+    ]
+    assert len(strike_defend_rewards) == 1
+
+
 def test_lead_paperweight_uses_colorless_only_regenerable_reward_and_supports_reroll():
     mgr = RunManager(seed=222, character_id="Ironclad")
     assert mgr.run_state.player.obtain_relic("DRIFTWOOD")
@@ -440,7 +502,14 @@ def test_wongos_mystery_ticket_adds_three_relic_rewards_once_after_threshold():
     run_state = RunState(seed=220, character_id="Ironclad")
     assert run_state.player.obtain_relic("WONGOS_MYSTERY_TICKET")
     relic = next(relic for relic in run_state.player.get_relic_objects() if relic.relic_id.name == "WONGOS_MYSTERY_TICKET")
-    relic._combats_finished = 6
+
+    relic._combats_finished = 4
+    rewards = RewardsSet(run_state.player.player_id).with_rewards_from_room(create_room(RoomType.MONSTER), run_state)
+    generated = rewards.generate_without_offering(run_state)
+    relic_rewards = [reward for reward in generated if isinstance(reward, RelicReward)]
+    assert len(relic_rewards) == 0
+
+    relic._combats_finished = 5
 
     rewards = RewardsSet(run_state.player.player_id).with_rewards_from_room(create_room(RoomType.MONSTER), run_state)
     generated = rewards.generate_without_offering(run_state)

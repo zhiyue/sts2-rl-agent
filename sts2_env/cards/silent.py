@@ -13,7 +13,11 @@ from sts2_env.core.combat import CombatState
 
 
 def _owner(card: CardInstance, combat: CombatState) -> Creature:
-    return getattr(card, "owner", None) or combat.player
+    return (
+        getattr(card, "owner", None)
+        or getattr(getattr(combat, "active_card_source", None), "owner", None)
+        or combat.primary_player
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -154,7 +158,7 @@ def dodge_and_roll(card: CardInstance, combat: CombatState, target: Creature | N
     owner = _owner(card, combat)
     blk = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
     owner.gain_block(blk)
-    combat.apply_power_to(owner, PowerId.BLOCK_NEXT_TURN, card.base_block)
+    combat.apply_power_to(owner, PowerId.BLOCK_NEXT_TURN, blk)
 
 
 @register_effect(CardId.FLICK_FLACK)
@@ -178,7 +182,10 @@ def leading_strike(card: CardInstance, combat: CombatState, target: Creature | N
 def piercing_wail(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     loss = card.effect_vars.get("strength_loss", 6)
     for enemy in combat.alive_enemies:
-        combat.apply_power_to(enemy, PowerId.STRENGTH, -loss)
+        prev = enemy.get_power_amount(PowerId.PIERCING_WAIL)
+        combat.apply_power_to(enemy, PowerId.PIERCING_WAIL, loss)
+        if enemy.get_power_amount(PowerId.PIERCING_WAIL) > prev:
+            combat.apply_power_to(enemy, PowerId.STRENGTH, -loss)
 
 
 @register_effect(CardId.POISONED_STAB)
@@ -303,10 +310,8 @@ def bubble_bubble(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.CALCULATED_GAMBLE)
 def calculated_gamble(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    hand_size = len(combat.hand)
-    combat.discard_pile.extend(combat.hand)
-    combat.hand.clear()
-    combat._draw_cards(hand_size)
+    cards_to_discard = list(combat.hand)
+    combat.discard_cards(cards_to_discard, draw_count=len(cards_to_discard))
 
 
 @register_effect(CardId.DASH)
@@ -714,10 +719,9 @@ def knife_trap(card: CardInstance, combat: CombatState, target: Creature | None)
 def malaise(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     # X-cost: reduce Strength by X and apply X Weak
-    x = combat.energy + card.cost
+    x = getattr(card, "energy_spent", 0)
     combat.apply_power_to(target, PowerId.STRENGTH, -x)
     combat.apply_power_to(target, PowerId.WEAK, x)
-    combat.energy = 0
 
 
 @register_effect(CardId.MASTER_PLANNER)
@@ -821,7 +825,10 @@ def tools_of_the_trade(card: CardInstance, combat: CombatState, target: Creature
 
 @register_effect(CardId.TRACKING)
 def tracking(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(_owner(card, combat), PowerId.TRACKING, 1)
+    amount = card.effect_vars.get("tracking", 1)
+    owner = _owner(card, combat)
+    combat.apply_power_to(owner, PowerId.TRACKING, amount)
+    combat.apply_power_to(owner, PowerId.TRACKING, amount)
 
 
 # ---------------------------------------------------------------------------
@@ -1480,7 +1487,8 @@ def make_malaise() -> CardInstance:
     return CardInstance(
         card_id=CardId.MALAISE, cost=-1, card_type=CardType.SKILL,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.RARE,
-        keywords=frozenset({"exhaust"}), instance_id=_get_next_id(),
+        keywords=frozenset({"exhaust"}), has_energy_cost_x=True,
+        instance_id=_get_next_id(),
     )
 
 

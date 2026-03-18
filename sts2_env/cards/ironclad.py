@@ -21,7 +21,11 @@ from sts2_env.core.combat import CombatState
 # ---------------------------------------------------------------------------
 
 def _owner(card: CardInstance, combat: CombatState) -> Creature:
-    return getattr(card, "owner", None) or combat.player
+    return (
+        getattr(card, "owner", None)
+        or getattr(getattr(combat, "active_card_source", None), "owner", None)
+        or combat.primary_player
+    )
 
 
 def _deal_damage_to_target(
@@ -47,7 +51,13 @@ def _gain_block(card: CardInstance, combat: CombatState) -> None:
     """Gain block equal to card.base_block."""
     owner = _owner(card, combat)
     block = calculate_block(card.base_block, owner, ValueProp.MOVE, combat, card_source=card)
+    before = owner.block
     owner.gain_block(block)
+    gained = owner.block - before
+    if gained > 0:
+        from sts2_env.core.hooks import fire_after_block_gained
+
+        fire_after_block_gained(owner, gained, combat)
 
 def _self_hp_loss(card: CardInstance, combat: CombatState, amount: int) -> None:
     """Non-attack (unblockable, unpowered) self-damage."""
@@ -320,21 +330,17 @@ def make_cinder(upgraded: bool = False) -> CardInstance:
 # --- Havoc ---
 @register_effect(CardId.HAVOC)
 def havoc(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # Auto-play the top card from draw pile
-    combat._shuffle_if_needed()
-    if combat.draw_pile:
-        top_card = combat.draw_pile.pop(0)
-        # Resolve target for auto-played card
-        auto_target = combat._resolve_target(top_card, None)
-        from sts2_env.cards.registry import play_card_effect
-        play_card_effect(top_card, combat, auto_target)
-        # Move to appropriate pile
-        if top_card.card_type == CardType.POWER:
-            pass
-        elif top_card.exhausts:
-            combat.exhaust_pile.append(top_card)
-        else:
-            combat.discard_pile.append(top_card)
+    # Auto-play top draw card and force-exhaust it.
+    owner = _owner(card, combat)
+    state = combat.combat_player_state_for(owner)
+    if state is None:
+        return
+    combat._shuffle_if_needed(owner)
+    if not state.draw:
+        return
+    top_card = state.draw.pop(0)
+    top_card.owner = owner
+    combat.auto_play_card(top_card, force_exhaust=True)
 
 
 def make_havoc(upgraded: bool = False) -> CardInstance:
@@ -427,15 +433,19 @@ def perfected_strike(card: CardInstance, combat: CombatState, target: Creature |
     assert target is not None
     calc_base = card.effect_vars.get("calc_base", 6)
     extra_per = card.effect_vars.get("extra_damage", 2)
-    # Count Strike cards in all piles
+    # Count Strike cards in all owner piles, including play pile.
+    owner = _owner(card, combat)
+    owner_state = combat.combat_player_state_for(owner)
+    if owner_state is None:
+        piles = [combat.hand, combat.draw_pile, combat.discard_pile, combat.exhaust_pile, combat.play_pile]
+    else:
+        piles = [owner_state.hand, owner_state.draw, owner_state.discard, owner_state.exhaust, owner_state.play]
     strike_count = 0
-    for pile in [combat.hand, combat.draw_pile, combat.discard_pile, combat.exhaust_pile]:
+    for pile in piles:
         for c in pile:
             if "strike" in c.card_id.name.lower():
                 strike_count += 1
-    # The card itself was already moved out of hand, but counted in discard
     base = calc_base + extra_per * strike_count
-    owner = _owner(card, combat)
     damage = calculate_damage(base, owner, target, ValueProp.MOVE, combat)
     apply_damage(target, damage, ValueProp.MOVE, combat, owner)
 
@@ -689,9 +699,9 @@ def make_ashen_strike(upgraded: bool = False) -> CardInstance:
 # --- Battle Trance ---
 @register_effect(CardId.BATTLE_TRANCE)
 def battle_trance(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(_owner(card, combat), PowerId.NO_DRAW, 1)
     draw = card.effect_vars.get("cards", 3)
     _draw_cards(combat, draw)
+    combat.apply_power_to(_owner(card, combat), PowerId.NO_DRAW, 1)
 
 
 def make_battle_trance(upgraded: bool = False) -> CardInstance:
@@ -1276,12 +1286,17 @@ def second_wind(card: CardInstance, combat: CombatState, target: Creature | None
     block_per = card.effect_vars.get("block", 5)
     # Exhaust all non-attack cards from hand, gain block for each
     to_exhaust = [c for c in combat.hand if not c.is_attack]
+    owner = _owner(card, combat)
     for c in to_exhaust:
-        combat.hand.remove(c)
-        combat.exhaust_pile.append(c)
-        owner = _owner(card, combat)
+        combat.exhaust_card(c)
         block = calculate_block(block_per, owner, ValueProp.MOVE, combat, card_source=card)
+        before = owner.block
         owner.gain_block(block)
+        gained = owner.block - before
+        if gained > 0:
+            from sts2_env.core.hooks import fire_after_block_gained
+
+            fire_after_block_gained(owner, gained, combat)
 
 
 def make_second_wind(upgraded: bool = False) -> CardInstance:
@@ -1755,9 +1770,8 @@ def fiend_fire(card: CardInstance, combat: CombatState, target: Creature | None)
     assert target is not None
     # Exhaust all cards in hand, deal damage for each
     cards_to_exhaust = list(combat.hand)
-    combat.hand.clear()
     for c in cards_to_exhaust:
-        combat.exhaust_pile.append(c)
+        combat.exhaust_card(c)
         if target.is_dead:
             continue
         owner = _owner(card, combat)

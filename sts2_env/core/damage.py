@@ -123,6 +123,9 @@ def apply_damage(
     attack = None
     if combat is not None:
         attack = combat.active_attack or combat.pending_auto_attack
+        can_hit = getattr(combat, "can_hit_creature", None)
+        if callable(can_hit) and not can_hit(target):
+            return DamageResult(target=target, blocked=0, hp_lost=0, was_killed=False, unblocked_damage=0)
 
     # Fire before-damage hooks (Thorns)
     if combat is not None:

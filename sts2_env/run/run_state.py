@@ -24,6 +24,7 @@ from sts2_env.map.map_point import MapCoord, MapPoint
 from sts2_env.map.generator import ActMap, generate_act_map
 from sts2_env.map.acts import ActConfig, get_act_config, ALL_ACTS
 from sts2_env.potions.base import PotionInstance
+from sts2_env.relics.base import RelicRarity
 from sts2_env.cards.base import CardInstance
 from sts2_env.run.odds import UnknownMapPointOdds, CardRarityOdds, PotionRewardOdds
 
@@ -45,6 +46,8 @@ class PlayerState:
     max_energy: int = 3
     base_orb_slot_count: int = 0
     relic_grab_bag: list[str] = field(default_factory=list)
+    relic_grab_bag_by_rarity: dict[RelicRarity, list[str]] = field(default_factory=dict)
+    relic_grab_bag_fallback: list[str] = field(default_factory=list)
     unlock_state: dict[str, Any] = field(default_factory=dict)
     discovered_cards: list[str] = field(default_factory=list)
     discovered_relics: list[str] = field(default_factory=list)
@@ -150,6 +153,108 @@ class PlayerState:
 
     def get_relic_objects(self) -> list[Any]:
         return self._ensure_relic_objects()
+
+    def has_event_pet(self) -> bool:
+        return any(relic_id in {"BYRDPIP", "PAELS_LEGION"} for relic_id in self.relics)
+
+    def _roll_relic_rarity(self, rng: Any) -> RelicRarity:
+        roll = rng.next_float()
+        if roll < 0.5:
+            return RelicRarity.COMMON
+        if roll < 0.83:
+            return RelicRarity.UNCOMMON
+        return RelicRarity.RARE
+
+    def populate_relic_grab_bag(self) -> None:
+        from sts2_env.relics.base import RelicPool
+        from sts2_env.relics.registry import RELIC_REGISTRY, load_all_relics
+
+        load_all_relics()
+        desired_pool = getattr(RelicPool, self.character_id.upper(), None)
+        allowed_rarities = (
+            RelicRarity.COMMON,
+            RelicRarity.UNCOMMON,
+            RelicRarity.RARE,
+            RelicRarity.SHOP,
+        )
+        self.relic_grab_bag_by_rarity = {rarity: [] for rarity in allowed_rarities}
+        self.relic_grab_bag_fallback = []
+        for relic_id, relic_cls in RELIC_REGISTRY.items():
+            if relic_cls.rarity not in allowed_rarities:
+                continue
+            if relic_cls.pool in {RelicPool.EVENT, RelicPool.FALLBACK, RelicPool.DEPRECATED}:
+                continue
+            if desired_pool is not None and relic_cls.pool not in {RelicPool.SHARED, desired_pool}:
+                continue
+            self.relic_grab_bag_by_rarity[relic_cls.rarity].append(relic_id.name)
+        for rarity, relic_ids in self.relic_grab_bag_by_rarity.items():
+            self.run_state.rng.rewards.shuffle(relic_ids)
+        self.relic_grab_bag = [
+            relic_id
+            for rarity in allowed_rarities
+            for relic_id in self.relic_grab_bag_by_rarity.get(rarity, [])
+        ]
+
+    def has_available_relics(self) -> bool:
+        if not self.relic_grab_bag_by_rarity and not self.relic_grab_bag_fallback:
+            self.populate_relic_grab_bag()
+        return any(self.relic_grab_bag_by_rarity.get(rarity) for rarity in (
+            RelicRarity.COMMON,
+            RelicRarity.UNCOMMON,
+            RelicRarity.RARE,
+            RelicRarity.SHOP,
+        )) or bool(self.relic_grab_bag_fallback)
+
+    def _relic_grab_bag_order(self, rarity: RelicRarity) -> list[RelicRarity]:
+        if rarity is RelicRarity.SHOP:
+            return [RelicRarity.SHOP, RelicRarity.COMMON, RelicRarity.UNCOMMON, RelicRarity.RARE]
+        if rarity is RelicRarity.COMMON:
+            return [RelicRarity.COMMON, RelicRarity.UNCOMMON, RelicRarity.RARE]
+        if rarity is RelicRarity.UNCOMMON:
+            return [RelicRarity.UNCOMMON, RelicRarity.RARE]
+        if rarity is RelicRarity.RARE:
+            return [RelicRarity.RARE]
+        return []
+
+    def remove_relic_from_grab_bag(self, relic_id: str) -> None:
+        while relic_id in self.relic_grab_bag:
+            self.relic_grab_bag.remove(relic_id)
+        for deque in self.relic_grab_bag_by_rarity.values():
+            while relic_id in deque:
+                deque.remove(relic_id)
+        while relic_id in self.relic_grab_bag_fallback:
+            self.relic_grab_bag_fallback.remove(relic_id)
+
+    def pull_next_relic_reward_id(
+        self,
+        *,
+        rarity: RelicRarity | None = None,
+        rng_stream: str = "rewards",
+        excluded_relic_ids: set[str] | None = None,
+    ) -> str | None:
+        if not self.relic_grab_bag_by_rarity and not self.relic_grab_bag_fallback:
+            self.populate_relic_grab_bag()
+        relic_rng = getattr(self.run_state.rng, rng_stream, self.run_state.rng.rewards)
+        target_rarity = rarity or self._roll_relic_rarity(relic_rng)
+        excluded = set(excluded_relic_ids or ())
+        excluded.update(self.relics)
+        for candidate_rarity in self._relic_grab_bag_order(target_rarity):
+            deque = self.relic_grab_bag_by_rarity.get(candidate_rarity, [])
+            for idx, relic_id in enumerate(list(deque)):
+                if relic_id in excluded:
+                    continue
+                deque.pop(idx)
+                if relic_id in self.relic_grab_bag:
+                    self.relic_grab_bag.remove(relic_id)
+                return relic_id
+        for idx, relic_id in enumerate(list(self.relic_grab_bag_fallback)):
+            if relic_id in excluded:
+                continue
+            self.relic_grab_bag_fallback.pop(idx)
+            if relic_id in self.relic_grab_bag:
+                self.relic_grab_bag.remove(relic_id)
+            return relic_id
+        return None
 
     def upgrade_card_instance(self, card: CardInstance | None) -> CardInstance | None:
         if card is None or card.upgraded:
@@ -290,7 +395,7 @@ class PlayerState:
 
     def add_random_card_to_deck(self, rarity: str, upgraded: bool = False) -> bool:
         card_rarity = CardRarity[rarity.upper()]
-        candidates = eligible_character_cards(self.character_id, rarity=card_rarity, generation_context=None)
+        candidates = eligible_character_cards(self.character_id, rarity=card_rarity, generation_context="modifier")
         if not candidates:
             return False
         card_id = self.run_state.rng.rewards.choice(candidates)
@@ -694,6 +799,44 @@ class PlayerState:
                 RelicReward(self.player_id, rarity=rarity, rng_stream=rng_stream)
             )
 
+    def offer_specific_relic_rewards(
+        self,
+        relic_ids: list[str],
+        *,
+        is_wax: bool = False,
+    ) -> None:
+        from sts2_env.run.reward_objects import RelicReward
+
+        for relic_id in relic_ids:
+            self.run_state.pending_rewards.append(
+                RelicReward(self.player_id, relic_id=relic_id, is_wax=is_wax)
+            )
+
+    def offer_add_cards_reward(self, cards: list[CardInstance]) -> None:
+        from sts2_env.run.reward_objects import AddCardsReward
+
+        self.run_state.pending_rewards.append(AddCardsReward(self.player_id, cards))
+
+    def offer_obtain_relics_reward(
+        self,
+        count: int,
+        *,
+        rarities: tuple[RelicRarity | None, ...] | None = None,
+        relic_ids: tuple[str, ...] | list[str] | None = None,
+        rng_stream: str = "rewards",
+    ) -> None:
+        from sts2_env.run.reward_objects import ObtainRelicsReward
+
+        self.run_state.pending_rewards.append(
+            ObtainRelicsReward(
+                self.player_id,
+                count=count,
+                rarities=rarities,
+                relic_ids=relic_ids,
+                rng_stream=rng_stream,
+            )
+        )
+
     def offer_remove_card_reward(self, count: int = 1, *, cards: list[CardInstance] | None = None) -> None:
         from sts2_env.run.reward_objects import RemoveCardReward
 
@@ -761,20 +904,36 @@ class PlayerState:
         self.offer_custom_card_reward(forced_rarities=bundle_rarities)
         self.offer_custom_card_reward(forced_rarities=bundle_rarities)
 
+    def roll_relic_reward_id(
+        self,
+        *,
+        rarity: Any | None = None,
+        rng_stream: str = "rewards",
+        excluded_relic_ids: set[str] | None = None,
+    ) -> str | None:
+        return self.pull_next_relic_reward_id(
+            rarity=rarity,
+            rng_stream=rng_stream,
+            excluded_relic_ids=excluded_relic_ids,
+        )
+
     def obtain_random_relics(self, count: int) -> int:
         obtained = 0
+        rolled: set[str] = set()
         for _ in range(count):
-            from sts2_env.run.reward_objects import RelicReward
-
-            reward = RelicReward(self.player_id)
-            reward.populate(self.run_state, None)
-            if reward.relic_id is None:
+            relic_id = self.roll_relic_reward_id(excluded_relic_ids=rolled)
+            if relic_id is None:
                 continue
-            self.obtain_relic(reward.relic_id)
-            obtained += 1
+            rolled.add(relic_id)
+            if self.obtain_relic(relic_id):
+                obtained += 1
         return obtained
 
-    def upgrade_starter_relic(self) -> bool:
+    def upgrade_starter_relic(
+        self,
+        starter_relic_id: str | None = None,
+        upgraded_relic_id: str | None = None,
+    ) -> bool:
         mapping = {
             "BURNING_BLOOD": "BLACK_BLOOD",
             "RING_OF_THE_SNAKE": "RING_OF_THE_DRAKE",
@@ -783,25 +942,48 @@ class PlayerState:
             "DIVINE_RIGHT": "DIVINE_DESTINY",
         }
         for i, relic_id in enumerate(self.relics):
-            upgraded = mapping.get(relic_id)
-            if upgraded is not None:
-                self.relics[i] = upgraded
-                return True
+            if starter_relic_id is not None and relic_id != starter_relic_id:
+                continue
+            upgraded = upgraded_relic_id or mapping.get(relic_id)
+            if upgraded is None:
+                continue
+            self.relics[i] = upgraded
+            if i < len(self.relic_objects):
+                from sts2_env.relics.registry import create_relic_by_name
+
+                self.relic_objects[i] = create_relic_by_name(upgraded)
+            return True
         return False
 
-    def obtain_relic(self, relic_id: str) -> bool:
+    def obtain_relic_with_setup(
+        self,
+        relic_id: str,
+        *,
+        setup_attrs: dict[str, object] | None = None,
+        is_wax: bool = False,
+    ) -> bool:
         from sts2_env.relics.registry import create_relic_by_name
 
         if relic_id in self.relics:
             return False
+        self.remove_relic_from_grab_bag(relic_id)
         self.relics.append(relic_id)
         try:
             relic = create_relic_by_name(relic_id)
         except KeyError:
             return True
+        for key, value in (setup_attrs or {}).items():
+            setattr(relic, key, value)
+        if is_wax:
+            setattr(relic, "is_wax", True)
+            setattr(relic, "is_melted", False)
+            relic.enabled = True
         self.relic_objects.append(relic)
         relic.after_obtained(self)
         return True
+
+    def obtain_relic(self, relic_id: str) -> bool:
+        return self.obtain_relic_with_setup(relic_id)
 
     def transform_relic(self, current_relic: Any, new_relic_id: Any) -> bool:
         from sts2_env.relics.registry import create_relic_by_name
@@ -877,6 +1059,7 @@ class RunState:
 
         # Event tracking
         self.visited_event_ids: set[str] = set()
+        self.extra_fields: dict[str, Any] = {}
 
         # Primary-player compatibility aliases.
         self.relics = self.player.relics
@@ -943,6 +1126,8 @@ class RunState:
     def initialize_run(self) -> None:
         """Set up a new run: apply ascension, generate first map."""
         self._apply_ascension_effects()
+        for player in self.players:
+            player.populate_relic_grab_bag()
         self.generate_map()
 
     def _apply_ascension_effects(self) -> None:

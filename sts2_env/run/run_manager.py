@@ -32,12 +32,17 @@ from sts2_env.core.enums import (
 from sts2_env.core.rng import Rng
 from sts2_env.map.map_point import MapCoord
 from sts2_env.potions.base import PotionInstance, create_potion, roll_random_potion_model
+from sts2_env.encounters.events import get_event_encounter_setup
 from sts2_env.run.events import EventModel, EventOption, EventResult, pick_event
 from sts2_env.run.reward_objects import (
+    AddCardsReward,
     CardReward,
     DuplicateCardReward,
     EnchantCardsReward,
     GoldReward,
+    LoseGoldReward,
+    LoseHpReward,
+    ObtainRelicsReward,
     PotionReward,
     RelicReward,
     RemoveCardReward,
@@ -508,6 +513,48 @@ class RunManager:
 
         self._combat.start_combat()
 
+    def _enter_event_combat(
+        self,
+        encounter_id: str,
+        reward_objects: list[Reward] | None = None,
+        *,
+        post_combat_phase: str | None = None,
+    ) -> None:
+        self._phase = self.PHASE_COMBAT
+        self._current_room_type = RoomType.MONSTER
+        self._current_room = CombatRoom(
+            room_type=RoomType.MONSTER,
+            encounter_id=encounter_id,
+            suppress_default_rewards=True,
+            post_combat_phase=post_combat_phase,
+        )
+        if reward_objects:
+            for reward in reward_objects:
+                self._current_room.add_extra_reward(self._run_state.player.player_id, reward)
+        reset_instance_counter()
+
+        player = self._run_state.player
+        combat_seed = self._rng.next_int(0, 2**31 - 1)
+        self._combat = CombatState(
+            player_hp=player.current_hp,
+            player_max_hp=player.max_hp,
+            deck=list(player.deck),
+            rng_seed=combat_seed,
+            relics=list(self._run_state.relics),
+            gold=player.gold,
+            character_id=self._run_state.player.character_id,
+            potions=list(player.potions),
+            max_potion_slots=player.max_potion_slots,
+            player_state=player,
+            room=self._current_room,
+        )
+        self._selected_combat_player_id = player.player_id
+        setup_fn = get_event_encounter_setup(encounter_id)
+        if setup_fn is not None:
+            encounter_rng = Rng(self._rng.next_int(0, 2**31 - 1))
+            setup_fn(self._combat, encounter_rng)
+        self._combat.start_combat()
+
     def _prime_next_card_reward(self) -> None:
         reward = self._current_reward
         self._offered_cards = reward.cards if isinstance(reward, CardReward) else []
@@ -539,7 +586,11 @@ class RunManager:
         while self._pending_rewards:
             reward = self._pending_rewards[0]
             if isinstance(reward, (
+                AddCardsReward,
                 GoldReward,
+                LoseGoldReward,
+                LoseHpReward,
+                ObtainRelicsReward,
                 RemoveCardReward,
                 UpgradeCardsReward,
                 TransformCardsReward,
@@ -550,6 +601,11 @@ class RunManager:
                 reward.select(self)
                 if self._run_state.pending_choice is not None:
                     self._resume_after_run_choice = self._advance_post_combat_rewards
+                    return
+                if self._run_state.is_over or self._run_state.player.is_dead:
+                    self._run_state.lose_run()
+                    self._phase = self.PHASE_RUN_OVER
+                    self._current_reward = None
                     return
                 self._current_reward = None
                 continue
@@ -1102,13 +1158,32 @@ class RunManager:
                     CardReward(player.player_id, context=context),
                 )
 
-        self._current_rewards = RewardsSet(player.player_id).with_rewards_from_room(self._current_room, self._run_state)
+        if isinstance(self._current_room, CombatRoom) and getattr(self._current_room, "suppress_default_rewards", False):
+            self._current_rewards = RewardsSet(player.player_id).empty_for_room(self._current_room)
+            for reward in self._current_room.extra_rewards.get(player.player_id, []):
+                self._current_rewards.rewards.append(reward)
+        else:
+            self._current_rewards = RewardsSet(player.player_id).with_rewards_from_room(self._current_room, self._run_state)
         generated_rewards = self._current_rewards.generate_without_offering(self._run_state)
         gold_reward = next((reward for reward in generated_rewards if isinstance(reward, GoldReward)), None)
         potion_reward = next((reward for reward in generated_rewards if isinstance(reward, PotionReward)), None)
+        room_ref = self._current_room
+        post_combat_phase = (
+            room_ref.post_combat_phase
+            if isinstance(room_ref, CombatRoom)
+            and getattr(room_ref, "suppress_default_rewards", False)
+            and not generated_rewards
+            and getattr(room_ref, "post_combat_phase", None)
+            else None
+        )
         self._pending_rewards = list(generated_rewards)
         self._phase = self.PHASE_CARD_REWARD
         self._advance_post_combat_rewards()
+        if post_combat_phase is not None:
+            self._phase = post_combat_phase
+            if post_combat_phase == self.PHASE_RUN_OVER:
+                self._run_state.is_over = True
+                self._run_state.player_won = True
 
         info: dict[str, Any] = {
             "player_won": True,
@@ -1201,6 +1276,9 @@ class RunManager:
         if self._return_phase_after_rewards is not None:
             self._phase = self._return_phase_after_rewards
             self._return_phase_after_rewards = None
+            return
+        if self._run_state.pending_rewards:
+            self._consume_run_pending_rewards()
             return
         if self._current_room_type == RoomType.BOSS:
             self._enter_boss_relic()
@@ -1409,7 +1487,8 @@ class RunManager:
         event = self._event_model
 
         if event is not None and option_id != "leave":
-            result = event.choose(self._run_state, option_id)
+            with self._deferred_followup_rewards():
+                result = event.choose(self._run_state, option_id)
             return self._apply_event_result(event, result)
         self._enter_map_choice()
         return {"phase": self.phase, "description": "Left the event."}
@@ -1418,14 +1497,16 @@ class RunManager:
         event = self._event_model
         if event is None or event.pending_choice is None:
             return {"phase": self.phase, "description": "No pending event choice.", "success": False}
-        result = event.resolve_pending_choice(action.get("index"))
+        with self._deferred_followup_rewards():
+            result = event.resolve_pending_choice(action.get("index"))
         return self._apply_event_result(event, result)
 
     def _do_event_confirm_choice(self) -> dict:
         event = self._event_model
         if event is None or event.pending_choice is None:
             return {"phase": self.phase, "description": "No pending event choice.", "success": False}
-        result = event.resolve_pending_choice(None)
+        with self._deferred_followup_rewards():
+            result = event.resolve_pending_choice(None)
         return self._apply_event_result(event, result)
 
     def _apply_event_result(self, event: EventModel, result: EventResult) -> dict:
@@ -1436,15 +1517,58 @@ class RunManager:
                 "description": result.description,
                 "finished": False,
             }
+
+        description = result.description
+        reward_objects = result.rewards.get("reward_objects", [])
+
         if not result.finished and result.next_options:
+            if reward_objects:
+                def _resume_event_options_after_rewards() -> None:
+                    if self._run_state.is_over:
+                        self._phase = self.PHASE_RUN_OVER
+                        return
+                    if self._run_state.player.is_dead:
+                        self._run_state.lose_run()
+                        self._phase = self.PHASE_RUN_OVER
+                        return
+                    self._event_options = result.next_options
+                    self._phase = self.PHASE_EVENT
+
+                self._resume_after_reward_chain = _resume_event_options_after_rewards
+                self._current_rewards = RewardsSet(self._run_state.player.player_id).with_custom_rewards(reward_objects)
+                self._pending_rewards = self._current_rewards.generate_without_offering(self._run_state)
+                self._phase = self.PHASE_CARD_REWARD
+                self._advance_post_combat_rewards()
+                return {
+                    "phase": self.phase,
+                    "description": description,
+                    "finished": False,
+                }
+            if self._run_state.pending_rewards:
+                def _resume_event_options_after_pending_rewards() -> None:
+                    if self._run_state.is_over:
+                        self._phase = self.PHASE_RUN_OVER
+                        return
+                    if self._run_state.player.is_dead:
+                        self._run_state.lose_run()
+                        self._phase = self.PHASE_RUN_OVER
+                        return
+                    self._event_options = result.next_options
+                    self._phase = self.PHASE_EVENT
+
+                self._resume_after_reward_chain = _resume_event_options_after_pending_rewards
+                self._consume_run_pending_rewards()
+                return {
+                    "phase": self.phase,
+                    "description": description,
+                    "finished": False,
+                }
             self._event_options = result.next_options
             return {
                 "phase": self.phase,
                 "description": result.description,
                 "finished": False,
             }
-
-        description = result.description
 
         if self._run_state.is_over:
             self._phase = self.PHASE_RUN_OVER
@@ -1454,7 +1578,8 @@ class RunManager:
             self._phase = self.PHASE_RUN_OVER
             return {"phase": self.PHASE_RUN_OVER, "description": description}
 
-        reward_objects = result.rewards.get("reward_objects", [])
+        event_combat_setup = result.event_combat_setup or result.rewards.get("event_combat_setup")
+        post_combat_phase = result.post_combat_phase or result.rewards.get("post_combat_phase")
         if self._run_state.pending_choice is not None:
             def _resume_after_event_choice() -> None:
                 if self._run_state.is_over:
@@ -1463,6 +1588,15 @@ class RunManager:
                 if self._run_state.player.is_dead:
                     self._run_state.lose_run()
                     self._phase = self.PHASE_RUN_OVER
+                    return
+                if event_combat_setup:
+                    self._event_model = None
+                    self._event_options = []
+                    self._enter_event_combat(
+                        event_combat_setup,
+                        list(reward_objects),
+                        post_combat_phase=post_combat_phase,
+                    )
                     return
                 if reward_objects:
                     self._current_rewards = RewardsSet(self._run_state.player.player_id).with_custom_rewards(reward_objects)
@@ -1481,6 +1615,20 @@ class RunManager:
                 "description": description,
                 "finished": False,
             }
+        if event_combat_setup:
+            self._event_model = None
+            self._event_options = []
+            self._enter_event_combat(
+                event_combat_setup,
+                list(reward_objects),
+                post_combat_phase=post_combat_phase,
+            )
+            return {
+                "phase": self.phase,
+                "description": description,
+                "finished": True,
+            }
+
         if reward_objects:
             self._resume_after_reward_chain = self._enter_map_choice
             self._current_rewards = RewardsSet(self._run_state.player.player_id).with_custom_rewards(reward_objects)

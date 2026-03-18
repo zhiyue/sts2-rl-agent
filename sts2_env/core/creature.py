@@ -216,6 +216,17 @@ class Creature:
             return fill_slots(self)
         return 0
 
+    def procure_potion(self, potion_id: str) -> bool:
+        combat = self.combat_state
+        procure_potion = getattr(combat, "procure_potion", None) if combat is not None else None
+        if callable(procure_potion):
+            return procure_potion(self, potion_id)
+        run_state = getattr(self, "run_state", None)
+        player_state = getattr(run_state, "player", None)
+        if player_state is not None and hasattr(player_state, "procure_potion"):
+            return player_state.procure_potion(potion_id)
+        return False
+
     def upgrade_random_cards(self, card_type: object | None, count: int) -> int:
         combat = self.combat_state
         state = getattr(combat, "combat_player_state_for", lambda *_: None)(self) if combat is not None else None

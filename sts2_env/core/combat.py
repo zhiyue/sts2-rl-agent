@@ -26,6 +26,7 @@ from sts2_env.cards.factory import (
     create_card,
     create_character_cards,
     create_distinct_character_cards,
+    eligible_registered_cards,
 )
 from sts2_env.cards.registry import fire_card_late_effects, play_card_effect
 from sts2_env.characters.all import ALL_CHARACTERS, get_character
@@ -124,6 +125,7 @@ class CombatState:
         self._pending_play: dict[str, object] | None = None
         self._pending_turn_setup: Callable[[], None] | None = None
         self._end_turn_after_play: bool = False
+        self.in_play_phase: bool = False
         self._damage_events_this_turn: list[tuple[Creature | None, Creature, ValueProp]] = []
         self._damage_events_combat: list[tuple[Creature | None, Creature, ValueProp, int]] = []
         self._draw_events_this_turn: list[tuple[Creature, bool]] = []
@@ -341,7 +343,15 @@ class CombatState:
 
     @property
     def hittable_enemies(self) -> list[Creature]:
-        return self.alive_enemies
+        return [enemy for enemy in self.alive_enemies if self.can_hit_creature(enemy)]
+
+    def can_hit_creature(self, creature: Creature) -> bool:
+        if not creature.is_alive:
+            return False
+        return all(
+            getattr(power, "should_allow_hitting", lambda owner, combat: True)(creature, self)
+            for power in creature.powers.values()
+        )
 
     def _push_attack_context(self, attack: AttackContext) -> None:
         from sts2_env.core.hooks import fire_before_attack
@@ -748,6 +758,11 @@ class CombatState:
         ):
             return False
         if (
+            any(hand_card.card_id == CardId.NORMALITY for hand_card in owner_state.hand)
+            and self.count_cards_played_this_turn(owner) >= 3
+        ):
+            return False
+        if (
             CardTag.OSTY_ATTACK in getattr(card, "tags", ())
             or "osty_attack" in getattr(card, "tags", ())
         ):
@@ -798,13 +813,18 @@ class CombatState:
             return False
 
         owner_state.hand.pop(hand_index)
-        self._execute_card_play(card, target, spend_energy=True)
+        previous_in_play_phase = self.in_play_phase
+        self.in_play_phase = True
+        try:
+            self._execute_card_play(card, target, spend_energy=True)
 
-        if not owner_state.hand:
-            fire_after_hand_emptied(self)
+            if not owner_state.hand:
+                fire_after_hand_emptied(self)
 
-        self._check_combat_end()
-        return True
+            self._check_combat_end()
+            return True
+        finally:
+            self.in_play_phase = previous_in_play_phase
 
     def _execute_card_play(
         self,
@@ -1160,6 +1180,16 @@ class CombatState:
             return potion
         return None
 
+    def procure_potion(
+        self,
+        owner: Creature | None,
+        potion_id: str,
+    ) -> bool:
+        from sts2_env.potions.base import create_potion
+
+        state = self.combat_player_state_for(owner or self.player) or self._primary_player_state
+        return self.add_potion(create_potion(potion_id), owner=state.creature)
+
     def fill_empty_potion_slots(
         self,
         owner: Creature | None = None,
@@ -1264,14 +1294,14 @@ class CombatState:
         if card.target_type == TargetType.ALL_ALLIES:
             return None
         if card.target_type == TargetType.RANDOM_ENEMY:
-            alive = self.alive_enemies
+            alive = self.hittable_enemies
             return self.rng.choice(alive) if alive else None
         if card.target_type == TargetType.ANY_ENEMY:
             if target_index is not None and 0 <= target_index < len(self.enemies):
                 enemy = self.enemies[target_index]
-                if enemy.is_alive:
+                if self.can_hit_creature(enemy):
                     return enemy
-            alive = self.alive_enemies
+            alive = self.hittable_enemies
             return alive[0] if alive else None
         if card.target_type == TargetType.ANY_ALLY:
             allies = self.get_player_allies_of(owner)
@@ -1806,7 +1836,7 @@ class CombatState:
         orb_queue = getattr(state, "orb_queue", None)
         if orb_queue is not None:
             if isinstance(orb_type, str):
-                orb_type = OrbType[orb_type]
+                orb_type = OrbType[orb_type.upper()]
             orb_queue.channel(orb_type, self)
 
     def trigger_first_orb_passive(self, owner: Creature) -> None:
@@ -1899,6 +1929,20 @@ class CombatState:
             return False
         creature.current_hp = 0
         creature.block = 0
+        for power in list(creature.powers.values()):
+            on_owner_death = getattr(power, "on_owner_death", None)
+            if callable(on_owner_death):
+                on_owner_death(creature, self)
+        for listener in self.all_creatures:
+            for power in list(listener.powers.values()):
+                on_ally_death = getattr(power, "on_ally_death", None)
+                if callable(on_ally_death):
+                    on_ally_death(listener, creature, self)
+        for state in self.combat_player_states:
+            for relic in list(state.relics):
+                after_death = getattr(relic, "after_death", None)
+                if callable(after_death):
+                    after_death(state.creature, creature, self)
         self._check_combat_end()
         return True
 
@@ -2065,6 +2109,8 @@ class CombatState:
         owner: Creature,
         card_type: CardType | None = None,
         rarity: str | None = None,
+        *,
+        generation_context: str = "combat",
     ) -> None:
         state = self.combat_player_state_for(owner)
         if state is None:
@@ -2075,6 +2121,7 @@ class CombatState:
             1,
             card_type=card_type,
             rarity=rarity,
+            generation_context=generation_context,
         )
         if generated:
             self._add_generated_cards_to_hand(generated, owner=owner)
@@ -2084,6 +2131,8 @@ class CombatState:
         owner: Creature,
         card_type: CardType | None = None,
         count: int = 1,
+        *,
+        generation_context: str = "combat",
     ) -> None:
         state = self.combat_player_state_for(owner)
         if state is None or count <= 0:
@@ -2094,7 +2143,7 @@ class CombatState:
             count,
             card_type=card_type,
             distinct=False,
-            generation_context="combat",
+            generation_context=generation_context,
         )
         self._add_generated_cards_to_hand(generated, owner=owner)
 
@@ -2111,7 +2160,13 @@ class CombatState:
             if upgrade and card.upgraded is False:
                 self.upgrade_card(card)
 
-    def generate_ethereal_cards(self, owner: Creature, count: int) -> None:
+    def generate_ethereal_cards(
+        self,
+        owner: Creature,
+        count: int,
+        *,
+        generation_context: str = "combat",
+    ) -> None:
         state = self.combat_player_state_for(owner)
         if state is None or count <= 0:
             return
@@ -2120,8 +2175,50 @@ class CombatState:
             self.rng,
             count,
             require_keyword="ethereal",
+            generation_context=generation_context,
         )
         self._add_generated_cards_to_hand(generated, owner=owner)
+
+    def generate_colorless_cards(self, owner: Creature, count: int) -> None:
+        state = self.combat_player_state_for(owner)
+        if state is None or count <= 0:
+            return
+        colorless_ids = eligible_registered_cards(
+            module_name="sts2_env.cards.colorless",
+            generation_context="modifier",
+        )
+        generated = [create_card(self.rng.choice(colorless_ids)) for _ in range(count) if colorless_ids]
+        self._add_generated_cards_to_hand(generated, owner=owner)
+
+    def generate_free_attack_in_hand(self, owner: Creature) -> None:
+        state = self.combat_player_state_for(owner)
+        if state is None:
+            return
+        generated = create_character_cards(
+            state.character_id,
+            self.rng,
+            1,
+            card_type=CardType.ATTACK,
+            distinct=True,
+            generation_context="modifier",
+        )
+        for card in generated:
+            card.set_temporary_cost_for_turn(0)
+        self._add_generated_cards_to_hand(generated, owner=owner)
+
+    def move_zero_cost_cards_to_hand(self, owner: Creature, count: int) -> None:
+        state = self.combat_player_state_for(owner)
+        if state is None or count <= 0:
+            return
+        candidates = [
+            card for card in state.draw
+            if not getattr(card, "has_energy_cost_x", False) and getattr(card, "cost", 0) == 0
+        ]
+        if not candidates:
+            return
+        self.rng.shuffle(candidates)
+        for card in candidates[:count]:
+            self.move_card_to_creature_hand(owner, card)
 
     def add_status_cards_to_discard(self, owner: Creature, card_name: str, count: int) -> None:
         if self.combat_player_state_for(owner) is None or count <= 0:
@@ -2183,6 +2280,16 @@ class CombatState:
         clone = card.clone(self.rng.next_int(1, 2**31 - 1))
         clone.keywords = frozenset(set(clone.keywords) | {"ethereal"})
         self.move_card_to_creature_hand(owner, clone)
+
+    def reduce_random_card_cost_to_zero(self, owner: Creature) -> None:
+        state = self.combat_player_state_for(owner)
+        if state is None:
+            return
+        candidates = [card for card in state.hand if not getattr(card, "has_energy_cost_x", False)]
+        if not candidates:
+            return
+        self.rng.shuffle(candidates)
+        candidates[0].set_temporary_cost_for_turn(0)
 
     def add_shivs_to_hand(self, owner: Creature, count: int) -> None:
         from sts2_env.cards.status import make_shiv
@@ -2337,7 +2444,15 @@ class CombatState:
     # ---- Combat end ----
 
     def _check_combat_end(self) -> None:
-        if not self.alive_enemies:
+        blocking_dead_enemies = [
+            enemy
+            for enemy in self.enemies
+            if not enemy.is_alive and any(
+                getattr(power, "should_stop_combat_ending", lambda: False)()
+                for power in enemy.powers.values()
+            )
+        ]
+        if not self.alive_enemies and not blocking_dead_enemies:
             self._end_combat(player_won=True)
         elif self.primary_player.is_dead:
             self._end_combat(player_won=False)

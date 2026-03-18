@@ -252,7 +252,7 @@ class TestConcreteCombatRewardCards:
         rewards = generate_combat_reward_cards(rs, "regular", 3)
 
         assert len(rewards) == 3
-        assert all(card.card_id in eligible_character_cards("Ironclad", generation_context=None) for card in rewards)
+        assert all(card.card_id in eligible_character_cards("Ironclad", generation_context="combat") for card in rewards)
 
 
 class TestCombatGenerationEligibility:
@@ -278,3 +278,12 @@ class TestCombatGenerationEligibility:
         assert CardId.HAND_OF_GREED not in colorless_combat
         assert CardId.ALCHEMIZE in colorless_all
         assert CardId.HAND_OF_GREED in colorless_all
+
+    def test_combat_reward_cards_respect_combat_generation_filters(self):
+        rs = RunState(43, character_id="Silent")
+        rs.initialize_run()
+        rewards = generate_combat_reward_cards(rs, "regular", 20)
+
+        reward_ids = {card.card_id for card in rewards}
+        assert CardId.THE_HUNT not in reward_ids
+        assert reward_ids <= set(eligible_character_cards("Silent", generation_context="combat"))

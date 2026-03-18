@@ -128,7 +128,7 @@ def _pick_reward_card(
             for card_id in eligible_character_cards(
                 character_id,
                 rarity=current_rarity,
-                generation_context=None,
+                generation_context="combat",
             ):
                 if card_id in chosen_ids or card_id in seen_ids:
                     continue
@@ -138,7 +138,7 @@ def _pick_reward_card(
             for card_id in eligible_registered_cards(
                 module_name="sts2_env.cards.colorless",
                 rarity=current_rarity,
-                generation_context=None,
+                generation_context="combat",
             ):
                 if card_id in chosen_ids or card_id in seen_ids:
                     continue
@@ -154,7 +154,7 @@ def _pick_reward_card(
             for card_id in eligible_character_cards(
                 character_id,
                 rarity=current_rarity,
-                generation_context=None,
+                generation_context="combat",
             ):
                 if card_id in seen_ids:
                     continue
@@ -164,7 +164,7 @@ def _pick_reward_card(
             for card_id in eligible_registered_cards(
                 module_name="sts2_env.cards.colorless",
                 rarity=current_rarity,
-                generation_context=None,
+                generation_context="combat",
             ):
                 if card_id in seen_ids:
                     continue

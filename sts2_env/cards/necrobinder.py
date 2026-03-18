@@ -17,7 +17,11 @@ from sts2_env.core.combat import CombatState
 
 
 def _owner(card: CardInstance, combat: CombatState) -> Creature:
-    return getattr(card, "owner", None) or combat.player
+    return (
+        getattr(card, "owner", None)
+        or getattr(getattr(combat, "active_card_source", None), "owner", None)
+        or combat.primary_player
+    )
 
 
 def _osty(card: CardInstance, combat: CombatState) -> Creature | None:
@@ -1316,6 +1320,7 @@ def make_sic_em(upgraded: bool = False) -> CardInstance:
 
     card = create_reference_card(CardId.SIC_EM, upgraded=upgraded, allow_generation=True)
     card.base_damage = 6 if upgraded else 5
+    card.effect_vars["sic_em"] = 3 if upgraded else 2
     return card
 
 

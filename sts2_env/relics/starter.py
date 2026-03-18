@@ -152,10 +152,9 @@ class DivineRight(RelicInstance):
     pool = RelicPool.REGENT
     STARS = 3
 
-    def after_room_entered(self, owner: Creature, room_type: object) -> None:
-        # Gain 3 stars when entering combat room
-        if hasattr(room_type, "is_combat") and room_type.is_combat:
-            owner.gain_stars(self.STARS)
+    def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        if side == CombatSide.PLAYER and combat.round_number == 1:
+            combat.gain_stars(owner, self.STARS)
 
 
 @register_relic
@@ -168,4 +167,4 @@ class DivineDestiny(RelicInstance):
 
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.PLAYER and combat.round_number == 1:
-            owner.gain_stars(self.STARS)
+            combat.gain_stars(owner, self.STARS)

@@ -22,7 +22,7 @@ def current_owner(combat: CombatState, card: CardInstance | None = None) -> Crea
     owner = getattr(card, "owner", None) if card is not None else None
     if owner is None:
         owner = getattr(getattr(combat, "active_card_source", None), "owner", None)
-    return owner or combat.player
+    return owner or combat.primary_player
 
 
 # ─── Damage ─────────────────────────────────────────────────────────────

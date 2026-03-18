@@ -386,7 +386,7 @@ class LastingCandy(RelicInstance):
             run_state.rng.rewards,
             1,
             card_type=CardType.POWER,
-            generation_context=None,
+            generation_context="modifier",
             distinct=True,
         )
         if generated:
@@ -551,7 +551,18 @@ class MummifiedHand(RelicInstance):
 
     def after_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
         if hasattr(card, "card_type") and card.card_type == CardType.POWER:
-            combat.reduce_random_card_cost_to_zero(owner)
+            candidates = [
+                hand_card
+                for hand_card in combat.hand
+                if getattr(hand_card, "cost", 0) > 0 and not getattr(hand_card, "has_energy_cost_x", False)
+            ]
+            if not candidates:
+                return
+            chosen = combat.rng.choice(candidates)
+            if hasattr(chosen, "set_temporary_cost_for_turn"):
+                chosen.set_temporary_cost_for_turn(0)
+            else:
+                chosen.cost = 0
 
 
 @register_relic
@@ -887,7 +898,8 @@ class UnceasingTop(RelicInstance):
     pool = RelicPool.SHARED
 
     def after_hand_emptied(self, owner: Creature, combat: CombatState) -> None:
-        if combat.in_play_phase:
+        in_play_phase = getattr(combat, "in_play_phase", combat.current_side == CombatSide.PLAYER)
+        if in_play_phase:
             combat.draw_cards(owner, 1)
 
 

@@ -4,7 +4,15 @@ import sts2_env.powers  # noqa: F401
 
 from sts2_env.cards.ironclad import create_ironclad_starter_deck
 from sts2_env.cards.ironclad_basic import make_strike_ironclad
-from sts2_env.cards.status import make_burn, make_debt, make_frantic_escape, make_regret, make_void
+from sts2_env.cards.status import (
+    make_burn,
+    make_debt,
+    make_frantic_escape,
+    make_normality,
+    make_regret,
+    make_shiv,
+    make_void,
+)
 from sts2_env.core.combat import CombatState
 from sts2_env.core.enums import PowerId
 from sts2_env.core.rng import Rng
@@ -97,3 +105,19 @@ class TestStatusParityExtra:
         assert sandpit.amount == 6
         assert frantic.cost == 3
 
+    def test_normality_blocks_playing_a_fourth_card_while_it_remains_in_hand(self):
+        """Matches Normality.cs: while in hand, the player cannot play more than 3 cards per turn."""
+        combat = _make_combat()
+        shiv_a = make_shiv()
+        shiv_b = make_shiv()
+        shiv_c = make_shiv()
+        shiv_d = make_shiv()
+        combat.hand = [make_normality(), shiv_a, shiv_b, shiv_c, shiv_d]
+        combat.energy = 10
+
+        assert combat.play_card(1, 0)
+        assert combat.play_card(1, 0)
+        assert combat.play_card(1, 0)
+        assert combat.count_cards_played_this_turn(combat.player) == 3
+        assert combat.can_play_card(shiv_d) is False
+        assert combat.play_card(1, 0) is False

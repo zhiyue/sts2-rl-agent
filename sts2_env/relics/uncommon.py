@@ -5,10 +5,12 @@ All Uncommon-rarity relics from the reference doc.
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
+from sts2_env.core.constants import VULNERABLE_MULTIPLIER
 from sts2_env.core.enums import (
-    RelicRarity, CombatSide, CardType, PowerId, ValueProp,
+    RelicRarity, CombatSide, CardType, OrbType, PowerId, ValueProp,
 )
 from sts2_env.relics.base import RelicId, RelicPool, RelicInstance
 from sts2_env.relics.registry import register_relic
@@ -16,6 +18,18 @@ from sts2_env.relics.registry import register_relic
 if TYPE_CHECKING:
     from sts2_env.core.creature import Creature
     from sts2_env.core.combat import CombatState
+
+
+@lru_cache(maxsize=1)
+def _colorless_card_ids() -> frozenset[object]:
+    from sts2_env.cards.factory import eligible_registered_cards
+
+    return frozenset(
+        eligible_registered_cards(
+            module_name="sts2_env.cards.colorless",
+            generation_context=None,
+        )
+    )
 
 
 @register_relic
@@ -53,10 +67,13 @@ class Bellows(RelicInstance):
     pool = RelicPool.SHARED
 
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
-        if side == CombatSide.PLAYER and combat.round_number == 1:
-            for card in list(combat.hand):
-                if hasattr(card, "upgrade"):
-                    card.upgrade()
+        if side != owner.side or combat.round_number > 1:
+            return
+        state = combat.combat_player_state_for(owner)
+        if state is None:
+            return
+        for card in list(state.hand):
+            combat.upgrade_card(card)
 
 
 @register_relic
@@ -66,7 +83,19 @@ class BookRepairKnife(RelicInstance):
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.NECROBINDER
     HEAL_PER = 3
-    # AfterDiedToDoom hook - specialized necrobinder mechanic
+
+    def after_died_to_doom(self, owner: Creature, creatures: list[Creature], combat: CombatState | None = None) -> None:
+        combat_state = combat or getattr(owner, "combat_state", None)
+        doomed = 0
+        for creature in creatures:
+            if creature is owner or not creature.is_dead:
+                continue
+            if combat_state is not None:
+                if any(not power.should_owner_death_trigger_fatal(creature, combat_state) for power in creature.powers.values()):
+                    continue
+            doomed += 1
+        if doomed > 0:
+            owner.heal(self.HEAL_PER * doomed)
 
 
 @register_relic
@@ -76,7 +105,28 @@ class BowlerHat(RelicInstance):
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.SHARED
     MULTIPLIER = 0.2
-    # ShouldGainGold / AfterGoldGained hooks
+
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._pending_bonus_gold: int = 0
+        self._is_applying_bonus: bool = False
+
+    def should_gain_gold(self, owner: Creature, amount: int) -> bool | None:
+        if self._is_applying_bonus:
+            return True
+        self._pending_bonus_gold = int(amount * self.MULTIPLIER)
+        return True
+
+    def on_gold_gained(self, owner: Creature, amount: int) -> None:
+        if self._is_applying_bonus or self._pending_bonus_gold <= 0:
+            return
+        bonus = self._pending_bonus_gold
+        self._pending_bonus_gold = 0
+        self._is_applying_bonus = True
+        try:
+            owner.gain_gold(bonus)
+        finally:
+            self._is_applying_bonus = False
 
 
 @register_relic
@@ -119,7 +169,10 @@ class FuneraryMask(RelicInstance):
 
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.PLAYER and combat.round_number == 1:
-            combat.create_cards_in_draw_pile(owner, "Soul", self.CARDS)
+            from sts2_env.cards.status import make_soul
+
+            for _ in range(self.CARDS):
+                combat.insert_card_into_creature_draw_pile(owner, make_soul(), random_position=True)
 
 
 @register_relic
@@ -148,7 +201,25 @@ class GoldPlatedCables(RelicInstance):
     relic_id = RelicId.GOLD_PLATED_CABLES
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.DEFECT
-    # ModifyOrbPassiveTriggerCounts hook
+
+    def _trigger_first_passive_if(self, owner: Creature, combat: CombatState, *, plasma: bool) -> None:
+        state = combat.combat_player_state_for(owner)
+        orb_queue = getattr(state, "orb_queue", None) if state is not None else None
+        if orb_queue is None or not orb_queue.orbs:
+            return
+        first = orb_queue.orbs[0]
+        if plasma and first.orb_type == OrbType.PLASMA:
+            orb_queue.trigger_first_passive(combat)
+        if not plasma and first.orb_type != OrbType.PLASMA:
+            orb_queue.trigger_first_passive(combat)
+
+    def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        if side == owner.side:
+            self._trigger_first_passive_if(owner, combat, plasma=True)
+
+    def before_turn_end(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        if side == owner.side:
+            self._trigger_first_passive_if(owner, combat, plasma=False)
 
 
 @register_relic
@@ -160,10 +231,23 @@ class GremlinHorn(RelicInstance):
     ENERGY = 1
     CARDS = 1
 
-    def after_death(self, owner: Creature, dead: Creature, combat: CombatState) -> None:
-        if dead is not owner and getattr(dead, "is_enemy", False):
-            combat.gain_energy(owner, self.ENERGY)
-            combat.draw_cards(owner, self.CARDS)
+    def after_damage_received(
+        self,
+        owner: Creature,
+        target: Creature,
+        dealer: Creature | None,
+        damage: int,
+        props: ValueProp,
+        combat: CombatState,
+    ) -> None:
+        if target is owner:
+            return
+        if target.side != CombatSide.ENEMY:
+            return
+        if not target.is_dead:
+            return
+        combat.gain_energy(owner, self.ENERGY)
+        combat.draw_cards(owner, self.CARDS)
 
 
 @register_relic
@@ -191,12 +275,34 @@ class JossPaper(RelicInstance):
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)
         self._cards_exhausted: int = 0
+        self._ethereal_exhausted_this_turn: int = 0
+
+    def _draw_if_threshold_met(self, owner: Creature, combat: CombatState) -> None:
+        if self._cards_exhausted < self.EXHAUST_THRESHOLD:
+            return
+        draws = (self._cards_exhausted // self.EXHAUST_THRESHOLD) * self.CARDS
+        self._cards_exhausted %= self.EXHAUST_THRESHOLD
+        combat.draw_cards(owner, draws)
 
     def after_card_exhausted(self, owner: Creature, card: object, combat: CombatState) -> None:
+        card_owner = getattr(card, "owner", None)
+        if card_owner is not None and card_owner is not owner:
+            return
+        if getattr(card, "is_ethereal", False) and combat.current_side == CombatSide.PLAYER:
+            self._ethereal_exhausted_this_turn += 1
+            return
         self._cards_exhausted += 1
-        if self._cards_exhausted >= self.EXHAUST_THRESHOLD:
-            self._cards_exhausted -= self.EXHAUST_THRESHOLD
-            combat.draw_cards(owner, self.CARDS)
+        self._draw_if_threshold_met(owner, combat)
+
+    def after_turn_end(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        if side != CombatSide.PLAYER or self._ethereal_exhausted_this_turn <= 0:
+            return
+        self._cards_exhausted += self._ethereal_exhausted_this_turn
+        self._ethereal_exhausted_this_turn = 0
+        self._draw_if_threshold_met(owner, combat)
+
+    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        self._ethereal_exhausted_this_turn = 0
 
 
 @register_relic
@@ -220,7 +326,7 @@ class Kusarigama(RelicInstance):
         if hasattr(card, "card_type") and card.card_type == CardType.ATTACK:
             self._attacks_this_turn += 1
             if self._attacks_this_turn % self.ATTACK_THRESHOLD == 0:
-                target = combat.get_random_enemy()
+                target = combat.random_enemy_of(owner)
                 if target:
                     combat.deal_damage(owner, target, self.DAMAGE, ValueProp.UNPOWERED)
 
@@ -383,7 +489,29 @@ class PaperPhrog(RelicInstance):
     relic_id = RelicId.PAPER_PHROG
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.IRONCLAD
-    # ModifyVulnerableMultiplier hook - handled in damage pipeline
+    EXTRA_VULNERABLE = 0.25
+
+    def modify_damage_multiplicative(
+        self,
+        owner: Creature,
+        dealer: Creature | None,
+        target: Creature,
+        props: ValueProp,
+        card: object | None = None,
+    ) -> float:
+        if dealer is not owner or target is owner or not props.is_powered():
+            return 1.0
+        if target.get_power_amount(PowerId.VULNERABLE) <= 0:
+            return 1.0
+
+        vulnerable_multiplier = VULNERABLE_MULTIPLIER
+        cruelty = dealer.powers.get(PowerId.CRUELTY)
+        if cruelty is not None:
+            vulnerable_multiplier += cruelty.amount / 100.0
+        if target.has_power(PowerId.DEBILITATE):
+            vulnerable_multiplier += vulnerable_multiplier - 1.0
+
+        return (vulnerable_multiplier + self.EXTRA_VULNERABLE) / vulnerable_multiplier
 
 
 @register_relic
@@ -397,7 +525,7 @@ class ParryingShield(RelicInstance):
 
     def after_turn_end(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.PLAYER and owner.block >= self.BLOCK_THRESHOLD:
-            target = combat.get_random_enemy()
+            target = combat.random_enemy_of(owner)
             if target:
                 combat.deal_damage(owner, target, self.DAMAGE, ValueProp.UNPOWERED)
 
@@ -452,7 +580,13 @@ class PetrifiedToad(RelicInstance):
     pool = RelicPool.SHARED
 
     def before_combat_start(self, owner: Creature, combat: CombatState) -> None:
-        owner.procure_potion("PotionShapedRock")
+        if hasattr(owner, "procure_potion"):
+            owner.procure_potion("PotionShapedRock")
+            return
+        import sts2_env.potions  # noqa: F401
+        from sts2_env.potions.base import create_potion
+
+        combat.add_potion(create_potion("PotionShapedRock"), owner=owner)
 
 
 @register_relic
@@ -464,9 +598,19 @@ class Planisphere(RelicInstance):
     HEAL = 4
 
     def after_room_entered(self, owner: Creature, room_type: object) -> None:
+        if owner.current_hp <= 0:
+            return
         if hasattr(room_type, "is_unknown") and room_type.is_unknown:
-            if owner.current_hp > 0:
-                owner.heal(self.HEAL)
+            owner.heal(self.HEAL)
+            return
+        run_state = getattr(owner, "run_state", None)
+        visited = getattr(run_state, "visited_map_coords", None)
+        act_map = getattr(run_state, "map", None)
+        if act_map is None or not visited:
+            return
+        current = act_map.get_point(visited[-1])
+        if current is not None and getattr(getattr(current, "point_type", None), "name", None) == "UNKNOWN":
+            owner.heal(self.HEAL)
 
 
 @register_relic
@@ -490,7 +634,18 @@ class Regalite(RelicInstance):
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.REGENT
     BLOCK = 2
-    # AfterCardEnteredCombat hook
+
+    def after_card_entered_combat(self, owner: Creature, card: object, combat: CombatState) -> None:
+        if getattr(card, "owner", None) is not owner:
+            return
+        visual_card_pool = getattr(card, "visual_card_pool", None)
+        is_colorless = bool(
+            getattr(card, "is_colorless", False)
+            or getattr(visual_card_pool, "is_colorless", False)
+            or getattr(card, "card_id", None) in _colorless_card_ids()
+        )
+        if is_colorless:
+            owner.gain_block(self.BLOCK, unpowered=True)
 
 
 @register_relic
@@ -500,7 +655,18 @@ class ReptileTrinket(RelicInstance):
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.SHARED
     STRENGTH = 3
-    # AfterPotionUsed hook
+
+    def after_potion_used(
+        self,
+        owner: Creature,
+        potion: object,
+        target: Creature | None,
+        combat: CombatState,
+    ) -> None:
+        if getattr(potion, "owner", owner) is not owner or combat.is_over:
+            return
+        owner.apply_power(PowerId.STRENGTH, self.STRENGTH)
+        owner.apply_power(PowerId.REPTILE_TRINKET, self.STRENGTH)
 
 
 @register_relic
@@ -569,7 +735,10 @@ class StoneCracker(RelicInstance):
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.SHARED
     CARDS = 3
-    # AfterRoomEntered with boss room check
+
+    def after_room_entered(self, owner: Creature, room_type: object) -> None:
+        if hasattr(room_type, "is_boss") and room_type.is_boss and hasattr(owner, "upgrade_random_cards"):
+            owner.upgrade_random_cards(None, self.CARDS)
 
 
 @register_relic
@@ -602,7 +771,7 @@ class Tingsha(RelicInstance):
 
     def after_card_discarded(self, owner: Creature, card: object, combat: CombatState) -> None:
         if combat.current_side == CombatSide.PLAYER:
-            target = combat.get_random_enemy()
+            target = combat.random_enemy_of(owner)
             if target:
                 combat.deal_damage(owner, target, self.DAMAGE, ValueProp.UNPOWERED)
 

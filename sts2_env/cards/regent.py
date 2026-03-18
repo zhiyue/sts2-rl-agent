@@ -18,7 +18,11 @@ from sts2_env.core.combat import CombatState
 
 
 def _owner(card: CardInstance, combat: CombatState) -> Creature:
-    return getattr(card, "owner", None) or combat.player
+    return (
+        getattr(card, "owner", None)
+        or getattr(getattr(combat, "active_card_source", None), "owner", None)
+        or combat.primary_player
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -129,7 +133,7 @@ def collision_course(card: CardInstance, combat: CombatState, target: Creature |
     _deal_damage_single(card, combat, target)
     from sts2_env.cards.status import make_debris
 
-    combat.move_card_to_hand(make_debris())
+    combat._add_generated_cards_to_hand([make_debris()], owner=_owner(card, combat))  # noqa: SLF001
 
 
 @register_effect(CardId.COSMIC_INDIFFERENCE)
@@ -401,7 +405,7 @@ def knockout_blow(card: CardInstance, combat: CombatState, target: Creature | No
 def largesse(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     if target is None:
         return
-    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless")
+    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless", generation_context="modifier")
     generated = create_cards_from_ids(colorless_ids, combat.rng, 1, distinct=True)
     if not generated:
         return
@@ -426,7 +430,7 @@ def lunar_blast(card: CardInstance, combat: CombatState, target: Creature | None
 @register_effect(CardId.MANIFEST_AUTHORITY)
 def manifest_authority(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     _gain_block(card, combat)
-    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless")
+    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless", generation_context="modifier")
     generated = create_cards_from_ids(colorless_ids, combat.rng, 1, distinct=True)
     if generated:
         if card.upgraded:
@@ -459,6 +463,7 @@ def parry_card(card: CardInstance, combat: CombatState, target: Creature | None)
 @register_effect(CardId.PARTICLE_WALL)
 def particle_wall(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     _gain_block(card, combat)
+    combat.move_card_to_hand(card)
 
 
 @register_effect(CardId.PILLAR_OF_CREATION)
@@ -475,7 +480,7 @@ def prophesize(card: CardInstance, combat: CombatState, target: Creature | None)
 
 @register_effect(CardId.QUASAR)
 def quasar(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless")
+    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless", generation_context="modifier")
     generated = create_cards_from_ids(colorless_ids, combat.rng, 3, distinct=True)
     for generated_card in generated:
         if card.upgraded:
@@ -619,7 +624,7 @@ def bombardment(card: CardInstance, combat: CombatState, target: Creature | None
 
 @register_effect(CardId.BUNDLE_OF_JOY)
 def bundle_of_joy(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless")
+    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless", generation_context="modifier")
     generated = create_cards_from_ids(
         colorless_ids,
         combat.rng,
@@ -741,7 +746,7 @@ def heavenly_drill(card: CardInstance, combat: CombatState, target: Creature | N
 def heirloom_hammer(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     _deal_damage_single(card, combat, target)
-    colorless_ids = set(eligible_registered_cards(module_name="sts2_env.cards.colorless"))
+    colorless_ids = set(eligible_registered_cards(module_name="sts2_env.cards.colorless", generation_context="modifier"))
     candidates = [c for c in combat.hand if c.card_id in colorless_ids]
     if not candidates:
         return
@@ -908,6 +913,7 @@ def make_astral_pulse(upgraded: bool = False) -> CardInstance:
         card_id=CardId.ASTRAL_PULSE, cost=0, card_type=CardType.ATTACK,
         target_type=TargetType.ALL_ENEMIES, rarity=CardRarity.COMMON,
         base_damage=18 if upgraded else 14, upgraded=upgraded,
+        star_cost=3,
         instance_id=_get_next_id(),
     )
 
@@ -993,6 +999,7 @@ def make_guiding_star(upgraded: bool = False) -> CardInstance:
         card_id=CardId.GUIDING_STAR, cost=1, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
         base_damage=13 if upgraded else 12, upgraded=upgraded,
+        star_cost=2,
         effect_vars={"cards": 3 if upgraded else 2},
         instance_id=_get_next_id(),
     )

@@ -130,3 +130,18 @@ EVENT_ENCOUNTERS: list[EncounterSetup] = [
     setup_punch_off,
     setup_the_architect,
 ]
+
+EVENT_ENCOUNTER_REGISTRY: dict[str, EncounterSetup] = {
+    "battleworn_dummy_v1": setup_battleworn_dummy_v1,
+    "battleworn_dummy_v2": setup_battleworn_dummy_v2,
+    "battleworn_dummy_v3": setup_battleworn_dummy_v3,
+    "dense_vegetation": setup_dense_vegetation,
+    "fake_merchant": setup_fake_merchant,
+    "mysterious_knight": setup_mysterious_knight,
+    "punch_off": setup_punch_off,
+    "the_architect": setup_the_architect,
+}
+
+
+def get_event_encounter_setup(encounter_id: str) -> EncounterSetup | None:
+    return EVENT_ENCOUNTER_REGISTRY.get(encounter_id)

@@ -25,7 +25,11 @@ from sts2_env.core.combat import CombatState
 
 
 def _owner(card: CardInstance, combat: CombatState) -> Creature:
-    return getattr(card, "owner", None) or combat.player
+    return (
+        getattr(card, "owner", None)
+        or getattr(getattr(combat, "active_card_source", None), "owner", None)
+        or combat.primary_player
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -95,7 +99,12 @@ def dark_shackles(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.DISCOVERY)
 def discovery(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    candidates = create_distinct_character_cards(combat.character_id, combat.rng, 3)
+    candidates = create_distinct_character_cards(
+        combat.character_id,
+        combat.rng,
+        3,
+        generation_context="modifier",
+    )
     if not candidates:
         return
 
@@ -210,6 +219,7 @@ def jack_of_all_trades(card: CardInstance, combat: CombatState, target: Creature
     colorless_ids = eligible_registered_cards(
         module_name=__name__,
         exclude_ids={CardId.JACK_OF_ALL_TRADES},
+        generation_context="modifier",
     )
     generated = create_cards_from_ids(
         colorless_ids,
@@ -369,7 +379,7 @@ def splash(card: CardInstance, combat: CombatState, target: Creature | None) -> 
         if cfg.character_id.lower() == own_character:
             continue
         candidate_ids.extend(
-            eligible_character_cards(cfg.character_id, card_type=CardType.ATTACK)
+            eligible_character_cards(cfg.character_id, card_type=CardType.ATTACK, generation_context="modifier")
         )
 
     if not candidate_ids:
@@ -404,8 +414,13 @@ def tag_team(card: CardInstance, combat: CombatState, target: Creature | None) -
 
 @register_effect(CardId.THE_BOMB_CARD)
 def the_bomb_card(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    turns = card.effect_vars.get("turns", 3)
     damage = card.effect_vars.get("bomb_damage", 40)
-    combat.apply_power_to(_owner(card, combat), PowerId.THE_BOMB, damage)
+    owner = _owner(card, combat)
+    combat.apply_power_to(owner, PowerId.THE_BOMB, turns)
+    bomb_power = owner.powers.get(PowerId.THE_BOMB)
+    if bomb_power is not None and hasattr(bomb_power, "damage"):
+        bomb_power.damage = damage
 
 
 @register_effect(CardId.THINKING_AHEAD)
@@ -555,6 +570,7 @@ def jackpot(card: CardInstance, combat: CombatState, target: Creature | None) ->
         for card_id in eligible_registered_cards(
             module_name=None,
             card_type=None,
+            generation_context="modifier",
         )
         if card_preview(card_id).cost == 0 and not card_preview(card_id).has_energy_cost_x
     ]

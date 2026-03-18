@@ -489,6 +489,9 @@ class IllusionPower(PowerInstance):
         self.is_reviving = False
         owner.current_hp = owner.max_hp
 
+    def should_allow_hitting(self, owner: Creature, combat: CombatState) -> bool:
+        return not self.is_reviving
+
 
 # ---------------------------------------------------------------------------
 # AsleepPower
@@ -935,6 +938,9 @@ class DoorRevivalPower(PowerInstance):
 
     def should_stop_combat_ending(self) -> bool:
         return self.is_half_dead
+
+    def should_allow_hitting(self, owner: Creature, combat: CombatState) -> bool:
+        return not self.is_half_dead
 
 
 # ---------------------------------------------------------------------------

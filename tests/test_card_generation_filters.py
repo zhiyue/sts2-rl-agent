@@ -22,3 +22,16 @@ def test_colorless_combat_generation_excludes_non_generatable_cards():
     assert CardId.ALCHEMIZE not in colorless_cards
     assert CardId.HAND_OF_GREED not in colorless_cards
     assert CardId.DISCOVERY in colorless_cards
+
+
+def test_modifier_generation_excludes_modifier_blacklisted_cards():
+    ironclad_modifier_cards = set(
+        eligible_character_cards("Ironclad", generation_context="modifier")
+    )
+    colorless_modifier_cards = set(
+        eligible_registered_cards(module_name="sts2_env.cards.colorless", generation_context="modifier")
+    )
+
+    assert CardId.BAD_LUCK not in colorless_modifier_cards
+    assert CardId.CURSE_OF_THE_BELL not in colorless_modifier_cards
+    assert CardId.ANGER in ironclad_modifier_cards

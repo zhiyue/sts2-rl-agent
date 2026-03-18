@@ -54,6 +54,7 @@ def _attack_potion(combat: CombatState, user: Creature, target: Creature | None)
         3,
         card_type=CardType.ATTACK,
         distinct=True,
+        generation_context="modifier",
     )
     for generated_card in generated:
         generated_card.set_temporary_cost_for_turn(0)
@@ -83,7 +84,10 @@ def _blood_potion(combat: CombatState, user: Creature, target: Creature | None) 
 def _colorless_potion(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Generate a random Colorless card (cost 0) in hand.
     """
-    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless")
+    colorless_ids = eligible_registered_cards(
+        module_name="sts2_env.cards.colorless",
+        generation_context="modifier",
+    )
     generated = create_cards_from_ids(colorless_ids, combat.rng, 3, distinct=True)
     for generated_card in generated:
         generated_card.set_temporary_cost_for_turn(0)
@@ -151,6 +155,7 @@ def _power_potion(combat: CombatState, user: Creature, target: Creature | None) 
         3,
         card_type=CardType.POWER,
         distinct=True,
+        generation_context="modifier",
     )
     for generated_card in generated:
         generated_card.set_temporary_cost_for_turn(0)
@@ -173,6 +178,7 @@ def _skill_potion(combat: CombatState, user: Creature, target: Creature | None) 
         3,
         card_type=CardType.SKILL,
         distinct=True,
+        generation_context="modifier",
     )
     for generated_card in generated:
         generated_card.set_temporary_cost_for_turn(0)
@@ -426,7 +432,10 @@ def _bottled_potential(combat: CombatState, user: Creature, target: Creature | N
 def _cosmic_concoction(combat: CombatState, user: Creature, target: Creature | None) -> None:
     """Generate 3 upgraded Colorless cards in hand.
     """
-    colorless_ids = eligible_registered_cards(module_name="sts2_env.cards.colorless")
+    colorless_ids = eligible_registered_cards(
+        module_name="sts2_env.cards.colorless",
+        generation_context="modifier",
+    )
     generated = create_cards_from_ids(colorless_ids, combat.rng, 3, distinct=True)
     for generated_card in generated:
         combat.upgrade_card(generated_card)
@@ -535,9 +544,24 @@ def _orobic_acid(combat: CombatState, user: Creature, target: Creature | None) -
     """Generate 1 random Attack, 1 Skill, 1 Power, each with cost 0, in hand.
     """
     generated = []
-    generated.extend(create_character_cards(combat.character_id, combat.rng, 1, card_type=CardType.ATTACK, distinct=True))
-    generated.extend(create_character_cards(combat.character_id, combat.rng, 1, card_type=CardType.SKILL, distinct=True))
-    generated.extend(create_character_cards(combat.character_id, combat.rng, 1, card_type=CardType.POWER, distinct=True))
+    generated.extend(
+        create_character_cards(
+            combat.character_id, combat.rng, 1,
+            card_type=CardType.ATTACK, distinct=True, generation_context="modifier",
+        )
+    )
+    generated.extend(
+        create_character_cards(
+            combat.character_id, combat.rng, 1,
+            card_type=CardType.SKILL, distinct=True, generation_context="modifier",
+        )
+    )
+    generated.extend(
+        create_character_cards(
+            combat.character_id, combat.rng, 1,
+            card_type=CardType.POWER, distinct=True, generation_context="modifier",
+        )
+    )
     for generated_card in generated:
         generated_card.set_temporary_cost_for_turn(0)
         combat.move_card_to_hand(generated_card)

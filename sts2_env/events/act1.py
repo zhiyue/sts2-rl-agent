@@ -7,7 +7,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sts2_env.cards.factory import create_card
+from sts2_env.core.enums import CardId
+from sts2_env.potions.base import normal_pool_models
 from sts2_env.run.events import EventModel, EventOption, EventResult, register_event
+from sts2_env.events.shared import _event_result_with_rewards, _should_defer_event_rewards
+from sts2_env.run.reward_objects import AddCardsReward, PotionReward, RelicReward
 
 if TYPE_CHECKING:
     from sts2_env.run.run_state import RunState
@@ -100,10 +105,22 @@ class TheLegendsWereTrue(EventModel):
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "nab_map":
+            if _should_defer_event_rewards(run_state):
+                return _event_result_with_rewards(
+                    "Gained Spoils Map card.",
+                    [AddCardsReward(run_state.player.player_id, [create_card(CardId.SPOILS_MAP)])],
+                )
+            run_state.player.add_card_instance_to_deck(create_card(CardId.SPOILS_MAP))
             return EventResult(finished=True, description="Gained Spoils Map card.")
         run_state.player.lose_hp(8)
+        reward_objects = []
+        models = normal_pool_models(in_combat=False, character_id=run_state.player.character_id)
+        if models:
+            model = run_state.rng.rewards.choice(models)
+            reward_objects.append(PotionReward(run_state.player.player_id, potion_id=model.potion_id))
         return EventResult(finished=True,
-                           description="Took 8 damage, gained a potion.")
+                           description="Took 8 damage, gained a potion.",
+                           rewards={"reward_objects": reward_objects})
 
 
 register_event(TheLegendsWereTrue())
@@ -124,28 +141,48 @@ class TeaMaster(EventModel):
 
     def generate_initial_options(self, run_state: RunState) -> list[EventOption]:
         gold = run_state.player.gold
-        options: list[EventOption] = []
-        if gold >= 50:
-            options.append(EventOption("bone_tea", "Bone Tea (50g)",
-                                        "Gain Bone Tea relic"))
-        if gold >= 150:
-            options.append(EventOption("ember_tea", "Ember Tea (150g)",
-                                        "Gain Ember Tea relic"))
-        options.append(EventOption("discourtesy", "Tea of Discourtesy",
-                                    "Free: gain Tea of Discourtesy relic"))
-        return options
+        return [
+            EventOption(
+                "bone_tea",
+                "Bone Tea (50g)" if gold >= 50 else "Bone Tea",
+                "Gain Bone Tea relic",
+                enabled=gold >= 50,
+            ),
+            EventOption(
+                "ember_tea",
+                "Ember Tea (150g)" if gold >= 150 else "Ember Tea",
+                "Gain Ember Tea relic",
+                enabled=gold >= 150,
+            ),
+            EventOption("discourtesy", "Tea of Discourtesy", "Free: gain Tea of Discourtesy relic"),
+        ]
 
     def choose(self, run_state: RunState, option_id: str) -> EventResult:
         if option_id == "bone_tea":
             run_state.player.lose_gold(50)
-            return EventResult(finished=True,
-                               description="Paid 50g, gained Bone Tea relic.")
+            if _should_defer_event_rewards(run_state):
+                return _event_result_with_rewards(
+                    "Paid 50g, gained Bone Tea relic.",
+                    [RelicReward(run_state.player.player_id, relic_id="BONE_TEA")],
+                )
+            run_state.player.obtain_relic("BONE_TEA")
+            return EventResult(finished=True, description="Paid 50g, gained Bone Tea relic.")
         if option_id == "ember_tea":
             run_state.player.lose_gold(150)
-            return EventResult(finished=True,
-                               description="Paid 150g, gained Ember Tea relic.")
-        return EventResult(finished=True,
-                           description="Gained Tea of Discourtesy relic.")
+            if _should_defer_event_rewards(run_state):
+                return _event_result_with_rewards(
+                    "Paid 150g, gained Ember Tea relic.",
+                    [RelicReward(run_state.player.player_id, relic_id="EMBER_TEA")],
+                )
+            run_state.player.obtain_relic("EMBER_TEA")
+            return EventResult(finished=True, description="Paid 150g, gained Ember Tea relic.")
+        if _should_defer_event_rewards(run_state):
+            return _event_result_with_rewards(
+                "Gained Tea of Discourtesy relic.",
+                [RelicReward(run_state.player.player_id, relic_id="TEA_OF_DISCOURTESY")],
+            )
+        run_state.player.obtain_relic("TEA_OF_DISCOURTESY")
+        return EventResult(finished=True, description="Gained Tea of Discourtesy relic.")
 
 
 register_event(TeaMaster())

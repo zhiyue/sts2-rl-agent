@@ -17,7 +17,11 @@ from sts2_env.core.combat import CombatState
 
 
 def _owner(card: CardInstance, combat: CombatState) -> Creature:
-    return getattr(card, "owner", None) or combat.player
+    return (
+        getattr(card, "owner", None)
+        or getattr(getattr(combat, "active_card_source", None), "owner", None)
+        or combat.primary_player
+    )
 
 
 # ===========================================================================
@@ -567,6 +571,7 @@ def distraction_effect(card: CardInstance, combat: CombatState, target: Creature
         combat.rng,
         1,
         card_type=CardType.SKILL,
+        generation_context="modifier",
     )
     if not generated:
         return
@@ -702,8 +707,47 @@ def make_hello_world(upgraded: bool = False) -> CardInstance:
 
 @register_effect(CardId.MAD_SCIENCE)
 def mad_science_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    assert target is not None
-    _deal_damage_single(card, combat, target)
+    owner = _owner(card, combat)
+    rider = card.effect_vars.get("rider", 0)
+    if card.card_type == CardType.ATTACK:
+        assert target is not None
+        hits = card.effect_vars.get("violence_hits", 1) if rider == 2 else 1
+        for _ in range(hits):
+            _deal_damage_single(card, combat, target)
+        if rider == 1:
+            target.apply_power(PowerId.WEAK, card.effect_vars.get("sapping_weak", 2))
+            target.apply_power(PowerId.VULNERABLE, card.effect_vars.get("sapping_vulnerable", 2))
+        elif rider == 3:
+            target.apply_power(PowerId.STRANGLE, card.effect_vars.get("choking_damage", 6))
+        return
+
+    if card.card_type == CardType.SKILL:
+        _gain_block(card, combat)
+        if rider == 4:
+            combat.gain_energy(owner, card.effect_vars.get("energized_energy", 2))
+        elif rider == 5:
+            combat.draw_cards(owner, card.effect_vars.get("wisdom_cards", 3))
+        elif rider == 6:
+            generated = create_character_cards(
+                combat.character_id,
+                combat.rng,
+                1,
+                distinct=True,
+                generation_context="modifier",
+            )
+            if generated:
+                generated[0].set_combat_cost(0)
+                generated[0].owner = owner
+                combat.hand.append(generated[0])
+        return
+
+    if rider == 7:
+        owner.apply_power(PowerId.STRENGTH, card.effect_vars.get("expertise_strength", 2))
+        owner.apply_power(PowerId.DEXTERITY, card.effect_vars.get("expertise_dexterity", 2))
+    elif rider == 8:
+        owner.apply_power(PowerId.CURIOUS, card.effect_vars.get("curious_reduction", 1))
+    elif rider == 9:
+        owner.apply_power(PowerId.IMPROVEMENT, 1)
 
 
 def make_mad_science(upgraded: bool = False) -> CardInstance:
@@ -712,7 +756,20 @@ def make_mad_science(upgraded: bool = False) -> CardInstance:
         card_id=CardId.MAD_SCIENCE, cost=1, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.EVENT,
         base_damage=12, upgraded=upgraded, keywords=kw,
-        effect_vars={"block": 8}, instance_id=_get_next_id(),
+        effect_vars={
+            "block": 8,
+            "sapping_weak": 2,
+            "sapping_vulnerable": 2,
+            "violence_hits": 3,
+            "choking_damage": 6,
+            "energized_energy": 2,
+            "wisdom_cards": 3,
+            "expertise_strength": 2,
+            "expertise_dexterity": 2,
+            "curious_reduction": 1,
+            "rider": 0,
+        },
+        instance_id=_get_next_id(),
     )
 
 
@@ -724,6 +781,7 @@ def metamorphosis_effect(card: CardInstance, combat: CombatState, target: Creatu
         card.effect_vars.get("cards", 3),
         card_type=CardType.ATTACK,
         distinct=False,
+        generation_context="modifier",
     )
     for generated_card in generated:
         generated_card.set_combat_cost(0)

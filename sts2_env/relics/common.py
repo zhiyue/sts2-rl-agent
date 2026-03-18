@@ -380,9 +380,15 @@ class StrikeDummy(RelicInstance):
         self, owner: Creature, dealer: Creature | None, target: Creature,
         props: ValueProp, card: object | None = None
     ) -> int:
+        is_strike = (
+            card is not None
+            and (
+                (hasattr(card, "tags") and (CardTag.STRIKE in card.tags or "strike" in {str(tag).lower() for tag in card.tags}))
+                or (hasattr(card, "card_id") and "STRIKE" in card.card_id.name)
+            )
+        )
         if (dealer is owner
-                and card is not None
-                and hasattr(card, "tags") and CardTag.STRIKE in card.tags
+                and is_strike
                 and hasattr(card, "card_type") and card.card_type == CardType.ATTACK
                 and bool(props & ValueProp.MOVE) and not bool(props & ValueProp.UNPOWERED)):
             return self.EXTRA_DAMAGE

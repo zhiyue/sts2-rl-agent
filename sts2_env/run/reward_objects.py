@@ -25,6 +25,10 @@ class RewardType(Enum):
     POTION = auto()
     RELIC = auto()
     CARD = auto()
+    ADD_CARD = auto()
+    OBTAIN_RELIC = auto()
+    LOSE_HP = auto()
+    LOSE_GOLD = auto()
     REMOVE_CARD = auto()
     UPGRADE_CARD = auto()
     TRANSFORM_CARD = auto()
@@ -116,6 +120,7 @@ class RelicReward(Reward):
     rarity: RelicRarity | None = None
     is_wax: bool = False
     rng_stream: str = "rewards"
+    setup_attrs: dict[str, object] = field(default_factory=dict)
 
     def __init__(
         self,
@@ -125,33 +130,23 @@ class RelicReward(Reward):
         *,
         is_wax: bool = False,
         rng_stream: str = "rewards",
+        setup_attrs: dict[str, object] | None = None,
     ):
         super().__init__(player_id=player_id, reward_type=RewardType.RELIC, rewards_set_index=3)
         self.relic_id = relic_id
         self.rarity = rarity
         self.is_wax = is_wax
         self.rng_stream = rng_stream
+        self.setup_attrs = dict(setup_attrs or {})
 
     def populate(self, run_state: RunState, room: Room | None) -> None:
         if self.relic_id is None:
             player = run_state.get_player(self.player_id)
             load_all_relics()
-            relic_rng = getattr(run_state.rng, self.rng_stream, run_state.rng.rewards)
-            desired_pool = getattr(RelicPool, player.character_id.upper(), None)
-            owned = set(player.relics)
-            candidates: list[str] = []
-            for relic_id, relic_cls in RELIC_REGISTRY.items():
-                if relic_id.name in owned:
-                    continue
-                if relic_cls.pool in {RelicPool.EVENT, RelicPool.FALLBACK, RelicPool.DEPRECATED}:
-                    continue
-                if desired_pool is not None and relic_cls.pool not in {RelicPool.SHARED, desired_pool}:
-                    continue
-                if self.rarity is not None and relic_cls.rarity is not self.rarity:
-                    continue
-                candidates.append(relic_id.name)
-            if candidates:
-                self.relic_id = relic_rng.choice(candidates)
+            self.relic_id = player.pull_next_relic_reward_id(
+                rarity=self.rarity,
+                rng_stream=self.rng_stream,
+            )
         self.is_populated = True
 
     def select(self, run_manager: RunManager, **_: object) -> dict:
@@ -161,19 +156,13 @@ class RelicReward(Reward):
         previous = run_manager.run_state.defer_followup_rewards
         run_manager.run_state.defer_followup_rewards = True
         try:
-            player.obtain_relic(self.relic_id)
+            player.obtain_relic_with_setup(
+                self.relic_id,
+                setup_attrs=self.setup_attrs,
+                is_wax=self.is_wax,
+            )
         finally:
             run_manager.run_state.defer_followup_rewards = previous
-        if self.is_wax:
-            try:
-                index = player.relics.index(self.relic_id)
-            except ValueError:
-                index = -1
-            if 0 <= index < len(player.relic_objects):
-                relic = player.relic_objects[index]
-                setattr(relic, "is_wax", True)
-                setattr(relic, "is_melted", False)
-                relic.enabled = True
         return {"description": f"Obtained relic {self.relic_id}.", "relic_id": self.relic_id}
 
 
@@ -287,6 +276,101 @@ class CardReward(Reward):
             "description": "Rerolled card reward.",
             "success": True,
             "rerolls_remaining": self.rerolls_remaining,
+        }
+
+
+@dataclass
+class AddCardsReward(Reward):
+    cards: list[CardInstance] = field(default_factory=list)
+
+    def __init__(self, player_id: int, cards: list[CardInstance]):
+        super().__init__(player_id=player_id, reward_type=RewardType.ADD_CARD, rewards_set_index=4, skippable=False)
+        self.cards = list(cards)
+
+    def select(self, run_manager: RunManager, **_: object) -> dict:
+        player = run_manager.run_state.get_player(self.player_id)
+        for card in self.cards:
+            player.add_card_instance_to_deck(card)
+        return {
+            "description": f"Added {len(self.cards)} card(s) to deck.",
+            "added": len(self.cards),
+        }
+
+
+@dataclass
+class ObtainRelicsReward(Reward):
+    count: int = 1
+    rarities: tuple[RelicRarity | None, ...] = field(default_factory=tuple)
+    relic_ids: tuple[str, ...] = field(default_factory=tuple)
+    rng_stream: str = "rewards"
+
+    def __init__(
+        self,
+        player_id: int,
+        count: int = 1,
+        *,
+        rarities: tuple[RelicRarity | None, ...] | None = None,
+        relic_ids: tuple[str, ...] | list[str] | None = None,
+        rng_stream: str = "rewards",
+    ):
+        super().__init__(player_id=player_id, reward_type=RewardType.OBTAIN_RELIC, rewards_set_index=4, skippable=False)
+        self.relic_ids = tuple(relic_ids or ())
+        self.count = len(self.relic_ids) if self.relic_ids else count
+        self.rarities = tuple(rarities or ())
+        self.rng_stream = rng_stream
+
+    def select(self, run_manager: RunManager, **_: object) -> dict:
+        obtained: list[str] = []
+        for index in range(self.count):
+            if index < len(self.relic_ids):
+                reward = RelicReward(self.player_id, relic_id=self.relic_ids[index], rng_stream=self.rng_stream)
+            else:
+                rarity = self.rarities[index] if index < len(self.rarities) else None
+                reward = RelicReward(self.player_id, rarity=rarity, rng_stream=self.rng_stream)
+                reward.populate(run_manager.run_state, run_manager.current_room)
+            if reward.relic_id is None:
+                continue
+            reward.select(run_manager)
+            obtained.append(reward.relic_id)
+        return {
+            "description": f"Obtained {len(obtained)} relic(s).",
+            "obtained": obtained,
+        }
+
+
+@dataclass
+class LoseHpReward(Reward):
+    amount: int = 0
+
+    def __init__(self, player_id: int, amount: int):
+        super().__init__(player_id=player_id, reward_type=RewardType.LOSE_HP, rewards_set_index=4, skippable=False)
+        self.amount = amount
+
+    def select(self, run_manager: RunManager, **_: object) -> dict:
+        player = run_manager.run_state.get_player(self.player_id)
+        lost = player.lose_hp(self.amount)
+        if player.current_hp <= 0:
+            run_manager.run_state.lose_run()
+        return {
+            "description": f"Lost {lost} HP.",
+            "hp_lost": lost,
+        }
+
+
+@dataclass
+class LoseGoldReward(Reward):
+    amount: int = 0
+
+    def __init__(self, player_id: int, amount: int):
+        super().__init__(player_id=player_id, reward_type=RewardType.LOSE_GOLD, rewards_set_index=4, skippable=False)
+        self.amount = amount
+
+    def select(self, run_manager: RunManager, **_: object) -> dict:
+        player = run_manager.run_state.get_player(self.player_id)
+        lost = player.lose_gold(self.amount)
+        return {
+            "description": f"Lost {lost} gold.",
+            "gold_lost": lost,
         }
 
 
@@ -483,6 +567,10 @@ class RewardsSet:
     def with_rewards_from_room(self, room: Room, run_state: RunState) -> RewardsSet:
         self.room = room
         if room.room_type == RoomType.BOSS and run_state.current_act_index >= len(run_state.acts) - 1:
+            if hasattr(room, "extra_rewards"):
+                self.rewards.extend(room.extra_rewards.get(self.player_id, []))
+            return self
+        if getattr(room, "suppress_default_rewards", False):
             if hasattr(room, "extra_rewards"):
                 self.rewards.extend(room.extra_rewards.get(self.player_id, []))
             return self

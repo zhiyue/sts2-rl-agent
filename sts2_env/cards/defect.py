@@ -14,7 +14,11 @@ from sts2_env.core.combat import CombatState
 
 
 def _owner(card: CardInstance, combat: CombatState) -> Creature:
-    return getattr(card, "owner", None) or combat.player
+    return (
+        getattr(card, "owner", None)
+        or getattr(getattr(combat, "active_card_source", None), "owner", None)
+        or combat.primary_player
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -48,6 +52,13 @@ def _get_orb_count(combat: CombatState) -> int:
     return len(queue.orbs) if queue is not None else 0
 
 
+def _get_unique_orb_type_count(combat: CombatState) -> int:
+    queue = getattr(combat, 'orb_queue', None)
+    if queue is None:
+        return 0
+    return len({orb.orb_type for orb in queue.orbs})
+
+
 def _add_orb_slot(combat: CombatState, count: int = 1) -> None:
     queue = getattr(combat, 'orb_queue', None)
     if queue is not None:
@@ -66,6 +77,17 @@ def _non_exhausted_status_cards(combat: CombatState, owner: Creature) -> list[Ca
         for card in combat._all_cards_for_creature(owner, include_exhausted=False)  # noqa: SLF001
         if card.card_type == CardType.STATUS
     ]
+
+
+def _target_intends_to_attack(combat: CombatState, target: Creature | None) -> bool:
+    if target is None:
+        return False
+    ai = combat.enemy_ais.get(target.combat_id)
+    if ai is None:
+        return False
+    move = getattr(ai, "current_move", None)
+    intents = getattr(move, "intents", ())
+    return any(getattr(intent, "is_attack", False) for intent in intents)
 
 
 # ---------------------------------------------------------------------------
@@ -206,7 +228,7 @@ def compile_driver(card: CardInstance, combat: CombatState, target: Creature | N
     assert target is not None
     dmg = calculate_damage(card.base_damage, _owner(card, combat), target, ValueProp.MOVE, combat)
     apply_damage(target, dmg, ValueProp.MOVE, combat, _owner(card, combat))
-    draw = _get_orb_count(combat)
+    draw = _get_unique_orb_type_count(combat)
     if draw > 0:
         combat._draw_cards(draw)
 
@@ -230,7 +252,8 @@ def go_for_the_eyes(card: CardInstance, combat: CombatState, target: Creature | 
     assert target is not None
     dmg = calculate_damage(card.base_damage, _owner(card, combat), target, ValueProp.MOVE, combat)
     apply_damage(target, dmg, ValueProp.MOVE, combat, _owner(card, combat))
-    combat.apply_power_to(target, PowerId.WEAK, card.effect_vars.get("weak", 1))
+    if _target_intends_to_attack(combat, target):
+        combat.apply_power_to(target, PowerId.WEAK, card.effect_vars.get("weak", 1))
 
 
 @register_effect(CardId.GUNK_UP)
@@ -335,10 +358,11 @@ def capacitor(card: CardInstance, combat: CombatState, target: Creature | None) 
 
 @register_effect(CardId.CHAOS)
 def chaos(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    import random
     orb_types = [OrbType.LIGHTNING, OrbType.FROST, OrbType.DARK, OrbType.PLASMA, OrbType.GLASS]
-    chosen = combat.rng.choice(orb_types)
-    _channel_orb(combat, chosen)
+    repeat = card.effect_vars.get("repeat", 1)
+    for _ in range(max(0, repeat)):
+        chosen = combat.rng.choice(orb_types)
+        _channel_orb(combat, chosen)
 
 
 @register_effect(CardId.CHILL)
@@ -553,11 +577,12 @@ def synthesis(card: CardInstance, combat: CombatState, target: Creature | None) 
 
 @register_effect(CardId.TEMPEST)
 def tempest(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # X-cost: channel X Lightning orbs
-    x = combat.energy + card.cost
+    # X-cost: channel X Lightning orbs (+1 when upgraded).
+    x = getattr(card, "energy_spent", 0)
+    if card.upgraded:
+        x += 1
     for _ in range(max(0, x)):
         _channel_orb(combat, OrbType.LIGHTNING)
-    combat.energy = 0
 
 
 @register_effect(CardId.TESLA_COIL)
@@ -580,6 +605,7 @@ def white_noise(card: CardInstance, combat: CombatState, target: Creature | None
         combat.rng,
         1,
         card_type=CardType.POWER,
+        generation_context="modifier",
     )
     if not generated:
         return
@@ -730,11 +756,20 @@ def modded(card: CardInstance, combat: CombatState, target: Creature | None) -> 
 
 @register_effect(CardId.MULTI_CAST)
 def multi_cast(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    # X-cost: evoke front orb X times
-    x = combat.energy + card.cost
-    for _ in range(max(0, x)):
-        _evoke_front(combat)
-    combat.energy = 0
+    # X-cost: evoke front orb X times, removing the orb only on the last evoke.
+    queue = getattr(combat, 'orb_queue', None)
+    if queue is None or not queue.orbs:
+        return
+    evokes = getattr(card, "energy_spent", 0)
+    if card.upgraded:
+        evokes += 1
+    for i in range(max(0, evokes)):
+        if not queue.orbs:
+            break
+        if i == evokes - 1:
+            _evoke_front(combat)
+        else:
+            queue.orbs[0].on_evoke(combat)
 
 
 @register_effect(CardId.RAINBOW)
@@ -1034,6 +1069,7 @@ def make_chaos() -> CardInstance:
     return CardInstance(
         card_id=CardId.CHAOS, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.UNCOMMON,
+        effect_vars={"repeat": 1},
         instance_id=_get_next_id(),
     )
 
@@ -1267,8 +1303,9 @@ def make_synthesis() -> CardInstance:
 
 def make_tempest() -> CardInstance:
     return CardInstance(
-        card_id=CardId.TEMPEST, cost=-1, card_type=CardType.SKILL,
+        card_id=CardId.TEMPEST, cost=0, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.UNCOMMON,
+        has_energy_cost_x=True,
         instance_id=_get_next_id(),
     )
 
@@ -1439,8 +1476,9 @@ def make_modded() -> CardInstance:
 
 def make_multi_cast() -> CardInstance:
     return CardInstance(
-        card_id=CardId.MULTI_CAST, cost=-1, card_type=CardType.SKILL,
+        card_id=CardId.MULTI_CAST, cost=0, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.RARE,
+        has_energy_cost_x=True,
         instance_id=_get_next_id(),
     )
 

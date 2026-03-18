@@ -21,7 +21,7 @@ def test_byrdonis_nest_take_adds_byrdonis_egg_to_deck():
     assert any(card.card_id == CardId.BYRDONIS_EGG for card in run_state.player.deck)
 
 
-def test_byrdonis_nest_is_disallowed_when_player_has_egg_or_byrdpip():
+def test_byrdonis_nest_is_only_disallowed_when_player_already_has_event_pet():
     run_state = RunState(seed=1102, character_id="Ironclad")
     run_state.initialize_run()
     event = ByrdonisNest()
@@ -29,7 +29,7 @@ def test_byrdonis_nest_is_disallowed_when_player_has_egg_or_byrdpip():
     assert event.is_allowed(run_state) is True
 
     run_state.player.deck.append(create_card(CardId.BYRDONIS_EGG))
-    assert event.is_allowed(run_state) is False
+    assert event.is_allowed(run_state) is True
 
     run_state.player.deck = [card for card in run_state.player.deck if card.card_id != CardId.BYRDONIS_EGG]
     run_state.player.obtain_relic("BYRDPIP")

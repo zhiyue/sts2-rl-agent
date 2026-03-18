@@ -59,6 +59,8 @@ class CombatRoom(Room):
     encounter_id: str = ""
     is_elite: bool = False
     is_boss: bool = False
+    suppress_default_rewards: bool = False
+    post_combat_phase: str | None = None
     gold_proportion: float = 1.0
     extra_rewards: dict[int, list[Any]] = field(default_factory=dict)
 
