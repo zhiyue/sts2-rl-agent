@@ -399,6 +399,8 @@ def fire_after_turn_end(side: CombatSide, combat: CombatState) -> None:
             and type(power).on_turn_end_enemy_side is not PowerInstance.on_turn_end_enemy_side
         ):
             power.on_turn_end_enemy_side(owner)
+            if not power.allow_negative and power.amount <= 0:
+                owner.powers.pop(power.power_id, None)
     for owner, relic in _iter_relic_listeners(combat):
         relic.after_turn_end(owner, side, combat)
 
