@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, TYPE_CHECKING
 
+from sts2_env.core.enums import PowerId
 from sts2_env.core.rng import Rng
 
 if TYPE_CHECKING:
@@ -26,7 +27,7 @@ from sts2_env.monsters.act3 import (
     create_spectral_knight,
     create_mecha_knight,
     create_soul_nexus,
-    create_door,
+    create_aeonglass,
     create_queen,
     create_test_subject,
 )
@@ -69,7 +70,7 @@ WEAK_ENCOUNTERS: list[EncounterSetup] = [
 
 def setup_axebots_normal(combat: CombatState, rng: Rng) -> None:
     for _ in range(2):
-        creature, ai = create_axebot(rng)
+        creature, ai = create_axebot(rng, ascension_level=getattr(combat, "ascension_level", 0))
         combat.add_enemy(creature, ai)
 
 
@@ -167,9 +168,12 @@ ELITE_ENCOUNTERS: list[EncounterSetup] = [
 
 # ---- Boss Encounters ----
 
-def setup_doormaker_boss(combat: CombatState, rng: Rng) -> None:
-    door, door_ai = create_door(rng, ascension_level=getattr(combat, "ascension_level", 0))
-    combat.add_enemy(door, door_ai)
+def setup_aeonglass_boss(combat: CombatState, rng: Rng) -> None:
+    creature, ai = create_aeonglass(rng, ascension_level=getattr(combat, "ascension_level", 0))
+    combat.add_enemy(creature, ai)
+    presence = creature.powers.get(PowerId.WITHERING_PRESENCE)
+    if presence is not None:
+        presence.target_player = combat.primary_player
 
 
 def setup_queen_boss(combat: CombatState, rng: Rng) -> None:
@@ -188,7 +192,7 @@ def setup_test_subject_boss(combat: CombatState, rng: Rng) -> None:
 BOSS_ENCOUNTERS: list[EncounterSetup] = [
     setup_queen_boss,
     setup_test_subject_boss,
-    setup_doormaker_boss,
+    setup_aeonglass_boss,
 ]
 
 
@@ -196,7 +200,7 @@ ALL_ACT3_ENCOUNTERS: list[EncounterSetup] = [
     setup_axebots_normal,
     setup_construct_menagerie_normal,
     setup_devoted_sculptor_weak,
-    setup_doormaker_boss,
+    setup_aeonglass_boss,
     setup_fabricator_normal,
     setup_frog_knight_normal,
     setup_globe_head_normal,

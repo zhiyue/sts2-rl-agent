@@ -389,7 +389,6 @@ class PowerId(Enum):
     CRAB_RAGE = auto()
     DAMPEN = auto()
     DIE_FOR_YOU = auto()
-    DOOR_REVIVAL = auto()
     ILLUSION = auto()
     INFESTED = auto()
     MINION = auto()
@@ -400,6 +399,7 @@ class PowerId(Enum):
     STEAM_ERUPTION = auto()
     STOCK = auto()
     SURPRISE = auto()
+    WITHERING_PRESENCE = auto()
     # -- 11. Special/Unique Mechanics --
     ACCELERANT = auto()
     ANTICIPATE = auto()
@@ -624,6 +624,7 @@ class CardId(Enum):
     SHIV = auto()
     INFECTION = auto()
     BECKON = auto()
+    WITHER = auto()
 
     # Silent common
     ACROBATICS = auto()

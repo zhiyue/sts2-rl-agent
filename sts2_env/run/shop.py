@@ -304,6 +304,8 @@ def _create_relic_shop_entry(
         relic_name = relic_id.name
         if relic_name in owned or relic_id in SHOP_BLACKLISTED_RELICS:
             continue
+        if not getattr(relic_cls, "is_allowed_in_shops", True):
+            continue
         if relic_cls.pool in {RelicPool.EVENT, RelicPool.FALLBACK, RelicPool.DEPRECATED}:
             continue
         if relic_rarity == RelicRarity.SHOP:

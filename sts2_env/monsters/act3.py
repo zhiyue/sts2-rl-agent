@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sts2_env.core.creature import Creature
-from sts2_env.core.enums import CombatSide, MoveRepeatType, PowerId, ValueProp
+from sts2_env.core.enums import CardId, CombatSide, MoveRepeatType, PowerId, ValueProp
 from sts2_env.core.damage import calculate_damage, apply_damage
 from sts2_env.core.rng import Rng
 from sts2_env.monsters.intents import (
@@ -20,8 +20,12 @@ from sts2_env.monsters.state_machine import (
     ConditionalBranchState, MonsterAI, MonsterState, MoveState, RandomBranchState,
 )
 from sts2_env.monsters.block import gain_move_block
-from sts2_env.monsters.targets import apply_power_to_living_player_targets, living_player_targets
-from sts2_env.cards.status import make_burn, make_dazed, make_slimed
+from sts2_env.monsters.targets import (
+    add_generated_cards_to_living_player_discards,
+    apply_power_to_living_player_targets,
+    living_player_targets,
+)
+from sts2_env.cards.status import make_burn, make_dazed, make_slimed, make_wither
 from sts2_env.monsters.shared import TORCH_HEAD_AMALGAM_MONSTER_ID
 
 if TYPE_CHECKING:
@@ -132,13 +136,45 @@ def create_devoted_sculptor(rng: Rng, ascension_level: int = 0) -> tuple[Creatur
     return creature, MonsterAI(states, DEVOTED_SCULPTOR_FORBIDDEN_INCANTATION_MOVE)
 
 
-# ---- ScrollOfBiting (HP 24-26 / 26-28 asc) ----
+# ---- ScrollOfBiting (HP 30-37 / 33-39 asc) ----
 
-def create_scroll_of_biting(rng: Rng, starter_move_idx: int = 0) -> tuple[Creature, MonsterAI]:
-    hp = rng.next_int(31, 38)
+SCROLL_OF_BITING_BASE_MIN_HP = 30
+SCROLL_OF_BITING_BASE_MAX_HP = 37
+SCROLL_OF_BITING_TOUGH_MIN_HP = 33
+SCROLL_OF_BITING_TOUGH_MAX_HP = 39
+SCROLL_OF_BITING_BASE_CHOMP_DAMAGE = 14
+SCROLL_OF_BITING_DEADLY_CHOMP_DAMAGE = 16
+SCROLL_OF_BITING_BASE_CHEW_DAMAGE = 5
+SCROLL_OF_BITING_DEADLY_CHEW_DAMAGE = 6
+
+
+def create_scroll_of_biting(rng: Rng, starter_move_idx: int = 0, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
+    min_hp = _ascension_value(
+        ascension_level,
+        TOUGH_ENEMIES_ASCENSION_LEVEL,
+        SCROLL_OF_BITING_TOUGH_MIN_HP,
+        SCROLL_OF_BITING_BASE_MIN_HP,
+    )
+    max_hp = _ascension_value(
+        ascension_level,
+        TOUGH_ENEMIES_ASCENSION_LEVEL,
+        SCROLL_OF_BITING_TOUGH_MAX_HP,
+        SCROLL_OF_BITING_BASE_MAX_HP,
+    )
+    hp = rng.next_int(min_hp, max_hp)
     creature = Creature(max_hp=hp, monster_id="SCROLL_OF_BITING")
-    chomp_dmg = 14
-    chew_dmg = 5
+    chomp_dmg = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        SCROLL_OF_BITING_DEADLY_CHOMP_DAMAGE,
+        SCROLL_OF_BITING_BASE_CHOMP_DAMAGE,
+    )
+    chew_dmg = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        SCROLL_OF_BITING_DEADLY_CHEW_DAMAGE,
+        SCROLL_OF_BITING_BASE_CHEW_DAMAGE,
+    )
 
     def chomp(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, chomp_dmg)
@@ -173,7 +209,7 @@ TURRET_OPERATOR_BASE_FIRE_DAMAGE = 3
 TURRET_OPERATOR_DEADLY_FIRE_DAMAGE = 4
 TURRET_OPERATOR_FIRE_REPEAT = 5
 TURRET_OPERATOR_RELOAD_STRENGTH = 1
-TURRET_OPERATOR_UNLOAD_MOVE_1 = "UNLOAD_MOVE_1"
+TURRET_OPERATOR_UNLOAD_MOVE = "UNLOAD_MOVE"
 TURRET_OPERATOR_UNLOAD_MOVE_2 = "UNLOAD_MOVE_2"
 TURRET_OPERATOR_RELOAD_MOVE = "RELOAD_MOVE"
 
@@ -207,8 +243,8 @@ def create_turret_operator(rng: Rng, ascension_level: int = 0) -> tuple[Creature
     )
 
     states: dict[str, MonsterState] = {
-        TURRET_OPERATOR_UNLOAD_MOVE_1: MoveState(
-            TURRET_OPERATOR_UNLOAD_MOVE_1,
+        TURRET_OPERATOR_UNLOAD_MOVE: MoveState(
+            TURRET_OPERATOR_UNLOAD_MOVE,
             unload,
             [multi_attack_intent(fire_intent_damage, TURRET_OPERATOR_FIRE_REPEAT)],
             follow_up_id=TURRET_OPERATOR_UNLOAD_MOVE_2,
@@ -223,76 +259,166 @@ def create_turret_operator(rng: Rng, ascension_level: int = 0) -> tuple[Creature
             TURRET_OPERATOR_RELOAD_MOVE,
             reload,
             [buff_intent()],
-            follow_up_id=TURRET_OPERATOR_UNLOAD_MOVE_1,
+            follow_up_id=TURRET_OPERATOR_UNLOAD_MOVE,
         ),
     }
-    return creature, MonsterAI(states, TURRET_OPERATOR_UNLOAD_MOVE_1)
+    return creature, MonsterAI(states, TURRET_OPERATOR_UNLOAD_MOVE)
 
 
 # ========================================================================
 # NORMAL ENCOUNTERS
 # ========================================================================
 
-# ---- Axebot (HP 40-44 / 42-46 asc) ----
+# ---- Axebot (HP 70-78 / 76-86 asc, +10 per used stock on respawn) ----
+
+AXEBOT_MONSTER_ID = "AXEBOT"
+AXEBOT_BASE_MIN_HP = 70
+AXEBOT_BASE_MAX_HP = 78
+AXEBOT_TOUGH_MIN_HP = 76
+AXEBOT_TOUGH_MAX_HP = 86
+AXEBOT_INITIAL_STOCK_AMOUNT = 2
+AXEBOT_RESPAWN_MAX_HP_BONUS = 10
+AXEBOT_BASE_BOOT_UP_BLOCK = 10
+AXEBOT_DEADLY_BOOT_UP_BLOCK = 15
+AXEBOT_BASE_BOOT_UP_STRENGTH = 3
+AXEBOT_DEADLY_BOOT_UP_STRENGTH = 4
+AXEBOT_BASE_ONE_TWO_DAMAGE = 10
+AXEBOT_DEADLY_ONE_TWO_DAMAGE = 11
+AXEBOT_ONE_TWO_REPEAT = 2
+AXEBOT_BASE_HAMMER_UPPERCUT_DAMAGE = 14
+AXEBOT_DEADLY_HAMMER_UPPERCUT_DAMAGE = 18
+AXEBOT_HAMMER_UPPERCUT_DEBUFF = 2
+AXEBOT_BOOT_UP_MOVE = "BOOT_UP_MOVE"
+AXEBOT_ONE_TWO_MOVE = "ONE_TWO_MOVE"
+AXEBOT_HAMMER_UPPERCUT_MOVE = "HAMMER_UPPERCUT_MOVE"
+
 
 def create_axebot(
     rng: Rng,
     start_with_boot_up: bool = False,
     stock_amount: int | None = None,
+    ascension_level: int = 0,
 ) -> tuple[Creature, MonsterAI]:
-    hp = rng.next_int(40, 44)
-    creature = Creature(max_hp=hp, monster_id="AXEBOT")
-    one_two_dmg = 5
-    hammer_uppercut_dmg = 8
-    hammer_uppercut_debuff = 1
-    boot_up_block = 10
-    boot_up_strength = 1
-    sharpen_strength = 4
+    # C#: RespawnCount = 2 - StockAmount; Min/MaxInitialHp gains
+    # RespawnCount * 10, i.e. each consumed stock revives the Axebot with
+    # +10 max HP.  The sim implements this on the StockPower respawn path,
+    # which re-creates the Axebot with stock_amount = remaining stock.
+    effective_stock = AXEBOT_INITIAL_STOCK_AMOUNT if stock_amount is None else stock_amount
+    respawn_count = AXEBOT_INITIAL_STOCK_AMOUNT - effective_stock
+    respawn_hp_bonus = respawn_count * AXEBOT_RESPAWN_MAX_HP_BONUS
+    min_hp = (
+        _ascension_value(
+            ascension_level,
+            TOUGH_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_TOUGH_MIN_HP,
+            AXEBOT_BASE_MIN_HP,
+        )
+        + respawn_hp_bonus
+    )
+    max_hp = (
+        _ascension_value(
+            ascension_level,
+            TOUGH_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_TOUGH_MAX_HP,
+            AXEBOT_BASE_MAX_HP,
+        )
+        + respawn_hp_bonus
+    )
+    hp = rng.next_int(min_hp, max_hp)
+    creature = Creature(max_hp=hp, monster_id=AXEBOT_MONSTER_ID)
 
     def boot_up(combat: CombatState) -> None:
+        boot_up_block = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_DEADLY_BOOT_UP_BLOCK,
+            AXEBOT_BASE_BOOT_UP_BLOCK,
+        )
+        boot_up_strength = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_DEADLY_BOOT_UP_STRENGTH,
+            AXEBOT_BASE_BOOT_UP_STRENGTH,
+        )
         _gain_block(creature, boot_up_block, combat)
-        creature.apply_power(PowerId.STRENGTH, boot_up_strength)
+        creature.apply_power(PowerId.STRENGTH, boot_up_strength * respawn_count)
 
     def one_two(combat: CombatState) -> None:
-        _deal_damage_to_player(combat, creature, one_two_dmg, hits=2)
-
-    def sharpen(combat: CombatState) -> None:
-        creature.apply_power(PowerId.STRENGTH, sharpen_strength)
+        one_two_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_DEADLY_ONE_TWO_DAMAGE,
+            AXEBOT_BASE_ONE_TWO_DAMAGE,
+        )
+        _deal_damage_to_player(combat, creature, one_two_dmg, hits=AXEBOT_ONE_TWO_REPEAT)
 
     def hammer_uppercut(combat: CombatState) -> None:
+        hammer_uppercut_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_DEADLY_HAMMER_UPPERCUT_DAMAGE,
+            AXEBOT_BASE_HAMMER_UPPERCUT_DAMAGE,
+        )
         _deal_damage_to_player(combat, creature, hammer_uppercut_dmg)
-        apply_power_to_living_player_targets(combat, PowerId.WEAK, hammer_uppercut_debuff, applier=creature)
-        apply_power_to_living_player_targets(combat, PowerId.FRAIL, hammer_uppercut_debuff, applier=creature)
+        apply_power_to_living_player_targets(combat, PowerId.WEAK, AXEBOT_HAMMER_UPPERCUT_DEBUFF, applier=creature)
+        apply_power_to_living_player_targets(combat, PowerId.FRAIL, AXEBOT_HAMMER_UPPERCUT_DEBUFF, applier=creature)
 
-    rand = RandomBranchState("RAND_MOVE")
-    rand.add_branch("ONE_TWO_MOVE", MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
-    rand.add_branch("SHARPEN_MOVE", MoveRepeatType.CANNOT_REPEAT)
-    rand.add_branch("HAMMER_UPPERCUT_MOVE", MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
+    one_two_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        AXEBOT_DEADLY_ONE_TWO_DAMAGE,
+        AXEBOT_BASE_ONE_TWO_DAMAGE,
+    )
+    hammer_uppercut_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        AXEBOT_DEADLY_HAMMER_UPPERCUT_DAMAGE,
+        AXEBOT_BASE_HAMMER_UPPERCUT_DAMAGE,
+    )
 
+    # C# chain: BOOT_UP -> HAMMER_UPPERCUT -> ONE_TWO -> HAMMER_UPPERCUT -> ...
+    # Initial state is HAMMER_UPPERCUT unless a stock override was provided
+    # (sim: stock_amount / start_with_boot_up), in which case it is BOOT_UP.
     states: dict[str, MonsterState] = {
-        "RAND_MOVE": rand,
-        "BOOT_UP_MOVE": MoveState("BOOT_UP_MOVE", boot_up, [defend_intent(), buff_intent()], follow_up_id="RAND_MOVE"),
-        "ONE_TWO_MOVE": MoveState("ONE_TWO_MOVE", one_two, [multi_attack_intent(one_two_dmg, 2)], follow_up_id="RAND_MOVE"),
-        "SHARPEN_MOVE": MoveState("SHARPEN_MOVE", sharpen, [buff_intent()], follow_up_id="RAND_MOVE"),
-        "HAMMER_UPPERCUT_MOVE": MoveState("HAMMER_UPPERCUT_MOVE", hammer_uppercut, [attack_intent(hammer_uppercut_dmg), debuff_intent()], follow_up_id="RAND_MOVE"),
+        AXEBOT_BOOT_UP_MOVE: MoveState(
+            AXEBOT_BOOT_UP_MOVE,
+            boot_up,
+            [defend_intent(), buff_intent()],
+            follow_up_id=AXEBOT_HAMMER_UPPERCUT_MOVE,
+        ),
+        AXEBOT_ONE_TWO_MOVE: MoveState(
+            AXEBOT_ONE_TWO_MOVE,
+            one_two,
+            [multi_attack_intent(one_two_intent_damage, AXEBOT_ONE_TWO_REPEAT)],
+            follow_up_id=AXEBOT_HAMMER_UPPERCUT_MOVE,
+        ),
+        AXEBOT_HAMMER_UPPERCUT_MOVE: MoveState(
+            AXEBOT_HAMMER_UPPERCUT_MOVE,
+            hammer_uppercut,
+            [attack_intent(hammer_uppercut_intent_damage), debuff_intent()],
+            follow_up_id=AXEBOT_ONE_TWO_MOVE,
+        ),
     }
 
     if stock_amount is None:
-        creature.apply_power(PowerId.STOCK, 2)
+        creature.apply_power(PowerId.STOCK, AXEBOT_INITIAL_STOCK_AMOUNT)
     elif stock_amount > 0:
         creature.apply_power(PowerId.STOCK, stock_amount)
 
-    initial = "BOOT_UP_MOVE" if start_with_boot_up or stock_amount is not None else "RAND_MOVE"
+    if start_with_boot_up or stock_amount is not None:
+        initial = AXEBOT_BOOT_UP_MOVE
+    else:
+        initial = AXEBOT_HAMMER_UPPERCUT_MOVE
     return creature, MonsterAI(states, initial, rng)
 
 
 # ---- Fabricator (HP 150 / 155 asc) + bots ----
 
 ZAPBOT_MONSTER_ID = "ZAPBOT"
-ZAPBOT_BASE_MIN_HP = 23
-ZAPBOT_BASE_MAX_HP = 28
-ZAPBOT_TOUGH_MIN_HP = 24
-ZAPBOT_TOUGH_MAX_HP = 29
+ZAPBOT_BASE_MIN_HP = 18
+ZAPBOT_BASE_MAX_HP = 23
+ZAPBOT_TOUGH_MIN_HP = 19
+ZAPBOT_TOUGH_MAX_HP = 24
 ZAPBOT_BASE_ZAP_DAMAGE = 14
 ZAPBOT_DEADLY_ZAP_DAMAGE = 15
 ZAPBOT_HIGH_VOLTAGE_AMOUNT = 2
@@ -343,10 +469,10 @@ def create_zapbot(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Monster
 
 
 STABBOT_MONSTER_ID = "STABBOT"
-STABBOT_BASE_MIN_HP = 23
-STABBOT_BASE_MAX_HP = 28
-STABBOT_TOUGH_MIN_HP = 24
-STABBOT_TOUGH_MAX_HP = 29
+STABBOT_BASE_MIN_HP = 18
+STABBOT_BASE_MAX_HP = 23
+STABBOT_TOUGH_MIN_HP = 19
+STABBOT_TOUGH_MAX_HP = 24
 STABBOT_BASE_STAB_DAMAGE = 11
 STABBOT_DEADLY_STAB_DAMAGE = 12
 STABBOT_STAB_FRAIL = 1
@@ -398,10 +524,10 @@ def create_stabbot(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Monste
 
 
 GUARDBOT_MONSTER_ID = "GUARDBOT"
-GUARDBOT_BASE_MIN_HP = 21
-GUARDBOT_BASE_MAX_HP = 25
-GUARDBOT_TOUGH_MIN_HP = 22
-GUARDBOT_TOUGH_MAX_HP = 26
+GUARDBOT_BASE_MIN_HP = 16
+GUARDBOT_BASE_MAX_HP = 20
+GUARDBOT_TOUGH_MIN_HP = 17
+GUARDBOT_TOUGH_MAX_HP = 21
 GUARDBOT_GUARD_BLOCK = 15
 GUARDBOT_GUARD_MOVE = "GUARD_MOVE"
 
@@ -439,10 +565,10 @@ def create_guardbot(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Monst
 
 
 NOISEBOT_MONSTER_ID = "NOISEBOT"
-NOISEBOT_BASE_MIN_HP = 23
-NOISEBOT_BASE_MAX_HP = 28
-NOISEBOT_TOUGH_MIN_HP = 24
-NOISEBOT_TOUGH_MAX_HP = 29
+NOISEBOT_BASE_MIN_HP = 18
+NOISEBOT_BASE_MAX_HP = 23
+NOISEBOT_TOUGH_MIN_HP = 19
+NOISEBOT_TOUGH_MAX_HP = 24
 NOISEBOT_DAZED_TO_DISCARD = 1
 NOISEBOT_DAZED_TO_DRAW = 1
 NOISEBOT_NOISE_MOVE = "NOISE_MOVE"
@@ -763,7 +889,8 @@ GLOBE_HEAD_THUNDER_STRIKE_REPEAT = 3
 GLOBE_HEAD_BASE_GALVANIC_BURST_DAMAGE = 16
 GLOBE_HEAD_DEADLY_GALVANIC_BURST_DAMAGE = 17
 GLOBE_HEAD_GALVANIC_BURST_STRENGTH = 2
-GLOBE_HEAD_GALVANIC_AMOUNT = 6
+GLOBE_HEAD_BASE_GALVANIC_AMOUNT = 6
+GLOBE_HEAD_DEADLY_GALVANIC_AMOUNT = 8
 GLOBE_HEAD_SHOCKING_SLAP_MOVE = "SHOCKING_SLAP"
 GLOBE_HEAD_THUNDER_STRIKE_MOVE = "THUNDER_STRIKE"
 GLOBE_HEAD_GALVANIC_BURST_MOVE = "GALVANIC_BURST"
@@ -847,15 +974,20 @@ def create_globe_head(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Mon
         ),
     }
 
-    creature.apply_power(PowerId.GALVANIC, GLOBE_HEAD_GALVANIC_AMOUNT)
+    creature.apply_power(PowerId.GALVANIC, _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        GLOBE_HEAD_DEADLY_GALVANIC_AMOUNT,
+        GLOBE_HEAD_BASE_GALVANIC_AMOUNT,
+    ))
     return creature, MonsterAI(states, GLOBE_HEAD_SHOCKING_SLAP_MOVE)
 
 
-# ---- OwlMagistrate (HP 82 / 86 asc) ----
+# ---- OwlMagistrate (HP 231 / 247 asc) ----
 
 OWL_MAGISTRATE_MONSTER_ID = "OWL_MAGISTRATE"
-OWL_MAGISTRATE_BASE_HP = 234
-OWL_MAGISTRATE_TOUGH_HP = 243
+OWL_MAGISTRATE_BASE_HP = 231
+OWL_MAGISTRATE_TOUGH_HP = 247
 OWL_MAGISTRATE_BASE_SCRUTINY_DAMAGE = 16
 OWL_MAGISTRATE_DEADLY_SCRUTINY_DAMAGE = 17
 OWL_MAGISTRATE_PECK_ASSAULT_DAMAGE = 4
@@ -960,8 +1092,8 @@ def create_owl_magistrate(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
 # ---- SlimedBerserker (HP 60-65 / 64-69 asc) ----
 
 SLIMED_BERSERKER_MONSTER_ID = "SLIMED_BERSERKER"
-SLIMED_BERSERKER_BASE_HP = 266
-SLIMED_BERSERKER_TOUGH_HP = 276
+SLIMED_BERSERKER_BASE_HP = 261
+SLIMED_BERSERKER_TOUGH_HP = 281
 SLIMED_BERSERKER_BASE_PUMMELING_DAMAGE = 4
 SLIMED_BERSERKER_DEADLY_PUMMELING_DAMAGE = 5
 SLIMED_BERSERKER_PUMMELING_REPEAT = 4
@@ -1083,8 +1215,8 @@ THE_FORGOTTEN_TOUGH_HP = 111
 THE_FORGOTTEN_MIASMA_DEXTERITY = -2
 THE_FORGOTTEN_MIASMA_BLOCK = 8
 THE_FORGOTTEN_MIASMA_SELF_DEXTERITY = 2
-THE_FORGOTTEN_BASE_DREAD_DAMAGE = 15
-THE_FORGOTTEN_DEADLY_DREAD_DAMAGE = 17
+THE_FORGOTTEN_BASE_DREAD_DAMAGE = 13
+THE_FORGOTTEN_DEADLY_DREAD_DAMAGE = 15
 THE_FORGOTTEN_POSSESS_SPEED = 1
 THE_FORGOTTEN_MIASMA_MOVE = "MIASMA"
 THE_FORGOTTEN_DREAD_MOVE = "DREAD"
@@ -1151,6 +1283,17 @@ def create_the_forgotten(rng: Rng, ascension_level: int = 0) -> tuple[Creature, 
     )
     creature = Creature(max_hp=hp, monster_id=THE_FORGOTTEN_MONSTER_ID)
 
+    def _dread_damage(combat: CombatState | None) -> int:
+        # C#: DreadDamage = ascension base + creature's Dexterity amount
+        ascension = _combat_ascension_level(combat) if combat is not None else 0
+        base = _ascension_value(
+            ascension,
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            THE_FORGOTTEN_DEADLY_DREAD_DAMAGE,
+            THE_FORGOTTEN_BASE_DREAD_DAMAGE,
+        )
+        return base + creature.get_power_amount(PowerId.DEXTERITY)
+
     def miasma(combat: CombatState) -> None:
         apply_power_to_living_player_targets(
             combat,
@@ -1160,15 +1303,12 @@ def create_the_forgotten(rng: Rng, ascension_level: int = 0) -> tuple[Creature, 
         )
         _gain_block(creature, THE_FORGOTTEN_MIASMA_BLOCK, combat)
         creature.apply_power(PowerId.DEXTERITY, THE_FORGOTTEN_MIASMA_SELF_DEXTERITY, applier=creature)
+        # C# SingleAttackIntent(() => DreadDamage) is dynamic: refresh the
+        # displayed intent damage now that self-Dexterity is applied.
+        states[THE_FORGOTTEN_DREAD_MOVE].intents[0].damage = _dread_damage(combat)
 
     def dread(combat: CombatState) -> None:
-        dread_dmg = _ascension_value(
-            _combat_ascension_level(combat),
-            DEADLY_ENEMIES_ASCENSION_LEVEL,
-            THE_FORGOTTEN_DEADLY_DREAD_DAMAGE,
-            THE_FORGOTTEN_BASE_DREAD_DAMAGE,
-        )
-        _deal_damage_to_player(combat, creature, dread_dmg)
+        _deal_damage_to_player(combat, creature, _dread_damage(combat))
 
     dread_intent_damage = _ascension_value(
         ascension_level,
@@ -1230,7 +1370,7 @@ MAGI_KNIGHT_BASE_SPEAR_DAMAGE = 10
 MAGI_KNIGHT_DEADLY_SPEAR_DAMAGE = 11
 MAGI_KNIGHT_BASE_BOMB_DAMAGE = 35
 MAGI_KNIGHT_DEADLY_BOMB_DAMAGE = 40
-MAGI_KNIGHT_FIRST_POWER_SHIELD_MOVE = "FIRST_POWER_SHIELD_MOVE"
+MAGI_KNIGHT_POWER_SHIELD_MOVE = "POWER_SHIELD_MOVE"
 MAGI_KNIGHT_DAMPEN_MOVE = "DAMPEN_MOVE"
 MAGI_KNIGHT_RAM_MOVE = "RAM_MOVE"
 MAGI_KNIGHT_PREP_MOVE = "PREP_MOVE"
@@ -1258,6 +1398,8 @@ MECHA_KNIGHT_DEADLY_CHARGE_DAMAGE = 30
 MECHA_KNIGHT_BASE_HEAVY_CLEAVE_DAMAGE = 35
 MECHA_KNIGHT_DEADLY_HEAVY_CLEAVE_DAMAGE = 40
 MECHA_KNIGHT_WINDUP_BLOCK = 15
+MECHA_KNIGHT_BASE_FLAMETHROWER_DAMAGE = 8
+MECHA_KNIGHT_DEADLY_FLAMETHROWER_DAMAGE = 12
 MECHA_KNIGHT_FLAMETHROWER_BURNS = 4
 MECHA_KNIGHT_WINDUP_STRENGTH = 5
 MECHA_KNIGHT_ARTIFACT = 3
@@ -1505,8 +1647,8 @@ def create_magi_knight(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Mo
     )
 
     states: dict[str, MonsterState] = {
-        MAGI_KNIGHT_FIRST_POWER_SHIELD_MOVE: MoveState(
-            MAGI_KNIGHT_FIRST_POWER_SHIELD_MOVE,
+        MAGI_KNIGHT_POWER_SHIELD_MOVE: MoveState(
+            MAGI_KNIGHT_POWER_SHIELD_MOVE,
             power_shield,
             [attack_intent(power_shield_intent_damage), defend_intent()],
             follow_up_id=MAGI_KNIGHT_DAMPEN_MOVE,
@@ -1536,7 +1678,7 @@ def create_magi_knight(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Mo
             follow_up_id=MAGI_KNIGHT_RAM_MOVE,
         ),
     }
-    return creature, MonsterAI(states, MAGI_KNIGHT_FIRST_POWER_SHIELD_MOVE)
+    return creature, MonsterAI(states, MAGI_KNIGHT_POWER_SHIELD_MOVE)
 
 
 def create_spectral_knight(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
@@ -1631,6 +1773,13 @@ def create_mecha_knight(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
         _deal_damage_to_player(combat, creature, charge_dmg)
 
     def flamethrower(combat: CombatState) -> None:
+        flamethrower_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            MECHA_KNIGHT_DEADLY_FLAMETHROWER_DAMAGE,
+            MECHA_KNIGHT_BASE_FLAMETHROWER_DAMAGE,
+        )
+        _deal_damage_to_player(combat, creature, flamethrower_dmg)
         for target in living_player_targets(combat):
             for _ in range(MECHA_KNIGHT_FLAMETHROWER_BURNS):
                 combat.add_generated_card_to_creature_hand(
@@ -1658,6 +1807,12 @@ def create_mecha_knight(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
         MECHA_KNIGHT_DEADLY_CHARGE_DAMAGE,
         MECHA_KNIGHT_BASE_CHARGE_DAMAGE,
     )
+    flamethrower_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        MECHA_KNIGHT_DEADLY_FLAMETHROWER_DAMAGE,
+        MECHA_KNIGHT_BASE_FLAMETHROWER_DAMAGE,
+    )
     heavy_cleave_intent_damage = _ascension_value(
         ascension_level,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
@@ -1675,7 +1830,7 @@ def create_mecha_knight(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
         MECHA_KNIGHT_FLAMETHROWER_MOVE: MoveState(
             MECHA_KNIGHT_FLAMETHROWER_MOVE,
             flamethrower,
-            [status_intent()],
+            [attack_intent(flamethrower_intent_damage), status_intent()],
             follow_up_id=MECHA_KNIGHT_WINDUP_MOVE,
         ),
         MECHA_KNIGHT_WINDUP_MOVE: MoveState(
@@ -1816,177 +1971,137 @@ def create_soul_nexus(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Mon
 # BOSS ENCOUNTERS
 # ========================================================================
 
-# ---- Door + Doormaker ----
+# ---- Aeonglass (Act 3 boss; replaced Door + Doormaker as of v0.111.0) ----
 
-DOOR_MONSTER_ID = "DOOR"
-DOOR_BASE_HP = 155
-DOOR_TOUGH_HP = 165
-DOOR_BASE_DRAMATIC_OPEN_DAMAGE = 25
-DOOR_DEADLY_DRAMATIC_OPEN_DAMAGE = 28
-DOOR_ENFORCE_DAMAGE = 20
-DOOR_BASE_ENFORCE_STRENGTH = 3
-DOOR_DEADLY_ENFORCE_STRENGTH = 4
-DOOR_SLAM_DAMAGE = 15
-DOOR_SLAM_REPEAT = 2
-DOOR_REVIVAL_AMOUNT = 1
-DOOR_DRAMATIC_OPEN_MOVE = "DRAMATIC_OPEN_MOVE"
-DOOR_DOOR_SLAM_MOVE = "DOOR_SLAM_MOVE"
-DOOR_ENFORCE_MOVE = "ENFORCE_MOVE"
-DOOR_DEAD_MOVE = "DEAD_MOVE"
-
-DOORMAKER_MONSTER_ID = "DOORMAKER"
-DOORMAKER_BASE_HP = 489
-DOORMAKER_TOUGH_HP = 512
-DOORMAKER_BASE_BEAM_DAMAGE = 31
-DOORMAKER_DEADLY_BEAM_DAMAGE = 34
-DOORMAKER_BASE_GET_BACK_IN_DAMAGE = 40
-DOORMAKER_DEADLY_GET_BACK_IN_DAMAGE = 45
-DOORMAKER_STRENGTH = 5
-DOORMAKER_BASE_DOOR_STRENGTH_SCALE = 3
-DOORMAKER_DEADLY_DOOR_STRENGTH_SCALE = 4
-DOORMAKER_BASE_DOOR_HP_SCALE = 20
-DOORMAKER_TOUGH_DOOR_HP_SCALE = 25
-DOORMAKER_WHAT_IS_IT_MOVE = "WHAT_IS_IT_MOVE"
-DOORMAKER_BEAM_MOVE = "BEAM_MOVE"
-DOORMAKER_GET_BACK_IN_MOVE = "GET_BACK_IN_MOVE"
+AEONGLASS_MONSTER_ID = "AEONGLASS"
+AEONGLASS_BASE_HP = 512
+AEONGLASS_TOUGH_HP = 535
+AEONGLASS_BASE_EBB_DAMAGE = 22
+AEONGLASS_DEADLY_EBB_DAMAGE = 26
+AEONGLASS_EBB_BLOCK = 33
+AEONGLASS_BASE_EYE_LASERS_DAMAGE = 11
+AEONGLASS_DEADLY_EYE_LASERS_DAMAGE = 12
+AEONGLASS_EYE_LASERS_REPEAT = 2
+AEONGLASS_BASE_INTENSITY_STRENGTH = 3
+AEONGLASS_DEADLY_INTENSITY_STRENGTH = 4
+AEONGLASS_BASE_WITHER_AMOUNT = 1
+AEONGLASS_DEADLY_WITHER_AMOUNT = 2
+AEONGLASS_WITHERING_PRESENCE_CARDS_LEFT = 6
+AEONGLASS_EBB_MOVE = "EBB_MOVE"
+AEONGLASS_EYE_LASERS_MOVE = "EYE_LASERS_MOVE"
+AEONGLASS_INCREASING_INTENSITY_MOVE = "INCREASING_INTENSITY_MOVE"
 
 
-def create_door(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
+def _fake_upgrade_all_withers(combat: CombatState) -> None:
+    """Fake-upgrade every Wither in the players' piles (+3 damage each)."""
+    from sts2_env.cards.status import WITHER_DAMAGE_PER_FAKE_UPGRADE
+
+    for player_state in combat.combat_player_states:
+        for pile in player_state.all_piles:
+            for card in pile:
+                if card.card_id == CardId.WITHER:
+                    card.base_damage = (card.base_damage or 0) + WITHER_DAMAGE_PER_FAKE_UPGRADE
+
+
+def create_aeonglass(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
     hp = _ascension_value(
         ascension_level,
         TOUGH_ENEMIES_ASCENSION_LEVEL,
-        DOOR_TOUGH_HP,
-        DOOR_BASE_HP,
+        AEONGLASS_TOUGH_HP,
+        AEONGLASS_BASE_HP,
     )
-    creature = Creature(max_hp=hp, monster_id=DOOR_MONSTER_ID)
+    # C#: MaxInitialHp == MinInitialHp -- a fixed HP pool, no roll.
+    creature = Creature(max_hp=hp, monster_id=AEONGLASS_MONSTER_ID)
 
-    def dramatic_open(combat: CombatState) -> None:
-        dramatic_open_dmg = _ascension_value(
+    def ebb(combat: CombatState) -> None:
+        ebb_dmg = _ascension_value(
             _combat_ascension_level(combat),
             DEADLY_ENEMIES_ASCENSION_LEVEL,
-            DOOR_DEADLY_DRAMATIC_OPEN_DAMAGE,
-            DOOR_BASE_DRAMATIC_OPEN_DAMAGE,
+            AEONGLASS_DEADLY_EBB_DAMAGE,
+            AEONGLASS_BASE_EBB_DAMAGE,
         )
-        _deal_damage_to_player(combat, creature, dramatic_open_dmg)
+        _deal_damage_to_player(combat, creature, ebb_dmg)
+        _gain_block(creature, AEONGLASS_EBB_BLOCK, combat)
 
-    def enforce(combat: CombatState) -> None:
-        _deal_damage_to_player(combat, creature, DOOR_ENFORCE_DAMAGE)
-        enforce_strength = _ascension_value(
+    def eye_lasers(combat: CombatState) -> None:
+        laser_dmg = _ascension_value(
             _combat_ascension_level(combat),
             DEADLY_ENEMIES_ASCENSION_LEVEL,
-            DOOR_DEADLY_ENFORCE_STRENGTH,
-            DOOR_BASE_ENFORCE_STRENGTH,
+            AEONGLASS_DEADLY_EYE_LASERS_DAMAGE,
+            AEONGLASS_BASE_EYE_LASERS_DAMAGE,
         )
-        combat.apply_power_to(creature, PowerId.STRENGTH, enforce_strength, applier=creature)
+        _deal_damage_to_player(combat, creature, laser_dmg, hits=AEONGLASS_EYE_LASERS_REPEAT)
 
-    def door_slam(combat: CombatState) -> None:
-        _deal_damage_to_player(combat, creature, DOOR_SLAM_DAMAGE, hits=DOOR_SLAM_REPEAT)
+    def increasing_intensity(combat: CombatState) -> None:
+        _fake_upgrade_all_withers(combat)
+        presence = creature.powers.get(PowerId.WITHERING_PRESENCE)
+        level = presence.wither_upgrade_level + 1 if presence is not None else 1
+        if presence is not None:
+            presence.wither_upgrade_level = level
+        wither_amount = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AEONGLASS_DEADLY_WITHER_AMOUNT,
+            AEONGLASS_BASE_WITHER_AMOUNT,
+        )
+        add_generated_cards_to_living_player_discards(
+            combat,
+            lambda: make_wither(level),
+            wither_amount,
+        )
+        strength = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AEONGLASS_DEADLY_INTENSITY_STRENGTH,
+            AEONGLASS_BASE_INTENSITY_STRENGTH,
+        )
+        if presence is not None:
+            strength += presence.additional_strength
+            presence.additional_strength += 1
+        combat.apply_power_to(creature, PowerId.STRENGTH, strength, applier=creature)
 
-    def dead_move(combat: CombatState) -> None:
-        pass
-
-    dramatic_open_intent_damage = _ascension_value(
+    ebb_intent_damage = _ascension_value(
         ascension_level,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
-        DOOR_DEADLY_DRAMATIC_OPEN_DAMAGE,
-        DOOR_BASE_DRAMATIC_OPEN_DAMAGE,
+        AEONGLASS_DEADLY_EBB_DAMAGE,
+        AEONGLASS_BASE_EBB_DAMAGE,
+    )
+    eye_lasers_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        AEONGLASS_DEADLY_EYE_LASERS_DAMAGE,
+        AEONGLASS_BASE_EYE_LASERS_DAMAGE,
+    )
+    wither_intent_amount = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        AEONGLASS_DEADLY_WITHER_AMOUNT,
+        AEONGLASS_BASE_WITHER_AMOUNT,
     )
 
     states: dict[str, MonsterState] = {
-        DOOR_DRAMATIC_OPEN_MOVE: MoveState(
-            DOOR_DRAMATIC_OPEN_MOVE,
-            dramatic_open,
-            [attack_intent(dramatic_open_intent_damage)],
-            follow_up_id=DOOR_DOOR_SLAM_MOVE,
+        AEONGLASS_EBB_MOVE: MoveState(
+            AEONGLASS_EBB_MOVE,
+            ebb,
+            [attack_intent(ebb_intent_damage), defend_intent()],
+            follow_up_id=AEONGLASS_EYE_LASERS_MOVE,
         ),
-        DOOR_DOOR_SLAM_MOVE: MoveState(
-            DOOR_DOOR_SLAM_MOVE,
-            door_slam,
-            [multi_attack_intent(DOOR_SLAM_DAMAGE, DOOR_SLAM_REPEAT)],
-            follow_up_id=DOOR_ENFORCE_MOVE,
+        AEONGLASS_EYE_LASERS_MOVE: MoveState(
+            AEONGLASS_EYE_LASERS_MOVE,
+            eye_lasers,
+            [multi_attack_intent(eye_lasers_intent_damage, AEONGLASS_EYE_LASERS_REPEAT)],
+            follow_up_id=AEONGLASS_INCREASING_INTENSITY_MOVE,
         ),
-        DOOR_ENFORCE_MOVE: MoveState(
-            DOOR_ENFORCE_MOVE,
-            enforce,
-            [attack_intent(DOOR_ENFORCE_DAMAGE), buff_intent()],
-            follow_up_id=DOOR_DRAMATIC_OPEN_MOVE,
-        ),
-        DOOR_DEAD_MOVE: MoveState(DOOR_DEAD_MOVE, dead_move, [Intent(IntentType.UNKNOWN)], follow_up_id=DOOR_DEAD_MOVE),
-    }
-
-    creature.apply_power(PowerId.DOOR_REVIVAL, DOOR_REVIVAL_AMOUNT)
-    return creature, MonsterAI(states, DOOR_DRAMATIC_OPEN_MOVE)
-
-
-def create_doormaker(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
-    hp = _ascension_value(
-        ascension_level,
-        TOUGH_ENEMIES_ASCENSION_LEVEL,
-        DOORMAKER_TOUGH_HP,
-        DOORMAKER_BASE_HP,
-    )
-    creature = Creature(max_hp=hp, monster_id=DOORMAKER_MONSTER_ID)
-
-    def what_is_it(combat: CombatState) -> None:
-        pass
-
-    def beam(combat: CombatState) -> None:
-        laser_beam_dmg = _ascension_value(
-            _combat_ascension_level(combat),
-            DEADLY_ENEMIES_ASCENSION_LEVEL,
-            DOORMAKER_DEADLY_BEAM_DAMAGE,
-            DOORMAKER_BASE_BEAM_DAMAGE,
-        )
-        _deal_damage_to_player(combat, creature, laser_beam_dmg)
-
-    def get_back_in(combat: CombatState) -> None:
-        get_back_in_dmg = _ascension_value(
-            _combat_ascension_level(combat),
-            DEADLY_ENEMIES_ASCENSION_LEVEL,
-            DOORMAKER_DEADLY_GET_BACK_IN_DAMAGE,
-            DOORMAKER_BASE_GET_BACK_IN_DAMAGE,
-        )
-        _deal_damage_to_player(combat, creature, get_back_in_dmg)
-        if combat.is_over or creature.is_dead:
-            return
-        combat.apply_power_to(creature, PowerId.STRENGTH, DOORMAKER_STRENGTH, applier=creature)
-        combat.revive_door()
-        combat.escape_creature(creature)
-
-    laser_beam_intent_damage = _ascension_value(
-        ascension_level,
-        DEADLY_ENEMIES_ASCENSION_LEVEL,
-        DOORMAKER_DEADLY_BEAM_DAMAGE,
-        DOORMAKER_BASE_BEAM_DAMAGE,
-    )
-    get_back_in_intent_damage = _ascension_value(
-        ascension_level,
-        DEADLY_ENEMIES_ASCENSION_LEVEL,
-        DOORMAKER_DEADLY_GET_BACK_IN_DAMAGE,
-        DOORMAKER_BASE_GET_BACK_IN_DAMAGE,
-    )
-
-    states: dict[str, MonsterState] = {
-        DOORMAKER_WHAT_IS_IT_MOVE: MoveState(
-            DOORMAKER_WHAT_IS_IT_MOVE,
-            what_is_it,
-            [Intent(IntentType.STUN)],
-            follow_up_id=DOORMAKER_BEAM_MOVE,
-        ),
-        DOORMAKER_BEAM_MOVE: MoveState(
-            DOORMAKER_BEAM_MOVE,
-            beam,
-            [attack_intent(laser_beam_intent_damage)],
-            follow_up_id=DOORMAKER_GET_BACK_IN_MOVE,
-        ),
-        DOORMAKER_GET_BACK_IN_MOVE: MoveState(
-            DOORMAKER_GET_BACK_IN_MOVE,
-            get_back_in,
-            [attack_intent(get_back_in_intent_damage), buff_intent()],
-            follow_up_id=DOORMAKER_GET_BACK_IN_MOVE,
+        AEONGLASS_INCREASING_INTENSITY_MOVE: MoveState(
+            AEONGLASS_INCREASING_INTENSITY_MOVE,
+            increasing_intensity,
+            [status_intent(), buff_intent()],
+            follow_up_id=AEONGLASS_EBB_MOVE,
         ),
     }
-    return creature, MonsterAI(states, DOORMAKER_WHAT_IS_IT_MOVE)
+    creature.apply_power(PowerId.ARTIFACT, 3)
+    creature.apply_power(PowerId.WITHERING_PRESENCE, AEONGLASS_WITHERING_PRESENCE_CARDS_LEFT)
+    return creature, MonsterAI(states, AEONGLASS_EBB_MOVE)
 
 
 # ---- Queen ----
@@ -2020,7 +2135,7 @@ QUEEN_BURN_BRIGHT_STRENGTH = 1
 QUEEN_BURN_BRIGHT_BLOCK = 20
 QUEEN_ENRAGE_STRENGTH = 2
 QUEEN_PUPPET_STRINGS_MOVE = "PUPPET_STRINGS_MOVE"
-QUEEN_YOUR_MINE_MOVE = "YOUR_MINE_MOVE"
+QUEEN_YOU_ARE_MINE_MOVE = "YOU_ARE_MINE_MOVE"
 QUEEN_YOURE_MINE_NOW_BRANCH = "YOURE_MINE_NOW_BRANCH"
 QUEEN_BURN_BRIGHT_FOR_ME_MOVE = "BURN_BRIGHT_FOR_ME_MOVE"
 QUEEN_BURN_BRIGHT_FOR_ME_BRANCH = "BURN_BRIGHT_FOR_ME_BRANCH"
@@ -2105,10 +2220,10 @@ def create_queen(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterA
             QUEEN_PUPPET_STRINGS_MOVE,
             puppet_strings,
             [strong_debuff_intent()],
-            follow_up_id=QUEEN_YOUR_MINE_MOVE,
+            follow_up_id=QUEEN_YOU_ARE_MINE_MOVE,
         ),
-        QUEEN_YOUR_MINE_MOVE: MoveState(
-            QUEEN_YOUR_MINE_MOVE,
+        QUEEN_YOU_ARE_MINE_MOVE: MoveState(
+            QUEEN_YOU_ARE_MINE_MOVE,
             youre_mine,
             [debuff_intent()],
             follow_up_id=QUEEN_YOURE_MINE_NOW_BRANCH,
@@ -2159,8 +2274,6 @@ TEST_SUBJECT_DEADLY_BITE_DAMAGE = 22
 TEST_SUBJECT_BASE_SKULL_BASH_DAMAGE = 14
 TEST_SUBJECT_DEADLY_SKULL_BASH_DAMAGE = 16
 TEST_SUBJECT_SKULL_BASH_VULNERABLE = 1
-TEST_SUBJECT_BASE_POUNCE_DAMAGE = 30
-TEST_SUBJECT_DEADLY_POUNCE_DAMAGE = 32
 TEST_SUBJECT_BASE_MULTI_CLAW_DAMAGE = 10
 TEST_SUBJECT_DEADLY_MULTI_CLAW_DAMAGE = 11
 TEST_SUBJECT_BASE_MULTI_CLAW_COUNT = 3
@@ -2180,10 +2293,9 @@ TEST_SUBJECT_RESPAWN_MOVE = "RESPAWN_MOVE"
 TEST_SUBJECT_REVIVE_BRANCH = "REVIVE_BRANCH"
 TEST_SUBJECT_BITE_MOVE = "BITE_MOVE"
 TEST_SUBJECT_SKULL_BASH_MOVE = "SKULL_BASH_MOVE"
-TEST_SUBJECT_POUNCE_MOVE = "POUNCE_MOVE"
 TEST_SUBJECT_MULTI_CLAW_MOVE = "MULTI_CLAW_MOVE"
 TEST_SUBJECT_PHASE3_LACERATE_MOVE = "PHASE3_LACERATE_MOVE"
-TEST_SUBJECT_BIG_POUNCE_MOVE = "BIG_POUNCE_MOVE"
+TEST_SUBJECT_BIG_POUNCE_MOVE = "BIG_POUNCE"
 TEST_SUBJECT_BURNING_GROWL_MOVE = "BURNING_GROWL_MOVE"
 
 
@@ -2260,15 +2372,6 @@ def create_test_subject(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
             applier=creature,
         )
 
-    def pounce(combat: CombatState) -> None:
-        pounce_dmg = _ascension_value(
-            _combat_ascension_level(combat),
-            DEADLY_ENEMIES_ASCENSION_LEVEL,
-            TEST_SUBJECT_DEADLY_POUNCE_DAMAGE,
-            TEST_SUBJECT_BASE_POUNCE_DAMAGE,
-        )
-        _deal_damage_to_player(combat, creature, pounce_dmg)
-
     def multi_claw(combat: CombatState) -> None:
         multi_claw_dmg = _ascension_value(
             _combat_ascension_level(combat),
@@ -2321,12 +2424,6 @@ def create_test_subject(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
         TEST_SUBJECT_DEADLY_SKULL_BASH_DAMAGE,
         TEST_SUBJECT_BASE_SKULL_BASH_DAMAGE,
     )
-    pounce_intent_damage = _ascension_value(
-        ascension_level,
-        DEADLY_ENEMIES_ASCENSION_LEVEL,
-        TEST_SUBJECT_DEADLY_POUNCE_DAMAGE,
-        TEST_SUBJECT_BASE_POUNCE_DAMAGE,
-    )
     multi_claw_intent_damage = _ascension_value(
         ascension_level,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
@@ -2371,17 +2468,11 @@ def create_test_subject(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
             [attack_intent(skull_bash_intent_damage), debuff_intent()],
             follow_up_id=TEST_SUBJECT_BITE_MOVE,
         ),
-        TEST_SUBJECT_POUNCE_MOVE: MoveState(
-            TEST_SUBJECT_POUNCE_MOVE,
-            pounce,
-            [attack_intent(pounce_intent_damage)],
-            follow_up_id=TEST_SUBJECT_MULTI_CLAW_MOVE,
-        ),
         TEST_SUBJECT_MULTI_CLAW_MOVE: MoveState(
             TEST_SUBJECT_MULTI_CLAW_MOVE,
             multi_claw,
             [multi_attack_intent(multi_claw_intent_damage, _multi_claw_total_count())],
-            follow_up_id=TEST_SUBJECT_POUNCE_MOVE,
+            follow_up_id=TEST_SUBJECT_MULTI_CLAW_MOVE,
         ),
         TEST_SUBJECT_PHASE3_LACERATE_MOVE: MoveState(
             TEST_SUBJECT_PHASE3_LACERATE_MOVE,

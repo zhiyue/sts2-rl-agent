@@ -33,14 +33,16 @@ def _gain_unpowered_block(owner: Creature, amount: int, combat: CombatState) -> 
 
 @register_relic
 class AmethystAubergine(RelicInstance):
-    """Gain 10 gold after non-boss combat rooms."""
+    """Gain 15 gold after non-boss combat rooms."""
     relic_id = RelicId.AMETHYST_AUBERGINE
     rarity = RelicRarity.COMMON
     pool = RelicPool.SHARED
+    # IsAllowedInShops => false (v0.111.0); shop relic rolls do not consult this yet.
+    is_allowed_in_shops = False
 
     def is_allowed(self, run_state: RunState) -> bool:
         return self.is_before_act3_treasure_chest(run_state)
-    GOLD = 10
+    GOLD = 15
 
     def modify_rewards(
         self,
@@ -289,22 +291,37 @@ class OddlySmoothStone(RelicInstance):
 
 @register_relic
 class Pendulum(RelicInstance):
-    """Draw 1 card on shuffle."""
+    """Every 3rd turn, draw 1 additional card."""
     relic_id = RelicId.PENDULUM
     rarity = RelicRarity.COMMON
     pool = RelicPool.SHARED
+    CARDS = 1
+    TURNS = 3
 
-    def after_shuffle(self, owner: Creature, combat: CombatState) -> None:
-        combat.draw_cards(owner, 1)
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._turns_seen: int = 0
+
+    def before_hand_draw(self, owner: Creature, combat: CombatState) -> None:
+        # v0.111.0 Pendulum.cs BeforeHandDraw: TurnsSeen = (TurnsSeen + 1) % Turns.
+        self._turns_seen = (self._turns_seen + 1) % self.TURNS
+
+    def modify_hand_draw(self, owner: Creature, draw: int, combat: CombatState) -> int:
+        if self._turns_seen == 0:
+            return draw + self.CARDS
+        return draw
+
+    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        pass  # _turns_seen persists across combats (SavedProperty)
 
 
 @register_relic
 class Permafrost(RelicInstance):
-    """First Power card played per combat: gain 6 block."""
+    """First Power card played per combat: gain 7 block."""
     relic_id = RelicId.PERMAFROST
-    rarity = RelicRarity.COMMON
+    rarity = RelicRarity.UNCOMMON
     pool = RelicPool.SHARED
-    BLOCK = 6
+    BLOCK = 7
 
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)
@@ -531,7 +548,7 @@ class Whetstone(RelicInstance):
 
 @register_relic
 class BookOfFiveRings(RelicInstance):
-    """Every 5 cards added to deck, heal 15."""
+    """Every 5 cards added to deck, heal 20."""
     relic_id = RelicId.BOOK_OF_FIVE_RINGS
     rarity = RelicRarity.COMMON
     pool = RelicPool.SHARED
@@ -539,7 +556,7 @@ class BookOfFiveRings(RelicInstance):
     def is_allowed(self, run_state: RunState) -> bool:
         return self.is_before_act3_treasure_chest(run_state)
     CARDS_THRESHOLD = 5
-    HEAL = 15
+    HEAL = 20
 
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)

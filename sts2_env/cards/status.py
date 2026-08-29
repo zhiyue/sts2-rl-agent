@@ -1382,6 +1382,35 @@ def burn_turn_end_in_hand(card: CardInstance, combat: CombatState, cards_in_hand
     _deal_self_damage(card, combat, card.effect_vars.get("damage", BURN_DAMAGE))
 
 
+WITHER_BASE_DAMAGE = 3
+WITHER_DAMAGE_PER_FAKE_UPGRADE = 3
+
+
+def make_wither(fake_upgrade_level: int = 0) -> CardInstance:
+    """Aeonglass status card. Unplayable; end-of-turn: deals 3 damage to the
+    holder (unpowered), increased by 3 per fake upgrade applied by the boss."""
+    return CardInstance(
+        card_id=CardId.WITHER, cost=-1, card_type=CardType.STATUS,
+        target_type=TargetType.NONE, rarity=CardRarity.STATUS,
+        keywords=frozenset({"unplayable"}),
+        base_damage=WITHER_BASE_DAMAGE
+        + WITHER_DAMAGE_PER_FAKE_UPGRADE * fake_upgrade_level,
+        instance_id=_get_next_id(),
+    )
+
+
+@register_effect(CardId.WITHER)
+def wither_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    """Unplayable. End-of-turn: deals 3 damage to the holder (unpowered).
+    Triggered by combat end-of-turn hook, not this function."""
+    pass
+
+
+@register_turn_end_in_hand_hook(CardId.WITHER)
+def wither_turn_end_in_hand(card: CardInstance, combat: CombatState, cards_in_hand_at_turn_end: int) -> None:
+    _deal_self_damage(card, combat, card.base_damage or WITHER_BASE_DAMAGE)
+
+
 @register_effect(CardId.DAZED)
 def dazed_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     """Unplayable, Ethereal. Pure dead-weight status card."""

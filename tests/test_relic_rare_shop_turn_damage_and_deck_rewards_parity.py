@@ -236,7 +236,7 @@ def test_precarious_shears_deck_choice_mode_queues_remove_reward_and_applies_dam
     starting_deck_size = len(run_state.player.deck)
 
     assert run_state.player.obtain_relic("PRECARIOUS_SHEARS")
-    assert run_state.player.current_hp == start_hp - 13
+    assert run_state.player.current_hp == start_hp - 16
     assert len(run_state.player.deck) == starting_deck_size
 
     remove_rewards = [reward for reward in run_state.pending_rewards if isinstance(reward, RemoveCardReward)]

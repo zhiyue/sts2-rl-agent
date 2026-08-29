@@ -425,8 +425,7 @@ def test_scroll_boxes_enqueues_choose_one_card_bundle_reward():
 
     bundles = [reward for reward in run_state.pending_rewards if isinstance(reward, CardBundlesReward)]
     assert len(bundles) == 1
-    assert run_state.player.gold == 0
-    assert starting_gold > run_state.player.gold
+    assert run_state.player.gold == starting_gold
     assert len(bundles[0].bundles) == 2
     assert all(len(bundle) == 3 for bundle in bundles[0].bundles)
     assert all(
@@ -779,13 +778,13 @@ def test_amethyst_aubergine_adds_bonus_gold_reward_object():
 
     gold_rewards = [reward for reward in generated if isinstance(reward, GoldReward)]
     assert len(gold_rewards) == 2
-    assert any(reward.min_gold == 10 and reward.max_gold == 10 for reward in gold_rewards)
+    assert any(reward.min_gold == 15 and reward.max_gold == 15 for reward in gold_rewards)
 
     run_state.current_act_index = 0
     boss_rewards = RewardsSet(run_state.player.player_id).with_rewards_from_room(create_room(RoomType.BOSS), run_state)
     boss_generated = boss_rewards.generate_without_offering(run_state)
     assert any(
-        isinstance(reward, GoldReward) and reward.min_gold == 10 and reward.max_gold == 10
+        isinstance(reward, GoldReward) and reward.min_gold == 15 and reward.max_gold == 15
         for reward in boss_generated
     )
 
@@ -796,7 +795,7 @@ def test_amethyst_aubergine_adds_bonus_gold_reward_object():
     )
     final_boss_generated = final_boss_rewards.generate_without_offering(run_state)
     assert not any(
-        isinstance(reward, GoldReward) and reward.min_gold == 10 and reward.max_gold == 10
+        isinstance(reward, GoldReward) and reward.min_gold == 15 and reward.max_gold == 15
         for reward in final_boss_generated
     )
 

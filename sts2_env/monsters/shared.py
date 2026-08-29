@@ -338,14 +338,16 @@ def create_dense_vegetation_wriggler(
 TORCH_HEAD_AMALGAM_MONSTER_ID = "TORCH_HEAD_AMALGAM"
 TORCH_HEAD_AMALGAM_BASE_HP = 199
 TORCH_HEAD_AMALGAM_TOUGH_HP = 211
+TORCH_HEAD_AMALGAM_BASE_STRONG_TACKLE_DAMAGE = 26
+TORCH_HEAD_AMALGAM_DEADLY_STRONG_TACKLE_DAMAGE = 32
 TORCH_HEAD_AMALGAM_BASE_TACKLE_DAMAGE = 18
-TORCH_HEAD_AMALGAM_DEADLY_TACKLE_DAMAGE = 19
+TORCH_HEAD_AMALGAM_DEADLY_TACKLE_DAMAGE = 22
 TORCH_HEAD_AMALGAM_BASE_WEAK_TACKLE_DAMAGE = 14
-TORCH_HEAD_AMALGAM_DEADLY_WEAK_TACKLE_DAMAGE = 15
+TORCH_HEAD_AMALGAM_DEADLY_WEAK_TACKLE_DAMAGE = 16
 TORCH_HEAD_AMALGAM_SOUL_BEAM_DAMAGE = 8
 TORCH_HEAD_AMALGAM_SOUL_BEAM_REPEAT = 3
 TORCH_HEAD_AMALGAM_MINION = 1
-TORCH_HEAD_AMALGAM_TACKLE_1_MOVE = "TACKLE_1_MOVE"
+TORCH_HEAD_AMALGAM_STRONG_TACKLE_MOVE = "STRONG_TACKLE_MOVE"
 TORCH_HEAD_AMALGAM_TACKLE_2_MOVE = "TACKLE_2_MOVE"
 TORCH_HEAD_AMALGAM_BEAM_MOVE = "BEAM_MOVE"
 TORCH_HEAD_AMALGAM_TACKLE_3_MOVE = "TACKLE_3_MOVE"
@@ -360,6 +362,15 @@ def create_torch_head_amalgam(rng: Rng, ascension_level: int = 0) -> tuple[Creat
         TORCH_HEAD_AMALGAM_BASE_HP,
     )
     creature = Creature(max_hp=hp, monster_id=TORCH_HEAD_AMALGAM_MONSTER_ID)
+
+    def strong_tackle(combat: CombatState) -> None:
+        strong_tackle_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            TORCH_HEAD_AMALGAM_DEADLY_STRONG_TACKLE_DAMAGE,
+            TORCH_HEAD_AMALGAM_BASE_STRONG_TACKLE_DAMAGE,
+        )
+        _deal_damage_to_player(combat, creature, strong_tackle_dmg)
 
     def tackle(combat: CombatState) -> None:
         tackle_dmg = _ascension_value(
@@ -387,6 +398,12 @@ def create_torch_head_amalgam(rng: Rng, ascension_level: int = 0) -> tuple[Creat
             hits=TORCH_HEAD_AMALGAM_SOUL_BEAM_REPEAT,
         )
 
+    strong_tackle_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        TORCH_HEAD_AMALGAM_DEADLY_STRONG_TACKLE_DAMAGE,
+        TORCH_HEAD_AMALGAM_BASE_STRONG_TACKLE_DAMAGE,
+    )
     tackle_intent_damage = _ascension_value(
         ascension_level,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
@@ -401,10 +418,10 @@ def create_torch_head_amalgam(rng: Rng, ascension_level: int = 0) -> tuple[Creat
     )
 
     states: dict[str, MonsterState] = {
-        TORCH_HEAD_AMALGAM_TACKLE_1_MOVE: MoveState(
-            TORCH_HEAD_AMALGAM_TACKLE_1_MOVE,
-            tackle,
-            [attack_intent(tackle_intent_damage)],
+        TORCH_HEAD_AMALGAM_STRONG_TACKLE_MOVE: MoveState(
+            TORCH_HEAD_AMALGAM_STRONG_TACKLE_MOVE,
+            strong_tackle,
+            [attack_intent(strong_tackle_intent_damage)],
             follow_up_id=TORCH_HEAD_AMALGAM_TACKLE_2_MOVE,
         ),
         TORCH_HEAD_AMALGAM_TACKLE_2_MOVE: MoveState(
@@ -434,7 +451,7 @@ def create_torch_head_amalgam(rng: Rng, ascension_level: int = 0) -> tuple[Creat
     }
 
     creature.apply_power(PowerId.MINION, TORCH_HEAD_AMALGAM_MINION)
-    return creature, MonsterAI(states, TORCH_HEAD_AMALGAM_TACKLE_1_MOVE)
+    return creature, MonsterAI(states, TORCH_HEAD_AMALGAM_STRONG_TACKLE_MOVE)
 
 
 # ========================================================================

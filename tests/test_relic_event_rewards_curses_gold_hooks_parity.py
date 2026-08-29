@@ -73,7 +73,7 @@ class TestRelicEventRewardsCursesGoldHooksParity:
         assert isinstance(reward, UpgradeCardsReward)
         assert reward.count == 6
 
-    def test_seal_of_gold_spends_five_gold_for_one_energy_each_player_turn(self):
+    def test_seal_of_gold_spends_three_gold_for_one_energy_each_player_turn(self):
         combat = CombatState(
             player_hp=80,
             player_max_hp=80,
@@ -87,37 +87,52 @@ class TestRelicEventRewardsCursesGoldHooksParity:
         combat.add_enemy(creature, ai)
         combat.start_combat()
 
-        assert combat.gold == 15
+        assert combat.gold == 17
         assert combat.energy == 4
 
         combat.end_player_turn()
-        assert combat.gold == 10
+        assert combat.gold == 14
         assert combat.energy == 4
 
-    def test_sere_talon_deferred_followups_queue_two_curses_and_three_wishes(self):
+    def test_distinguished_cape_adds_random_curses_and_apparitions_without_hp_loss(self):
+        run_state = RunState(seed=777, character_id="Ironclad")
+        run_state.rng.niche = _FirstSampleRng()
+        start_max_hp = run_state.player.max_hp
+        starting_deck_size = len(run_state.player.deck)
+
+        assert run_state.player.obtain_relic("DISTINGUISHED_CAPE")
+
+        assert run_state.player.max_hp == start_max_hp
+        added_cards = [card.card_id.name for card in run_state.player.deck[starting_deck_size:]]
+        assert added_cards.count("APPARITION") == 3
+        assert len([name for name in added_cards if name != "APPARITION"]) == 2
+
+    def test_sere_talon_loses_nine_max_hp_and_queues_only_three_wishes(self):
         run_state = RunState(seed=775, character_id="Ironclad")
         run_state.defer_followup_rewards = True
-        run_state.rng.rewards = _FailingSampleRng()
-        run_state.rng.niche = _FirstSampleRng()
+        run_state.rng.niche = _FailingSampleRng()
+        start_max_hp = run_state.player.max_hp
 
         assert run_state.player.obtain_relic("SERE_TALON")
+        assert run_state.player.max_hp == start_max_hp - 9
         assert len(run_state.pending_rewards) == 1
         assert isinstance(run_state.pending_rewards[0], AddCardsReward)
         added_cards = [card.card_id.name for card in run_state.pending_rewards[0].cards]
         assert added_cards.count("WISH") == 3
-        assert len([name for name in added_cards if name not in {"WISH"}]) == 2
+        assert len(added_cards) == 3
 
-    def test_sere_talon_immediate_curses_use_niche_rng(self):
+    def test_sere_talon_immediate_adds_only_three_wishes_after_max_hp_loss(self):
         run_state = RunState(seed=775, character_id="Ironclad")
-        run_state.rng.rewards = _FailingSampleRng()
-        run_state.rng.niche = _FirstSampleRng()
+        run_state.rng.niche = _FailingSampleRng()
+        start_max_hp = run_state.player.max_hp
         deck_size_before = len(run_state.player.deck)
 
         assert run_state.player.obtain_relic("SERE_TALON")
 
+        assert run_state.player.max_hp == start_max_hp - 9
         added_cards = [card.card_id.name for card in run_state.player.deck[deck_size_before:]]
         assert added_cards.count("WISH") == 3
-        assert len([name for name in added_cards if name != "WISH"]) == 2
+        assert len(added_cards) == 3
 
     def test_small_capsule_queues_one_relic_reward(self):
         run_state = RunState(seed=776, character_id="Ironclad")
