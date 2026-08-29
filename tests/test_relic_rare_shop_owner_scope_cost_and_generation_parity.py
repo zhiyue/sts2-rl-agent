@@ -113,6 +113,23 @@ class TestRelicRareShopOwnerScopeCostAndGenerationParity:
         assert enemy.get_power_amount(PowerId.SHACKLING_POTION) == 4
         assert enemy.get_power_amount(PowerId.STRENGTH) == -4
 
+    def test_unsettling_lamp_ignores_debuff_absorbed_by_artifact(self):
+        """Matches v0.111.0 UnsettlingLamp.cs: debuffs absorbed by Artifact don't trigger the relic."""
+        combat = _make_ironclad_combat(["UnsettlingLamp"], seed=1900)
+        enemy = combat.enemies[0]
+        source = make_bash()
+        source.owner = combat.player
+        combat.apply_power_to(enemy, PowerId.ARTIFACT, 1, applier=combat.player)
+
+        combat.apply_power_to(enemy, PowerId.STRENGTH, -1, applier=combat.player, source=source)
+
+        assert enemy.get_power_amount(PowerId.ARTIFACT) == 0
+        assert enemy.get_power_amount(PowerId.STRENGTH) == 0
+
+        combat.apply_power_to(enemy, PowerId.STRENGTH, -1, applier=combat.player, source=source)
+
+        assert enemy.get_power_amount(PowerId.STRENGTH) == -2
+
     def test_intimidating_helmet_grants_four_block_when_playing_cards_costing_two_or_more(self):
         """Matches IntimidatingHelmet.cs: cards spending at least 2 energy grant 4 block before play."""
         combat = _make_ironclad_combat(["IntimidatingHelmet"], seed=1901)
@@ -253,7 +270,15 @@ class TestRelicRareShopOwnerScopeCostAndGenerationParity:
 
         combat.start_combat()
 
-        assert combat.hand[-1].card_id != CardId.BASH
+        generated = combat.hand[-1]
+        assert generated.card_id != CardId.BASH
+        # v0.111.0: SetToFreeThisTurn instead of EnergyCost.SetThisCombat(0).
+        assert generated.cost == 0
+
+        base_cost = generated.original_cost
+        combat.end_player_turn()
+
+        assert generated.cost == base_cost
 
     def test_power_cell_moves_two_zero_cost_cards_from_draw_pile_to_hand_on_round_one(self):
         """Matches PowerCell.cs: round 1 moves up to 2 random zero-cost cards from draw to hand."""
@@ -401,7 +426,6 @@ class TestRelicRareShopOwnerScopeCostAndGenerationParity:
             [
                 "BrilliantScarf",
                 "DaughterOfTheWind",
-                "DiamondDiadem",
                 "IronClub",
                 "LostWisp",
                 "MusicBox",
@@ -443,9 +467,6 @@ class TestRelicRareShopOwnerScopeCostAndGenerationParity:
         assert _combat_relic(combat, "VELVET_CHOKER").should_play(combat.player, owner_attack, combat) is None
         assert _combat_relic(combat, "PAELS_EYE").should_take_extra_turn(combat.player, combat) is True
 
-        fire_before_turn_end(CombatSide.PLAYER, combat)
-        assert combat.player.get_power_amount(PowerId.DIAMOND_DIADEM) == 1
-
     def test_daughter_of_the_wind_block_triggers_after_block_gained_hooks(self):
         combat = _make_ironclad_combat(["DaughterOfTheWind"], seed=1927)
         enemy = combat.enemies[0]
@@ -462,23 +483,19 @@ class TestRelicRareShopOwnerScopeCostAndGenerationParity:
         assert combat.player.block == 1
         assert enemy.current_hp == start_hp - 11
 
-    def test_diamond_diadem_resets_after_side_turn_start(self):
+    def test_diamond_diadem_grants_block_and_blur_only_on_turn_one(self):
         combat = _make_ironclad_combat(["DiamondDiadem"], seed=1912)
-        relic = _combat_relic(combat, "DIAMOND_DIADEM")
-        card = make_strike_ironclad()
-        card.owner = combat.player
 
-        for _ in range(3):
-            fire_after_card_played(card, combat)
+        assert combat.player.block == 20
+        assert combat.player.get_power_amount(PowerId.BLUR) == 1
 
-        fire_before_turn_end(CombatSide.PLAYER, combat)
-        assert PowerId.DIAMOND_DIADEM not in combat.player.powers
-
-        fire_before_side_turn_start(CombatSide.PLAYER, combat)
-        assert relic._cards_this_turn == 3
+        combat.end_player_turn()
+        assert combat.player.get_power_amount(PowerId.BLUR) == 0
+        block_after_round_two_start = combat.player.block
 
         fire_after_side_turn_start(CombatSide.PLAYER, combat)
-        assert relic._cards_this_turn == 0
+        assert combat.player.block == block_after_round_two_start
+        assert combat.player.get_power_amount(PowerId.BLUR) == 0
 
     def test_brilliant_scarf_makes_fifth_owner_card_energy_and_star_cost_free(self):
         combat = _make_ironclad_combat(["BrilliantScarf"], seed=1918)

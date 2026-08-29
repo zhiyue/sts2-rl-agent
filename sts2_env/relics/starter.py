@@ -94,16 +94,34 @@ class CrackedCore(RelicInstance):
 
 @register_relic
 class InfusedCore(RelicInstance):
-    """Upgraded CrackedCore."""
+    """Upgraded CrackedCore: 3 Lightning on turn 1; your Lightning orbs deal +1 damage."""
     relic_id = RelicId.INFUSED_CORE
     rarity = RelicRarity.STARTER
     pool = RelicPool.EVENT
     LIGHTNING_COUNT = 3
+    EXTRA_DAMAGE = 1
 
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.PLAYER and combat.round_number == 1:
             for _ in range(self.LIGHTNING_COUNT):
                 combat.channel_orb(owner, OrbType.LIGHTNING)
+
+    def on_orb_channeled(self, owner: Creature, combat: CombatState) -> None:
+        # v0.111.0 InfusedCore.cs ModifyOrbValue: owner's Lightning orbs gain +ExtraDamage.
+        # The orb value pipeline has no relic hook, so boost each freshly
+        # channeled Lightning orb (channel_orb is the only creation funnel).
+        state = combat.combat_player_state_for(owner)
+        orbs = getattr(getattr(state, "orb_queue", None), "orbs", [])
+        if not orbs:
+            return
+        orb = orbs[-1]
+        if getattr(orb, "orb_type", None) is not OrbType.LIGHTNING:
+            return
+        bonus = self.EXTRA_DAMAGE
+        base_passive = orb.get_passive_value
+        base_evoke = orb.get_evoke_value
+        orb.get_passive_value = lambda combat_ref: base_passive(combat_ref) + bonus
+        orb.get_evoke_value = lambda combat_ref: base_evoke(combat_ref) + bonus
 
 
 # ─── Necrobinder Starter ────────────────────────────────────────────────

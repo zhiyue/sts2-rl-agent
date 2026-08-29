@@ -487,7 +487,7 @@ def test_jungle_maze_adventure_truncates_gold_gain_after_decimal_relic_hooks():
     result = event.choose(run_state, "join")
 
     assert result.finished
-    assert run_state.player.gold == 76
+    assert run_state.player.gold == 80
 
 
 def test_whispering_hollow_hug_uses_run_level_transform_reward_in_run_manager():

@@ -130,7 +130,7 @@ RUBY_RAIDER_TOUGH_HP_RANGES = {
     "TRACKER_RUBY_RAIDER": (22, 26),
 }
 BYGONE_EFFIGY_TOUGH_HP = 132
-BYRDONIS_TOUGH_HP = 99
+BYRDONIS_TOUGH_HP = 90
 PHROG_PARASITE_TOUGH_MIN_HP = 66
 PHROG_PARASITE_TOUGH_MAX_HP = 68
 VANTOM_TOUGH_HP = 183
@@ -155,8 +155,8 @@ BOWLBUG_SILK_MONSTER_ID = "BOWLBUG_SILK"
 BOWLBUG_SILK_TOUGH_MIN_HP = 41
 BOWLBUG_SILK_TOUGH_MAX_HP = 44
 EXOSKELETON_MONSTER_ID = "EXOSKELETON"
-EXOSKELETON_TOUGH_MIN_HP = 25
-EXOSKELETON_TOUGH_MAX_HP = 29
+EXOSKELETON_TOUGH_MIN_HP = 26
+EXOSKELETON_TOUGH_MAX_HP = 30
 CHOMPER_MONSTER_ID = "CHOMPER"
 CHOMPER_TOUGH_MIN_HP = 63
 CHOMPER_TOUGH_MAX_HP = 67
@@ -937,13 +937,13 @@ class TestAct3Pools:
         assert [encounter.__name__ for encounter in ACT3_BOSS] == [
             "setup_queen_boss",
             "setup_test_subject_boss",
-            "setup_doormaker_boss",
+            "setup_aeonglass_boss",
         ]
         assert [encounter.__name__ for encounter in ALL_ACT3_ENCOUNTERS] == [
             "setup_axebots_normal",
             "setup_construct_menagerie_normal",
             "setup_devoted_sculptor_weak",
-            "setup_doormaker_boss",
+            "setup_aeonglass_boss",
             "setup_fabricator_normal",
             "setup_frog_knight_normal",
             "setup_globe_head_normal",
@@ -1016,14 +1016,15 @@ class TestAllEncountersSetup:
 
     @pytest.mark.parametrize("act_name, encounters", ALL_ENCOUNTERS_BY_ACT)
     def test_hp_values_within_bounds(self, act_name, encounters):
-        """All monster HP values should be between 1 and 500."""
+        """All monster HP values should be between 1 and 600."""
         for seed in range(10):
             rng = Rng(seed)
             for encounter in encounters:
                 combat = _make_combat(seed)
                 encounter(combat, rng)
                 for enemy in combat.enemies:
-                    assert 1 <= enemy.max_hp <= 500, (
+                    # v0.111.0: Act3 boss Aeonglass is a fixed 512 (A8 535) HP.
+                    assert 1 <= enemy.max_hp <= 600, (
                         f"{act_name}: unreasonable HP {enemy.max_hp} for {enemy.monster_id}"
                     )
                     assert enemy.current_hp == enemy.max_hp

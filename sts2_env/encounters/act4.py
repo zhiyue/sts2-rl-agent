@@ -124,10 +124,10 @@ def setup_sewer_clam_normal(combat: CombatState, rng: Rng) -> None:
     combat.add_enemy(creature, ai)
 
 
-def setup_toadpoles_normal(combat: CombatState, rng: Rng) -> None:
+def setup_seapunk_normal(combat: CombatState, rng: Rng) -> None:
     cultist, cultist_ai = create_calcified_cultist(rng, ascension_level=combat.ascension_level)
     combat.add_enemy(cultist, cultist_ai)
-    creature, ai = create_toadpole(rng, slot="back", ascension_level=combat.ascension_level)
+    creature, ai = create_seapunk(rng, ascension_level=combat.ascension_level)
     combat.add_enemy(creature, ai)
 
 
@@ -150,8 +150,8 @@ NORMAL_ENCOUNTERS: list[EncounterSetup] = [
     setup_haunted_ship_normal,
     setup_living_fog_normal,
     setup_punch_construct_normal,
+    setup_seapunk_normal,
     setup_sewer_clam_normal,
-    setup_toadpoles_normal,
     setup_two_tailed_rats_normal,
 ]
 

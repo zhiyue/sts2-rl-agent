@@ -342,7 +342,7 @@ class TestActionMasksPerPhase:
         env.reset(seed=42)
 
         mgr = RunManager(seed=805, character_id="Ironclad")
-        assert mgr.run_state.player.obtain_relic("BEAUTIFUL_BRACELET")
+        assert mgr.run_state.player.obtain_relic("TRI_BOOMERANG")
         env._mgr = mgr
 
         mask = env.action_masks()
@@ -359,7 +359,7 @@ class TestActionMasksPerPhase:
         assert not truncated
         assert mgr.phase == RunManager.PHASE_MAP_CHOICE
         assert mgr.run_state.pending_choice is None
-        assert sum(1 for card in mgr.run_state.player.deck if card.has_enchantment("Swift")) == 3
+        assert sum(1 for card in mgr.run_state.player.deck if card.has_enchantment("Instinct")) == 3
 
     def test_card_reward_mask(self, env):
         """Force into CARD_REWARD phase and verify mask."""

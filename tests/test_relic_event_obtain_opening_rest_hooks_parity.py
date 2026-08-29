@@ -254,7 +254,7 @@ class TestRelicEventObtainOpeningRestHooksParity:
         assert len(combat.hand) == 7
         assert relic._turns_seen == 0  # noqa: SLF001
 
-    def test_toasty_mittens_round_one_exhausts_non_innate_card(self):
+    def test_toasty_mittens_exhausts_chosen_hand_card_and_grants_strength(self):
         combat = CombatState(
             player_hp=80,
             player_max_hp=80,
@@ -265,16 +265,45 @@ class TestRelicEventObtainOpeningRestHooksParity:
         )
         innate = make_backstab()
         non_innate = make_strike_ironclad()
-        combat.draw_pile = [innate, non_innate]
-        combat.hand = []
+        combat.draw_pile = [make_strike_ironclad() for _ in range(8)]
+        combat.hand = [innate, non_innate]
         combat.discard_pile = []
         combat.exhaust_pile = []
 
         combat._start_player_turn()  # noqa: SLF001
 
+        assert combat.pending_choice is not None
+        target_index = next(
+            index
+            for index, option in enumerate(combat.pending_choice.options)
+            if option.card is non_innate
+        )
+        assert combat.resolve_pending_choice(target_index)
+
         assert innate in combat.hand
         assert non_innate in combat.exhaust_pile
         assert combat.player.get_power_amount(PowerId.STRENGTH) == 1
+
+    def test_toasty_mittens_prompts_again_on_later_turns(self):
+        combat = CombatState(
+            player_hp=80,
+            player_max_hp=80,
+            deck=create_ironclad_starter_deck(),
+            rng_seed=892,
+            character_id="Ironclad",
+            relics=["ToastyMittens"],
+        )
+        creature, ai = create_shrinker_beetle(Rng(892))
+        combat.add_enemy(creature, ai)
+        combat.start_combat()
+
+        assert combat.pending_choice is not None
+        assert combat.resolve_pending_choice(0)
+        assert combat.player.get_power_amount(PowerId.STRENGTH) == 1
+
+        combat.end_player_turn()
+
+        assert combat.pending_choice is not None
 
     def test_pomander_queues_single_upgrade_reward_when_followups_are_deferred(self):
         run_state = RunState(seed=882, character_id="Ironclad")
@@ -357,12 +386,12 @@ class TestRelicEventObtainOpeningRestHooksParity:
         assert combat.player.block == 7
         assert enemy.current_hp == start_hp - 5
 
-    def test_signet_ring_grants_nine_hundred_ninety_nine_gold_on_obtain(self):
+    def test_signet_ring_grants_eight_hundred_eighty_eight_gold_on_obtain(self):
         run_state = RunState(seed=888, character_id="Ironclad")
         starting_gold = run_state.player.gold
 
         assert run_state.player.obtain_relic("SIGNET_RING")
-        assert run_state.player.gold == starting_gold + 999
+        assert run_state.player.gold == starting_gold + 888
 
     def test_small_capsule_queues_one_relic_reward(self):
         run_state = RunState(seed=889, character_id="Ironclad")

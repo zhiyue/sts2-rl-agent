@@ -99,14 +99,15 @@ class BookRepairKnife(RelicInstance):
 
 @register_relic
 class BowlerHat(RelicInstance):
-    """Gain 20% bonus gold on gold gains."""
+    """Gain 25% bonus gold on gold gains."""
     relic_id = RelicId.BOWLER_HAT
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.SHARED
+    is_allowed_in_shops = False
 
     def is_allowed(self, run_state: RunState) -> bool:
         return self.is_before_act3_treasure_chest(run_state)
-    MULTIPLIER = 0.2
+    MULTIPLIER = 0.25
 
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)
@@ -170,8 +171,8 @@ class FuneraryMask(RelicInstance):
     pool = RelicPool.NECROBINDER
     CARDS = 3
 
-    def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
-        if side == CombatSide.PLAYER and combat.round_number == 1:
+    def before_hand_draw(self, owner: Creature, combat: CombatState) -> None:
+        if combat.round_number == 1:
             from sts2_env.cards.status import make_soul
 
             for _ in range(self.CARDS):
@@ -326,6 +327,8 @@ class Kusarigama(RelicInstance):
                     combat.deal_damage(owner, target, self.DAMAGE, ValueProp.UNPOWERED)
 
     def after_turn_end(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        if side != owner.side:
+            return
         self._attacks_this_turn = 0
 
     def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
@@ -345,8 +348,11 @@ class LetterOpener(RelicInstance):
         super().__init__(relic_id)
         self._skills_this_turn: int = 0
 
+    def before_combat_start(self, owner: Creature, combat: CombatState) -> None:
+        self._skills_this_turn = 0
+
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
-        if side == CombatSide.PLAYER:
+        if side == CombatSide.PLAYER and combat.round_number > 1:
             self._skills_this_turn = 0
 
     def after_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
@@ -371,6 +377,7 @@ class LuckyFysh(RelicInstance):
     relic_id = RelicId.LUCKY_FYSH
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.SHARED
+    is_allowed_in_shops = False
 
     def is_allowed(self, run_state: RunState) -> bool:
         return self.is_before_act3_treasure_chest(run_state)
@@ -639,7 +646,7 @@ class Planisphere(RelicInstance):
 
     def is_allowed(self, run_state: RunState) -> bool:
         return self.is_before_act3_treasure_chest(run_state)
-    HEAL = 4
+    HEAL = 5
 
     def after_room_entered(self, owner: Creature, room_type: object) -> None:
         if owner.current_hp <= 0:
@@ -673,25 +680,30 @@ class RedMask(RelicInstance):
 
 @register_relic
 class Regalite(RelicInstance):
-    """When colorless card enters combat, gain 2 block."""
+    """First card generated for combat each turn: gain 4 block."""
     relic_id = RelicId.REGALITE
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.REGENT
-    BLOCK = 2
+    BLOCK = 4
 
-    def after_card_entered_combat(self, owner: Creature, card: object, combat: CombatState) -> None:
-        if getattr(card, "owner", None) is not owner:
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._used_this_turn: bool = False
+
+    def after_card_generated_for_combat(
+        self, owner: Creature, card: object, added_by_player: bool, combat: CombatState
+    ) -> None:
+        if getattr(card, "owner", None) is not owner or self._used_this_turn:
             return
-        visual_card_pool = getattr(card, "visual_card_pool", None)
-        is_visual_colorless = getattr(card, "is_visual_colorless", None)
-        is_colorless = bool(
-            getattr(card, "is_colorless", False)
-            or getattr(card, "visual_card_pool_is_colorless", False)
-            or (callable(is_visual_colorless) and is_visual_colorless())
-            or getattr(visual_card_pool, "is_colorless", False)
-        )
-        if is_colorless:
-            _gain_unpowered_block(owner, self.BLOCK, combat)
+        self._used_this_turn = True
+        _gain_unpowered_block(owner, self.BLOCK, combat)
+
+    def before_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        if side == owner.side:
+            self._used_this_turn = False
+
+    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        self._used_this_turn = False
 
 
 @register_relic

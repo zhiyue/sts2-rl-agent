@@ -88,13 +88,11 @@ CUBEX_CONSTRUCT_DEADLY_EXPEL_DAMAGE = 6
 CUBEX_CONSTRUCT_EXPEL_HITS = 2
 CUBEX_CONSTRUCT_STRENGTH_GAIN = 2
 CUBEX_CONSTRUCT_INITIAL_BLOCK = 13
-CUBEX_CONSTRUCT_SUBMERGE_BLOCK = 15
 CUBEX_CONSTRUCT_ARTIFACT_AMOUNT = 1
 CUBEX_CONSTRUCT_CHARGE_UP_MOVE = "CHARGE_UP_MOVE"
 CUBEX_CONSTRUCT_REPEATER_MOVE = "REPEATER_MOVE"
 CUBEX_CONSTRUCT_REPEATER_MOVE_2 = "REPEATER_MOVE_2"
 CUBEX_CONSTRUCT_EXPEL_BLAST_MOVE = "EXPEL_BLAST"
-CUBEX_CONSTRUCT_SUBMERGE_MOVE = "SUBMERGE_MOVE"
 
 
 def create_cubex_construct(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
@@ -127,9 +125,6 @@ def create_cubex_construct(rng: Rng, ascension_level: int = 0) -> tuple[Creature
             CUBEX_CONSTRUCT_BASE_EXPEL_DAMAGE,
         )
         _deal_damage_to_player(combat, creature, expel_dmg, hits=CUBEX_CONSTRUCT_EXPEL_HITS)
-
-    def submerge(combat: CombatState) -> None:
-        _gain_block(creature, CUBEX_CONSTRUCT_SUBMERGE_BLOCK, combat)
 
     blast_intent_damage = _ascension_value(
         ascension_level,
@@ -168,12 +163,6 @@ def create_cubex_construct(rng: Rng, ascension_level: int = 0) -> tuple[Creature
             expel_blast,
             [multi_attack_intent(expel_intent_damage, CUBEX_CONSTRUCT_EXPEL_HITS)],
             follow_up_id=CUBEX_CONSTRUCT_REPEATER_MOVE,
-        ),
-        CUBEX_CONSTRUCT_SUBMERGE_MOVE: MoveState(
-            CUBEX_CONSTRUCT_SUBMERGE_MOVE,
-            submerge,
-            [defend_intent()],
-            follow_up_id=CUBEX_CONSTRUCT_CHARGE_UP_MOVE,
         ),
     }
 
@@ -889,8 +878,8 @@ ASSASSIN_RUBY_RAIDER_BASE_MIN_HP = 18
 ASSASSIN_RUBY_RAIDER_BASE_MAX_HP = 23
 ASSASSIN_RUBY_RAIDER_TOUGH_MIN_HP = 19
 ASSASSIN_RUBY_RAIDER_TOUGH_MAX_HP = 24
-ASSASSIN_RUBY_RAIDER_BASE_KILLSHOT_DAMAGE = 11
-ASSASSIN_RUBY_RAIDER_DEADLY_KILLSHOT_DAMAGE = 12
+ASSASSIN_RUBY_RAIDER_BASE_KILLSHOT_DAMAGE = 10
+ASSASSIN_RUBY_RAIDER_DEADLY_KILLSHOT_DAMAGE = 11
 ASSASSIN_RUBY_RAIDER_KILLSHOT_MOVE = "KILLSHOT_MOVE"
 
 AXE_RUBY_RAIDER_ID = "AXE_RUBY_RAIDER"
@@ -1229,8 +1218,8 @@ def create_tracker_ruby_raider(rng: Rng, ascension_level: int = 0) -> tuple[Crea
 BYGONE_EFFIGY_ID = "BYGONE_EFFIGY"
 BYGONE_EFFIGY_BASE_HP = 127
 BYGONE_EFFIGY_TOUGH_HP = 132
-BYGONE_EFFIGY_BASE_SLASH_DAMAGE = 15
-BYGONE_EFFIGY_DEADLY_SLASH_DAMAGE = 17
+BYGONE_EFFIGY_BASE_SLASH_DAMAGE = 13
+BYGONE_EFFIGY_DEADLY_SLASH_DAMAGE = 15
 BYGONE_EFFIGY_WAKE_STRENGTH = 10
 BYGONE_EFFIGY_SLOW = 1
 BYGONE_EFFIGY_INITIAL_SLEEP_MOVE = "INITIAL_SLEEP_MOVE"
@@ -1306,17 +1295,17 @@ def create_bygone_effigy(rng: Rng, ascension_level: int = 0) -> tuple[Creature, 
     return creature, MonsterAI(states, BYGONE_EFFIGY_INITIAL_SLEEP_MOVE)
 
 
-# ---- Byrdonis (HP 91-94 / 99 asc) ----
+# ---- Byrdonis (HP 81-84 / 90 asc) ----
 
 BYRDONIS_ID = "BYRDONIS"
-BYRDONIS_BASE_MIN_HP = 91
-BYRDONIS_BASE_MAX_HP = 94
-BYRDONIS_TOUGH_HP = 99
+BYRDONIS_BASE_MIN_HP = 81
+BYRDONIS_BASE_MAX_HP = 84
+BYRDONIS_TOUGH_HP = 90
 BYRDONIS_BASE_PECK_DAMAGE = 3
 BYRDONIS_DEADLY_PECK_DAMAGE = 4
 BYRDONIS_PECK_HITS = 3
-BYRDONIS_BASE_SWOOP_DAMAGE = 16
-BYRDONIS_DEADLY_SWOOP_DAMAGE = 18
+BYRDONIS_BASE_SWOOP_DAMAGE = 17
+BYRDONIS_DEADLY_SWOOP_DAMAGE = 19
 BYRDONIS_TERRITORIAL = 1
 BYRDONIS_SWOOP_MOVE = "SWOOP_MOVE"
 BYRDONIS_PECK_MOVE = "PECK_MOVE"
@@ -1488,11 +1477,12 @@ VANTOM_DEADLY_INK_BLOT_DAMAGE = 8
 VANTOM_BASE_INKY_LANCE_DAMAGE = 6
 VANTOM_DEADLY_INKY_LANCE_DAMAGE = 7
 VANTOM_INKY_LANCE_HITS = 2
-VANTOM_BASE_DISMEMBER_DAMAGE = 27
+VANTOM_BASE_DISMEMBER_DAMAGE = 26
 VANTOM_DEADLY_DISMEMBER_DAMAGE = 30
 VANTOM_DISMEMBER_WOUNDS = 3
 VANTOM_PREPARE_STRENGTH = 2
-VANTOM_SLIPPERY = 9
+VANTOM_BASE_SLIPPERY = 8
+VANTOM_TOUGH_SLIPPERY = 9
 VANTOM_INK_BLOT_MOVE = "INK_BLOT_MOVE"
 VANTOM_INKY_LANCE_MOVE = "INKY_LANCE_MOVE"
 VANTOM_DISMEMBER_MOVE = "DISMEMBER_MOVE"
@@ -1539,6 +1529,12 @@ def create_vantom(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Monster
         VANTOM_BASE_HP,
     )
     creature = Creature(max_hp=hp, monster_id=VANTOM_ID)
+    slippery = _ascension_value(
+        ascension_level,
+        TOUGH_ENEMIES_ASCENSION_LEVEL,
+        VANTOM_TOUGH_SLIPPERY,
+        VANTOM_BASE_SLIPPERY,
+    )
 
     def ink_blot(combat: CombatState) -> None:
         ink_blot_dmg = _ascension_value(
@@ -1618,7 +1614,7 @@ def create_vantom(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Monster
             follow_up_id=VANTOM_INK_BLOT_MOVE,
         ),
     }
-    creature.apply_power(PowerId.SLIPPERY, VANTOM_SLIPPERY)
+    creature.apply_power(PowerId.SLIPPERY, slippery)
     return creature, MonsterAI(states, VANTOM_INK_BLOT_MOVE)
 
 

@@ -98,6 +98,9 @@ class TestRelicUncommonCardCountAndExhaustHooksParity:
         assert enemy.current_hp == start_hp - 12
         assert relic._attacks_this_turn == 2
 
+        fire_after_turn_end(CombatSide.ENEMY, combat)
+        assert relic._attacks_this_turn == 2
+
         fire_after_turn_end(CombatSide.PLAYER, combat)
         assert relic._attacks_this_turn == 0
 

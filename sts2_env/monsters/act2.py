@@ -642,13 +642,13 @@ def create_bowlbug_silk(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
     return creature, MonsterAI(states, BOWLBUG_SILK_TOXIC_SPIT_MOVE)
 
 
-# ---- Exoskeleton (HP 24-28 / 25-29 asc) ----
+# ---- Exoskeleton (HP 24-28 / 26-30 asc) ----
 
 EXOSKELETON_MONSTER_ID = "EXOSKELETON"
 EXOSKELETON_BASE_MIN_HP = 24
 EXOSKELETON_BASE_MAX_HP = 28
-EXOSKELETON_TOUGH_MIN_HP = 25
-EXOSKELETON_TOUGH_MAX_HP = 29
+EXOSKELETON_TOUGH_MIN_HP = 26
+EXOSKELETON_TOUGH_MAX_HP = 30
 EXOSKELETON_SKITTER_DAMAGE = 1
 EXOSKELETON_BASE_SKITTER_HITS = 3
 EXOSKELETON_DEADLY_SKITTER_HITS = 4
@@ -1035,7 +1035,8 @@ LOUSE_PROGENITOR_BASE_POUNCE_DAMAGE = 14
 LOUSE_PROGENITOR_DEADLY_POUNCE_DAMAGE = 16
 LOUSE_PROGENITOR_BASE_CURL_BLOCK = 14
 LOUSE_PROGENITOR_TOUGH_CURL_BLOCK = 18
-LOUSE_PROGENITOR_GROW_STRENGTH = 5
+LOUSE_PROGENITOR_BASE_GROW_STRENGTH = 5
+LOUSE_PROGENITOR_DEADLY_GROW_STRENGTH = 7
 LOUSE_PROGENITOR_WEB_CANNON_MOVE = "WEB_CANNON_MOVE"
 LOUSE_PROGENITOR_CURL_AND_GROW_MOVE = "CURL_AND_GROW_MOVE"
 LOUSE_PROGENITOR_POUNCE_MOVE = "POUNCE_MOVE"
@@ -1074,8 +1075,14 @@ def create_louse_progenitor(rng: Rng, ascension_level: int = 0) -> tuple[Creatur
             LOUSE_PROGENITOR_TOUGH_CURL_BLOCK,
             LOUSE_PROGENITOR_BASE_CURL_BLOCK,
         )
+        grow_strength = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            LOUSE_PROGENITOR_DEADLY_GROW_STRENGTH,
+            LOUSE_PROGENITOR_BASE_GROW_STRENGTH,
+        )
         _gain_block(creature, curl_block, combat)
-        creature.apply_power(PowerId.STRENGTH, LOUSE_PROGENITOR_GROW_STRENGTH)
+        creature.apply_power(PowerId.STRENGTH, grow_strength)
 
     def pounce(combat: CombatState) -> None:
         pounce_dmg = _ascension_value(
@@ -1754,16 +1761,16 @@ def create_the_obscura(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Mo
 # ELITE ENCOUNTERS
 # ========================================================================
 
-# ---- Decimillipede (3 segments) (HP 42-48 / 48-56 asc) ----
+# ---- Decimillipede (3 segments) (HP 40-46 / 46-52 asc) ----
 
 DECIMILLIPEDE_SEGMENT_MONSTER_ID = "DECIMILLIPEDE_SEGMENT"
 DECIMILLIPEDE_SEGMENT_FRONT_MONSTER_ID = "DECIMILLIPEDE_SEGMENT_FRONT"
 DECIMILLIPEDE_SEGMENT_MIDDLE_MONSTER_ID = "DECIMILLIPEDE_SEGMENT_MIDDLE"
 DECIMILLIPEDE_SEGMENT_BACK_MONSTER_ID = "DECIMILLIPEDE_SEGMENT_BACK"
-DECIMILLIPEDE_SEGMENT_MIN_HP = 42
-DECIMILLIPEDE_SEGMENT_MAX_HP = 48
-DECIMILLIPEDE_SEGMENT_TOUGH_MIN_HP = 48
-DECIMILLIPEDE_SEGMENT_TOUGH_MAX_HP = 56
+DECIMILLIPEDE_SEGMENT_MIN_HP = 40
+DECIMILLIPEDE_SEGMENT_MAX_HP = 46
+DECIMILLIPEDE_SEGMENT_TOUGH_MIN_HP = 46
+DECIMILLIPEDE_SEGMENT_TOUGH_MAX_HP = 52
 DECIMILLIPEDE_HP_STEP = 2
 DECIMILLIPEDE_REATTACH_HP = 25
 DECIMILLIPEDE_BASE_WRITHE_DAMAGE = 5
@@ -1983,11 +1990,11 @@ def create_decimillipede_segment_back(
     return creature, ai
 
 
-# ---- Entomancer (HP 145 / 155 asc) ----
+# ---- Entomancer (HP 145 / 165 asc) ----
 
 ENTOMANCER_MONSTER_ID = "ENTOMANCER"
 ENTOMANCER_BASE_HP = 145
-ENTOMANCER_TOUGH_HP = 155
+ENTOMANCER_TOUGH_HP = 165
 ENTOMANCER_BASE_SPEAR_DAMAGE = 18
 ENTOMANCER_DEADLY_SPEAR_DAMAGE = 20
 ENTOMANCER_BASE_BEES_DAMAGE = 3
@@ -2088,25 +2095,26 @@ def create_entomancer(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Mon
     return creature, MonsterAI(states, ENTOMANCER_BEES_MOVE)
 
 
-# ---- InfestedPrism (HP 200 / 215 asc) ----
+# ---- InfestedPrism (HP 161 / 171 asc) ----
 
 INFESTED_PRISM_MONSTER_ID = "INFESTED_PRISM"
-INFESTED_PRISM_BASE_HP = 200
-INFESTED_PRISM_TOUGH_HP = 215
-INFESTED_PRISM_BASE_JAB_DAMAGE = 22
-INFESTED_PRISM_DEADLY_JAB_DAMAGE = 24
-INFESTED_PRISM_BASE_RADIATE_DAMAGE = 16
-INFESTED_PRISM_DEADLY_RADIATE_DAMAGE = 18
-INFESTED_PRISM_BASE_RADIATE_BLOCK = 16
-INFESTED_PRISM_DEADLY_RADIATE_BLOCK = 18
-INFESTED_PRISM_BASE_WHIRLWIND_DAMAGE = 9
-INFESTED_PRISM_DEADLY_WHIRLWIND_DAMAGE = 10
+INFESTED_PRISM_BASE_HP = 161
+INFESTED_PRISM_TOUGH_HP = 171
+INFESTED_PRISM_BASE_JAB_DAMAGE = 15
+INFESTED_PRISM_DEADLY_JAB_DAMAGE = 17
+INFESTED_PRISM_BASE_RADIATE_DAMAGE = 11
+INFESTED_PRISM_DEADLY_RADIATE_DAMAGE = 13
+INFESTED_PRISM_BASE_RADIATE_BLOCK = 11
+INFESTED_PRISM_DEADLY_RADIATE_BLOCK = 13
+INFESTED_PRISM_BASE_WHIRLWIND_DAMAGE = 5
+INFESTED_PRISM_DEADLY_WHIRLWIND_DAMAGE = 6
 INFESTED_PRISM_WHIRLWIND_REPEAT = 3
 INFESTED_PRISM_BASE_PULSATE_BLOCK = 20
 INFESTED_PRISM_TOUGH_PULSATE_BLOCK = 22
-INFESTED_PRISM_BASE_PULSATE_STRENGTH = 4
-INFESTED_PRISM_DEADLY_PULSATE_STRENGTH = 5
-INFESTED_PRISM_VITAL_SPARK = 1
+INFESTED_PRISM_BASE_PULSATE_DAMAGE = 8
+INFESTED_PRISM_DEADLY_PULSATE_DAMAGE = 10
+INFESTED_PRISM_BASE_VITAL_SPARK = 2
+INFESTED_PRISM_DEADLY_VITAL_SPARK = 3
 INFESTED_PRISM_JAB_MOVE = "JAB_MOVE"
 INFESTED_PRISM_RADIATE_MOVE = "RADIATE_MOVE"
 INFESTED_PRISM_WHIRLWIND_MOVE = "WHIRLWIND_MOVE"
@@ -2163,14 +2171,21 @@ def create_infested_prism(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
             INFESTED_PRISM_TOUGH_PULSATE_BLOCK,
             INFESTED_PRISM_BASE_PULSATE_BLOCK,
         )
-        pulsate_str = _ascension_value(
+        pulsate_dmg = _ascension_value(
             _combat_ascension_level(combat),
             DEADLY_ENEMIES_ASCENSION_LEVEL,
-            INFESTED_PRISM_DEADLY_PULSATE_STRENGTH,
-            INFESTED_PRISM_BASE_PULSATE_STRENGTH,
+            INFESTED_PRISM_DEADLY_PULSATE_DAMAGE,
+            INFESTED_PRISM_BASE_PULSATE_DAMAGE,
         )
+        vital_spark = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            INFESTED_PRISM_DEADLY_VITAL_SPARK,
+            INFESTED_PRISM_BASE_VITAL_SPARK,
+        )
+        _deal_damage_to_player(combat, creature, pulsate_dmg)
         _gain_block(creature, pulsate_block, combat)
-        creature.apply_power(PowerId.STRENGTH, pulsate_str)
+        creature.apply_power(PowerId.VITAL_SPARK, vital_spark)
 
     jab_intent_damage = _ascension_value(
         ascension_level,
@@ -2189,6 +2204,12 @@ def create_infested_prism(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
         INFESTED_PRISM_DEADLY_WHIRLWIND_DAMAGE,
         INFESTED_PRISM_BASE_WHIRLWIND_DAMAGE,
+    )
+    pulsate_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        INFESTED_PRISM_DEADLY_PULSATE_DAMAGE,
+        INFESTED_PRISM_BASE_PULSATE_DAMAGE,
     )
 
     states: dict[str, MonsterState] = {
@@ -2213,12 +2234,18 @@ def create_infested_prism(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
         INFESTED_PRISM_PULSATE_MOVE: MoveState(
             INFESTED_PRISM_PULSATE_MOVE,
             pulsate,
-            [buff_intent(), defend_intent()],
+            [attack_intent(pulsate_intent_damage), buff_intent(), defend_intent()],
             follow_up_id=INFESTED_PRISM_JAB_MOVE,
         ),
     }
 
-    creature.apply_power(PowerId.VITAL_SPARK, INFESTED_PRISM_VITAL_SPARK)
+    initial_vital_spark = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        INFESTED_PRISM_DEADLY_VITAL_SPARK,
+        INFESTED_PRISM_BASE_VITAL_SPARK,
+    )
+    creature.apply_power(PowerId.VITAL_SPARK, initial_vital_spark)
     return creature, MonsterAI(states, INFESTED_PRISM_JAB_MOVE)
 
 
@@ -2527,8 +2554,8 @@ def create_knowledge_demon(rng: Rng, ascension_level: int = 0) -> tuple[Creature
 # ---- KaiserCrab (Crusher + Rocket) ----
 
 CRUSHER_MONSTER_ID = "CRUSHER"
-CRUSHER_BASE_HP = 199
-CRUSHER_TOUGH_HP = 209
+CRUSHER_BASE_HP = 209
+CRUSHER_TOUGH_HP = 219
 CRUSHER_BASE_THRASH_DAMAGE = 12
 CRUSHER_DEADLY_THRASH_DAMAGE = 14
 CRUSHER_ENLARGING_STRIKE_DAMAGE = 4
@@ -2536,7 +2563,8 @@ CRUSHER_BASE_BUG_STING_DAMAGE = 6
 CRUSHER_DEADLY_BUG_STING_DAMAGE = 7
 CRUSHER_BUG_STING_REPEAT = 2
 CRUSHER_BUG_STING_DEBUFF = 2
-CRUSHER_ADAPT_STRENGTH = 2
+CRUSHER_BASE_ADAPT_STRENGTH = 2
+CRUSHER_DEADLY_ADAPT_STRENGTH = 3
 CRUSHER_BASE_GUARDED_STRIKE_DAMAGE = 12
 CRUSHER_DEADLY_GUARDED_STRIKE_DAMAGE = 14
 CRUSHER_GUARDED_STRIKE_BLOCK = 18
@@ -2582,7 +2610,13 @@ def create_crusher(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Monste
         apply_power_to_living_player_targets(combat, PowerId.FRAIL, CRUSHER_BUG_STING_DEBUFF, applier=creature)
 
     def adapt(combat: CombatState) -> None:
-        creature.apply_power(PowerId.STRENGTH, CRUSHER_ADAPT_STRENGTH)
+        adapt_strength = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            CRUSHER_DEADLY_ADAPT_STRENGTH,
+            CRUSHER_BASE_ADAPT_STRENGTH,
+        )
+        creature.apply_power(PowerId.STRENGTH, adapt_strength)
 
     def guarded_strike(combat: CombatState) -> None:
         guarded_strike_dmg = _ascension_value(
@@ -2652,15 +2686,16 @@ def create_crusher(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Monste
 
 
 ROCKET_MONSTER_ID = "ROCKET"
-ROCKET_BASE_HP = 189
-ROCKET_TOUGH_HP = 199
+ROCKET_BASE_HP = 199
+ROCKET_TOUGH_HP = 209
 ROCKET_BASE_TARGETING_RETICLE_DAMAGE = 3
 ROCKET_DEADLY_TARGETING_RETICLE_DAMAGE = 4
 ROCKET_BASE_PRECISION_BEAM_DAMAGE = 18
 ROCKET_DEADLY_PRECISION_BEAM_DAMAGE = 20
 ROCKET_BASE_LASER_DAMAGE = 31
 ROCKET_DEADLY_LASER_DAMAGE = 35
-ROCKET_CHARGE_UP_STRENGTH = 2
+ROCKET_BASE_CHARGE_UP_STRENGTH = 2
+ROCKET_DEADLY_CHARGE_UP_STRENGTH = 3
 ROCKET_SURROUNDED_AMOUNT = 1
 ROCKET_BACK_ATTACK_RIGHT_AMOUNT = 1
 ROCKET_CRAB_RAGE_AMOUNT = 1
@@ -2699,7 +2734,13 @@ def create_rocket(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Monster
         _deal_damage_to_player(combat, creature, precision_dmg)
 
     def charge_up(combat: CombatState) -> None:
-        creature.apply_power(PowerId.STRENGTH, ROCKET_CHARGE_UP_STRENGTH)
+        charge_up_strength = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            ROCKET_DEADLY_CHARGE_UP_STRENGTH,
+            ROCKET_BASE_CHARGE_UP_STRENGTH,
+        )
+        creature.apply_power(PowerId.STRENGTH, charge_up_strength)
 
     def laser(combat: CombatState) -> None:
         laser_dmg = _ascension_value(

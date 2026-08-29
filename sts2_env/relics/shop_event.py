@@ -1017,19 +1017,21 @@ class Astrolabe(RelicInstance):
 
 @register_relic
 class BeautifulBracelet(RelicInstance):
-    """Enchant 3 cards with Swift(3)."""
+    """Enchant 4 random cards with Swift(2)."""
     relic_id = RelicId.BEAUTIFUL_BRACELET
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    CARDS = 3
-    SWIFT = 3
+    CARDS = 4
+    SWIFT = 2
 
     def after_obtained(self, owner: Creature) -> None:
         candidates = [card for card in owner.deck if can_enchant_card(card, "Swift")]
+        owner.run_state.rng.niche.shuffle(candidates)
+        selected = candidates[:self.CARDS]
         if getattr(owner.run_state, "defer_followup_rewards", False):
-            owner.offer_enchant_cards_reward("Swift", self.SWIFT, self.CARDS, cards=candidates)
+            owner.offer_enchant_cards_reward("Swift", self.SWIFT, self.CARDS, cards=selected)
             return
-        owner.enchant_selected_cards("Swift", self.SWIFT, self.CARDS, cards=candidates)
+        owner.enchant_selected_cards("Swift", self.SWIFT, self.CARDS, cards=selected)
 
 
 @register_relic
@@ -1485,51 +1487,43 @@ class DelicateFrond(RelicInstance):
 
 @register_relic
 class DiamondDiadem(RelicInstance):
-    """If <= 2 cards played this turn, gain stacking buff."""
+    """Turn 1: gain 20 unpowered Block and apply 1 Blur."""
     relic_id = RelicId.DIAMOND_DIADEM
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    CARD_THRESHOLD = 2
-
-    def __init__(self, relic_id: RelicId):
-        super().__init__(relic_id)
-        self._cards_this_turn: int = 0
-
-    def after_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
-        if getattr(card, "owner", None) is owner:
-            self._cards_this_turn += 1
-
-    def before_turn_end(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
-        if side == CombatSide.PLAYER and self._cards_this_turn <= self.CARD_THRESHOLD:
-            owner.apply_power(PowerId.DIAMOND_DIADEM, 1)
+    BLOCK = 20
+    BLUR = 1
 
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
-        if side == CombatSide.PLAYER:
-            self._cards_this_turn = 0
-
-    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
-        self._cards_this_turn = 0
+        if side == CombatSide.PLAYER and combat.round_number == 1:
+            _gain_unpowered_block(owner, self.BLOCK, combat)
+            owner.apply_power(PowerId.BLUR, self.BLUR)
 
 
 @register_relic
 class DistinguishedCape(RelicInstance):
-    """Lose 9 max HP, add 3 Apparition cards."""
+    """Add 2 random curses and 3 Apparition cards."""
     relic_id = RelicId.DISTINGUISHED_CAPE
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     has_upon_pickup_effect = True
-    HP_LOSS = 9
+    CURSES = 2
     CARDS = 3
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.lose_max_hp(self.HP_LOSS)
         if getattr(owner.run_state, "defer_followup_rewards", False):
-            from sts2_env.cards.factory import create_card
+            from sts2_env.cards.factory import create_card, eligible_registered_cards
 
-            card_id = owner._coerce_card_id("Apparition")
-            if card_id is not None:
-                owner.offer_add_cards_reward([create_card(card_id) for _ in range(self.CARDS)])
+            curse_ids = eligible_registered_cards(card_pool=CardPoolId.CURSE, generation_context="modifier")
+            chosen_curses = owner.run_state.rng.niche.sample(curse_ids, min(self.CURSES, len(curse_ids)))
+            generated = [create_card(card_id) for card_id in chosen_curses]
+            apparition_id = owner._coerce_card_id("Apparition")
+            if apparition_id is not None:
+                generated.extend(create_card(apparition_id) for _ in range(self.CARDS))
+            if generated:
+                owner.offer_add_cards_reward(generated)
                 return
+        owner.add_random_curses(self.CURSES, rng=owner.run_state.rng.niche)
         for _ in range(self.CARDS):
             owner.add_card_to_deck("Apparition")
 
@@ -2199,6 +2193,9 @@ class JeweledMask(RelicInstance):
         candidates = [card for card in state.draw if card.card_type == CardType.POWER]
         if not candidates:
             return
+        non_innate = [card for card in candidates if not card.is_innate]
+        if non_innate:
+            candidates = non_innate
         selected = combat.combat_card_selection_rng.choice(candidates)
         selected.set_temporary_free_this_turn()
         combat.move_card_to_creature_hand(owner, selected)
@@ -2922,13 +2919,13 @@ class Pomander(RelicInstance):
 
 @register_relic
 class PrecariousShears(RelicInstance):
-    """Remove 2 cards, take 13 damage."""
+    """Remove 2 cards, take 16 damage."""
     relic_id = RelicId.PRECARIOUS_SHEARS
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     has_upon_pickup_effect = True
     CARDS = 2
-    DAMAGE = 13
+    DAMAGE = 16
 
     def after_obtained(self, owner: Creature) -> None:
         candidates = owner.removable_deck_cards()
@@ -3138,7 +3135,7 @@ class SandCastle(RelicInstance):
 
 @register_relic
 class ScrollBoxes(RelicInstance):
-    """Lose all gold, choose from 2 bundles of cards."""
+    """Choose from 2 bundles of cards."""
     relic_id = RelicId.SCROLL_BOXES
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
@@ -3157,7 +3154,6 @@ class ScrollBoxes(RelicInstance):
         )
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.lose_all_gold()
         owner.offer_card_bundles()
 
 
@@ -3222,12 +3218,12 @@ class SeaGlass(RelicInstance):
 
 @register_relic
 class SealOfGold(RelicInstance):
-    """If >= 5 gold, gain 1 energy and lose 5 gold each turn."""
+    """If >= 3 gold, gain 1 energy and lose 3 gold each turn."""
     relic_id = RelicId.SEAL_OF_GOLD
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     ENERGY = 1
-    GOLD_COST = 5
+    GOLD_COST = 3
 
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.PLAYER:
@@ -3240,42 +3236,34 @@ class SealOfGold(RelicInstance):
 
 @register_relic
 class SereTalon(RelicInstance):
-    """Add 2 random curses and 3 Wish cards."""
+    """Lose 9 max HP, add 3 Wish cards."""
     relic_id = RelicId.SERE_TALON
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     has_upon_pickup_effect = True
-    CURSES = 2
+    HP_LOSS = 9
     WISHES = 3
 
     def after_obtained(self, owner: Creature) -> None:
+        owner.lose_max_hp(self.HP_LOSS)
         if getattr(owner.run_state, "defer_followup_rewards", False):
-            from sts2_env.cards.factory import create_card, eligible_registered_cards
+            from sts2_env.cards.factory import create_card
 
-            curse_ids = eligible_registered_cards(card_pool=CardPoolId.CURSE, generation_context="modifier")
-            chosen_curses = owner.run_state.rng.niche.sample(curse_ids, min(self.CURSES, len(curse_ids)))
-            generated = [
-                create_card(card_id)
-                for card_id in chosen_curses
-            ]
             wish_id = owner._coerce_card_id("Wish")
             if wish_id is not None:
-                generated.extend(create_card(wish_id) for _ in range(self.WISHES))
-            if generated:
-                owner.offer_add_cards_reward(generated)
+                owner.offer_add_cards_reward([create_card(wish_id) for _ in range(self.WISHES)])
                 return
-        owner.add_random_curses(self.CURSES, rng=owner.run_state.rng.niche)
         for _ in range(self.WISHES):
             owner.add_card_to_deck("Wish")
 
 
 @register_relic
 class SignetRing(RelicInstance):
-    """Gain 999 gold."""
+    """Gain 888 gold."""
     relic_id = RelicId.SIGNET_RING
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    GOLD = 999
+    GOLD = 888
 
     def after_obtained(self, owner: Creature) -> None:
         owner.gain_gold(self.GOLD)
@@ -3581,28 +3569,33 @@ class ThrowingAxe(RelicInstance):
 
 @register_relic
 class ToastyMittens(RelicInstance):
-    """Each turn: exhaust top of draw pile, gain 1 Strength."""
+    """Each turn: exhaust 1 card from hand, gain 1 Strength."""
     relic_id = RelicId.TOASTY_MITTENS
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     STRENGTH = 1
 
-    def before_hand_draw(self, owner: Creature, combat: CombatState) -> None:
-        from sts2_env.core.hooks import fire_after_card_exhausted
-
+    def after_player_turn_start(self, owner: Creature, combat: CombatState) -> None:
         state = combat.combat_player_state_for(owner)
         if state is None:
             return
-        combat._shuffle_if_needed(owner)  # noqa: SLF001
-        if combat.round_number == 1:
-            card = next((card for card in state.draw if not card.is_innate), None)
+
+        def _exhaust_selected(card: object | None) -> None:
             if card is not None:
-                state.draw.remove(card)
-                state.exhaust.append(card)
-                fire_after_card_exhausted(card, combat)
+                combat.exhaust_card(card)
+            owner.apply_power(PowerId.STRENGTH, self.STRENGTH)
+
+        cards = list(state.hand)
+        if cards:
+            combat.request_card_choice(
+                prompt="Choose a card to exhaust.",
+                cards=cards,
+                source_pile="hand",
+                resolver=_exhaust_selected,
+                allow_skip=False,
+            )
         else:
-            combat.exhaust_top_of_draw_pile(owner)
-        owner.apply_power(PowerId.STRENGTH, self.STRENGTH)
+            _exhaust_selected(None)
 
 
 @register_relic

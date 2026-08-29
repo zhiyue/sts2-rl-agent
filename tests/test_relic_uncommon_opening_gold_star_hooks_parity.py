@@ -98,17 +98,17 @@ class TestRelicUncommonOpeningGoldStarHooksParity:
         assert combat.round_number == 2
         assert any(not card.upgraded for card in combat.hand)
 
-    def test_bowler_hat_grants_floor_twenty_percent_bonus_without_recursive_chaining(self):
-        """Matches BowlerHat.cs: gain floor(20%) bonus gold after each non-bonus gain."""
+    def test_bowler_hat_grants_floor_twenty_five_percent_bonus_without_recursive_chaining(self):
+        """Matches BowlerHat.cs (v0.111.0): gold gains are multiplied by 1.25 (floor)."""
         run_state = RunState(seed=1002, character_id="Ironclad")
         run_state.player.gold = 0
         assert run_state.player.obtain_relic("BOWLER_HAT")
 
-        run_state.player.gain_gold(11)
-        assert run_state.player.gold == 13
+        run_state.player.gain_gold(8)
+        assert run_state.player.gold == 10
 
         run_state.player.gain_gold(1)
-        assert run_state.player.gold == 14
+        assert run_state.player.gold == 11
 
     def test_eternal_feather_heals_at_rest_site_by_deck_size_quanta(self):
         """Matches EternalFeather.cs: rest-site heal is 3 * floor(deck_size / 5)."""
@@ -124,13 +124,25 @@ class TestRelicUncommonOpeningGoldStarHooksParity:
         relic.after_room_entered(run_state.player, RoomVisitContext(RoomType.REST_SITE))
         assert run_state.player.current_hp == 46
 
-    def test_funerary_mask_adds_three_souls_to_draw_on_round_one(self):
-        """Matches FuneraryMask.cs: on round 1 start, add 3 Soul cards to draw pile at random positions."""
+    def test_funerary_mask_adds_three_souls_to_draw_before_opening_hand_draw(self):
+        """Matches FuneraryMask.cs (v0.111.0): before the turn-1 hand draw, add 3 Soul cards at random positions."""
         combat = _make_ironclad_combat(["FuneraryMask"], seed=1004)
-        souls = [card for card in combat.draw_pile if card.card_id == CardId.SOUL]
+        souls = [
+            card for card in list(combat.draw_pile) + list(combat.hand)
+            if card.card_id == CardId.SOUL
+        ]
 
         assert len(souls) == 3
         assert all(card.owner is combat.player for card in souls)
+
+        relic = next(relic for relic in combat.relics if relic.relic_id.name == "FUNERARY_MASK")
+        combat.round_number = 2
+        relic.before_hand_draw(combat.player, combat)
+        souls_after = [
+            card for card in list(combat.draw_pile) + list(combat.hand)
+            if card.card_id == CardId.SOUL
+        ]
+        assert len(souls_after) == 3
 
     def test_galactic_dust_gains_block_every_ten_stars_spent_with_rollover(self):
         """Matches GalacticDust.cs: thresholded spend counter grants 10 unpowered block per 10 stars."""

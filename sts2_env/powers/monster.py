@@ -4,7 +4,7 @@ Covers: MinionPower, SlipperyPower, RavenousPower, TerritorialPower,
 HardenedShellPower, SkittishPower, ThieveryPower, SurprisePower, PlowPower,
 SmoggyPower, InfestedPower, IllusionPower, AsleepPower, SteamEruptionPower,
 ShriekPower, SuckPower, CrabRagePower, SpinnerPower, FeedingFrenzyPower,
-HatchPower, BurrowedPower, SurroundedPower, CoveredPower, DoorRevivalPower,
+HatchPower, BurrowedPower, SurroundedPower, CoveredPower,
 PersonalHivePower, CoordinatePower, SlothPower, MonologuePower.
 
 All logic verified against decompiled C# source.
@@ -1265,101 +1265,6 @@ class CoveredPower(PowerInstance):
 
 
 # ---------------------------------------------------------------------------
-# DoorRevivalPower
-# ---------------------------------------------------------------------------
-class DoorRevivalPower(PowerInstance):
-    """On death, the Door opens and spawns the Doormaker. The Door is not
-    removed from combat. When the Doormaker revives the Door, it heals
-    to minimum max HP.
-
-    C# ref: DoorRevivalPower.cs
-    - BeforeDeath: mark as half-dead.
-    - AfterDeath: spawn Doormaker.
-    - ShouldAllowHitting: false while half-dead.
-    - ShouldStopCombatFromEnding: true while Doormaker is alive.
-    - ShouldCreatureBeRemovedFromCombatAfterDeath: false for owner.
-    - ShouldPowerBeRemovedAfterOwnerDeath: false.
-    StackType.Single. Invisible.
-
-    Simplified: Tracks half-dead state. The encounter system handles
-    Doormaker spawning.
-    """
-
-    power_type = PowerType.BUFF
-    stack_type = PowerStackType.SINGLE
-
-    def __init__(self, amount: int = 1):
-        super().__init__(PowerId.DOOR_REVIVAL, amount)
-        self.is_half_dead: bool = False
-        self.return_count: int = 0
-        self.initial_max_hp: int | None = None
-
-    def before_death(self, owner: Creature, creature: Creature, combat: CombatState) -> None:
-        if creature is not owner:
-            return
-        if self.initial_max_hp is None:
-            self.initial_max_hp = owner.max_hp
-        self.is_half_dead = True
-
-    def after_death(
-        self,
-        owner: Creature,
-        creature: Creature,
-        combat: CombatState,
-        was_removal_prevented: bool = False,
-    ) -> None:
-        if creature is not owner:
-            return
-        if was_removal_prevented:
-            self.is_half_dead = False
-            return
-        combat.spawn_doormaker()
-        combat.set_enemy_state(owner, "DEAD_MOVE")
-
-    def revive(self, owner: Creature, min_hp: int) -> None:
-        """Called by the encounter system to revive the Door."""
-        self.is_half_dead = False
-        owner.max_hp = min_hp
-        owner.current_hp = min_hp
-        owner.escaped = False
-        owner._death_processed = False
-
-    def should_stop_combat_ending(
-        self,
-        owner: Creature | None = None,
-        combat: CombatState | None = None,
-    ) -> bool:
-        if not self.is_half_dead:
-            return False
-        current_combat = combat or getattr(owner, "combat_state", None)
-        if current_combat is None:
-            return True
-        from sts2_env.monsters.act3 import DOORMAKER_MONSTER_ID
-
-        return any(
-            enemy.monster_id == DOORMAKER_MONSTER_ID and enemy.is_alive
-            for enemy in current_combat.enemies
-        )
-
-    def should_allow_hitting(self, owner: Creature, combat: CombatState) -> bool:
-        return not self.is_half_dead
-
-    def should_creature_be_removed_from_combat_after_death(
-        self,
-        owner: Creature,
-        combat: CombatState,
-    ) -> bool:
-        return False
-
-    def should_power_be_removed_after_owner_death(
-        self,
-        owner: Creature,
-        combat: CombatState,
-    ) -> bool:
-        return False
-
-
-# ---------------------------------------------------------------------------
 # PersonalHivePower
 # ---------------------------------------------------------------------------
 class PersonalHivePower(PowerInstance):
@@ -1590,6 +1495,53 @@ class BackAttackRightPower(PowerInstance):
 
 
 # ---------------------------------------------------------------------------
+# WitheringPresencePower (Aeonglass boss)
+# ---------------------------------------------------------------------------
+WITHERING_PRESENCE_CARDS_LEFT = 6
+
+
+class WitheringPresencePower(PowerInstance):
+    """Aeonglass applies this to each player at combat start (amount 6).
+
+    C# ref: WitheringPresencePower.cs (instanced, Target = player creature)
+    - AfterCardPlayed: if the played card belongs to the target player,
+      decrement CardsLeft; on reaching 0, add 1 Wither to that player's hand
+      and reset the counter to 6.
+
+    New Withers are fake-upgraded to the boss's current WitherUpgradeCount.
+    ``target_player`` must be wired up by the encounter setup (the player
+    creature does not exist at monster-creation time).
+    """
+
+    power_type = PowerType.BUFF
+    stack_type = PowerStackType.COUNTER
+
+    def __init__(
+        self,
+        target_player: Creature | None = None,
+        wither_upgrade_level: int = 0,
+        cards_left: int = WITHERING_PRESENCE_CARDS_LEFT,
+    ):
+        super().__init__(PowerId.WITHERING_PRESENCE, cards_left)
+        self.target_player = target_player
+        self.wither_upgrade_level = wither_upgrade_level
+        self.additional_strength = 0
+
+    def after_card_played(
+        self, owner: Creature, card: object, combat: CombatState
+    ) -> None:
+        if self.target_player is None or getattr(card, "owner", None) is not self.target_player:
+            return
+        self.amount -= 1
+        if self.amount <= 0:
+            from sts2_env.cards.status import make_wither
+
+            wither = make_wither(self.wither_upgrade_level)
+            combat._add_generated_cards_to_hand([wither], owner=self.target_player)
+            self.amount = WITHERING_PRESENCE_CARDS_LEFT
+
+
+# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 from sts2_env.core.creature import register_power_class  # noqa: E402
@@ -1618,13 +1570,13 @@ _ALL_POWERS: dict[PowerId, type[PowerInstance]] = {
     PowerId.BURROWED: BurrowedPower,
     PowerId.SURROUNDED: SurroundedPower,
     PowerId.COVERED: CoveredPower,
-    PowerId.DOOR_REVIVAL: DoorRevivalPower,
     PowerId.PERSONAL_HIVE: PersonalHivePower,
     PowerId.COORDINATE: CoordinatePower,
     PowerId.SLOTH: SlothPower,
     PowerId.MONOLOGUE: MonologuePower,
     PowerId.BACK_ATTACK_LEFT: BackAttackLeftPower,
     PowerId.BACK_ATTACK_RIGHT: BackAttackRightPower,
+    PowerId.WITHERING_PRESENCE: WitheringPresencePower,
 }
 
 for _pid, _cls in _ALL_POWERS.items():

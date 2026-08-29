@@ -157,13 +157,11 @@ from sts2_env.monsters.act2 import (
     create_rocket,
 )
 from sts2_env.monsters.act1 import create_eye_with_teeth, create_parafright
-from sts2_env.monsters.act3 import create_door
+from sts2_env.monsters.act3 import create_aeonglass
 from sts2_env.monsters.act3 import (
     TEST_SUBJECT_MULTI_CLAW_MOVE,
-    TEST_SUBJECT_POUNCE_MOVE,
     TEST_SUBJECT_PHASE3_LACERATE_MOVE,
     TEST_SUBJECT_RESPAWN_MOVE,
-    create_doormaker,
     create_fabricator,
     create_osty,
     create_test_subject,
@@ -172,7 +170,7 @@ from sts2_env.monsters.act4 import create_waterfall_giant
 from sts2_env.monsters.act1_weak import create_shrinker_beetle, create_twig_slime_s
 from sts2_env.potions.base import create_potion
 from sts2_env.powers.base import PowerInstance
-from sts2_env.powers.monster import AsleepPower, CrabRagePower, DoorRevivalPower, IllusionPower, RavenousPower, SmoggyPower
+from sts2_env.powers.monster import AsleepPower, CrabRagePower, IllusionPower, RavenousPower, SmoggyPower, WitheringPresencePower
 from sts2_env.powers.monster import CoveredPower, SuckPower, SurprisePower, ThieveryPower
 from sts2_env.powers.remaining_a import DampenPower
 from sts2_env.run.run_state import PlayerState
@@ -548,18 +546,25 @@ class TestMonsterDeathPrevention:
         assert combat.is_over is False
         assert combat.player_won is False
 
-    def test_door_revival_power_marks_enemy_half_dead_and_blocks_combat_end(self):
+    def test_withering_presence_adds_upgraded_wither_every_six_cards(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
-        enemy = combat.enemies[0]
-        power = DoorRevivalPower()
-        enemy.powers[PowerId.DOOR_REVIVAL] = power
+        boss, boss_ai = create_aeonglass(Rng(105))
+        combat.add_enemy(boss, boss_ai)
+        presence = WitheringPresencePower(target_player=combat.player, wither_upgrade_level=1)
+        boss.powers[PowerId.WITHERING_PRESENCE] = presence
         combat.start_combat()
+        hand_before = len(combat.hand)
 
-        assert combat.kill_creature(enemy)
-        assert enemy.current_hp == 0
-        assert power.is_half_dead is True
-        assert combat.is_over is False
-        assert combat.player_won is False
+        filler = make_strike_ironclad()
+        filler.owner = combat.player
+        for _ in range(6):
+            presence.after_card_played(boss, filler, combat)
+
+        assert presence.amount == 6  # counter reset for the next batch
+        assert len(combat.hand) == hand_before + 1
+        wither = combat.hand[-1]
+        assert wither.card_id == CardId.WITHER
+        assert wither.base_damage == 6  # base 3 + one fake upgrade
 
 
 class TestMonsterDeathBroadcast:
@@ -578,12 +583,12 @@ class TestMonsterDeathBroadcast:
     def test_ravenous_power_triggers_when_dead_ally_remains_in_combat(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
         owner = combat.enemies[0]
-        door, door_ai = create_door(Rng(101))
-        combat.add_enemy(door, door_ai)
+        ally, ally_ai = create_twig_slime_s(Rng(101))
+        combat.add_enemy(ally, ally_ai)
         owner.powers[PowerId.RAVENOUS] = RavenousPower(3)
         combat.start_combat()
 
-        assert combat.kill_creature(door)
+        assert combat.kill_creature(ally)
         assert owner.get_power_amount(PowerId.STRENGTH) == 3
         assert combat.enemy_ais[owner.combat_id].current_move.state_id == "STUNNED"
 
@@ -603,28 +608,28 @@ class TestMonsterDeathBroadcast:
     def test_crab_rage_triggers_when_dead_ally_remains_in_combat(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
         owner = combat.enemies[0]
-        door, door_ai = create_door(Rng(102))
-        combat.add_enemy(door, door_ai)
+        ally, ally_ai = create_twig_slime_s(Rng(102))
+        combat.add_enemy(ally, ally_ai)
         owner.powers[PowerId.CRAB_RAGE] = CrabRagePower()
         combat.start_combat()
 
-        assert combat.kill_creature(door)
+        assert combat.kill_creature(ally)
         assert owner.get_power_amount(PowerId.STRENGTH) == 5
         assert owner.block == 99
         assert PowerId.CRAB_RAGE not in owner.powers
 
     def test_dampen_removes_dead_caster_that_remains_in_combat(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
-        door, door_ai = create_door(Rng(103))
-        combat.add_enemy(door, door_ai)
+        caster, caster_ai = create_twig_slime_s(Rng(103))
+        combat.add_enemy(caster, caster_ai)
         dampen = DampenPower()
-        dampen.add_caster(door)
+        dampen.add_caster(caster)
         combat.player.powers[PowerId.DAMPEN] = dampen
         combat.start_combat()
 
-        assert combat.kill_creature(door)
+        assert combat.kill_creature(caster)
         assert PowerId.DAMPEN not in combat.player.powers
-        assert door not in dampen.casters
+        assert caster not in dampen.casters
 
     def test_asleep_power_stuns_enemy_when_woken_by_damage(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
@@ -779,7 +784,7 @@ class TestMonsterDeathBroadcast:
     def test_covered_power_drops_when_coverer_dies_but_remains_in_combat(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
         covered_enemy = combat.enemies[0]
-        coverer, coverer_ai = create_door(Rng(104))
+        coverer, coverer_ai = create_twig_slime_s(Rng(104))
         combat.add_enemy(coverer, coverer_ai)
         combat.start_combat()
 
@@ -791,7 +796,6 @@ class TestMonsterDeathBroadcast:
     def test_surrounded_keeps_facing_when_dead_enemy_is_no_longer_hittable(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
         enemy = combat.enemies[0]
-        enemy.powers[PowerId.DOOR_REVIVAL] = DoorRevivalPower()
         enemy.apply_power(PowerId.BACK_ATTACK_LEFT, 1)
         combat.player.apply_power(PowerId.SURROUNDED, 1)
         combat.start_combat()
@@ -986,109 +990,6 @@ class TestUntargetableReviveStates:
         assert eye.current_hp == eye.max_hp
         assert eye.powers[PowerId.ILLUSION].is_reviving is False
 
-    def test_half_dead_enemy_ignores_damage(self):
-        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
-        enemy = combat.enemies[0]
-        power = DoorRevivalPower()
-        power.is_half_dead = True
-        enemy.powers[PowerId.DOOR_REVIVAL] = power
-        combat.start_combat()
-
-        hp_before = enemy.current_hp
-        result = combat.deal_damage(combat.player, enemy, 10, ValueProp.MOVE)
-        assert result
-        assert result[0].hp_lost == 0
-        assert enemy.current_hp == hp_before
-
-    def test_door_revival_spawns_doormaker_and_switches_door_to_dead_state(self):
-        combat = CombatState(
-            player_hp=80,
-            player_max_hp=80,
-            deck=create_ironclad_starter_deck(),
-            rng_seed=42,
-            character_id="Ironclad",
-        )
-        enemy, ai = create_door(Rng(42))
-        combat.add_enemy(enemy, ai)
-        combat.start_combat()
-
-        assert combat.kill_creature(enemy)
-        assert any(creature.monster_id == "DOORMAKER" for creature in combat.enemies if creature is not enemy)
-        assert combat.enemy_ais[enemy.combat_id].current_move.state_id == "DEAD_MOVE"
-
-    def test_doormaker_get_back_in_revives_door_and_then_escapes(self):
-        combat = CombatState(
-            player_hp=80,
-            player_max_hp=80,
-            deck=create_ironclad_starter_deck(),
-            rng_seed=43,
-            character_id="Ironclad",
-        )
-        door, door_ai = create_door(Rng(43))
-        doormaker, doormaker_ai = create_doormaker(Rng(44))
-        combat.add_enemy(door, door_ai)
-        combat.add_enemy(doormaker, doormaker_ai)
-        combat.start_combat()
-
-        assert combat.kill_creature(door)
-        starting_max_hp = door.max_hp
-        doormaker_ai._current_state_id = "GET_BACK_IN_MOVE"  # noqa: SLF001
-        doormaker_ai.current_move.perform(combat)
-
-        assert door.current_hp == starting_max_hp + 20
-        assert door.max_hp == starting_max_hp + 20
-        assert door.get_power_amount(PowerId.STRENGTH) == 3
-        assert combat.enemy_ais[door.combat_id].current_move.state_id == "DRAMATIC_OPEN_MOVE"
-        assert doormaker.escaped is True
-
-    def test_door_only_blocks_combat_end_while_doormaker_is_alive(self):
-        combat = CombatState(
-            player_hp=80,
-            player_max_hp=80,
-            deck=create_ironclad_starter_deck(),
-            rng_seed=45,
-            character_id="Ironclad",
-        )
-        door, door_ai = create_door(Rng(45))
-        doormaker, doormaker_ai = create_doormaker(Rng(46))
-        combat.add_enemy(door, door_ai)
-        combat.add_enemy(doormaker, doormaker_ai)
-        combat.start_combat()
-
-        assert combat.kill_creature(door)
-        assert combat.is_over is False
-        assert combat.kill_creature(doormaker)
-        assert combat.is_over is True
-        assert combat.player_won is True
-
-    def test_second_door_revival_uses_scaled_max_hp_and_strength_amount(self):
-        combat = CombatState(
-            player_hp=80,
-            player_max_hp=80,
-            deck=create_ironclad_starter_deck(),
-            rng_seed=47,
-            character_id="Ironclad",
-        )
-        door, door_ai = create_door(Rng(47))
-        doormaker, doormaker_ai = create_doormaker(Rng(48))
-        combat.add_enemy(door, door_ai)
-        combat.add_enemy(doormaker, doormaker_ai)
-        combat.start_combat()
-
-        assert combat.kill_creature(door)
-        revived_once = combat.revive_door()
-        assert revived_once is door
-        assert door.max_hp == 175
-        assert door.current_hp == 175
-        assert door.get_power_amount(PowerId.STRENGTH) == 3
-
-        assert combat.kill_creature(door)
-        revived_twice = combat.revive_door()
-        assert revived_twice is door
-        assert door.max_hp == 195
-        assert door.current_hp == 195
-        assert door.get_power_amount(PowerId.STRENGTH) == 6
-
     def test_test_subject_respawns_during_enemy_turn(self):
         combat = CombatState(
             player_hp=80,
@@ -1119,13 +1020,15 @@ class TestUntargetableReviveStates:
         subject_ai.current_move.perform(combat)
         subject_ai.on_move_performed()
         subject_ai.roll_move(combat.rng)
-        assert subject_ai.current_move.state_id == TEST_SUBJECT_POUNCE_MOVE
+        # v0.111.0: POUNCE removed, MULTI_CLAW loops into itself
+        assert subject_ai.current_move.state_id == TEST_SUBJECT_MULTI_CLAW_MOVE
+        assert subject_ai.current_move.intents[0].hits == 4
 
         subject_ai.current_move.perform(combat)
         subject_ai.on_move_performed()
         subject_ai.roll_move(combat.rng)
         assert subject_ai.current_move.state_id == TEST_SUBJECT_MULTI_CLAW_MOVE
-        assert subject_ai.current_move.intents[0].hits == 4
+        assert subject_ai.current_move.intents[0].hits == 5
 
     def test_test_subject_second_respawn_removes_adaptable(self):
         combat = CombatState(
@@ -1163,7 +1066,7 @@ class TestUntargetableReviveStates:
         combat.add_enemy(giant, giant_ai)
         combat.start_combat()
 
-        assert giant.max_hp == 250
+        assert giant.max_hp == 240
         giant_ai.current_move.perform(combat)
         giant_ai.on_move_performed()
         giant_ai.roll_move(combat.rng)
@@ -1227,6 +1130,24 @@ class TestDeathPowerRetention:
         assert combat.player.is_dead
         assert combat.is_over is True
         assert combat.player_won is False
+
+    def test_lizard_tail_heals_at_least_one_hp(self):
+        """Matches v0.111.0 LizardTail.cs: heal amount is Math.Max(1m, maxHp * 50%)."""
+        combat = CombatState(
+            player_hp=1,
+            player_max_hp=1,
+            deck=create_ironclad_starter_deck(),
+            rng_seed=105,
+            character_id="Ironclad",
+            relics=["LizardTail"],
+        )
+        enemy, enemy_ai = create_shrinker_beetle(Rng(105))
+        combat.add_enemy(enemy, enemy_ai)
+        combat.start_combat()
+
+        assert combat.kill_creature(combat.player)
+        assert combat.player.current_hp == 1
+        assert combat.is_over is False
 
     def test_melancholy_cost_drops_after_enemy_death(self):
         combat = _make_combat(create_necrobinder_starter_deck(), "Necrobinder")
@@ -1352,17 +1273,6 @@ class TestDeathPowerRetention:
         assert combat.kill_creature(enemy)
         assert enemy.escaped is True
         assert enemy not in combat.alive_enemies
-
-    def test_half_dead_enemy_stays_on_battlefield(self):
-        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
-        enemy = combat.enemies[0]
-        enemy.powers[PowerId.DOOR_REVIVAL] = DoorRevivalPower()
-        combat.start_combat()
-
-        assert combat.kill_creature(enemy)
-        assert enemy.escaped is False
-        assert enemy in combat.enemies
-
 
 class TestMonsterPlayLocks:
     def test_smoggy_blocks_skill_plays_after_first_skill(self):

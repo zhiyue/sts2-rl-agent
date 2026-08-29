@@ -14,6 +14,7 @@ from sts2_env.core.enums import (
 )
 from sts2_env.cards.factory import (
     card_metadata,
+    create_distinct_character_cards,
     eligible_character_cards,
     eligible_registered_cards,
 )
@@ -569,7 +570,7 @@ class LastingCandy(RelicInstance):
 
 @register_relic
 class LizardTail(RelicInstance):
-    """Prevent death once, heal 50% max HP."""
+    """Prevent death once, heal 50% max HP (at least 1)."""
     relic_id = RelicId.LIZARD_TAIL
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
@@ -586,7 +587,8 @@ class LizardTail(RelicInstance):
     def should_die_late(self, owner: Creature, combat: CombatState) -> bool | None:
         if not self._was_used:
             self._was_used = True
-            heal_amount = owner.max_hp * self.HEAL_PCT // PERCENT_DENOMINATOR
+            # v0.111.0: heal amount is at least 1 (Math.Max(1m, ...)).
+            heal_amount = max(1, owner.max_hp * self.HEAL_PCT // PERCENT_DENOMINATOR)
             if owner.is_dead:
                 owner.current_hp = min(owner.max_hp, heal_amount)
             else:
@@ -1115,7 +1117,7 @@ class UnceasingTop(RelicInstance):
 
 @register_relic
 class UnsettlingLamp(RelicInstance):
-    """First debuff card: double all debuff amounts (once per combat)."""
+    """First debuff card: double all debuff amounts (once per combat, skips Artifact targets)."""
     relic_id = RelicId.UNSETTLING_LAMP
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
@@ -1153,6 +1155,9 @@ class UnsettlingLamp(RelicInstance):
         if power_cls is None or not getattr(power_cls, "is_visible", True):
             return amount
         if _power_type_for_amount(power_cls, amount) != PowerType.DEBUFF:
+            return amount
+        if target.has_power(PowerId.ARTIFACT):
+            # v0.111.0: a debuff absorbed by Artifact no longer triggers the relic.
             return amount
         if self._triggering_card is None:
             self._triggering_card = card_source
@@ -1232,14 +1237,28 @@ class RuinedHelmet(RelicInstance):
 
 @register_relic
 class VexingPuzzlebox(RelicInstance):
-    """Round 1: generate random card with 0 cost in hand."""
+    """Round 1: generate a random card in hand, free this turn."""
     relic_id = RelicId.VEXING_PUZZLEBOX
     rarity = RelicRarity.RARE
     pool = RelicPool.SHARED
 
     def after_player_turn_start(self, owner: Creature, combat: CombatState) -> None:
-        if combat.round_number == 1:
-            combat.generate_free_card_in_hand(owner)
+        if combat.round_number != 1:
+            return
+        state = combat.combat_player_state_for(owner)
+        if state is None:
+            return
+        generated = create_distinct_character_cards(
+            state.character_id,
+            combat.combat_card_generation_rng,
+            1,
+            generation_context="combat",
+            is_multiplayer=combat.is_multiplayer,
+        )
+        for card in generated:
+            # v0.111.0: SetToFreeThisTurn instead of SetThisCombat(0).
+            card.set_temporary_free_this_turn()
+            combat.add_generated_card_to_creature_hand(owner, card)
 
 
 @register_relic

@@ -75,7 +75,7 @@ class TestRelicUncommonOwnerScopeAndRoomHooksParity:
         assert player.current_hp == 43
 
     def test_planisphere_heals_when_last_map_point_was_unknown(self):
-        """Matches Planisphere.cs: heal when entering from an Unknown map node."""
+        """Matches Planisphere.cs (v0.111.0): heal 5 when entering from an Unknown map node."""
         run_state = RunState(seed=1202, character_id="Ironclad")
         run_state.player.current_hp = 35
         assert run_state.player.obtain_relic("PLANISPHERE")
@@ -88,7 +88,7 @@ class TestRelicUncommonOwnerScopeAndRoomHooksParity:
         run_state.add_visited_coord(unknown.coord)
 
         relic.after_room_entered(run_state.player, RoomVisitContext(RoomType.MONSTER))
-        assert run_state.player.current_hp == 39
+        assert run_state.player.current_hp == 40
 
     def test_planisphere_does_not_heal_on_non_unknown_or_when_owner_dead(self):
         """Planisphere should not heal for known nodes and should never revive a dead owner."""
@@ -111,27 +111,38 @@ class TestRelicUncommonOwnerScopeAndRoomHooksParity:
         relic.after_room_entered(run_state.player, RoomVisitContext(RoomType.MONSTER))
         assert run_state.player.current_hp == 0
 
-    def test_regalite_gains_block_only_for_owner_colorless_card_entering_combat(self):
-        """Matches Regalite.cs: owner gains 2 block when a colorless card enters combat."""
+    def test_regalite_grants_block_once_per_turn_for_first_generated_card(self):
+        """Matches Regalite.cs (v0.111.0): first card generated for the owner each turn grants 4 block."""
         combat = _make_ironclad_combat(["Regalite"], seed=1204)
         player = combat.player
         player.block = 0
 
-        colorless = create_card(CardId.VOLLEY)
-        combat.move_card_to_creature_hand(player, colorless)
-        assert player.block == 2
+        combat.add_generated_card_to_creature_hand(player, create_card(CardId.VOLLEY))
+        assert player.block == 4
 
-        event_with_class_visual_pool = create_card(CardId.ENTRENCH)
-        combat.move_card_to_creature_hand(player, event_with_class_visual_pool)
-        assert player.block == 2
+        combat.add_generated_card_to_creature_hand(player, create_card(CardId.VOLLEY))
+        assert player.block == 4
 
-        non_colorless = create_card(CardId.STRIKE_IRONCLAD)
-        combat.move_card_to_creature_hand(player, non_colorless)
-        assert player.block == 2
+        combat.add_generated_card_to_creature_hand(player, create_card(CardId.STRIKE_IRONCLAD))
+        assert player.block == 4
 
-        other_owner_card = create_card(CardId.VOLLEY)
-        combat._apply_card_after_card_entered_combat(other_owner_card, combat.enemies[0])  # noqa: SLF001
-        assert player.block == 2
+    def test_regalite_resets_each_turn_and_ignores_other_owners_generated_cards(self):
+        """Matches Regalite.cs (v0.111.0): counter resets on owner turn start; other owners' cards never trigger."""
+        combat = _make_ironclad_combat(["Regalite"], seed=1209)
+        player = combat.player
+        player.block = 0
+        enemy = combat.enemies[0]
+        enemy.max_hp = 400
+        enemy.current_hp = 400
+
+        combat.add_generated_card_to_creature_hand(enemy, create_card(CardId.VOLLEY))
+        assert player.block == 0
+
+        combat.end_player_turn()
+        assert combat.round_number == 2
+
+        combat.add_generated_card_to_creature_hand(player, create_card(CardId.VOLLEY))
+        assert player.block == 4
 
     def test_regalite_block_triggers_after_block_gained_hooks(self):
         combat = _make_ironclad_combat(["Regalite"], seed=1209)
@@ -141,9 +152,9 @@ class TestRelicUncommonOwnerScopeAndRoomHooksParity:
         enemy = combat.enemies[0]
         start_hp = enemy.current_hp
 
-        combat.move_card_to_creature_hand(player, create_card(CardId.VOLLEY))
+        combat.add_generated_card_to_creature_hand(player, create_card(CardId.VOLLEY))
 
-        assert player.block == 2
+        assert player.block == 4
         assert enemy.current_hp == start_hp - 5
 
     def test_reptile_trinket_applies_temporary_strength_on_owned_potion_use(self):

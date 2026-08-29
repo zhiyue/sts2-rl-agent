@@ -130,18 +130,27 @@ class TestRelicStarterCommonRestUpgradeHooksParity:
         assert len(blades) == 1
         assert blades[0].base_damage == 20
 
-    def test_pendulum_draws_one_extra_when_shuffle_happens(self):
-        """Matches Pendulum.cs: after shuffling discard into draw, draw 1 card."""
+    def test_pendulum_draws_one_extra_card_every_third_turn(self):
+        """Matches Pendulum.cs: every 3rd hand draw gains +1 card (counter cycles mod 3)."""
         combat = _make_ironclad_combat(["Pendulum"], seed=1604)
-        combat.hand.clear()
-        combat.draw_pile.clear()
-        combat.discard_pile = [make_strike_ironclad(), make_defend_ironclad()]
 
-        combat.draw_cards(combat.player, 1)
+        # Turn 1: counter 0 -> 1, no bonus.
+        assert len(combat.hand) == 5
 
-        assert len(combat.hand) == 2
-        assert len(combat.draw_pile) == 0
-        assert len(combat.discard_pile) == 0
+        combat.end_player_turn()
+        assert combat.round_number == 2
+        # Turn 2: counter 1 -> 2, no bonus.
+        assert len(combat.hand) == 5
+
+        combat.end_player_turn()
+        assert combat.round_number == 3
+        # Turn 3: counter 2 -> 0, +1 card.
+        assert len(combat.hand) == 6
+
+        combat.end_player_turn()
+        assert combat.round_number == 4
+        # Cycle restarts: counter 0 -> 1, no bonus.
+        assert len(combat.hand) == 5
 
     def test_regal_pillow_adds_fifteen_to_rest_site_heal_amount(self):
         """Matches RegalPillow.cs: rest-site heal amount gains +15."""
@@ -219,10 +228,10 @@ class TestRelicStarterCommonRestUpgradeHooksParity:
         assert relic._cards_added == BookOfFiveRings.CARDS_THRESHOLD - 1
 
         run_state.player.add_card_instance_to_deck(make_strike_ironclad())
-        assert run_state.player.current_hp == 35
+        assert run_state.player.current_hp == 40
         assert relic._cards_added == BookOfFiveRings.CARDS_THRESHOLD
 
         for _ in range(5):
             run_state.player.add_card_instance_to_deck(make_strike_ironclad())
-        assert run_state.player.current_hp == 50
+        assert run_state.player.current_hp == 60
         assert relic._cards_added == BookOfFiveRings.CARDS_THRESHOLD * 2
