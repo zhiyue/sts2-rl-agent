@@ -197,7 +197,7 @@ The agent learns to progress further through Act 1 but does not yet achieve a po
 
 1. **Sparse reward:** Only +1 for winning the entire run, -1 for death. No intermediate signal for floor progression (unless reward shaping is enabled).
 2. **Long episodes:** A full Act 1 run involves 15+ floors, each with its own combat, map choice, and reward decisions. Episodes can span thousands of steps.
-3. **Multi-phase action space:** The agent must learn to handle 8 different game phases with very different semantics under a single Discrete(100) action space.
+3. **Multi-phase action space:** The agent must learn to handle 8 different game phases with very different semantics under a single Discrete(157) action space.
 4. **Compounding errors:** A bad card reward choice in floor 3 might not manifest as a loss until floor 12.
 
 ### Challenges and Mitigations

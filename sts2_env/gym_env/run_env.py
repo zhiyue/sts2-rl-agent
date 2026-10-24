@@ -28,7 +28,7 @@ for the current game phase are unmasked:
 
 Observation space
 -----------------
-Flat ``float32`` vector of size ``RUN_OBS_SIZE`` (151).
+Flat ``float32`` vector of size ``RUN_OBS_SIZE`` (152).
 
 * Combat observation (131) -- reuses :func:`encode_observation`.
 * Run-level state (20):
@@ -203,7 +203,7 @@ NUM_PHASES = len(_PHASE_INDEX)
 # ---------------------------------------------------------------------------
 
 _RUN_STATE_SIZE = 20   # see module docstring
-RUN_OBS_SIZE = COMBAT_OBS_SIZE + _RUN_STATE_SIZE  # 131 + 20 = 151
+RUN_OBS_SIZE = COMBAT_OBS_SIZE + _RUN_STATE_SIZE  # 132 + 20 = 152
 
 DEFAULT_MAX_STEPS = 10_000
 DEFAULT_MAX_COMBAT_TURNS = 200

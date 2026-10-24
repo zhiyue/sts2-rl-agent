@@ -6,13 +6,13 @@ ensures the trained model receives inputs in the exact same encoding
 it was trained on.
 
 The observation format is defined in gym_env/observation.py:
-  - Player state: hp/max_hp, block/50, energy/10, max_energy/10 (4)
+  - Player state: hp/max_hp, block/50, energy/10, max_energy/10, stars/5 (5)
   - Player powers: str, dex, vuln, weak, frail, artifact (6)
   - Hand cards: card_id_norm, cost, damage, block, is_attack (10 * 5 = 50)
   - Pile sizes: draw, discard, exhaust, reserved, reserved, reserved (6)
   - Enemies: alive, hp%, block, intent_onehot(5), intent_dmg,
              intent_hits, vuln, weak, str (5 * 13 = 65)
-  Total: 131 dimensions
+  Total: 132 dimensions
 """
 
 from __future__ import annotations

@@ -55,9 +55,9 @@ run/                        Full-run state management (depends on all above)
   events.py                 Event handler
 
 gym_env/                    Gymnasium environments (depends on run/, encounters/)
-  combat_env.py             Single-combat env (Discrete(115), obs 131-dim)
-  run_env.py                Full-run env (Discrete(157), obs 151-dim)
-  observation.py            CombatState -> 131-dim float32 vector
+  combat_env.py             Single-combat env (Discrete(115), obs 132-dim)
+  run_env.py                Full-run env (Discrete(157), obs 152-dim)
+  observation.py            CombatState -> 132-dim float32 vector
   action_space.py           Action encoding + masking
   reward.py                 Reward shaping
 
@@ -331,7 +331,7 @@ The first move is held until `on_move_performed()` is called. After that, `roll_
 
 Single-combat training environment.
 
-- **Observation:** `Box(low=-1, high=10, shape=(131,), dtype=float32)`
+- **Observation:** `Box(low=-1, high=10, shape=(132,), dtype=float32)`
 - **Action space:** `Discrete(115)` = 1 end_turn + 10 untargeted card actions + 50 targeted card actions + 54 potion actions (`9 slots * (1 untargeted + 5 enemy targets)`)
 - **Action masking:** `action_masks()` returns `int8[115]` marking legal actions. Required by `MaskablePPO`.
 
@@ -350,7 +350,7 @@ On `step(action)`:
 
 ### Observation encoding (`gym_env/observation.py`)
 
-131-dimensional flat float32 vector:
+132-dimensional flat float32 vector:
 
 | Segment | Dims | Encoding |
 |---------|------|----------|
@@ -375,7 +375,7 @@ Card ID is normalized as `(card_index + 1) / (total_card_ids + 1)` to produce a 
 | | CombatEnv | RunEnv |
 |--|-----------|--------|
 | Scope | Single combat | Full multi-act run |
-| Obs size | 131 | 151 (131 combat + 20 run-level) |
+| Obs size | 132 | 152 (132 combat + 20 run-level) |
 | Action space | Discrete(115) | Discrete(157) |
 | Phases | Combat only | Combat + map + card_reward + boss_relic + shop + rest + event + treasure |
 | Reward | +1 win / -1 loss | +1 run win / -1 death or timeout |

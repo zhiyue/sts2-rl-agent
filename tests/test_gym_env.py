@@ -37,7 +37,7 @@ class TestReset:
         obs, info = env.reset(seed=42)
         assert isinstance(obs, np.ndarray)
         assert obs.shape == (OBS_SIZE,)
-        assert obs.shape == (131,)
+        assert obs.shape == (132,)
 
     def test_reset_obs_dtype(self, env):
         obs, info = env.reset(seed=42)
@@ -70,7 +70,7 @@ class TestStep:
     def test_step_end_turn_obs_shape(self, seeded_env):
         obs, reward, terminated, truncated, info = seeded_env.step(0)
         assert isinstance(obs, np.ndarray)
-        assert obs.shape == (131,)
+        assert obs.shape == (132,)
         assert obs.dtype == np.float32
 
     def test_step_end_turn_reward_is_float(self, seeded_env):
@@ -104,7 +104,7 @@ class TestStep:
         action = int(valid_actions[1])
         obs, reward, terminated, truncated, info = seeded_env.step(action)
         assert isinstance(obs, np.ndarray)
-        assert obs.shape == (131,)
+        assert obs.shape == (132,)
 
 
 class TestActionMasks:
@@ -292,7 +292,7 @@ class TestStressEpisodes:
                 action = int(rng.choice(valid))
                 obs, reward, terminated, truncated, info = env.step(action)
                 # Verify step outputs are well-formed at every step
-                assert obs.shape == (131,)
+                assert obs.shape == (132,)
                 assert obs.dtype == np.float32
                 assert isinstance(reward, float)
                 assert isinstance(terminated, bool)

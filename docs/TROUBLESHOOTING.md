@@ -349,4 +349,4 @@ obs, info = env.reset()  # Start next episode
 
 **Cause:** The observation size changed between training and inference (e.g., new features were added to the observation encoder).
 
-**Solution:** Ensure the same version of `observation.py` is used for both training and inference. The observation size is `OBS_SIZE = 131` dimensions. If you modify the observation encoder, retrain the model.
+**Solution:** Ensure the same version of `observation.py` is used for both training and inference. The observation size is `OBS_SIZE = 132` dimensions. If you modify the observation encoder, retrain the model.
