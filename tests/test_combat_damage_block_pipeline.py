@@ -271,3 +271,60 @@ class TestBlockPipeline:
 
         assert player_block == MULTIPLAYER_BLOCK_BASE
         assert unpowered_enemy_block == MULTIPLAYER_BLOCK_BASE
+
+    def test_before_block_gained_fires_with_raw_amount_before_modify(self, simple_combat):
+        """C# CreatureCmd.cs:634-642: Hook.BeforeBlockGained (Hook.cs:131-137)
+        fires with the RAW amount right before Hook.ModifyBlock runs.  Skeleton
+        dispatch — no v0.107.1 listener implements it yet."""
+        from sts2_env.core.hooks import modify_block
+
+        events: list[tuple[Creature, int, ValueProp, object]] = []
+
+        class _BeforeBlockProbe(PowerInstance):
+            def __init__(self):
+                super().__init__(PowerId.BURROWED, 1)
+
+            def before_block_gained(self, owner, creature, amount, props, card_source):
+                events.append((creature, amount, props, card_source))
+
+        simple_combat.player.powers[PowerId.BURROWED] = _BeforeBlockProbe()
+
+        modify_block(8, simple_combat.player, ValueProp.MOVE, simple_combat, card_source=None)
+
+        assert events == [(simple_combat.player, 8, ValueProp.MOVE, None)]
+
+    def test_block_cap_constant_matches_csharp_gain_block_internal(self):
+        """C# Creature.cs:465 GainBlockInternal caps block at 999999999, not 999."""
+        from sts2_env.core.constants import BLOCK_CAP
+
+        assert BLOCK_CAP == 999999999
+
+
+class TestHookListenerOrder:
+    """A7 guard: C# dispatches one global listener table built per creature
+    (powers -> relics -> potions -> orbs -> cards, CombatState.cs:410-501).
+    The sim only carries powers and relics; pin their relative order so a
+    future listener class cannot silently jump the queue."""
+
+    def test_hook_listeners_dispatch_powers_before_relics_per_creature(self, simple_combat):
+        from sts2_env.core.hooks import _iter_hook_listeners  # noqa: SLF001
+        from sts2_env.relics.base import RelicId, RelicInstance
+
+        class _OrderProbeRelic(RelicInstance):
+            def __init__(self):
+                super().__init__(RelicId.BURNING_BLOOD)
+
+        simple_combat.player.apply_power(PowerId.DEXTERITY, 1)
+        simple_combat.current_player_state.relics.append(_OrderProbeRelic())
+
+        kinds = [
+            "relic" if is_relic else "power"
+            for owner, listener, is_relic in _iter_hook_listeners(simple_combat)
+            if owner is simple_combat.player
+        ]
+
+        assert "power" in kinds and "relic" in kinds
+        assert kinds.index("relic") > max(
+            index for index, kind in enumerate(kinds) if kind == "power"
+        )
+

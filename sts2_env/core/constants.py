@@ -1,7 +1,9 @@
 """Game constants verified against decompiled C# source."""
 
 MAX_HAND_SIZE = 10
-BLOCK_CAP = 999
+# C# Creature.GainBlockInternal caps block at 999999999 (Creature.cs:465:
+# `Block = (int)Math.Min((decimal)Block + amount, 999999999m)`).
+BLOCK_CAP = 999999999
 BASE_DRAW = 5
 BASE_ENERGY = 3
 PERCENT_DENOMINATOR = 100

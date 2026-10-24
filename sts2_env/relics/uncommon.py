@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sts2_env.core.constants import PERCENT_DENOMINATOR, VULNERABLE_MULTIPLIER
 from sts2_env.core.enums import (
     RelicRarity, CombatSide, CardType, MapPointType, OrbType, PowerId, RoomType, ValueProp,
 )
@@ -513,33 +512,20 @@ class Pantograph(RelicInstance):
 
 @register_relic
 class PaperPhrog(RelicInstance):
-    """Enemies take +25% more damage from Vulnerable."""
+    """Enemies take +25% more damage from Vulnerable.
+
+    v0.107.1 parity: the +0.25 is folded into VulnerablePower's own
+    multiplier BEFORE Debilitate doubles the excess (C# VulnerablePower.cs
+    calls PaperPhrog.ModifyVulnerableMultiplier from inside
+    ModifyDamageMultiplicative), so it is applied in
+    sts2_env/powers/common.py::VulnerablePower — not via a separate
+    multiplicative listener here.
+    """
+
     relic_id = RelicId.PAPER_PHROG
     rarity = RelicRarity.UNCOMMON
     pool = RelicPool.IRONCLAD
     EXTRA_VULNERABLE = 0.25
-
-    def modify_damage_multiplicative(
-        self,
-        owner: Creature,
-        dealer: Creature | None,
-        target: Creature,
-        props: ValueProp,
-        card: object | None = None,
-    ) -> float:
-        if dealer is not owner or target is None or target is owner or not props.is_powered_attack():
-            return 1.0
-        if target.get_power_amount(PowerId.VULNERABLE) <= 0:
-            return 1.0
-
-        vulnerable_multiplier = VULNERABLE_MULTIPLIER
-        cruelty = dealer.powers.get(PowerId.CRUELTY)
-        if cruelty is not None:
-            vulnerable_multiplier += cruelty.amount / PERCENT_DENOMINATOR
-        if target.has_power(PowerId.DEBILITATE):
-            vulnerable_multiplier += vulnerable_multiplier - 1.0
-
-        return (vulnerable_multiplier + self.EXTRA_VULNERABLE) / vulnerable_multiplier
 
 
 @register_relic

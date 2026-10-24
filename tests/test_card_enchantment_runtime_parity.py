@@ -430,6 +430,45 @@ def test_runtime_enchantments_cover_draw_energy_autoplay_and_replay():
     assert glam_combat.enemies[0].current_hp == glam_combat.enemies[0].max_hp - 6
 
 
+def test_modify_shuffle_order_dispatch_matches_csharp_initial_flag():
+    """C# Hook.ModifyShuffleOrder (Hook.cs:2004-2009): both the combat-start
+    shuffle (CardPile.cs:79, isInitialShuffle=true) and standard shuffles
+    (CardPileCmd.cs:877, isInitialShuffle=false) run through one dispatch;
+    PerfectFit only reorders standard shuffles (PerfectFit.cs:12)."""
+    from sts2_env.core.hooks import modify_shuffle_order
+
+    combat = _make_combat(create_ironclad_starter_deck())
+    perfect_fit = make_strike_ironclad()
+    perfect_fit.add_enchantment("PerfectFit", 1)
+    cards = [make_defend_ironclad(), perfect_fit, make_defend_ironclad()]
+
+    modify_shuffle_order(combat, combat.player, cards, is_initial_shuffle=True)
+    assert cards[1] is perfect_fit  # initial shuffle leaves the order untouched
+
+    modify_shuffle_order(combat, combat.player, cards, is_initial_shuffle=False)
+    assert cards[0] is perfect_fit  # standard shuffle moves it to the top
+
+
+def test_imbued_moves_to_bottom_of_draw_pile_at_turn_one_draw():
+    """C# CombatManager.cs:659-664: on turn 1, cards whose enchantment sets
+    ShouldStartAtBottomOfDrawPile (Imbued, Imbued.cs:11) are moved to the
+    bottom of the draw pile before Innate cards move to the top.  The
+    placement happens at the turn-1 draw step, NOT during the initial
+    shuffle (CardPile.cs:79), so cards generated during before_combat_start
+    can never land below an Imbued card."""
+    imbued = make_defend_ironclad()
+    imbued.add_enchantment("Imbued", 1)
+    deck = [make_defend_ironclad() for _ in range(5)] + [imbued]
+    combat = _make_combat(deck)
+    state = combat.current_player_state
+
+    combat._reset_player_combat_state(state)  # noqa: SLF001
+    combat._prepare_opening_draw_for_owner(combat.player, 5)  # noqa: SLF001
+
+    assert state.draw[-1] is imbued
+    assert all(not card.has_enchantment("Imbued") for card in state.draw[:-1])
+
+
 def test_eternal_cards_are_not_removable_and_perfect_fit_moves_to_top_on_shuffle():
     player = PlayerState(character_id="Ironclad", deck=create_ironclad_starter_deck())
     player.deck[0].add_enchantment("TezcatarasEmber", 1)

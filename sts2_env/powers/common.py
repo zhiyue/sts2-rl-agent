@@ -7,9 +7,46 @@ from typing import TYPE_CHECKING
 from sts2_env.core.enums import PowerId, PowerType, PowerStackType, ValueProp
 from sts2_env.core.constants import VULNERABLE_MULTIPLIER, WEAK_MULTIPLIER, FRAIL_MULTIPLIER
 from sts2_env.powers.base import PowerInstance
+from sts2_env.relics.base import RelicId
 
 if TYPE_CHECKING:
     from sts2_env.core.creature import Creature
+
+# C# folds these multipliers in `decimal` (exact: 0.75m - 0.15m = 0.60m,
+# widened 0.20m).  Python floats can land one ulp below the true value
+# (0.75 - 0.15 - (1 - 0.6) = 0.19999999999999996) and the pipeline's
+# math.floor then drops a whole point of damage.  Round the folded
+# multiplier to 10 digits — the same guard the retired ratio-compensation
+# relic listeners used (PaperKrane.FLOAT_ROUND_DIGITS).
+MULTIPLIER_ROUND_DIGITS = 10
+
+
+def _get_relic_with_holder(creature: Creature | None, relic_id: RelicId) -> tuple[object, Creature] | None:
+    """Mirror C# ``Player.GetRelic<T>()`` lookups done inside power hooks.
+
+    C# VulnerablePower.cs:39 (``dealer.Player?.GetRelic<PaperPhrog>()``) and
+    WeakPower.cs:34 (``target?.Player?.GetRelic<PaperKrane>()``) read the
+    attacker's / victim's relic belt from inside the power's multiplicative
+    hook.  Pets resolve to their owner's belt, matching C# ``Creature.Player``
+    on pet creatures.  Returns ``(relic, holder_creature)`` or None; the
+    holder is needed for the Phrog/Krane self-target guards.
+    """
+    if creature is None:
+        return None
+    combat = getattr(creature, "combat_state", None)
+    if combat is None:
+        return None
+    holder = creature
+    relics = combat.relics_for_creature(holder)
+    if not relics:
+        owner = getattr(holder, "pet_owner", None)
+        if owner is not None:
+            holder = owner
+            relics = combat.relics_for_creature(owner)
+    for relic in relics:
+        if relic.relic_id == relic_id and getattr(relic, "enabled", True):
+            return relic, holder
+    return None
 
 
 class StrengthPower(PowerInstance):
@@ -67,14 +104,24 @@ class VulnerablePower(PowerInstance):
         self, owner: Creature, dealer: Creature | None, target: Creature, props: ValueProp
     ) -> float:
         if target is owner and props.is_powered_attack():
+            # C# VulnerablePower.ModifyDamageMultiplicative folds every modifier
+            # into a single multiplier value: the dealer's PaperPhrog (+0.25)
+            # and Cruelty patch the base 1.5 BEFORE Debilitate doubles the
+            # excess (VulnerablePower.cs:35-46; PaperPhrog.cs:17-27;
+            # DebilitatePower.cs:27-35).  Order matters: with Vuln + Debilitate
+            # + Phrog the C# result is (1.5 + 0.25) doubled = 2.5, not
+            # 1.5 doubled (+0.25) = 2.25.
             multiplier = VULNERABLE_MULTIPLIER
+            phrog = _get_relic_with_holder(dealer, RelicId.PAPER_PHROG)
+            if phrog is not None and owner is not phrog[1]:
+                multiplier += phrog[0].EXTRA_VULNERABLE
             if dealer is not None:
                 cruelty = dealer.powers.get(PowerId.CRUELTY)
                 if cruelty is not None:
                     multiplier += cruelty.amount / 100.0
             if owner.has_power(PowerId.DEBILITATE):
                 multiplier += multiplier - 1.0
-            return multiplier
+            return round(multiplier, MULTIPLIER_ROUND_DIGITS)
         return 1.0
 
     def on_turn_end_enemy_side(self, owner: Creature) -> None:
@@ -97,10 +144,19 @@ class WeakPower(PowerInstance):
         self, owner: Creature, dealer: Creature | None, target: Creature, props: ValueProp
     ) -> float:
         if dealer is owner and props.is_powered_attack():
+            # C# WeakPower.ModifyDamageMultiplicative folds every modifier into
+            # a single multiplier value: the victim's PaperKrane (-0.15) patches
+            # the base 0.75 BEFORE Debilitate widens the shortfall
+            # (WeakPower.cs:33-40; PaperKrane.cs:17-27; DebilitatePower.cs:37-45).
+            # Order matters: with Weak + Debilitate + Krane the C# result is
+            # (0.75 - 0.15) widened = 0.20, not 0.75 widened (-0.15) = 0.35.
             multiplier = WEAK_MULTIPLIER
+            krane = _get_relic_with_holder(target, RelicId.PAPER_KRANE)
+            if krane is not None and target is krane[1]:
+                multiplier -= krane[0].EXTRA_WEAK
             if owner.has_power(PowerId.DEBILITATE):
                 multiplier -= 1.0 - multiplier
-            return multiplier
+            return round(multiplier, MULTIPLIER_ROUND_DIGITS)
         return 1.0
 
     def on_turn_end_enemy_side(self, owner: Creature) -> None:

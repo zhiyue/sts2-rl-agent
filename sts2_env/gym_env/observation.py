@@ -1,14 +1,14 @@
 """Observation space encoding.
 
-Compact flat float32 vector (~131 dimensions):
-  Player state:       hp/max_hp, block/50, energy, max_energy       (4)
+Compact flat float32 vector (~132 dimensions):
+  Player state:       hp/max_hp, block/50, energy, max_energy, stars/5 (5)
   Player powers:      str, dex, vuln, weak, frail, artifact         (6)
   Hand (10 cards):    card_id_norm, cost, damage, block, is_attack  (50)
   Pile sizes:         draw, discard, exhaust, reserved, reserved,
                       reserved                                     (6)
   Enemies (5 slots):  alive, hp%, block, intent_onehot(5),
                       intent_dmg, intent_hits, vuln, weak, str      (13 * 5 = 65)
-Total: 4 + 6 + 50 + 6 + 65 = 131
+Total: 5 + 6 + 50 + 6 + 65 = 132
 """
 
 from __future__ import annotations
@@ -50,12 +50,14 @@ PILE_FEATURES = 6  # draw_size, discard_size, exhaust_size, reserved x3
 
 # Observation size
 OBS_SIZE = (
-    4                                  # player state
+    5                                  # player state (incl. Stars, see
+                                       # PlayerCombatState.cs:190-208 — Stars
+                                       # gate card playability like energy)
     + NUM_PLAYER_POWERS                # player powers (6)
     + MAX_HAND_SIZE * CARD_FEATURES    # hand cards (50)
     + PILE_FEATURES                    # pile summaries (6)
     + MAX_ENEMIES * ENEMY_FEATURES     # enemies (65)
-)  # = 131
+)  # = 132
 
 
 def encode_observation(combat: CombatState) -> np.ndarray:
@@ -63,12 +65,13 @@ def encode_observation(combat: CombatState) -> np.ndarray:
     obs = np.zeros(OBS_SIZE, dtype=np.float32)
     idx = 0
 
-    # --- Player state (4) ---
+    # --- Player state (5: hp, block, energy, max_energy, stars) ---
     obs[idx] = combat.player.current_hp / combat.player.max_hp if combat.player.max_hp > 0 else 0.0
     obs[idx + 1] = combat.player.block / 50.0
     obs[idx + 2] = combat.energy / 10.0
     obs[idx + 3] = combat.max_energy / 10.0
-    idx += 4
+    obs[idx + 4] = combat.stars / 5.0
+    idx += 5
 
     # --- Player powers (6) ---
     for pid in PLAYER_POWERS:

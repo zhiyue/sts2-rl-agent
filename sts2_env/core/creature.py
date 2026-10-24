@@ -79,6 +79,26 @@ class Creature:
         return self.current_hp <= 0
 
     @property
+    def is_secondary_enemy(self) -> bool:
+        """C# Creature.IsSecondaryEnemy (Creature.cs:262): an enemy is secondary
+        when any of its powers declares ``owner_is_secondary_enemy`` (e.g.
+        MinionPower).  Secondary enemies automatically die unless a living
+        primary enemy remains."""
+        if self.side != CombatSide.ENEMY:
+            return False
+        return any(
+            getattr(power, "owner_is_secondary_enemy", False)
+            for power in self.powers.values()
+        )
+
+    @property
+    def is_primary_enemy(self) -> bool:
+        """C# Creature.IsPrimaryEnemy (Creature.cs:252): enemies that are not
+        secondary.  Combat victory only requires every primary enemy to die
+        (CombatManager.cs:192)."""
+        return self.side == CombatSide.ENEMY and not self.is_secondary_enemy
+
+    @property
     def creature(self) -> Creature:
         """Compatibility shim for code paths that expect owner.creature."""
         return self

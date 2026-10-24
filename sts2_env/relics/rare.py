@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sts2_env.core.constants import PERCENT_DENOMINATOR, WEAK_MULTIPLIER
+from sts2_env.core.constants import PERCENT_DENOMINATOR
 from sts2_env.core.creature import _power_type_for_amount, get_power_class
 from sts2_env.core.enums import (
     RelicRarity, CombatSide, CardType, PowerId, PowerType, RoomType, ValueProp,
@@ -1289,31 +1289,19 @@ class WhiteStar(RelicInstance):
 
 @register_relic
 class PaperKrane(RelicInstance):
-    """Reduce Weak damage multiplier by 15%."""
+    """Reduce Weak damage multiplier by 15%.
+
+    v0.107.1 parity: the -0.15 is folded into WeakPower's own multiplier
+    BEFORE Debilitate widens the shortfall (C# WeakPower.cs calls
+    PaperKrane.ModifyWeakMultiplier from inside ModifyDamageMultiplicative),
+    so it is applied in sts2_env/powers/common.py::WeakPower — not via a
+    separate multiplicative listener here.
+    """
+
     relic_id = RelicId.PAPER_KRANE
     rarity = RelicRarity.RARE
     pool = RelicPool.SILENT
     EXTRA_WEAK = 0.15
-    FLOAT_ROUND_DIGITS = 10
-
-    def modify_damage_multiplicative(
-        self,
-        owner: Creature,
-        dealer: Creature | None,
-        target: Creature,
-        props: ValueProp,
-        card: object | None = None,
-    ) -> float:
-        if target is not owner or dealer is None or not props.is_powered_attack():
-            return 1.0
-        if dealer.get_power_amount(PowerId.WEAK) <= 0:
-            return 1.0
-
-        weak_multiplier = WEAK_MULTIPLIER
-        if dealer.has_power(PowerId.DEBILITATE):
-            weak_multiplier -= 1.0 - weak_multiplier
-
-        return max(0.0, round((weak_multiplier - self.EXTRA_WEAK) / weak_multiplier, self.FLOAT_ROUND_DIGITS))
 
 
 @register_relic

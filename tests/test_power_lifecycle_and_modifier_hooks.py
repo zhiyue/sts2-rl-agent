@@ -36,6 +36,7 @@ from sts2_env.powers.base import PowerInstance
 from sts2_env.powers.monster import BurrowedPower, CrabRagePower, SkittishPower, SmoggyPower
 from sts2_env.powers.remaining_b import RampartPower
 from sts2_env.powers.remaining_c import SandpitPower, ToricToughnessPower
+from sts2_env.relics.registry import create_relic_by_name
 from sts2_env.run.reward_objects import GoldReward, RemoveCardReward
 from sts2_env.run.rooms import CombatRoom
 from sts2_env.run.run_state import PlayerState, RunState
@@ -675,6 +676,36 @@ class TestDamageModifierInteractions:
         player.apply_power(PowerId.WEAK, 1)
         assert calculate_damage(10, player, enemy, ValueProp.MOVE, simple_combat) == 5
 
+    def test_vulnerable_debilitate_paper_phrog_folds_phrog_in_before_doubling(self, simple_combat):
+        """C# VulnerablePower.cs:35-46 calls PaperPhrog.ModifyVulnerableMultiplier
+        from inside the power's own multiplicative hook, so Phrog's +0.25 patches
+        the base 1.5 BEFORE Debilitate doubles the excess: (1.5 + 0.25) widened
+        = 2.5x.  The previous Python ratio-compensation listener applied Phrog
+        after Debilitate and produced 2.25x."""
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        simple_combat.current_player_state.relics.append(create_relic_by_name("PaperPhrog"))
+
+        enemy.apply_power(PowerId.DEBILITATE, 1)
+        enemy.apply_power(PowerId.VULNERABLE, 1)
+
+        assert calculate_damage(10, player, enemy, ValueProp.MOVE, simple_combat) == 25
+
+    def test_weak_debilitate_paper_krane_folds_krane_in_before_widening(self, simple_combat):
+        """C# WeakPower.cs:33-40 calls PaperKrane.ModifyWeakMultiplier from
+        inside the power's own multiplicative hook, so Krane's -0.15 patches the
+        base 0.75 BEFORE Debilitate widens the shortfall: (0.75 - 0.15) widened
+        = 0.20x.  The previous Python ratio-compensation listener applied Krane
+        after Debilitate and produced 0.35x."""
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        simple_combat.current_player_state.relics.append(create_relic_by_name("PaperKrane"))
+
+        enemy.apply_power(PowerId.DEBILITATE, 1)
+        enemy.apply_power(PowerId.WEAK, 1)
+
+        assert calculate_damage(10, enemy, player, ValueProp.MOVE, simple_combat) == 2
+
     def test_debilitate_decrements_on_owner_turn_end_without_skip(self, simple_combat):
         player = simple_combat.player
         enemy = simple_combat.enemies[0]
@@ -934,6 +965,62 @@ class TestDamageModifierInteractions:
         )
         assert owner_dazed_count == 0
         assert pet_generated_count == personal_hive_amount
+
+
+class TestMinionVictoryAndCascade:
+    """C# CombatManager.cs:192: the fight is won once no *primary* enemy is
+    alive — living secondary (Minion) enemies do not keep it going.
+    CreatureCmd.cs:546-551: when a primary enemy dies and every living
+    teammate is secondary, the whole team is cascade-killed with it."""
+
+    def _add_minion(self, combat: CombatState) -> Creature:
+        minion = Creature(max_hp=10, current_hp=10, side=CombatSide.ENEMY, monster_id="TEST_MINION")
+        minion.apply_power(PowerId.MINION, 1)
+        combat.add_enemy(minion, _noop_monster_ai())
+        return minion
+
+    def test_killing_last_primary_enemy_wins_and_cascades_minion(self, simple_combat):
+        primary = simple_combat.enemies[0]
+        primary.max_hp = 50
+        primary.current_hp = 50
+        minion = self._add_minion(simple_combat)
+
+        assert primary.is_primary_enemy
+        assert minion.is_secondary_enemy
+        assert not simple_combat.is_over
+
+        simple_combat.kill_creature(primary)
+
+        assert simple_combat.is_over
+        assert simple_combat.player_won
+        # The minion cannot outlive its primary: it was cascade-killed.
+        assert not minion.is_alive
+
+    def test_living_minion_alone_does_not_block_victory(self, simple_combat):
+        """Direct check of the victory predicate (CombatManager.cs:192): a
+        living Minion secondary does not count towards the enemy-alive check."""
+        primary = simple_combat.enemies[0]
+        minion = self._add_minion(simple_combat)
+        primary.current_hp = 0
+
+        assert not primary.is_alive
+        assert minion.is_alive
+
+        simple_combat._check_combat_end()  # noqa: SLF001
+
+        assert simple_combat.is_over
+        assert simple_combat.player_won
+
+    def test_living_primary_enemy_still_blocks_victory(self, simple_combat):
+        """Control: a living primary enemy keeps the fight going even when a
+        minion teammate is also alive."""
+        primary = simple_combat.enemies[0]
+        minion = self._add_minion(simple_combat)
+        minion.current_hp = 1
+
+        simple_combat._check_combat_end()  # noqa: SLF001
+
+        assert not simple_combat.is_over
 
 
 class TestSandpitPower:
@@ -2729,9 +2816,13 @@ class TestCreatureBlock:
         player.clear_block()
         assert player.block == 0
 
-    def test_block_capped_at_999(self, player):
+    def test_block_capped_at_999999999(self, player):
+        """C# Creature.cs:465 GainBlockInternal caps block at 999999999."""
         player.gain_block(1000)
-        assert player.block == 999
+        assert player.block == 1000
+
+        player.gain_block(999999999)
+        assert player.block == 999999999
 
     def test_heal_capped_at_max(self, player):
         player.current_hp = 50

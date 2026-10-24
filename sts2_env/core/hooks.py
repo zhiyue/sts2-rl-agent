@@ -7,6 +7,32 @@ orbs, cards) participate in the dispatch.
 Dispatch order per C#: Powers → Relics → Potions → Orbs → AllCards → Modifiers.
 The simulator currently supports the two core listener classes that already
 exist in this repo: powers and relics.
+
+┌─ A7 note — structural difference vs C# (do not refactor blindly) ─────────
+│ C# builds ONE global listener table per dispatch: CombatState.cs:410-501
+│ (IterateHookListeners) walks creatures in order and appends, per creature,
+│ its powers → relics → potions → orbs → all cards in every pile (plus card
+│ afflictions/enchantments), then run Modifiers and Badges.  Every Hook.*
+│ entry point iterates that same flat list, and most are centrally guarded
+│ by CombatManager.IsOverOrEnding.
+│
+│ This module dispatches per listener CLASS: powers and relics are yielded
+│ either interleaved per creature (`_iter_hook_listeners`, used by most
+│ hooks) or in two segmented passes (`_iter_power_listeners` then
+│ `_iter_relic_listeners`, used by a few hooks).  Potions, orbs, and card
+│ models are NOT in the table; card models get their own fire_card_* calls
+│ dispatched from sts2_env/cards/registry.py at specific call sites.
+│
+│ This is a faithful numeric equivalent today because no potion, orb, or
+│ card implements a Modify* hook in v0.107.1 (the only card-adjacent
+│ listener is the PerfectFit enchantment, handled explicitly).  It becomes
+│ a real problem the moment the FIRST potion/orb/card implements a
+│ Modify* hook: C# would interleave it into the global order (e.g. a card
+│ listener between an enemy power and a relic), while this module would
+│ run it out of order.  When that happens, extend `_iter_hook_listeners`
+│ to include the new listener classes instead of adding more segmented
+│ passes.
+└────────────────────────────────────────────────────────────────────────────
 """
 
 from __future__ import annotations
@@ -17,8 +43,10 @@ from typing import TYPE_CHECKING, Iterator
 
 from sts2_env.cards.enchantments import (
     enchant_block_additive,
+    enchant_block_multiplicative,
     enchant_damage_additive,
     enchant_damage_multiplicative,
+    modify_shuffle_order as enchantment_modify_shuffle_order,
 )
 from sts2_env.core.enums import CardPilePosition, CombatSide, PileType, PowerId, ValueProp
 
@@ -58,6 +86,50 @@ def _iter_relic_listeners(combat: CombatState) -> Iterator[tuple[Creature, Relic
         for relic in getattr(state, "relics", ()):
             if getattr(relic, "enabled", True):
                 yield state.creature, relic
+
+
+def _relic_listeners_by_owner(combat: CombatState) -> dict[int, list[RelicInstance]]:
+    """Group enabled relic listeners by the id of their owner creature."""
+    grouped: dict[int, list[RelicInstance]] = {}
+    player_states = getattr(combat, "combat_player_states", None)
+    if player_states is None:
+        grouped[id(combat.player)] = [
+            relic
+            for relic in getattr(combat, "relics", ())
+            if getattr(relic, "enabled", True)
+        ]
+        return grouped
+    for state in player_states:
+        grouped[id(state.creature)] = [
+            relic
+            for relic in getattr(state, "relics", ())
+            if getattr(relic, "enabled", True)
+        ]
+    return grouped
+
+
+def _iter_hook_listeners(combat: CombatState) -> Iterator[tuple[Creature, object, bool]]:
+    """Yield `(owner, listener, is_relic)` in the C# combined dispatch order.
+
+    Matches `CombatState.IterateHookListeners` (CombatState.cs:410): for each
+    creature (player first, then allies, then enemies) all of the creature's
+    powers are yielded, followed by that same creature's relic listeners.
+    C# interleaves per creature — the player's relics fire before any enemy
+    power — so a flat "all powers then all relics" split would dispatch the
+    two listener classes out of order.
+    """
+    relics_by_owner = _relic_listeners_by_owner(combat)
+    for creature in combat.all_creatures:
+        for power in list(creature.powers.values()):
+            yield creature, power, False
+        for relic in relics_by_owner.get(id(creature), ()):
+            yield creature, relic, True
+
+
+def is_relic_listener(listener: object) -> bool:
+    from sts2_env.relics.base import RelicInstance
+
+    return isinstance(listener, RelicInstance)
 
 
 def _iter_modifier_listeners(combat: CombatState) -> Iterator[object]:
@@ -180,29 +252,26 @@ def modify_damage(
     if card_source is not None and hasattr(card_source, "enchantments"):
         damage += enchant_damage_additive(card_source, props)
 
-    # Step 1: Additive modifiers
-    for owner, power in _iter_power_listeners(combat):
-        damage += power.modify_damage_additive(owner, dealer, target, props)
-    for owner, relic in _iter_relic_listeners(combat):
-        damage += relic.modify_damage_additive(owner, dealer, target, props, card_source)
+    # Step 1: Additive modifiers (combined C# listener order per pass)
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
+        if is_relic:
+            damage += listener.modify_damage_additive(owner, dealer, target, props, card_source)
+        else:
+            damage += listener.modify_damage_additive(owner, dealer, target, props)
 
     # Step 2: Multiplicative modifiers
-    for owner, power in _iter_power_listeners(combat):
-        mult = power.modify_damage_multiplicative(owner, dealer, target, props)
-        damage *= mult
-    for owner, relic in _iter_relic_listeners(combat):
-        damage *= relic.modify_damage_multiplicative(owner, dealer, target, props, card_source)
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
+        if is_relic:
+            damage *= listener.modify_damage_multiplicative(owner, dealer, target, props, card_source)
+        else:
+            damage *= listener.modify_damage_multiplicative(owner, dealer, target, props)
     if card_source is not None and hasattr(card_source, "enchantments"):
         damage *= enchant_damage_multiplicative(card_source, props)
 
     # Step 3: Cap (usually no cap)
     cap = float("inf")
-    for owner, power in _iter_power_listeners(combat):
-        c = power.modify_damage_cap(owner, dealer, target, damage, props)
-        if c < cap:
-            cap = c
-    for owner, relic in _iter_relic_listeners(combat):
-        c = relic.modify_damage_cap(owner, dealer, target, damage, props)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        c = listener.modify_damage_cap(owner, dealer, target, damage, props)
         if c < cap:
             cap = c
     if damage > cap:
@@ -312,19 +381,15 @@ def fire_after_modifying_power_amount_received(
 
 
 def fire_before_attack(attack: object, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.before_attack(owner, attack, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_attack(owner, attack, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_attack(owner, attack, combat)
 
 
 def fire_after_attack(attack: object, combat: CombatState) -> None:
     from sts2_env.cards.registry import fire_card_after_attack
 
-    for owner, power in _iter_power_listeners(combat):
-        power.after_attack(owner, attack, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_attack(owner, attack, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_attack(owner, attack, combat)
     for state in getattr(combat, "combat_player_states", ()):
         for card in combat.unique_cards_in_piles(state.all_piles):
             fire_card_after_attack(card, attack, combat)
@@ -347,45 +412,45 @@ def modify_block(
     3. Multiplicative pass (Frail=0.75x)
     4. Floor and clamp to 0
     """
+    # C# CreatureCmd.GainBlock fires Hook.BeforeBlockGained(combatState,
+    # creature, amount, props, cardPlay?.Card) with the RAW amount right
+    # before Hook.ModifyBlock (CreatureCmd.cs:634-642).  Every real block
+    # application in this sim flows through calculate_block -> modify_block,
+    # so firing here reproduces the C# ordering; pure out-of-combat/unpowered
+    # gains that skip the pipeline do not fire it.  Skeleton dispatch: no
+    # v0.107.1 power or relic implements BeforeBlockGained yet.
+    fire_before_block_gained(target, base_block, combat, props=props, card_source=card_source)
+
     block = float(base_block)
-    modifier_ids: set[int] = set()
+    modifier_ids: list[tuple[Creature, object]] = []
 
     if card_source is not None and hasattr(card_source, "enchantments"):
+        # C# Hook.ModifyBlock applies the card enchantment's additive AND
+        # multiplicative corrections up front, before BOTH listener passes
+        # (Hook.cs:1316-1322) — the enchantment segments are not repeated
+        # after the listeners.
         block += enchant_block_additive(card_source, props)
+        block *= enchant_block_multiplicative(card_source, props)
 
     # Step 1: Additive
-    for owner, power in _iter_power_listeners(combat):
-        delta = power.modify_block_additive(owner, target, props, card_source, card_play)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        delta = listener.modify_block_additive(owner, target, props, card_source, card_play)
         block += delta
         if delta != 0:
-            modifier_ids.add(id(power))
-    for owner, relic in _iter_relic_listeners(combat):
-        delta = relic.modify_block_additive(owner, target, props, card_source, card_play)
-        block += delta
-        if delta != 0:
-            modifier_ids.add(id(relic))
+            modifier_ids.append((owner, listener))
 
     # Step 2: Multiplicative
-    for owner, power in _iter_power_listeners(combat):
-        multiplier = power.modify_block_multiplicative(owner, target, props, card_source, card_play, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        multiplier = listener.modify_block_multiplicative(owner, target, props, card_source, card_play, combat)
         block *= multiplier
         if multiplier != 1.0:
-            modifier_ids.add(id(power))
-    for owner, relic in _iter_relic_listeners(combat):
-        multiplier = relic.modify_block_multiplicative(owner, target, props, card_source, card_play, combat)
-        block *= multiplier
-        if multiplier != 1.0:
-            modifier_ids.add(id(relic))
+            modifier_ids.append((owner, listener))
     block *= _multiplayer_enemy_block_multiplier(target, props, combat)
 
     modified_block = max(0, math.floor(block))
     if modifier_ids:
-        for owner, power in _iter_power_listeners(combat):
-            if id(power) in modifier_ids:
-                power.after_modifying_block_amount(owner, modified_block, card_source, card_play, combat)
-        for owner, relic in _iter_relic_listeners(combat):
-            if id(relic) in modifier_ids:
-                relic.after_modifying_block_amount(owner, modified_block, card_source, card_play, combat)
+        for owner, listener in modifier_ids:
+            listener.after_modifying_block_amount(owner, modified_block, card_source, card_play, combat)
     return modified_block
 
 
@@ -401,10 +466,8 @@ def modify_hp_lost_before_osty(
     result = float(amount)
     for owner, relic in _iter_relic_listeners(combat):
         result = relic.modify_hp_lost_before_osty(owner, target, result, dealer, props)
-    for owner, power in _iter_power_listeners(combat):
-        result = power.modify_hp_lost_before_osty_late(owner, target, result, dealer, props)
-    for owner, relic in _iter_relic_listeners(combat):
-        result = relic.modify_hp_lost_before_osty_late(owner, target, result, dealer, props)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        result = listener.modify_hp_lost_before_osty_late(owner, target, result, dealer, props)
     return max(0, math.floor(result))
 
 
@@ -416,10 +479,14 @@ def modify_hp_lost_after_osty(
     combat: CombatState,
 ) -> int:
     result = float(amount)
-    for owner, power in _iter_power_listeners(combat):
-        result = power.modify_hp_lost(owner, target, result, dealer, props)
-    for owner, relic in _iter_relic_listeners(combat):
-        result = relic.modify_hp_lost_after_osty(owner, target, result, dealer, props)
+    # C# Hook.ModifyHpLost AfterOsty phase: one combined pass over all
+    # listeners (powers override ModifyHpLost, relics ModifyHpLostAfterOsty),
+    # then a second pass for the Late variant (implemented by powers).
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
+        if is_relic:
+            result = listener.modify_hp_lost_after_osty(owner, target, result, dealer, props)
+        else:
+            result = listener.modify_hp_lost(owner, target, result, dealer, props)
     for owner, power in _iter_power_listeners(combat):
         result = power.modify_hp_lost_late(owner, target, result, dealer, props)
     return max(0, math.floor(result))
@@ -476,34 +543,20 @@ def modify_hand_draw(
     """Modify number of cards drawn at turn start."""
     draw = base_draw
     modifiers: list[tuple[Creature, object]] = []
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
         if drawing_owner is not None and owner is not drawing_owner:
             continue
         before = draw
-        draw = power.modify_hand_draw(owner, draw)
+        draw = listener.modify_hand_draw(owner, draw, combat) if is_relic else listener.modify_hand_draw(owner, draw)
         if int(before) != int(draw):
-            modifiers.append((owner, power))
-    for owner, relic in _iter_relic_listeners(combat):
+            modifiers.append((owner, listener))
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
         if drawing_owner is not None and owner is not drawing_owner:
             continue
         before = draw
-        draw = relic.modify_hand_draw(owner, draw, combat)
+        draw = listener.modify_hand_draw_late(owner, draw, combat) if is_relic else listener.modify_hand_draw_late(owner, draw)
         if int(before) != int(draw):
-            modifiers.append((owner, relic))
-    for owner, power in _iter_power_listeners(combat):
-        if drawing_owner is not None and owner is not drawing_owner:
-            continue
-        before = draw
-        draw = power.modify_hand_draw_late(owner, draw)
-        if int(before) != int(draw):
-            modifiers.append((owner, power))
-    for owner, relic in _iter_relic_listeners(combat):
-        if drawing_owner is not None and owner is not drawing_owner:
-            continue
-        before = draw
-        draw = relic.modify_hand_draw_late(owner, draw, combat)
-        if int(before) != int(draw):
-            modifiers.append((owner, relic))
+            modifiers.append((owner, listener))
     for owner, modifier in modifiers:
         modifier.after_modifying_hand_draw(owner, combat)
     return max(0, draw)
@@ -519,14 +572,10 @@ def modify_max_energy(
     """Modify max energy (e.g. from relics)."""
     energy = base_energy
     target = energy_owner if energy_owner is not None else combat.player
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
         if owner is not target:
             continue
-        energy = power.modify_max_energy(owner, energy)
-    for owner, relic in _iter_relic_listeners(combat):
-        if owner is not target:
-            continue
-        energy = relic.modify_max_energy(owner, energy)
+        energy = listener.modify_max_energy(owner, energy)
     return max(0, energy)
 
 
@@ -537,10 +586,8 @@ def modify_summon_amount(
     combat: CombatState,
 ) -> int:
     result = amount
-    for owner, power in _iter_power_listeners(combat):
-        result = power.modify_summon_amount(owner, summoner, result, source, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        result = relic.modify_summon_amount(owner, summoner, result, source, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        result = listener.modify_summon_amount(owner, summoner, result, source, combat)
     return max(0, result)
 
 
@@ -549,17 +596,13 @@ def fire_after_summon(
     amount: int,
     combat: CombatState,
 ) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_summon(owner, summoner, amount, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_summon(owner, summoner, amount, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_summon(owner, summoner, amount, combat)
 
 
 def fire_after_osty_revived(osty: Creature, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_osty_revived(owner, osty, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_osty_revived(owner, osty, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_osty_revived(owner, osty, combat)
 
 
 # ─── Card Play Count ───────────────────────────────────────────────────
@@ -571,17 +614,12 @@ def modify_card_play_count(
 ) -> int:
     """Modify how many times a card is played (EchoForm = 2x)."""
     count = base_count
-    modifier_ids: set[int] = set()
-    for owner, power in _iter_power_listeners(combat):
+    modifier_ids: list[tuple[Creature, object]] = []
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
         before = count
-        count = power.modify_card_play_count(owner, count, card)
+        count = listener.modify_card_play_count(owner, count, card)
         if count != before:
-            modifier_ids.add(id(power))
-    for owner, relic in _iter_relic_listeners(combat):
-        before = count
-        count = relic.modify_card_play_count(owner, count, card)
-        if count != before:
-            modifier_ids.add(id(relic))
+            modifier_ids.append((owner, listener))
     combat._card_play_count_modifier_ids = modifier_ids
     return count
 
@@ -600,14 +638,9 @@ def block_clear_preventer(
     creature: Creature,
     combat: CombatState,
 ) -> tuple[Creature, object] | None:
-    for owner, power in _iter_power_listeners(combat):
-        result = power.should_clear_block(owner, creature)
-        if result is False:
-            return owner, power
-    for owner, relic in _iter_relic_listeners(combat):
-        result = relic.should_clear_block(owner, creature)
-        if result is False:
-            return owner, relic
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        if listener.should_clear_block(owner, creature) is False:
+            return owner, listener
     return None
 
 
@@ -633,46 +666,42 @@ def should_flush(combat: CombatState, flushing_owner: Creature | None = None) ->
     """Return whether the player's hand should flush at end of turn."""
     if flushing_owner is None:
         flushing_owner = combat.player
-    for owner, power in _iter_power_listeners(combat):
-        result = power.should_flush(owner, flushing_owner, combat)
-        if result is False:
-            return False
-    for owner, relic in _iter_relic_listeners(combat):
-        if owner is not flushing_owner:
-            continue
-        result = relic.should_flush(owner, combat)
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
+        if is_relic:
+            if owner is not flushing_owner:
+                continue
+            result = listener.should_flush(owner, combat)
+        else:
+            result = listener.should_flush(owner, flushing_owner, combat)
         if result is False:
             return False
     return True
 
 
 def fire_before_flush(flushing_owner: Creature, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.before_flush(owner, flushing_owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_flush(owner, flushing_owner, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_flush(owner, flushing_owner, combat)
 
 
 def fire_before_flush_late(flushing_owner: Creature, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.before_flush_late(owner, flushing_owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_flush_late(owner, flushing_owner, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_flush_late(owner, flushing_owner, combat)
 
 
 def should_play(card: object, combat: CombatState) -> bool:
     """Return whether the current card play is allowed by all listeners."""
-    for owner, power in _iter_power_listeners(combat):
-        result = getattr(power, "should_play", lambda *_: None)(owner, card, combat)
-        if result is False:
-            return False
-        should_card_be_playable = getattr(power, "should_card_be_playable", None)
-        if callable(should_card_be_playable) and should_card_be_playable(owner, card) is False:
-            return False
-    for owner, relic in _iter_relic_listeners(combat):
-        result = relic.should_play(owner, card, combat)
-        if result is False:
-            return False
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
+        if is_relic:
+            result = listener.should_play(owner, card, combat)
+            if result is False:
+                return False
+        else:
+            result = getattr(listener, "should_play", lambda *_: None)(owner, card, combat)
+            if result is False:
+                return False
+            should_card_be_playable = getattr(listener, "should_card_be_playable", None)
+            if callable(should_card_be_playable) and should_card_be_playable(owner, card) is False:
+                return False
     return True
 
 
@@ -685,22 +714,14 @@ def modify_card_play_result_pile_type_and_position(
     position: CardPilePosition,
 ) -> tuple[PileType, CardPilePosition]:
     modifiers: list[object] = []
-    for owner, power in _iter_power_listeners(combat):
-        modify_result = getattr(power, "modify_card_play_result_pile_type_and_position", None)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        modify_result = getattr(listener, "modify_card_play_result_pile_type_and_position", None)
         if not callable(modify_result):
             continue
         previous = (pile_type, position)
         pile_type, position = modify_result(owner, card, is_auto_play, energy_value, pile_type, position)
         if (pile_type, position) != previous:
-            modifiers.append(power)
-    for owner, relic in _iter_relic_listeners(combat):
-        modify_result = getattr(relic, "modify_card_play_result_pile_type_and_position", None)
-        if not callable(modify_result):
-            continue
-        previous = (pile_type, position)
-        pile_type, position = modify_result(owner, card, is_auto_play, energy_value, pile_type, position)
-        if (pile_type, position) != previous:
-            modifiers.append(relic)
+            modifiers.append(listener)
     for modifier in modifiers:
         after_modify = getattr(modifier, "after_modifying_card_play_result_pile_or_position", None)
         if callable(after_modify):
@@ -710,19 +731,12 @@ def modify_card_play_result_pile_type_and_position(
 
 def should_draw(combat: CombatState, drawing_owner: Creature, from_hand_draw: bool) -> bool:
     """Return whether a draw should proceed."""
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
         if owner is not drawing_owner:
             continue
-        result = power.should_draw(owner, from_hand_draw)
+        result = listener.should_draw(owner, from_hand_draw, combat) if is_relic else listener.should_draw(owner, from_hand_draw)
         if result is False:
-            power.after_preventing_draw(owner, combat)
-            return False
-    for owner, relic in _iter_relic_listeners(combat):
-        if owner is not drawing_owner:
-            continue
-        result = relic.should_draw(owner, from_hand_draw, combat)
-        if result is False:
-            relic.after_preventing_draw(owner, combat)
+            listener.after_preventing_draw(owner, combat)
             return False
     return True
 
@@ -739,17 +753,13 @@ def should_take_extra_turn(combat: CombatState) -> bool:
 # ─── Event Hooks (fire-and-forget) ─────────────────────────────────────
 
 def fire_before_card_played(card: object, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.before_card_played(owner, card, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_card_played(owner, card, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_card_played(owner, card, combat)
 
 
 def fire_after_card_played(card: object, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_card_played(owner, card, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_card_played(owner, card, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_card_played(owner, card, combat)
 
 
 def fire_after_card_generated_for_combat(
@@ -759,10 +769,8 @@ def fire_after_card_generated_for_combat(
 ) -> None:
     from sts2_env.cards.registry import fire_card_after_card_generated_for_combat
 
-    for owner, power in _iter_power_listeners(combat):
-        power.after_card_generated_for_combat(owner, card, added_by_player, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_card_generated_for_combat(owner, card, added_by_player, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_card_generated_for_combat(owner, card, added_by_player, combat)
     for state in getattr(combat, "combat_player_states", ()):
         for listener_card in combat.unique_cards_in_piles(state.all_piles):
             fire_card_after_card_generated_for_combat(listener_card, card, added_by_player, combat)
@@ -772,10 +780,8 @@ def fire_after_card_exhausted(card: object, combat: CombatState) -> None:
     record_card_exhausted = getattr(combat, "record_card_exhausted", None)
     if callable(record_card_exhausted):
         record_card_exhausted(card)
-    for owner, power in _iter_power_listeners(combat):
-        power.after_card_exhausted(owner, card, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_card_exhausted(owner, card, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_card_exhausted(owner, card, combat)
     # C# Hook.AfterCardExhausted also dispatches to all card models (AllCards
     # listener class, after powers/relics) — e.g. DrumOfBattle.
     from sts2_env.cards.registry import fire_card_after_card_exhausted
@@ -798,10 +804,8 @@ def fire_before_potion_used(
     target: Creature | None,
     combat: CombatState,
 ) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.before_potion_used(owner, potion, target, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_potion_used(owner, potion, target, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_potion_used(owner, potion, target, combat)
 
 
 def fire_after_potion_procured(potion: object, combat: CombatState) -> None:
@@ -834,35 +838,29 @@ def fire_after_card_drawn(card: object, from_hand_draw: bool, combat: CombatStat
 
 
 def fire_after_modifying_card_play_count(card: object, combat: CombatState) -> None:
-    modifier_ids = getattr(combat, "_card_play_count_modifier_ids", set())
-    for owner, power in _iter_power_listeners(combat):
-        if id(power) in modifier_ids:
-            power.after_modifying_card_play_count(owner, card, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        if id(relic) in modifier_ids:
-            relic.after_modifying_card_play_count(owner, card, combat)
-    combat._card_play_count_modifier_ids = set()
+    modifier_ids = getattr(combat, "_card_play_count_modifier_ids", [])
+    for owner, modifier in modifier_ids:
+        modifier.after_modifying_card_play_count(owner, card, combat)
+    combat._card_play_count_modifier_ids = []
 
 
 def fire_before_turn_end(side: CombatSide, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.before_turn_end_very_early(owner, side, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_turn_end_very_early(owner, side, combat)
-    for owner, power in _iter_power_listeners(combat):
-        power.before_turn_end_early(owner, side, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_turn_end_early(owner, side, combat)
-    for owner, power in _iter_power_listeners(combat):
-        power.before_turn_end(owner, side, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_turn_end(owner, side, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_turn_end_very_early(owner, side, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_turn_end_early(owner, side, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_turn_end(owner, side, combat)
 
 
 def fire_after_turn_end(side: CombatSide, combat: CombatState) -> None:
     from sts2_env.powers.base import PowerInstance
 
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
+        if is_relic:
+            listener.after_turn_end(owner, side, combat)
+            continue
+        power = listener
         used_turn_hook = type(power).after_turn_end is not PowerInstance.after_turn_end
         used_legacy_tick = False
         power.after_turn_end(owner, side, combat)
@@ -876,64 +874,47 @@ def fire_after_turn_end(side: CombatSide, combat: CombatState) -> None:
         should_remove = power.amount == 0 if power.allow_negative else power.amount <= 0
         if (used_turn_hook or used_legacy_tick) and should_remove and owner.powers.get(power.power_id) is power:
             combat._remove_power(owner, power.power_id)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_turn_end(owner, side, combat)
-    for owner, power in _iter_power_listeners(combat):
-        power.after_turn_end_late(owner, side, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_turn_end_late(owner, side, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_turn_end_late(owner, side, combat)
 
 
 def fire_before_side_turn_start(side: CombatSide, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.before_side_turn_start(owner, side, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_side_turn_start(owner, side, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_side_turn_start(owner, side, combat)
 
 
 def fire_before_hand_draw(drawing_owner: Creature, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
         if owner is drawing_owner:
-            power.before_hand_draw(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        if owner is drawing_owner:
-            relic.before_hand_draw(owner, combat)
+            listener.before_hand_draw(owner, combat)
 
 
 def fire_before_hand_draw_late(drawing_owner: Creature, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
         if owner is drawing_owner:
-            power.before_hand_draw_late(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        if owner is drawing_owner:
-            relic.before_hand_draw_late(owner, combat)
+            listener.before_hand_draw_late(owner, combat)
 
 
 def fire_after_player_turn_start(drawing_owner: Creature, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
         if owner is drawing_owner:
-            power.after_player_turn_start_early(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
+            listener.after_player_turn_start_early(owner, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
         if owner is drawing_owner:
-            relic.after_player_turn_start_early(owner, combat)
-    for owner, power in _iter_power_listeners(combat):
+            listener.after_player_turn_start(owner, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
         if owner is drawing_owner:
-            power.after_player_turn_start(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        if owner is drawing_owner:
-            relic.after_player_turn_start(owner, combat)
-    for owner, power in _iter_power_listeners(combat):
-        if owner is drawing_owner:
-            power.after_player_turn_start_late(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        if owner is drawing_owner:
-            relic.after_player_turn_start_late(owner, combat)
+            listener.after_player_turn_start_late(owner, combat)
 
 
 def fire_after_side_turn_start(side: CombatSide, combat: CombatState) -> None:
     from sts2_env.powers.base import PowerInstance
 
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
+        if is_relic:
+            listener.after_side_turn_start(owner, side, combat)
+            continue
+        power = listener
         used_turn_hook = type(power).after_side_turn_start is not PowerInstance.after_side_turn_start
         used_legacy_tick = False
         power.after_side_turn_start(owner, side, combat)
@@ -947,64 +928,45 @@ def fire_after_side_turn_start(side: CombatSide, combat: CombatState) -> None:
         should_remove = power.amount == 0 if power.allow_negative else power.amount <= 0
         if (used_turn_hook or used_legacy_tick) and should_remove and owner.powers.get(power.power_id) is power:
             combat._remove_power(owner, power.power_id)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_side_turn_start(owner, side, combat)
 
 
 def fire_before_play_phase_start(player: Creature, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.before_play_phase_start(owner, player, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_play_phase_start(owner, player, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_play_phase_start(owner, player, combat)
 
 
 def fire_after_block_cleared(creature: Creature, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_block_cleared(owner, creature, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_block_cleared(owner, creature, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_block_cleared(owner, creature, combat)
 
 
 def fire_after_creature_added_to_combat(creature: Creature, combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_creature_added_to_combat(owner, creature, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_creature_added_to_combat(owner, creature, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_creature_added_to_combat(owner, creature, combat)
     for modifier in _iter_modifier_listeners(combat):
         modifier.after_creature_added_to_combat(creature, combat)
 
 
 def fire_before_combat_start(combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.before_combat_start(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_combat_start(owner, combat)
-    for owner, power in _iter_power_listeners(combat):
-        power.before_combat_start_late(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_combat_start_late(owner, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_combat_start(owner, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_combat_start_late(owner, combat)
 
 
 def fire_after_energy_reset(combat: CombatState, reset_owner: Creature | None = None) -> None:
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
         if reset_owner is not None and owner is not reset_owner:
             continue
-        power.after_energy_reset(owner, combat)
-        should_remove = power.amount == 0 if power.allow_negative else power.amount <= 0
-        if should_remove and owner.powers.get(power.power_id) is power:
-            combat._remove_power(owner, power.power_id)
-    for owner, relic in _iter_relic_listeners(combat):
+        listener.after_energy_reset(owner, combat)
+        if not is_relic_listener(listener):
+            should_remove = listener.amount == 0 if listener.allow_negative else listener.amount <= 0
+            if should_remove and owner.powers.get(listener.power_id) is listener:
+                combat._remove_power(owner, listener.power_id)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
         if reset_owner is not None and owner is not reset_owner:
             continue
-        relic.after_energy_reset(owner, combat)
-    for owner, power in _iter_power_listeners(combat):
-        if reset_owner is not None and owner is not reset_owner:
-            continue
-        power.after_energy_reset_late(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        if reset_owner is not None and owner is not reset_owner:
-            continue
-        relic.after_energy_reset_late(owner, combat)
+        listener.after_energy_reset_late(owner, combat)
     if reset_owner is not None:
         combat.mark_energy_reset_this_turn(reset_owner)
 
@@ -1014,17 +976,45 @@ def fire_after_energy_spent(owner: Creature, card: object, amount: int, combat: 
         power.after_energy_spent(listener_owner, card, amount, combat)
 
 
+def modify_shuffle_order(
+    combat: CombatState,
+    owner: Creature,
+    cards: list,
+    *,
+    is_initial_shuffle: bool,
+) -> None:
+    """C# Hook.ModifyShuffleOrder (Hook.cs:2004-2009).
+
+    Called with ``is_initial_shuffle=True`` right after the combat-start
+    randomization (C# CardPile.cs:79) and with False on every standard
+    shuffle (C# CardPileCmd.cs:877).  Per Hook.cs:47 this hook intentionally
+    has no IsOverOrEnding guard — it must still reach listeners at combat
+    end.  v0.107.1 implementations: the PerfectFit enchantment (non-initial
+    shuffles only, PerfectFit.cs:10-16); powers/relics are probed for the
+    same-named hook for structural parity.
+    """
+    for creature in combat.all_creatures:
+        for power in list(creature.powers.values()):
+            modify_order = getattr(power, "modify_shuffle_order", None)
+            if callable(modify_order):
+                modify_order(creature, cards, is_initial_shuffle)
+    for relic_owner, relic in _iter_relic_listeners(combat):
+        modify_order = getattr(relic, "modify_shuffle_order", None)
+        if callable(modify_order):
+            modify_order(relic_owner, cards, is_initial_shuffle)
+    enchantment_modify_shuffle_order(cards, is_initial_shuffle=is_initial_shuffle)
+
+
 def fire_after_shuffle(combat: CombatState, shuffler: Creature | None = None) -> None:
-    for owner, power in _iter_power_listeners(combat):
+    for owner, listener, is_relic in _iter_hook_listeners(combat):
         if shuffler is not None and owner is not shuffler:
             continue
-        on_shuffle = getattr(power, "on_shuffle", None)
+        if is_relic:
+            listener.after_shuffle(owner, combat)
+            continue
+        on_shuffle = getattr(listener, "on_shuffle", None)
         if callable(on_shuffle):
             on_shuffle(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        if shuffler is not None and owner is not shuffler:
-            continue
-        relic.after_shuffle(owner, combat)
 
 
 def fire_after_hand_emptied(combat: CombatState) -> None:
@@ -1036,19 +1026,15 @@ def fire_before_damage_received(
     target: Creature, dealer: Creature | None, damage: int, props: ValueProp, combat: CombatState
 ) -> None:
     """Thorns, FlameBarrier fire here."""
-    for owner, power in _iter_power_listeners(combat):
-        power.before_damage_received(owner, target, dealer, damage, props, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.before_damage_received(owner, target, dealer, damage, props, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.before_damage_received(owner, target, dealer, damage, props, combat)
 
 
 def fire_after_damage_received(
     target: Creature, dealer: Creature | None, damage: int, props: ValueProp, combat: CombatState
 ) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_damage_received(owner, target, dealer, damage, props, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_damage_received(owner, target, dealer, damage, props, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_damage_received(owner, target, dealer, damage, props, combat)
 
 
 def fire_after_current_hp_changed(
@@ -1056,19 +1042,35 @@ def fire_after_current_hp_changed(
     delta: int,
     combat: CombatState,
 ) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_current_hp_changed(owner, creature, delta, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_current_hp_changed(owner, creature, delta, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_current_hp_changed(owner, creature, delta, combat)
 
 
 def fire_after_damage_given(
     dealer: Creature, target: Creature, damage: int, props: ValueProp, combat: CombatState
 ) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_damage_given(owner, dealer, target, damage, props, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_damage_given(owner, dealer, target, damage, props, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_damage_given(owner, dealer, target, damage, props, combat)
+
+
+def fire_before_block_gained(
+    creature: Creature,
+    amount: int,
+    combat: CombatState,
+    props: ValueProp | None = None,
+    card_source: object | None = None,
+) -> None:
+    """C# Hook.BeforeBlockGained (Hook.cs:131-137), fired from
+    CreatureCmd.GainBlock before Hook.ModifyBlock (CreatureCmd.cs:642).
+
+    Skeleton dispatch: no v0.107.1 listener implements BeforeBlockGained, so
+    listeners are probed with getattr instead of hard requirements on the
+    base classes.
+    """
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        before_block_gained = getattr(listener, "before_block_gained", None)
+        if callable(before_block_gained):
+            before_block_gained(owner, creature, amount, props, card_source)
 
 
 def fire_after_block_gained(
@@ -1080,21 +1082,15 @@ def fire_after_block_gained(
 ) -> None:
     if amount > 0 and props is not None:
         combat.record_block_gained_event(creature, props, card_play)
-    for owner, power in _iter_power_listeners(combat):
-        power.after_block_gained(owner, creature, amount, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_block_gained(owner, creature, amount, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_block_gained(owner, creature, amount, combat)
 
 
 def fire_after_combat_victory(combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_combat_victory_early(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_combat_victory_early(owner, combat)
-    for owner, power in _iter_power_listeners(combat):
-        power.after_combat_victory(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_combat_victory(owner, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_combat_victory_early(owner, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_combat_victory(owner, combat)
 
 
 def fire_after_forge(
@@ -1103,17 +1099,13 @@ def fire_after_forge(
     forger: Creature,
     source: object | None,
 ) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_forge(owner, amount, forger, source, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_forge(owner, amount, forger, source, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_forge(owner, amount, forger, source, combat)
 
 
 def fire_after_combat_end(combat: CombatState) -> None:
-    for owner, power in _iter_power_listeners(combat):
-        power.after_combat_end(owner, combat)
-    for owner, relic in _iter_relic_listeners(combat):
-        relic.after_combat_end(owner, combat)
+    for owner, listener, _is_relic in _iter_hook_listeners(combat):
+        listener.after_combat_end(owner, combat)
 
 
 def fire_after_taking_extra_turn(combat: CombatState) -> None:

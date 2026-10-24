@@ -23,7 +23,6 @@ from sts2_env.cards.enchantments import (
     after_player_turn_start as apply_enchantment_after_player_turn_start,
     before_flush as apply_enchantment_before_flush,
     enchant_play_count_bonus,
-    modify_shuffle_order as apply_enchantment_shuffle_order,
     on_card_drawn as apply_enchantment_on_card_drawn,
     on_card_played as apply_enchantment_on_card_played,
     reset_combat_enchantments,
@@ -769,9 +768,13 @@ class CombatState:
         state.exhaust.clear()
         state.play.clear()
         self.shuffle_rng.shuffle(state.draw)
-        imbued_cards = [card for card in state.draw if card.has_enchantment("Imbued")]
-        if imbued_cards:
-            state.draw[:] = [card for card in state.draw if not card.has_enchantment("Imbued")] + imbued_cards
+        # C# CardPile.cs:79: the initial combat-start shuffle runs the result
+        # through Hook.ModifyShuffleOrder(isInitialShuffle: true).  Turn-1
+        # Imbued bottom placement happens later, in
+        # _prepare_opening_draw_for_owner (CombatManager.cs:659-664).
+        from sts2_env.core.hooks import modify_shuffle_order
+
+        modify_shuffle_order(self, state.creature, state.draw, is_initial_shuffle=True)
 
     def _draw_opening_hand_for_state(self, state: CombatPlayerState, count: int = BASE_DRAW) -> None:
         innate_cards = [card for card in state.draw if card.is_innate]
@@ -950,12 +953,26 @@ class CombatState:
         self._check_combat_end()
 
     def _prepare_opening_draw_for_owner(self, owner: Creature, draw_count: int) -> int:
-        """Round-1 innate handling from `SetupPlayerTurn()`."""
+        """Round-1 draw-pile ordering from `SetupPlayerTurn()`.
+
+        C# CombatManager.cs:659-673: on turn 1 enchantments with
+        ShouldStartAtBottomOfDrawPile (Imbued) are moved to the bottom of the
+        draw pile FIRST, then Innate cards (excluding those) are moved to the
+        top, then the hand draw count is raised to cover the Innate cards.
+        """
         state = self.combat_player_state_for(owner)
         if state is None:
             return max(0, draw_count)
         if self.round_number != 1:
             return max(0, draw_count)
+
+        from sts2_env.cards.enchantments import should_start_at_bottom_of_draw_pile
+
+        bottom_cards = [card for card in state.draw if should_start_at_bottom_of_draw_pile(card)]
+        if bottom_cards:
+            state.draw[:] = [
+                card for card in state.draw if not should_start_at_bottom_of_draw_pile(card)
+            ] + bottom_cards
 
         innate_cards = [card for card in state.draw if card.is_innate]
         non_innate_cards = [card for card in state.draw if not card.is_innate]
@@ -1801,12 +1818,14 @@ class CombatState:
         """If draw pile is empty and discard has cards, shuffle discard into draw."""
         state = self.combat_player_state_for(owner or self.player) or self._primary_player_state
         if not state.draw and state.discard:
-            from sts2_env.core.hooks import fire_after_shuffle
+            from sts2_env.core.hooks import fire_after_shuffle, modify_shuffle_order
 
             state.draw[:] = list(state.discard)
             state.discard.clear()
             self.shuffle_rng.shuffle(state.draw)
-            apply_enchantment_shuffle_order(state.draw, is_initial_shuffle=False)
+            # C# CardPileCmd.cs:877: standard shuffles run through
+            # Hook.ModifyShuffleOrder(isInitialShuffle: false) (PerfectFit).
+            modify_shuffle_order(self, state.creature, state.draw, is_initial_shuffle=False)
             fire_after_shuffle(self, state.creature)
 
     def add_card_to_discard(
@@ -2049,6 +2068,11 @@ class CombatState:
             applier = getattr(source, "owner", None)
             if applier is None and self.current_side == CombatSide.PLAYER:
                 applier = self.primary_player
+        # C# PowerCmd.Apply (PowerCmd.cs:78-88): stacking onto an existing
+        # instance routes through ModifyAmount and returns before the
+        # SkipNextDurationTick assignment, so only a newly created instance
+        # gets its first duration tick skipped.
+        had_existing_instance = power_id in target.powers
         target.apply_power(
             power_id,
             amount,
@@ -2057,7 +2081,7 @@ class CombatState:
             ignore_next_instance=ignore_next_instance,
         )
 
-        if target.side == CombatSide.PLAYER:
+        if target.side == CombatSide.PLAYER and not had_existing_instance:
             power = target.powers.get(power_id)
             if power is not None and power.power_type == PowerType.DEBUFF:
                 power.skip_next_tick = True
@@ -3101,8 +3125,24 @@ class CombatState:
                     after_death(state.creature, creature, self)
         self._fire_card_after_death(creature, was_removal_prevented)
         self._sync_monster_death_move_responses(creature)
+        self._cascade_kill_secondary_teammates(creature)
         self._check_combat_end()
         return True
+
+    def _cascade_kill_secondary_teammates(self, creature: Creature) -> None:
+        """C# CreatureCmd.cs:546-551: when a *primary* enemy dies and every
+        living teammate is a secondary enemy (Minion), the whole remaining
+        team is killed with it — a minion can never outlive its primary."""
+        was_primary = creature.side == CombatSide.ENEMY and creature.is_primary_enemy
+        if not was_primary:
+            return
+        teammates = [
+            mate for mate in self.enemies
+            if mate is not creature and mate.is_alive and mate.side == creature.side
+        ]
+        if teammates and all(mate.is_secondary_enemy for mate in teammates):
+            for mate in list(teammates):
+                self.kill_creature(mate)
 
     def _fire_card_after_death(self, creature: Creature, was_removal_prevented: bool) -> None:
         from sts2_env.cards.registry import fire_card_after_death
@@ -3881,7 +3921,14 @@ class CombatState:
                 for power in enemy.powers.values()
             )
         ]
-        if not self.alive_enemies and not blocking_dead_enemies:
+        # C# CombatManager.cs:192: victory only requires every *primary*
+        # enemy to be dead — living secondary enemies (Minion) do not keep
+        # the fight going.  They are cascade-killed by kill_creature when
+        # the last primary dies (CreatureCmd.cs:546-551).
+        primary_enemies_alive = [
+            enemy for enemy in self.enemies if enemy.is_alive and enemy.is_primary_enemy
+        ]
+        if not primary_enemies_alive and not blocking_dead_enemies:
             self._end_combat(player_won=True)
         elif self.primary_player.is_dead:
             self._end_combat(player_won=False)

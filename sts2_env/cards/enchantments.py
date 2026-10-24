@@ -59,6 +59,16 @@ def apply_static_enchantment(card: CardInstance, name: str, amount: int = 1) -> 
         card.keywords = frozenset(set(card.keywords) | {"exhaust"})
 
 
+def should_start_at_bottom_of_draw_pile(card: CardInstance) -> bool:
+    """C# EnchantmentModel.ShouldStartAtBottomOfDrawPile (EnchantmentModel.cs:125).
+
+    On turn 1 the draw pile is ordered so enchanted cards with this flag sit at
+    the bottom before Innate cards are moved to the top (CombatManager.cs:659-664).
+    Only Imbued overrides it to true in v0.107.1 (Imbued.cs:11).
+    """
+    return card.has_enchantment("Imbued")
+
+
 def can_enchant_card(card: CardInstance, name: str) -> bool:
     if card.card_type in {CardType.STATUS, CardType.CURSE, CardType.QUEST}:
         return False
@@ -126,6 +136,18 @@ def enchant_block_additive(card: CardInstance, props: ValueProp) -> int:
     if card.has_enchantment("Goopy"):
         total += max(0, card.enchantments.get("Goopy", 1) - 1)
     return total
+
+
+def enchant_block_multiplicative(card: CardInstance, props: ValueProp) -> float:
+    """C# EnchantmentModel.EnchantBlockMultiplicative (EnchantmentModel.cs:418).
+
+    No v0.107.1 enchantment overrides it (all return the 1m default), so this
+    stays 1.0 until one is added; it must be applied together with the
+    additive enchantment pass BEFORE the listener passes (Hook.cs:1316-1322).
+    """
+    if not props.is_powered_card_or_monster_move_block():
+        return 1.0
+    return 1.0
 
 
 def enchant_play_count_bonus(card: CardInstance) -> int:

@@ -62,12 +62,16 @@ class MinionPower(PowerInstance):
     - ShouldOwnerDeathTriggerFatal: false
     StackType.Single. Non-stacking flag.
 
-    Minions do not count for combat victory; killing them does not end
-    the fight. The combat system checks for this power.
+    Minions do not count for combat victory (C# CombatManager.cs:192 only
+    requires every *primary* enemy to die) and are cascade-killed when the
+    last primary enemy dies (C# CreatureCmd.cs:546-551).  The combat system
+    reads this flag via ``Creature.is_secondary_enemy``.
     """
 
     power_type = PowerType.BUFF
     stack_type = PowerStackType.SINGLE
+    # C# MinionPower.OwnerIsSecondaryEnemy => true (Creature.cs:262 checks it).
+    owner_is_secondary_enemy = True
 
     def __init__(self, amount: int = 1):
         super().__init__(PowerId.MINION, amount)
