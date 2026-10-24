@@ -13,7 +13,7 @@ from sts2_env.core.damage import calculate_damage, apply_damage
 from sts2_env.core.rng import Rng
 from sts2_env.monsters.intents import (
     Intent, IntentType, attack_intent, buff_intent,
-    debuff_intent, strong_debuff_intent, status_intent,
+    debuff_intent, defend_intent, strong_debuff_intent, status_intent,
 )
 from sts2_env.monsters.state_machine import (
     ConditionalBranchState, MonsterAI, MonsterState, MoveState, RandomBranchState,
@@ -298,7 +298,9 @@ def create_nibbit(
         NIBBIT_SLICE_MOVE: MoveState(
             NIBBIT_SLICE_MOVE,
             slice_move,
-            [attack_intent(NIBBIT_SLICE_DAMAGE)],
+            # C# Nibbit.cs:72: SLICE_MOVE = SingleAttackIntent + DefendIntent
+            # (effect both attacks and gains block, Nibbit.cs:107-113).
+            [attack_intent(NIBBIT_SLICE_DAMAGE), defend_intent()],
             follow_up_id=NIBBIT_HISS_MOVE,
         ),
         NIBBIT_HISS_MOVE: MoveState(

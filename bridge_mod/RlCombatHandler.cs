@@ -27,6 +27,7 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
@@ -449,6 +450,19 @@ public class RlCombatHandler : IRoomHandler, IHandler
                 ["energy"] = pcs?.Energy ?? 0,
                 ["max_energy"] = pcs?.MaxEnergy ?? 3,
             };
+
+            // Player potions (empty slots are skipped by Player.Potions)
+            var potionList = new List<Dictionary<string, object>>();
+            int potionSlotIndex = 0;
+            foreach (PotionModel potion in player.Potions)
+            {
+                potionList.Add(new Dictionary<string, object>
+                {
+                    ["slot"] = potionSlotIndex++,
+                    ["id"] = potion.Id.Entry,
+                });
+            }
+            playerObj["potions"] = potionList;
 
             // Player powers
             var powers = new List<Dictionary<string, object>>();

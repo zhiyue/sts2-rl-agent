@@ -18,7 +18,10 @@ from __future__ import annotations
 
 import argparse
 import logging
+
+import numpy as np
 import sys
+from pathlib import Path
 import time
 from typing import Any
 
@@ -150,6 +153,7 @@ def run_agent(
 
         step_count = 0
         combat_count = 0
+        harvest_index = 0
 
         try:
             while True:
@@ -184,7 +188,18 @@ def run_agent(
                     continue
                 if phase in TERMINAL_PHASES:
                     logger.info("Run finished: %s", state.get("result", state.get("message", "unknown")))
-                    break
+                    if record_replay_path is not None and isinstance(client, BridgeReplayRecorder):
+                        harvest_index += 1
+                        harvest_path = Path(record_replay_path)
+                        per_run_path = harvest_path.with_name(
+                            f"{harvest_path.stem}_run{harvest_index:03d}{harvest_path.suffix}"
+                        )
+                        client.save(per_run_path)
+                        logger.info("Saved per-run trace to %s; waiting for next run", per_run_path)
+                        # The mod returns to the main menu and starts the next
+                        # seeded run automatically; start a fresh trace for it.
+                        client.reset_trace()
+                    continue
                 if phase == MSG_TYPE_ERROR:
                     logger.warning("Game error: %s", state.get("message", ""))
                     continue

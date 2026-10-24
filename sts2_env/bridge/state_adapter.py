@@ -272,8 +272,15 @@ class StateAdapter:
             card = hand[i]
             cost = card.get("cost", 0)
 
-            # Check if card is playable (enough energy, cost >= 0)
-            if cost < 0:
+            # The game reports per-card playability authoritative — trust it.
+            # (Unplayable curses/status share cost=-1 with X-cost cards; the
+            # old cost-only heuristic marked unplayable cards playable, which
+            # live-trace replay caught: the agent then "played" INFECTION.)
+            playable = card.get("playable")
+            if playable is not None:
+                if not playable:
+                    continue
+            elif cost < 0:
                 # X-cost cards (cost = -1) are always playable if energy > 0
                 if energy <= 0:
                     continue

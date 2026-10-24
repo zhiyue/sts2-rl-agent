@@ -113,11 +113,12 @@ public partial class MainFile : Node
             cts.Token, TimeSpan.FromSeconds(60), "Main menu not visible");
         Logger.Log("[RlAutoSlay] Main menu visible. Creating RL AutoSlayer...");
 
-        // Create and start the RL-driven AutoSlayer
+        // Create and start the RL-driven AutoSlayer (continuous harvest mode:
+        // runs restart automatically; each run failure/completion returns to
+        // the main menu and the next seeded run begins).
         _autoSlayer = new RlAutoSlayer();
-        string seed = SeedHelper.GetRandomSeed();
-        Logger.Log($"[RlAutoSlay] Starting RL run with seed: {seed}");
-        _autoSlayer.Start(seed);
+        Logger.Log("[RlAutoSlay] Starting continuous harvest mode");
+        _autoSlayer.StartContinuous();
     }
 }
 

@@ -155,6 +155,68 @@ public class RlAutoSlayer
         TaskHelper.RunSafely(task);
     }
 
+    /// <summary>
+    /// Harvest mode: play runs back to back forever. Each run failure or
+    /// completion returns to the main menu and the next seeded run starts
+    /// automatically, so one game session yields unlimited recorded combats
+    /// (the recorder reconnects and keeps collecting on the Python side).
+    /// </summary>
+    public void StartContinuous(string? logFile = null)
+    {
+        if (logFile != null)
+        {
+            AutoSlayLog.OpenLogFile(logFile);
+        }
+        IsActive = true;
+        SetAutoSlayerActive(true);
+        _cts = new CancellationTokenSource();
+        Task task = ContinuousRunLoopAsync(_cts.Token);
+        TaskHelper.RunSafely(task);
+    }
+
+    private async Task ContinuousRunLoopAsync(CancellationToken ct)
+    {
+        int runIndex = 0;
+        while (!ct.IsCancellationRequested)
+        {
+            runIndex++;
+            string seed = SeedHelper.GetRandomSeed();
+            Logger.Log($"[RlAutoSlayer] === Harvest run #{runIndex}, seed: {seed} ===");
+            _completionSignalSent = false;
+            await RunAsync(seed, ct);
+            if (ct.IsCancellationRequested)
+            {
+                break;
+            }
+            await ReturnToMainMenuSafe(ct);
+        }
+    }
+
+    private async Task ReturnToMainMenuSafe(CancellationToken ct)
+    {
+        try
+        {
+            Logger.Log("[RlAutoSlayer] Returning to main menu for next run");
+            await NGame.Instance.ReturnToMainMenuAfterRun();
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[RlAutoSlayer] ReturnToMainMenuAfterRun failed: {ex.Message}");
+        }
+        try
+        {
+            Node root = ((SceneTree)Engine.GetMainLoop()).Root;
+            await WaitHelper.Until(
+                () => root.GetNodeOrNull<Control>(MainMenuPath)?.IsVisibleInTree() ?? false,
+                ct, TimeSpan.FromSeconds(MainMenuTimeoutSeconds),
+                "Main menu did not appear between harvest runs");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[RlAutoSlayer] Main menu wait between runs failed: {ex.Message}");
+        }
+    }
+
     public void Stop()
     {
         IsActive = false;
