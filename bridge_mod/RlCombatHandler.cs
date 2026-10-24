@@ -512,6 +512,8 @@ public class RlCombatHandler : IRoomHandler, IHandler
                 ["draw_pile_count"] = pcs?.DrawPile.Cards.Count ?? 0,
                 ["discard_pile_count"] = pcs?.DiscardPile.Cards.Count ?? 0,
                 ["exhaust_pile_count"] = pcs?.ExhaustPile.Cards.Count ?? 0,
+                ["draw_pile"] = PileIds(pcs?.DrawPile.Cards),
+                ["discard_pile"] = PileIds(pcs?.DiscardPile.Cards),
                 ["round"] = combatState?.RoundNumber ?? 0,
                 ["floor"] = runState?.TotalFloor ?? 0,
                 ["act"] = (runState?.CurrentActIndex ?? 0) + 1,
@@ -663,6 +665,23 @@ public class RlCombatHandler : IRoomHandler, IHandler
         }
 
         return potions;
+    }
+
+    /// <summary>
+    /// Ordered card ids of a pile — lets the Python replay builder restore
+    /// the real draw/discard order so hand evolution matches the live game
+    /// (draw order is otherwise driven by the sim's own RNG).
+    /// </summary>
+    private static List<string> PileIds(System.Collections.Generic.IReadOnlyList<CardModel>? pile)
+    {
+        var ids = new List<string>();
+        if (pile == null)
+            return ids;
+        foreach (CardModel card in pile)
+        {
+            ids.Add(card.Id.Entry);
+        }
+        return ids;
     }
 
     private static List<string> GetAvailableActions(IEnumerable<Dictionary<string, object>> potions)

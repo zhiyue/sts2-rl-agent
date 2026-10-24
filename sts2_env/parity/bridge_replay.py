@@ -365,6 +365,13 @@ def normalize_bridge_state(state: dict[str, Any]) -> dict[str, Any]:
             "draw_pile_count": int(state.get("draw_pile_count", 0)),
             "discard_pile_count": int(state.get("discard_pile_count", 0)),
             "exhaust_pile_count": int(state.get("exhaust_pile_count", 0)),
+            "draw_pile": [str(entry) for entry in (state.get("draw_pile") or [])],
+            "discard_pile": [str(entry) for entry in (state.get("discard_pile") or [])],
+            "potions": [
+                {"slot": int(p.get("slot", 0)), "id": str(p.get("id", ""))}
+                for p in (state.get("potions") or [])
+                if isinstance(p, dict)
+            ],
             "round": int(state.get("round", 0)),
         }
     if state_type == STATE_TYPE_CARD_SELECT:
@@ -1043,9 +1050,26 @@ def combat_state_from_bridge_state(
                     potions_state.potions.append(None)
                 potions_state.potions[slot] = instance
 
+    def _fill_pile(target: list, entries: list | None, count: int) -> None:
+        """Restore real pile order when the trace carries ids; otherwise fall
+        back to Strike placeholders so counts still compare."""
+        target.clear()
+        if entries:
+            for entry in entries:
+                try:
+                    target.append(create_card(CardId[str(entry).upper()]))
+                except (KeyError, TypeError, ValueError):
+                    continue
+        while len(target) < count:
+            target.append(create_card(CardId.STRIKE_IRONCLAD))
+
     draw_count = int(state.get("draw_pile_count") or 0)
-    combat.draw_pile = [create_card(CardId.STRIKE_IRONCLAD) for _ in range(draw_count)]
-    combat.discard_pile = [create_card(CardId.STRIKE_IRONCLAD) for _ in range(int(state.get("discard_pile_count") or 0))]
+    _fill_pile(combat.draw_pile, state.get("draw_pile"), draw_count)
+    _fill_pile(
+        combat.discard_pile,
+        state.get("discard_pile"),
+        int(state.get("discard_pile_count") or 0),
+    )
     combat.exhaust_pile = []
     combat.round_number = int(state.get("round") or 1)
     return combat
