@@ -200,5 +200,6 @@ def test_run_manager_can_select_ally_player_and_play_from_their_hand():
     result = mgr.take_action(ally_play)
 
     assert result["success"] is True
-    assert ally.block == 7
+    # C# GatherLight.cs:17: BlockVar(8).
+    assert ally.block == 8
     assert ally.stars == 1

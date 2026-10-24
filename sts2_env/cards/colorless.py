@@ -26,8 +26,9 @@ from sts2_env.core.combat import CombatState
 
 
 BELIEVE_IN_YOU_ENERGY_KEY = "energy"
-BELIEVE_IN_YOU_ENERGY = 3
-BELIEVE_IN_YOU_UPGRADED_ENERGY = 4
+# BelieveInYou.cs:18 EnergyVar(2); OnUpgrade (31-34) UpgradeValueBy(1).
+BELIEVE_IN_YOU_ENERGY = 2
+BELIEVE_IN_YOU_UPGRADED_ENERGY = 3
 CATASTROPHE_CARDS_KEY = "cards"
 CATASTROPHE_CARDS = 2
 CATASTROPHE_UPGRADED_CARDS = 3
@@ -43,8 +44,9 @@ EQUILIBRIUM_BLOCK = 13
 EQUILIBRIUM_UPGRADED_BLOCK = 16
 EQUILIBRIUM_POWER = 1
 FASTEN_EXTRA_BLOCK_KEY = "extra_block"
-FASTEN_EXTRA_BLOCK = 5
-FASTEN_UPGRADED_EXTRA_BLOCK = 7
+# Fasten.cs:38 DynamicVar("ExtraBlock", 4); OnUpgrade (50-53) UpgradeValueBy(2).
+FASTEN_EXTRA_BLOCK = 4
+FASTEN_UPGRADED_EXTRA_BLOCK = 6
 FINESSE_BLOCK = 4
 FINESSE_UPGRADED_BLOCK = 7
 FINESSE_CARDS_KEY = "cards"
@@ -83,7 +85,10 @@ PANACHE_DAMAGE_KEY = "panache_damage"
 PANACHE_DAMAGE = 10
 PANACHE_UPGRADED_DAMAGE = 14
 PRODUCTION_ENERGY_KEY = "energy"
+# Production.cs:13 EnergyVar(2); OnUpgrade (29-32) UpgradeValueBy(1) and does NOT
+# remove the Exhaust keyword (CanonicalKeywords, line 15).
 PRODUCTION_ENERGY = 2
+PRODUCTION_UPGRADED_ENERGY = 3
 PROWESS_STRENGTH_KEY = "strength"
 PROWESS_DEXTERITY_KEY = "dexterity"
 PROWESS_POWER = 1
@@ -94,8 +99,9 @@ RESTLESSNESS_UPGRADED_CARDS = 3
 RESTLESSNESS_ENERGY_KEY = "energy"
 RESTLESSNESS_ENERGY = 2
 RESTLESSNESS_UPGRADED_ENERGY = 3
-SEEKER_STRIKE_DAMAGE = 6
-SEEKER_STRIKE_UPGRADED_DAMAGE = 9
+# SeekerStrike.cs:21 DamageVar(9); OnUpgrade (44-47) UpgradeValueBy(3).
+SEEKER_STRIKE_DAMAGE = 9
+SEEKER_STRIKE_UPGRADED_DAMAGE = 12
 SEEKER_STRIKE_CARDS_KEY = "cards"
 SEEKER_STRIKE_CARDS = 3
 SHOCKWAVE_POWER_KEY = "power"
@@ -131,8 +137,9 @@ CALAMITY_POWER = 1
 ENTROPY_CARDS_KEY = "cards"
 ENTROPY_CARDS = 1
 ETERNAL_ARMOR_PLATING_KEY = "plating"
-ETERNAL_ARMOR_PLATING = 7
-ETERNAL_ARMOR_UPGRADED_PLATING = 9
+# EternalArmor.cs:20 PowerVar<PlatingPower>(9); OnUpgrade (32-35) UpgradeValueBy(3).
+ETERNAL_ARMOR_PLATING = 9
+ETERNAL_ARMOR_UPGRADED_PLATING = 12
 JACKPOT_DAMAGE = 25
 JACKPOT_UPGRADED_DAMAGE = 30
 JACKPOT_CARDS_KEY = "cards"
@@ -340,9 +347,17 @@ def gang_up(card: CardInstance, combat: CombatState, target: Creature | None) ->
 @register_effect(CardId.HUDDLE_UP)
 def huddle_up(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     cards = card.effect_vars.get("cards", 2)
+    # HuddleUp.cs OnPlay (lines 26-34): iterates CombatState.GetTeammatesOf,
+    # which per CombatState.cs:397 "includes the creature itself" — so the
+    # caster draws too. get_teammates_of excludes the owner, so add it here.
+    owner = _owner(card, combat)
+    teammates = [owner]
+    for creature in combat.get_teammates_of(owner):
+        if creature is not owner:
+            teammates.append(creature)
     for teammate in [
         creature
-        for creature in combat.get_teammates_of(_owner(card, combat))
+        for creature in teammates
         if creature is not None and creature.is_alive and getattr(creature, "is_player", False)
     ]:
         combat._draw_cards_for_creature(teammate, cards)
@@ -671,8 +686,19 @@ def alchemize(card: CardInstance, combat: CombatState, target: Creature | None) 
 
 @register_effect(CardId.ANOINTED)
 def anointed(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # Anointed.cs OnPlay (lines 22-24): count = MaxCardsInHand - current hand
+    # size; take that many RANDOM rare cards (TakeRandom, no replacement) from
+    # the draw pile and add them to hand — only enough to fill the free slots.
+    from sts2_env.core.constants import MAX_HAND_SIZE
+
+    count = MAX_HAND_SIZE - len(combat.hand)
+    if count <= 0:
+        return
     rares = [c for c in list(combat.draw_pile) if c.rarity == CardRarity.RARE]
-    for rare in rares:
+    if not rares:
+        return
+    combat.stable_shuffle_cards(rares, combat.combat_card_selection_rng)
+    for rare in rares[:count]:
         combat.move_card_to_hand(rare)
 
 
@@ -720,10 +746,20 @@ def eternal_armor(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.GOLD_AXE)
 def gold_axe(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    """Damage scales with gold."""
+    """Damage scales with card plays finished this combat across all players."""
     assert target is not None
     owner = _owner(card, combat)
-    total_damage = card.effect_vars.get("calc_base", 0) + card.effect_vars.get("extra_damage", 1) * combat.count_cards_played_this_combat(owner)
+    # GoldAxe.cs CanonicalVars (lines 20-21): the multiplier is
+    # CombatManager.Instance.History.CardPlaysFinished.Count() — the combat-wide
+    # history, i.e. every player's finished card plays, not just the owner's.
+    # The in-flight play is not yet in History when the damage resolves, matching
+    # C# (entries are appended after the effect resolves). In single-player the
+    # only player is the owner, so behavior there is unchanged.
+    finished_plays = sum(
+        combat.count_cards_played_this_combat(state.creature)
+        for state in combat.combat_player_states
+    )
+    total_damage = card.effect_vars.get("calc_base", 0) + card.effect_vars.get("extra_damage", 1) * finished_plays
     damage = calculate_damage(total_damage, owner, target, ValueProp.MOVE, combat)
     apply_damage(target, damage, ValueProp.MOVE, combat, owner)
 
@@ -740,11 +776,21 @@ def hand_of_greed(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.HIDDEN_GEM)
 def hidden_gem(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # HiddenGem.cs OnPlay (lines 35-45): candidates from the draw pile exclude
+    # Unplayable cards, Curse/Quest (CardType 5/6), and any card whose
+    # GetEnchantedReplayCount() >= 1 (already has replay). Attack/Skill/Power
+    # (CardType 1-3) are preferred when any exist.
+    from sts2_env.cards.enchantments import enchant_play_count_bonus
+
+    def effective_replay_count(c: CardInstance) -> int:
+        return c.base_replay_count + enchant_play_count_bonus(c)
+
     valid_draw_cards = [
         c for c in combat.draw_pile
         if (
             not c.is_unplayable
             and c.card_type not in (CardType.CURSE, CardType.QUEST)
+            and effective_replay_count(c) < 1
         )
     ]
     candidates = [
@@ -825,9 +871,17 @@ def nostalgia_card(card: CardInstance, combat: CombatState, target: Creature | N
 
 @register_effect(CardId.RALLY)
 def rally(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # Rally.cs OnPlay (lines 26-35): iterates CombatState.GetTeammatesOf, which
+    # per CombatState.cs:397 "includes the creature itself" — so the caster
+    # gains block too. get_teammates_of excludes the owner, so add it here.
+    owner = _owner(card, combat)
+    teammates = [owner]
+    for creature in combat.get_teammates_of(owner):
+        if creature is not owner:
+            teammates.append(creature)
     for teammate in [
         creature
-        for creature in combat.get_teammates_of(_owner(card, combat))
+        for creature in teammates
         if creature is not None and creature.is_alive and getattr(creature, "is_player", False)
     ]:
         block = calculate_block(card.base_block, teammate, ValueProp.MOVE, combat, card_source=card)
@@ -1211,8 +1265,12 @@ def make_production(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.PRODUCTION, cost=0, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.UNCOMMON,
-        keywords=frozenset() if upgraded else frozenset({"exhaust"}),
-        effect_vars={PRODUCTION_ENERGY_KEY: PRODUCTION_ENERGY},
+        keywords=frozenset({"exhaust"}),
+        effect_vars={
+            PRODUCTION_ENERGY_KEY: (
+                PRODUCTION_UPGRADED_ENERGY if upgraded else PRODUCTION_ENERGY
+            )
+        },
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )

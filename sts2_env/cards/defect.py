@@ -12,6 +12,7 @@ from sts2_env.cards.base import (
 from sts2_env.cards.factory import create_character_cards
 from sts2_env.cards.registry import (
     register_after_card_generated_for_combat_hook,
+    register_after_card_played_hook,
     register_effect,
     register_self_mutating_block,
     register_self_mutating_damage,
@@ -105,8 +106,10 @@ GUNK_UP_UPGRADED_DAMAGE = 5
 GUNK_UP_REPEAT_KEY = "repeat"
 GUNK_UP_REPEAT = 3
 HOTFIX_FOCUS_KEY = "focus_power"
+# Hotfix.cs:18 CanonicalVars = PowerVar<FocusPower>(2); OnUpgrade (31-34) only
+# removes Exhaust, focus stays 2.
 HOTFIX_FOCUS = 2
-HOTFIX_UPGRADED_FOCUS = 3
+HOTFIX_UPGRADED_FOCUS = 2
 LEAP_BLOCK = 9
 LEAP_UPGRADED_BLOCK = 12
 HAILSTORM_POWER_KEY = "hailstorm_power"
@@ -144,8 +147,9 @@ THUNDER_UPGRADED_POWER = 8
 TURBO_ENERGY_KEY = "energy"
 TURBO_ENERGY = 2
 TURBO_UPGRADED_ENERGY = 3
-UPROAR_DAMAGE = 5
-UPROAR_UPGRADED_DAMAGE = 7
+# Uproar.cs:16 DamageVar(6), OnUpgrade (43-46) UpgradeValueBy(2); 2 hits (OnPlay WithHitCount(2)).
+UPROAR_DAMAGE = 6
+UPROAR_UPGRADED_DAMAGE = 8
 UPROAR_HITS = 2
 GENETIC_ALGORITHM_BLOCK_KEY = "block"
 GENETIC_ALGORITHM_BLOCK = 1
@@ -158,8 +162,9 @@ HELIX_DRILL_CALC_BASE_KEY = "calc_base"
 HELIX_DRILL_CALC_BASE = 0
 HELIX_DRILL_CALC_EXTRA_KEY = "calc_extra"
 HELIX_DRILL_CALC_EXTRA = 1
-HYPERBEAM_DAMAGE = 26
-HYPERBEAM_UPGRADED_DAMAGE = 34
+# Hyperbeam.cs:20-24 DamageVar(28) + PowerVar<FocusPower>(3); OnUpgrade (59-62) +8 damage.
+HYPERBEAM_DAMAGE = 28
+HYPERBEAM_UPGRADED_DAMAGE = 36
 HYPERBEAM_FOCUS_KEY = "focus_power"
 HYPERBEAM_FOCUS = 3
 METEOR_STRIKE_DAMAGE = 24
@@ -177,11 +182,14 @@ ICE_LANCE_REPEAT_KEY = "repeat"
 ICE_LANCE_REPEAT = 3
 SHADOW_SHIELD_BLOCK = 11
 SHADOW_SHIELD_UPGRADED_BLOCK = 15
-SYNTHESIS_DAMAGE = 12
-SYNTHESIS_UPGRADED_DAMAGE = 18
+# Synthesis.cs:15 DamageVar(14), OnUpgrade (31-34) UpgradeValueBy(6).
+SYNTHESIS_DAMAGE = 14
+SYNTHESIS_UPGRADED_DAMAGE = 20
 SYNTHESIS_FREE_POWER = 1
+# TeslaCoil.cs:19 DamageVar(3), OnUpgrade (43-46) UpgradeValueBy(1); upgraded also
+# triggers each Lightning orb passive a second time (OnPlay 36-39).
 TESLA_COIL_DAMAGE = 3
-TESLA_COIL_UPGRADED_DAMAGE = 6
+TESLA_COIL_UPGRADED_DAMAGE = 4
 VOLTAIC_CALC_BASE_KEY = "calc_base"
 VOLTAIC_CALC_BASE = 0
 VOLTAIC_CALC_EXTRA_KEY = "calc_extra"
@@ -207,8 +215,9 @@ QUADCAST_REPEAT = 4
 REBOOT_CARDS_KEY = "cards"
 REBOOT_CARDS = 4
 REBOOT_UPGRADED_CARDS = 6
-SHATTER_DAMAGE = 11
-SHATTER_UPGRADED_DAMAGE = 15
+# Shatter.cs:18 DamageVar(7), OnUpgrade (38-41) UpgradeValueBy(4).
+SHATTER_DAMAGE = 7
+SHATTER_UPGRADED_DAMAGE = 11
 SIGNAL_BOOST_COST = 1
 SIGNAL_BOOST_UPGRADED_COST = 0
 SIGNAL_BOOST_POWER_KEY = "signal_boost_power"
@@ -276,15 +285,23 @@ def _trigger_all_passives(combat: CombatState) -> None:
             orb.on_passive(combat)
 
 
-def _trigger_lightning_passives(combat: CombatState, target: Creature) -> None:
+def _trigger_lightning_passives(
+    combat: CombatState, target: Creature, times: int = 1
+) -> None:
+    """Trigger each Lightning orb's passive `times` times against `target`.
+
+    TeslaCoil.cs OnPlay (32-40) triggers every Lightning orb passive once, and a
+    second time per orb when the card is upgraded.
+    """
     queue = getattr(combat, 'orb_queue', None)
     if queue is not None:
         for orb in list(queue.orbs):
             if orb.orb_type != OrbType.LIGHTNING:
                 continue
-            value = orb.get_passive_value(combat)
-            if value > 0:
-                apply_damage(target, value, ValueProp.UNPOWERED, combat, combat.player)
+            for _ in range(times):
+                value = orb.get_passive_value(combat)
+                if value > 0:
+                    apply_damage(target, value, ValueProp.UNPOWERED, combat, combat.player)
 
 
 def _get_orb_count(combat: CombatState) -> int:
@@ -679,10 +696,16 @@ def double_energy(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.ENERGY_SURGE)
 def energy_surge(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # EnergySurge.cs OnPlay: for c in CombatState.GetTeammatesOf(Owner.Creature)
+    # where c.IsAlive && c.IsPlayer — GetTeammatesOf returns the whole side
+    # (CombatState.cs:397), so the caster itself is included in single-player.
     owner = _owner(card, combat)
-    for ally in combat.get_player_allies_of(owner):
-        energy = card.effect_vars.get(ENERGY_SURGE_ENERGY_KEY, ENERGY_SURGE_ENERGY)
-        combat.gain_energy(ally, energy)
+    energy = card.effect_vars.get(ENERGY_SURGE_ENERGY_KEY, ENERGY_SURGE_ENERGY)
+    teammates = [owner] + combat.get_player_allies_of(owner)
+    for teammate in teammates:
+        if not getattr(teammate, "is_alive", True):
+            continue
+        combat.gain_energy(teammate, energy)
 
 
 @register_effect(CardId.FERAL)
@@ -806,7 +829,35 @@ def rocket_punch_after_card_generated_for_combat(
     generated_owner = getattr(generated_card, "owner", None)
     if owner is not None and generated_owner is not owner:
         return
-    card.set_temporary_cost_for_turn(0)
+    # RocketPunch.cs AfterCardGeneratedForCombat: base.EnergyCost.SetUntilPlayed(0)
+    # — a LocalCostModifier(LocalCostType.Absolute, WhenPlayed) on RocketPunch
+    # itself (CardEnergyCost.cs:175), so RocketPunch costs 0 until it is next
+    # played, persisting across end-of-turn cleanup. Tracked with combat_vars
+    # markers (not _turn_cost_override, which end_of_turn_cleanup pops) and
+    # restored by rocket_punch_after_card_played below.
+    if "_until_played_cost" in card.combat_vars:
+        return
+    card.combat_vars["_until_played_cost"] = 0
+    card.combat_vars["_until_played_prev_cost"] = card.cost
+    card.cost = 0
+
+
+@register_after_card_played_hook(CardId.ROCKET_PUNCH)
+def rocket_punch_after_card_played(
+    card: CardInstance,
+    played_card: CardInstance,
+    owner: Creature,
+    combat: CombatState,
+) -> None:
+    # C# LocalCostModifierExpiration.WhenPlayed: the 0-cost modifier expires when
+    # RocketPunch is played, restoring its printed cost.
+    if played_card is not card:
+        return
+    if card.combat_vars.pop("_until_played_cost", None) is None:
+        return
+    prev_cost = card.combat_vars.pop("_until_played_prev_cost", None)
+    if prev_cost is not None:
+        card.cost = prev_cost
 
 
 @register_effect(CardId.SCAVENGE)
@@ -840,13 +891,13 @@ def scrape(card: CardInstance, combat: CombatState, target: Creature | None) -> 
         return
     draw = card.effect_vars.get(SCRAPE_CARDS_KEY, SCRAPE_CARDS)
     combat._draw_cards(draw)
-    to_discard = [
-        c for c in combat.hand[-draw:]
-        if c.cost != 0
-        or c.has_energy_cost_x
-        or int(c.combat_vars.get("_turn_star_cost_override", c.combat_vars.get("_combat_star_cost_override", c.star_cost))) > 0
-        or c.has_star_cost_x
-    ]
+    # Scrape.cs OnPlay: discard drawn cards where
+    # c.EnergyCost.GetWithModifiers(CostModifiers.Local) != 0 || c.EnergyCost.CostsX.
+    # Local cost = printed cost plus the card's own local modifiers (Python:
+    # card.cost, which set_temporary_cost_for_turn / set_combat_cost mutate);
+    # global power/relic cost modifiers and star costs are NOT part of
+    # EnergyCost, so 0-cost star cards are not discarded.
+    to_discard = [c for c in combat.hand[-draw:] if c.cost != 0 or c.has_energy_cost_x]
     for c in to_discard:
         combat.hand.remove(c)
         combat.discard_pile.append(c)
@@ -922,7 +973,8 @@ def tesla_coil(card: CardInstance, combat: CombatState, target: Creature | None)
     assert target is not None
     dmg = calculate_damage(card.base_damage, _owner(card, combat), target, ValueProp.MOVE, combat)
     apply_damage(target, dmg, ValueProp.MOVE, combat, _owner(card, combat))
-    _trigger_lightning_passives(combat, target)
+    # TeslaCoil.cs OnPlay (32-40): upgraded triggers each Lightning orb passive twice.
+    _trigger_lightning_passives(combat, target, times=2 if card.upgraded else 1)
 
 
 @register_effect(CardId.THUNDER_CARD)
@@ -936,8 +988,17 @@ def thunder_card(card: CardInstance, combat: CombatState, target: Creature | Non
 
 @register_effect(CardId.WHITE_NOISE)
 def white_noise(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # WhiteNoise.cs OnPlay: CardFactory.GetDistinctForCombat(base.Owner,
+    # base.Owner.Character.CardPool.GetUnlockedCards(...).Where(Type == Power), 1,
+    # rng) — the pool is the CARD OWNER's character (not combat.character_id,
+    # which in multiplayer is the primary player). GetDistinctForCombat picks
+    # count distinct cards via TakeRandom(count) (no replacement within the
+    # call); with count=1 there is no cross-combat dedup state in C#.
+    owner = _owner(card, combat)
+    owner_state = combat.combat_player_state_for(owner)
+    character_id = getattr(owner_state, "character_id", None) or combat.character_id
     generated = create_character_cards(
-        combat.character_id,
+        character_id,
         combat.combat_card_generation_rng,
         1,
         card_type=CardType.POWER,
@@ -947,7 +1008,7 @@ def white_noise(card: CardInstance, combat: CombatState, target: Creature | None
     if not generated:
         return
     generated[0].set_temporary_free_this_turn()
-    combat.add_generated_card_to_creature_hand(_owner(card, combat), generated[0])
+    combat.add_generated_card_to_creature_hand(owner, generated[0])
 
 
 # ---------------------------------------------------------------------------
@@ -1167,7 +1228,17 @@ def shatter(card: CardInstance, combat: CombatState, target: Creature | None) ->
     for enemy in combat.hittable_enemies:
         dmg = calculate_damage(card.base_damage, _owner(card, combat), enemy, ValueProp.MOVE, combat)
         apply_damage(enemy, dmg, ValueProp.MOVE, combat, _owner(card, combat))
-    _evoke_front(combat)
+    # Shatter.cs OnPlay (30-35): loops once per orb queued at cast time; each
+    # iteration evokes the front orb twice — first with dequeue:false (evoke
+    # effect and AfterOrbEvoked hooks fire, orb stays) then normally (orb removed).
+    queue = getattr(combat, 'orb_queue', None)
+    if queue is None:
+        return
+    for _ in range(len(queue.orbs)):
+        if not queue.orbs:
+            break
+        queue._evoke_orb(queue.orbs[0], combat)
+        queue.evoke_front(combat)
 
 
 @register_effect(CardId.SIGNAL_BOOST)
@@ -1418,6 +1489,7 @@ def make_hotfix(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.HOTFIX, cost=0, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.COMMON,
+        keywords=frozenset() if upgraded else frozenset({"exhaust"}),
         effect_vars={HOTFIX_FOCUS_KEY: HOTFIX_UPGRADED_FOCUS if upgraded else HOTFIX_FOCUS},
         upgraded=upgraded,
         instance_id=_get_next_id(),
@@ -1619,8 +1691,9 @@ def make_ftl(upgraded: bool = False) -> CardInstance:
 
 def make_fusion(upgraded: bool = False) -> CardInstance:
     return CardInstance(
-        card_id=CardId.FUSION, cost=1 if upgraded else 2, card_type=CardType.SKILL,
+        card_id=CardId.FUSION, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.UNCOMMON,
+        keywords=frozenset() if upgraded else frozenset({"exhaust"}),
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -2144,7 +2217,7 @@ def make_trash_to_treasure(upgraded: bool = False) -> CardInstance:
 
 def make_voltaic(upgraded: bool = False) -> CardInstance:
     return CardInstance(
-        card_id=CardId.VOLTAIC, cost=2, card_type=CardType.SKILL,
+        card_id=CardId.VOLTAIC, cost=3, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.RARE,
         keywords=frozenset() if upgraded else frozenset({"exhaust"}),
         effect_vars={

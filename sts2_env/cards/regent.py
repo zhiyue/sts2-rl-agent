@@ -26,6 +26,7 @@ from sts2_env.core.creature import Creature
 from sts2_env.core.combat import CombatState
 
 
+ASTRAL_PULSE_HITS = 2
 CELESTIAL_MIGHT_REPEAT = 3
 SEVEN_STARS_REPEAT = 7
 
@@ -108,22 +109,28 @@ def venerate(card: CardInstance, combat: CombatState, target: Creature | None) -
 
 @register_effect(CardId.ASTRAL_PULSE)
 def astral_pulse(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    _deal_damage_all(card, combat)
+    """C# AstralPulse.OnPlay: attack all opponents with hit count 2 (AstralPulse.cs:24-28)."""
+    for _ in range(card.effect_vars.get("hits", ASTRAL_PULSE_HITS)):
+        if _owner(card, combat).is_dead:
+            break
+        _deal_damage_all(card, combat)
 
 
 @register_effect(CardId.BEGONE)
 def begone(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    from sts2_env.cards.status import make_minion_dive_bomb
+    # Begone.cs (v0.107.1): Skill / TargetType.Self, deals no damage. OnPlay
+    # selects 1 hand card via CardSelectCmd.FromHand and CardCmd.Transform's it
+    # into MinionStrike, upgraded first when Begone is upgraded.
+    del target
+    from sts2_env.cards.status import make_minion_strike
 
-    assert target is not None
-    _deal_damage_single(card, combat, target)
     if not combat.hand:
         return
 
     def _resolver(selected: CardInstance | None) -> None:
         if selected is None:
             return
-        transformed = make_minion_dive_bomb(upgraded=card.upgraded)
+        transformed = make_minion_strike(upgraded=card.upgraded)
         combat.transform_card(selected, transformed)
 
     combat.request_card_choice(
@@ -219,17 +226,23 @@ def glitterstream(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.GLOW)
 def glow(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.gain_stars(_owner(card, combat), card.effect_vars.get("stars", 1))
-    cards = card.effect_vars.get("cards", 2)
-    combat._draw_cards(cards)
+    """C# Glow.OnPlay: gain Stars, draw Cards, apply DrawCardsNextTurnPower(Cards)
+    (Glow.cs:24-29)."""
+    owner = _owner(card, combat)
+    combat.gain_stars(owner, card.effect_vars.get("stars", 1))
+    cards = card.effect_vars.get("cards", 1)
+    combat._draw_cards(cards)  # noqa: SLF001
+    combat.apply_power_to(owner, PowerId.DRAW_CARDS_NEXT_TURN, cards)
 
 
 @register_effect(CardId.GUIDING_STAR)
 def guiding_star(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # GuidingStar.cs OnPlay: attack, then CardPileCmd.Draw(Cards.BaseValue) —
+    # an immediate draw of 2 (upgraded 3), not a next-turn draw power.
     assert target is not None
     _deal_damage_single(card, combat, target)
     cards = card.effect_vars.get("cards", 2)
-    combat.apply_power_to(_owner(card, combat), PowerId.DRAW_CARDS_NEXT_TURN, cards)
+    combat._draw_cards(cards)
 
 
 @register_effect(CardId.HIDDEN_CACHE)
@@ -274,9 +287,11 @@ def photon_cut(card: CardInstance, combat: CombatState, target: Creature | None)
 
 @register_effect(CardId.REFINE_BLADE)
 def refine_blade(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    """C# RefineBlade.OnPlay: forge first, then apply EnergyNextTurnPower
+    (RefineBlade.cs:27-32)."""
+    combat.forge(_owner(card, combat), card.effect_vars.get("forge", 9), source=card)
     energy = card.effect_vars.get("energy", 1)
     combat.apply_power_to(_owner(card, combat), PowerId.ENERGY_NEXT_TURN, energy)
-    combat.forge(_owner(card, combat), card.effect_vars.get("forge", 6), source=card)
 
 
 @register_effect(CardId.SOLAR_STRIKE)
@@ -288,7 +303,9 @@ def solar_strike(card: CardInstance, combat: CombatState, target: Creature | Non
 
 @register_effect(CardId.SPOILS_OF_BATTLE)
 def spoils_of_battle(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.forge(_owner(card, combat), card.effect_vars.get("forge", 10), source=card)
+    """C# SpoilsOfBattle.OnPlay: forge, then draw Cards (SpoilsOfBattle.cs:26-30)."""
+    combat.forge(_owner(card, combat), card.effect_vars.get("forge", 5), source=card)
+    combat._draw_cards(card.effect_vars.get("cards", 2))  # noqa: SLF001
 
 
 @register_effect(CardId.WROUGHT_IN_WAR)
@@ -301,6 +318,18 @@ def wrought_in_war(card: CardInstance, combat: CombatState, target: Creature | N
 # ---------------------------------------------------------------------------
 # Uncommon cards (36)
 # ---------------------------------------------------------------------------
+
+def make_alignment(upgraded: bool = False) -> CardInstance:
+    """C# Alignment: cost 0, Skill, Uncommon, Self, CanonicalStarCost 3;
+    OnUpgrade: Energy.UpgradeValueBy(1)."""
+    return CardInstance(
+        card_id=CardId.ALIGNMENT, cost=0, card_type=CardType.SKILL,
+        target_type=TargetType.SELF, rarity=CardRarity.UNCOMMON,
+        star_cost=3, upgraded=upgraded,
+        effect_vars={"energy": 3 if upgraded else 2},
+        instance_id=_get_next_id(),
+    )
+
 
 @register_effect(CardId.ALIGNMENT)
 def alignment(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
@@ -322,7 +351,11 @@ def bulwark(card: CardInstance, combat: CombatState, target: Creature | None) ->
 
 @register_effect(CardId.CHARGE)
 def charge(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    from sts2_env.cards.status import make_minion_strike
+    # Charge.cs OnPlay: CardSelectCmd.FromCombatPile(Draw, TransformSelectionPrompt,
+    # Cards=2), then CardCmd.TransformTo<MinionDiveBomb>(item) — and when Charge is
+    # upgraded, CardCmd.Upgrade(cardAdded) upgrades the transformed card
+    # (Charge.cs:30-38). MinionDiveBomb lives in the token pool (status.py).
+    from sts2_env.cards.status import make_minion_dive_bomb
 
     cards = sorted(combat.draw_pile, key=lambda c: (c.rarity.value, c.card_id.value))
     if not cards:
@@ -330,11 +363,11 @@ def charge(card: CardInstance, combat: CombatState, target: Creature | None) -> 
 
     def _resolver(selected_cards: list[CardInstance]) -> None:
         for selected in selected_cards:
-            transformed = make_minion_strike(upgraded=card.upgraded)
+            transformed = make_minion_dive_bomb(upgraded=card.upgraded)
             combat.transform_card(selected, transformed)
 
     combat.request_multi_card_choice(
-        prompt="Choose card(s) to transform into Minion Strike",
+        prompt="Choose card(s) to transform into Minion Dive Bomb",
         cards=cards,
         source_pile="draw",
         resolver=_resolver,
@@ -665,6 +698,18 @@ def terraforming(card: CardInstance, combat: CombatState, target: Creature | Non
 # Rare cards (26)
 # ---------------------------------------------------------------------------
 
+def make_arsenal(upgraded: bool = False) -> CardInstance:
+    """C# Arsenal: cost 1, Power, Rare, Self, PowerVar<ArsenalPower>(1);
+    OnUpgrade: AddKeyword(Innate)."""
+    return CardInstance(
+        card_id=CardId.ARSENAL, cost=1, card_type=CardType.POWER,
+        target_type=TargetType.SELF, rarity=CardRarity.RARE,
+        keywords=frozenset({"innate"}) if upgraded else frozenset(),
+        effect_vars={"arsenal": 1}, upgraded=upgraded,
+        instance_id=_get_next_id(),
+    )
+
+
 @register_effect(CardId.ARSENAL)
 def arsenal(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     amount = card.effect_vars.get("arsenal", 1)
@@ -834,8 +879,14 @@ def heavenly_drill(card: CardInstance, combat: CombatState, target: Creature | N
 def heirloom_hammer(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     _deal_damage_single(card, combat, target)
-    colorless_ids = set(eligible_registered_cards(card_pool=CardPoolId.COLORLESS, generation_context="modifier"))
-    candidates = [c for c in combat.hand if c.card_id in colorless_ids]
+    # HeirloomHammer.cs OnPlay: CardSelectCmd.FromHand filtered by
+    # c.VisualCardPool.IsColorless — visual pool, so EVENT- and TOKEN-pool cards
+    # (Soul, Shiv, MinionStrike, ...) count while STATUS-pool cards (Debris,
+    # Slimed, ...) and curse/quest cards do not. CardModel.visual_card_pool maps
+    # the C# VisualCardPool (reference_static_metadata), and
+    # visual_card_pool_is_colorless mirrors IsColorless
+    # (Colorless/Event/Token/Deprecated pools).
+    candidates = [c for c in combat.hand if c.visual_card_pool_is_colorless]
     if not candidates:
         return
 
@@ -904,7 +955,14 @@ def neutron_aegis(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.ROYALTIES_CARD)
 def royalties_card(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(_owner(card, combat), PowerId.ROYALTIES, 1)
+    # Royalties.cs OnPlay: PowerCmd.Apply<RoyaltiesPower>(Gold.BaseValue) — the
+    # Gold var (30, upgraded 40) IS the power amount; RoyaltiesPower.cs
+    # AfterCombatEnd adds a GoldReward(Amount) for that much gold.
+    combat.apply_power_to(
+        _owner(card, combat),
+        PowerId.ROYALTIES,
+        card.effect_vars.get("gold", 30),
+    )
 
 
 @register_effect(CardId.SEEKING_EDGE)
@@ -960,6 +1018,17 @@ def meteor_shower(card: CardInstance, combat: CombatState, target: Creature | No
         combat.apply_power_to(enemy, PowerId.VULNERABLE, vuln)
 
 
+def make_the_sealed_throne(upgraded: bool = False) -> CardInstance:
+    """C# TheSealedThrone: cost 1, Power, Ancient, Self, CanonicalStarCost 3;
+    OnUpgrade: EnergyCost.UpgradeBy(-1)."""
+    return CardInstance(
+        card_id=CardId.THE_SEALED_THRONE, cost=0 if upgraded else 1,
+        card_type=CardType.POWER, target_type=TargetType.SELF,
+        rarity=CardRarity.ANCIENT, star_cost=3, upgraded=upgraded,
+        instance_id=_get_next_id(),
+    )
+
+
 @register_effect(CardId.THE_SEALED_THRONE)
 def the_sealed_throne(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     combat.apply_power_to(_owner(card, combat), PowerId.THE_SEALED_THRONE, 1)
@@ -988,10 +1057,12 @@ def make_defend_regent(upgraded: bool = False) -> CardInstance:
 
 
 def make_falling_star(upgraded: bool = False) -> CardInstance:
+    """C# FallingStar: DamageVar(8), PowerVar<Weak>(1), PowerVar<Vulnerable>(1);
+    OnUpgrade: Damage.UpgradeValueBy(4) (FallingStar.cs:18-49)."""
     return CardInstance(
         card_id=CardId.FALLING_STAR, cost=0, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.BASIC,
-        base_damage=11 if upgraded else 7, upgraded=upgraded,
+        base_damage=12 if upgraded else 8, upgraded=upgraded,
         effect_vars={"weak": 1, "vulnerable": 1},
         star_cost=2,
         instance_id=_get_next_id(),
@@ -1009,10 +1080,13 @@ def make_venerate(upgraded: bool = False) -> CardInstance:
 
 
 def make_astral_pulse(upgraded: bool = False) -> CardInstance:
+    """C# AstralPulse: DamageVar(6); OnUpgrade: Damage.UpgradeValueBy(2)
+    (AstralPulse.cs:15-33)."""
     return CardInstance(
         card_id=CardId.ASTRAL_PULSE, cost=0, card_type=CardType.ATTACK,
         target_type=TargetType.ALL_ENEMIES, rarity=CardRarity.COMMON,
-        base_damage=18 if upgraded else 14, upgraded=upgraded,
+        base_damage=8 if upgraded else 6, upgraded=upgraded,
+        effect_vars={"hits": ASTRAL_PULSE_HITS},
         star_cost=3,
         instance_id=_get_next_id(),
     )
@@ -1030,19 +1104,21 @@ def make_beat_into_shape(upgraded: bool = False) -> CardInstance:
 
 def make_begone(upgraded: bool = False) -> CardInstance:
     return CardInstance(
-        card_id=CardId.BEGONE, cost=1, card_type=CardType.ATTACK,
-        target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
+        card_id=CardId.BEGONE, cost=1, card_type=CardType.SKILL,
+        target_type=TargetType.SELF, rarity=CardRarity.COMMON,
         base_damage=5 if upgraded else 4, upgraded=upgraded,
         instance_id=_get_next_id(),
     )
 
 
 def make_celestial_might(upgraded: bool = False) -> CardInstance:
+    """C# CelestialMight: DamageVar(6), RepeatVar(3);
+    OnUpgrade: Repeat.UpgradeValueBy(1) (CelestialMight.cs:14-36)."""
     return CardInstance(
         card_id=CardId.CELESTIAL_MIGHT, cost=2, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
-        base_damage=8 if upgraded else 6, upgraded=upgraded,
-        effect_vars={"repeat": CELESTIAL_MIGHT_REPEAT},
+        base_damage=6, upgraded=upgraded,
+        effect_vars={"repeat": 4 if upgraded else CELESTIAL_MIGHT_REPEAT},
         instance_id=_get_next_id(),
     )
 
@@ -1057,10 +1133,12 @@ def make_cloak_of_stars(upgraded: bool = False) -> CardInstance:
 
 
 def make_collision_course(upgraded: bool = False) -> CardInstance:
+    """C# CollisionCourse: DamageVar(11); OnUpgrade: Damage.UpgradeValueBy(4)
+    (CollisionCourse.cs:17-36)."""
     return CardInstance(
         card_id=CardId.COLLISION_COURSE, cost=0, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
-        base_damage=12 if upgraded else 9, upgraded=upgraded,
+        base_damage=15 if upgraded else 11, upgraded=upgraded,
         instance_id=_get_next_id(),
     )
 
@@ -1075,21 +1153,25 @@ def make_cosmic_indifference(upgraded: bool = False) -> CardInstance:
 
 
 def make_gather_light(upgraded: bool = False) -> CardInstance:
+    """C# GatherLight: BlockVar(8), StarsVar(1);
+    OnUpgrade: Block.UpgradeValueBy(3) (GatherLight.cs:15-34)."""
     return CardInstance(
         card_id=CardId.GATHER_LIGHT, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.COMMON,
-        base_block=10 if upgraded else 7, upgraded=upgraded,
+        base_block=11 if upgraded else 8, upgraded=upgraded,
         effect_vars={"stars": 1},
         instance_id=_get_next_id(),
     )
 
 
 def make_glow(upgraded: bool = False) -> CardInstance:
+    """C# Glow: StarsVar(1), CardsVar(1); OnUpgrade: Stars.UpgradeValueBy(1)
+    (Glow.cs:13-34)."""
     return CardInstance(
         card_id=CardId.GLOW, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.COMMON,
         upgraded=upgraded,
-        effect_vars={"cards": 2, "stars": 2 if upgraded else 1},
+        effect_vars={"cards": 1, "stars": 2 if upgraded else 1},
         instance_id=_get_next_id(),
     )
 
@@ -1137,41 +1219,49 @@ def make_photon_cut(upgraded: bool = False) -> CardInstance:
 
 
 def make_refine_blade(upgraded: bool = False) -> CardInstance:
+    """C# RefineBlade: ForgeVar(9), EnergyVar(1);
+    OnUpgrade: Forge.UpgradeValueBy(4) (RefineBlade.cs:14-36)."""
     return CardInstance(
         card_id=CardId.REFINE_BLADE, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.COMMON,
         upgraded=upgraded,
-        effect_vars={"forge": 10 if upgraded else 6, "energy": 1},
+        effect_vars={"forge": 13 if upgraded else 9, "energy": 1},
         instance_id=_get_next_id(),
     )
 
 
 def make_solar_strike(upgraded: bool = False) -> CardInstance:
+    """C# SolarStrike: DamageVar(9), StarsVar(1);
+    OnUpgrade: Damage.UpgradeValueBy(1), Stars.UpgradeValueBy(1) (SolarStrike.cs:16-40)."""
     return CardInstance(
         card_id=CardId.SOLAR_STRIKE, cost=1, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
-        base_damage=9 if upgraded else 8, upgraded=upgraded,
+        base_damage=10 if upgraded else 9, upgraded=upgraded,
         effect_vars={"stars": 2 if upgraded else 1},
         instance_id=_get_next_id(),
     )
 
 
 def make_spoils_of_battle(upgraded: bool = False) -> CardInstance:
+    """C# SpoilsOfBattle: ForgeVar(5), CardsVar(2);
+    OnUpgrade: Forge.UpgradeValueBy(3) (SpoilsOfBattle.cs:13-34)."""
     return CardInstance(
         card_id=CardId.SPOILS_OF_BATTLE, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.COMMON,
         upgraded=upgraded,
-        effect_vars={"forge": 15 if upgraded else 10},
+        effect_vars={"forge": 8 if upgraded else 5, "cards": 2},
         instance_id=_get_next_id(),
     )
 
 
 def make_wrought_in_war(upgraded: bool = False) -> CardInstance:
+    """C# WroughtInWar: DamageVar(7), ForgeVar(7);
+    OnUpgrade: Damage.UpgradeValueBy(2), Forge.UpgradeValueBy(2) (WroughtInWar.cs:15-40)."""
     return CardInstance(
         card_id=CardId.WROUGHT_IN_WAR, cost=1, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
         base_damage=9 if upgraded else 7, upgraded=upgraded,
-        effect_vars={"forge": 7 if upgraded else 5},
+        effect_vars={"forge": 9 if upgraded else 7},
         instance_id=_get_next_id(),
     )
 
@@ -1201,7 +1291,7 @@ def make_big_bang(upgraded: bool = False) -> CardInstance:
 
 def make_bundle_of_joy(upgraded: bool = False) -> CardInstance:
     return CardInstance(
-        card_id=CardId.BUNDLE_OF_JOY, cost=2, card_type=CardType.SKILL,
+        card_id=CardId.BUNDLE_OF_JOY, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.RARE,
         upgraded=upgraded, keywords=frozenset({"exhaust"}),
         effect_vars={"cards": 4 if upgraded else 3},
@@ -1219,10 +1309,12 @@ def make_crash_landing(upgraded: bool = False) -> CardInstance:
 
 
 def make_bulwark(upgraded: bool = False) -> CardInstance:
+    """C# Bulwark: BlockVar(12), ForgeVar(10);
+    OnUpgrade: Block.UpgradeValueBy(3), Forge.UpgradeValueBy(3) (Bulwark.cs:16-39)."""
     return CardInstance(
         card_id=CardId.BULWARK, cost=2, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.UNCOMMON,
-        base_block=16 if upgraded else 13, upgraded=upgraded,
+        base_block=15 if upgraded else 12, upgraded=upgraded,
         effect_vars={"forge": 13 if upgraded else 10},
         instance_id=_get_next_id(),
     )
@@ -1355,31 +1447,38 @@ def make_make_it_so(upgraded: bool = False) -> CardInstance:
 
 
 def make_heirloom_hammer(upgraded: bool = False) -> CardInstance:
+    """C# HeirloomHammer: DamageVar(20), RepeatVar(1);
+    OnUpgrade: Damage.UpgradeValueBy(5) (HeirloomHammer.cs:16-46)."""
     return CardInstance(
         card_id=CardId.HEIRLOOM_HAMMER, cost=2, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.RARE,
-        upgraded=upgraded, base_damage=22 if upgraded else 17,
+        upgraded=upgraded, base_damage=25 if upgraded else 20,
         effect_vars={"repeat": 1},
         instance_id=_get_next_id(),
     )
 
 
 def make_void_form(upgraded: bool = False) -> CardInstance:
+    """C# VoidForm: PowerVar<VoidFormPower>(2), Ethereal; OnUpgrade only removes
+    Ethereal, the power amount stays 2 (VoidForm.cs:13-31)."""
     return CardInstance(
         card_id=CardId.VOID_FORM, cost=3, card_type=CardType.POWER,
         target_type=TargetType.SELF, rarity=CardRarity.RARE,
+        keywords=frozenset() if upgraded else frozenset({"ethereal"}),
         upgraded=upgraded,
-        effect_vars={"void_form_power": 3 if upgraded else 2},
+        effect_vars={"void_form_power": 2},
         instance_id=_get_next_id(),
     )
 
 
 def make_crescent_spear(upgraded: bool = False) -> CardInstance:
+    """C# CrescentSpear: CalculationBaseVar(8), ExtraDamageVar(2), StarCost 1;
+    OnUpgrade: ExtraDamage.UpgradeValueBy(1) (CrescentSpear.cs:16-40)."""
     from sts2_env.cards.factory import create_reference_card
 
     card = create_reference_card(CardId.CRESCENT_SPEAR, upgraded=upgraded, allow_generation=True)
-    card.base_damage = 7 if upgraded else 6
-    card.effect_vars["calc_base"] = 6
+    card.base_damage = 8
+    card.effect_vars["calc_base"] = 8
     card.effect_vars["extra_damage"] = 3 if upgraded else 2
     return card
 
@@ -1456,9 +1555,15 @@ def make_i_am_invincible(upgraded: bool = False) -> CardInstance:
 
 
 def make_glitterstream(upgraded: bool = False) -> CardInstance:
+    """C# Glitterstream: BlockVar(11), BlockVar("BlockNextTurn", 5);
+    OnUpgrade: Block.UpgradeValueBy(2), BlockNextTurn.UpgradeValueBy(2)
+    (Glitterstream.cs:19-43). CARDS_REFERENCE.md records BlockNextTurn as dynamic,
+    so the C# value is applied here."""
     from sts2_env.cards.factory import create_reference_card
 
-    return create_reference_card(CardId.GLITTERSTREAM, upgraded=upgraded, allow_generation=True)
+    card = create_reference_card(CardId.GLITTERSTREAM, upgraded=upgraded, allow_generation=True)
+    card.effect_vars["block_next_turn"] = 7 if upgraded else 5
+    return card
 
 
 def make_seven_stars(upgraded: bool = False) -> CardInstance:

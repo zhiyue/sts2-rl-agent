@@ -439,7 +439,9 @@ def test_docs_backed_cards_preserve_reference_tags_for_explicit_instantiation(ca
         (CardId.BAD_LUCK, {"eternal", "unplayable"}),
         (CardId.CURSE_OF_THE_BELL, {"eternal", "unplayable"}),
         (CardId.ENTHRALLED, {"eternal"}),
-        (CardId.FOLLY, {"unplayable", "eternal", "innate"}),
+        # Folly.cs:11-17 lists CanonicalKeywords [Unplayable, Eternal, Innate,
+        # Ethereal]; the old expectation omitted Ethereal.
+        (CardId.FOLLY, {"unplayable", "eternal", "innate", "ethereal"}),
         (CardId.GREED, {"eternal", "unplayable"}),
     ],
 )
@@ -469,12 +471,17 @@ def test_knowledge_demon_status_cards_are_cost_unplayable_without_keyword(card_i
 def test_deprecated_card_matches_original_save_placeholder():
     card = create_card(CardId.DEPRECATED_CARD, upgraded=True)
 
-    assert card.cost == -1
-    assert card.original_cost == -1
-    assert card.card_type is CardType.CURSE
-    assert card.rarity is CardRarity.CURSE
+    # DeprecatedCard.cs: base(0, CardType.Status, CardRarity.Status,
+    # TargetType.None, shouldShowInCardLibrary: false); CanonicalKeywords is
+    # [CardKeyword.Exhaust]; MaxUpgradeLevel => 0. The old expectations
+    # (cost -1, Curse/Curse, keywords {unplayable}) predate the v0.107.1
+    # rework of the placeholder.
+    assert card.cost == 0
+    assert card.original_cost == 0
+    assert card.card_type is CardType.STATUS
+    assert card.rarity is CardRarity.STATUS
     assert card.target_type is TargetType.NONE
-    assert card.keywords == frozenset({"unplayable"})
+    assert card.keywords == frozenset({"exhaust"})
     assert card.upgraded is False
     assert card.can_be_generated_in_combat is True
     assert card.can_be_generated_by_modifiers is True

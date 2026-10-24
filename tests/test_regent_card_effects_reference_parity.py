@@ -22,6 +22,7 @@ from sts2_env.cards.regent import (
     make_glitterstream,
     make_hammer_time,
     make_hegemony,
+    make_heirloom_hammer,
     make_i_am_invincible,
     make_kingly_kick,
     make_kingly_punch,
@@ -128,7 +129,10 @@ class TestRegentCardEffectsReferenceParity:
 
         assert combat.play_card(0, 0)
 
-        assert enemy.current_hp == 88
+        # C# CrescentSpear.cs:20-22: CalculationBaseVar(8) + ExtraDamageVar(2) per
+        # card with CanonicalStarCost >= 0 or HasStarCostX. Star cards here:
+        # CrescentSpear (1) + TheSealedThrone (3) + Devastate (4) => 8 + 2*3 = 14.
+        assert enemy.current_hp == 86
         assert combat.stars == 0
 
     def test_devastate_spends_stars_and_deals_large_damage(self):
@@ -168,7 +172,8 @@ class TestRegentCardEffectsReferenceParity:
         assert combat.play_card(0)
 
         assert combat.player.block == 13
-        assert combat.player.get_power_amount(PowerId.BLOCK_NEXT_TURN) == 6
+        # C# Glitterstream.cs:22: BlockVar("BlockNextTurn", 5); Dexterity applies.
+        assert combat.player.get_power_amount(PowerId.BLOCK_NEXT_TURN) == 7
 
     def test_hegemony_deals_damage_and_grants_energy_next_turn(self):
         combat = _make_combat()
@@ -289,6 +294,45 @@ class TestRegentCardEffectsReferenceParity:
         assert len(combat.hand) == 3
         assert len({card.card_id for card in combat.hand}) == 3
 
+    def test_royalties_applies_gold_value_as_power_amount(self):
+        """Royalties.cs OnPlay: PowerCmd.Apply<RoyaltiesPower>(Gold.BaseValue) —
+        the power amount is the Gold var (30, upgraded 40); RoyaltiesPower.cs
+        AfterCombatEnd adds a GoldReward(Amount) for that much gold."""
+        combat = _make_combat()
+        combat.hand = [make_royalties_card()]
+        combat.energy = 1
+
+        assert combat.play_card(0)
+        assert combat.player.get_power_amount(PowerId.ROYALTIES) == 30
+
+        upgraded_combat = _make_combat()
+        upgraded_combat.hand = [make_royalties_card(upgraded=True)]
+        upgraded_combat.energy = 1
+
+        assert upgraded_combat.play_card(0)
+        assert upgraded_combat.player.get_power_amount(PowerId.ROYALTIES) == 40
+
+    def test_heirloom_hammer_copies_colorless_visual_pool_hand_cards(self):
+        """HeirloomHammer.cs OnPlay: hand filter is c.VisualCardPool.IsColorless —
+        TOKEN-pool cards (Soul) count as colorless while STATUS-pool cards
+        (Debris/Slimed) and curse cards do not (TokenCardPool.cs:15
+        IsColorless => true, StatusCardPool.cs:16 IsColorless => false)."""
+        from sts2_env.cards.status import make_slimed, make_soul
+
+        combat = _make_combat()
+        soul = make_soul()
+        status = make_slimed()
+        assert soul.visual_card_pool_is_colorless
+        assert not status.visual_card_pool_is_colorless
+        combat.hand = [make_heirloom_hammer(), soul, status]
+        combat.energy = 2
+
+        assert combat.play_card(0, 0)
+        # Soul is the only IsColorless hand card, so the single-option
+        # selection resolves immediately and copies it once (RepeatVar(1)).
+        assert len([c for c in combat.hand if c.card_id == soul.card_id]) == 2
+        assert status in combat.hand
+
     def test_arsenal_gains_strength_after_playing_colorless_card(self):
         combat = _make_combat()
         combat.hand = [make_royalties_card(), make_finesse()]
@@ -401,7 +445,8 @@ class TestRegentCardEffectsReferenceParity:
 
         assert combat.play_card(0)
         assert blocked.current_hp == 100
-        assert hittable.current_hp == 86
+        # C# AstralPulse.cs:24-28: Damage 6 with hit count 2 => 12 total damage.
+        assert hittable.current_hp == 88
 
     def test_resonance_reduces_strength_only_on_hittable_enemies(self):
         combat = _make_combat(extra_enemies=1)
@@ -507,8 +552,9 @@ class TestRegentCardEffectsReferenceParity:
         owner_blade = next(card for card in combat.hand if card.card_id == CardId.SOVEREIGN_BLADE)
         ally_hand = combat._ally_player_zones[ally]["hand"]  # noqa: SLF001
         ally_blade = next(card for card in ally_hand if card.card_id == CardId.SOVEREIGN_BLADE)
-        assert owner_blade.base_damage == 20
-        assert ally_blade.base_damage == 20
+        # C# SpoilsOfBattle.cs:15: ForgeVar(5) => blade 10 + 5.
+        assert owner_blade.base_damage == 15
+        assert ally_blade.base_damage == 15
 
     def test_monologue_gains_strength_per_card_played_then_resets_end_of_turn(self):
         combat = _make_combat()
@@ -607,7 +653,8 @@ class TestRegentCardEffectsReferenceParity:
 
         combat._apply_card_after_turn_end(CombatSide.PLAYER)  # noqa: SLF001
 
-        assert combat.player.block == 9
+        # IAmInvincible.cs CanonicalVars: BlockVar(10m, ValueProp.Move) in v0.107.1 (was 9).
+        assert combat.player.block == 10
         assert card in combat.discard_pile
 
     def test_kingly_kick_gets_cheaper_each_time_it_is_drawn(self):
@@ -636,12 +683,14 @@ class TestRegentCardEffectsReferenceParity:
         combat.draw_pile = [card]
 
         combat.draw_cards(combat.player, 1)
-        assert card.base_damage == 11
+        # KinglyPunch.cs: DamageVar(8m), DynamicVar("Increase", 4m) in v0.107.1
+        # (Increase was 3 in the older decompile) -> 8 + 4 = 12 after draw.
+        assert card.base_damage == 12
 
         combat.energy = 1
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == 89
-        assert card.base_damage == 11
+        assert enemy.current_hp == 88
+        assert card.base_damage == 12
 
     def test_kingly_punch_upgrade_preserves_drawn_damage_growth(self):
         combat = _make_combat()
@@ -651,10 +700,13 @@ class TestRegentCardEffectsReferenceParity:
         combat.draw_pile = [card]
 
         combat.draw_cards(combat.player, 1)
-        assert card.base_damage == 11
+        # KinglyPunch.cs v0.107.1: draw adds Increase 4 (8 + 4 = 12); OnUpgrade
+        # does Damage.UpgradeValueBy(2) and Increase.UpgradeValueBy(2) on the
+        # current values -> 14 / 6 (drawn growth is preserved).
+        assert card.base_damage == 12
 
         combat.upgrade_card(card)
 
         assert card.upgraded is True
-        assert card.base_damage == 11
-        assert card.effect_vars["increase"] == 5
+        assert card.base_damage == 14
+        assert card.effect_vars["increase"] == 6

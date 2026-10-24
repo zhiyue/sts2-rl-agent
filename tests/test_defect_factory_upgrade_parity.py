@@ -147,7 +147,9 @@ GO_FOR_THE_EYES_UPGRADED_DAMAGE = 4
 GO_FOR_THE_EYES_UPGRADED_WEAK = 2
 GUNK_UP_UPGRADED_DAMAGE = 5
 GUNK_UP_REPEAT = 3
-HOTFIX_UPGRADED_FOCUS = 3
+# Hotfix.cs (v0.107.1): PowerVar<FocusPower>(2m); OnUpgrade only removes Exhaust,
+# so the focus amount stays 2 (the older decompile raised it by 1 -> 3).
+HOTFIX_UPGRADED_FOCUS = 2
 LEAP_UPGRADED_BLOCK = 12
 LIGHTNING_ROD_UPGRADED_BLOCK = 7
 LIGHTNING_ROD_POWER = 2
@@ -156,7 +158,9 @@ MOMENTUM_STRIKE_DAMAGE = 10
 SWEEPING_BEAM_UPGRADED_DAMAGE = 9
 SWEEPING_BEAM_DRAW_COUNT = 1
 TURBO_UPGRADED_ENERGY = 3
-UPROAR_UPGRADED_DAMAGE = 7
+# Uproar.cs (v0.107.1): DamageVar(6m), OnUpgrade Damage.UpgradeValueBy(2m) -> 8
+# (the older decompile had 5 -> 7).
+UPROAR_UPGRADED_DAMAGE = 8
 UPROAR_HITS = 2
 ALLY_PLAYER_ID = 2
 ALLY_PLAYER_HP = 70
@@ -347,7 +351,11 @@ def test_energy_surge_factory_upgrade_gives_three_energy_to_player_ally():
 
     assert combat.play_card(HAND_CARD_INDEX)
 
-    assert combat.energy == ZERO_COST
+    # EnergySurge.cs OnPlay iterates CombatState.GetTeammatesOf(Owner.Creature)
+    # filtered to alive players; GetTeammatesOf (CombatState.cs:397) returns the
+    # whole side, so the caster gains the energy alongside the ally.
+    # Upgraded EnergySurge: cost 1, gain 3 — caster 1 - 1 + 3 = 3.
+    assert combat.energy == ENERGY_SURGE_UPGRADED_ENERGY
     assert ally_combat_state.energy == ENERGY_SURGE_UPGRADED_ENERGY
 
 
@@ -535,11 +543,13 @@ def test_gunk_up_factory_upgrade_increases_each_hit_damage_and_keeps_slimed():
     assert slimed[0].owner is combat.player
 
 
-def test_hotfix_factory_upgrade_increases_temporary_focus():
+def test_hotfix_factory_upgrade_keeps_focus_and_removes_exhaust():
     combat = _make_combat()
-    combat.hand = [make_hotfix(upgraded=True)]
+    card = make_hotfix(upgraded=True)
+    combat.hand = [card]
     combat.energy = ZERO_COST
 
+    assert card.exhausts is False
     assert combat.play_card(HAND_CARD_INDEX)
 
     assert combat.player.get_power_amount(PowerId.FOCUS) == HOTFIX_UPGRADED_FOCUS
@@ -942,7 +952,9 @@ def test_tesla_coil_factory_upgrade_increases_damage_and_keeps_lightning_passive
 
     assert combat.play_card(HAND_CARD_INDEX, FIRST_ENEMY_INDEX)
 
-    assert enemy.current_hp == starting_hp - TESLA_COIL_UPGRADED_DAMAGE - 3
+    # TeslaCoil.cs (v0.107.1): upgraded DamageVar 3+1=4, and each Lightning orb's
+    # passive (LightningOrb.PassiveVal = 3) triggers twice when upgraded.
+    assert enemy.current_hp == starting_hp - TESLA_COIL_UPGRADED_DAMAGE - 3 - 3
 
 
 def test_turbo_factory_upgrade_gains_three_energy_and_keeps_void_discard():
@@ -966,11 +978,12 @@ def test_voltaic_factory_upgrade_removes_exhaust_and_keeps_lightning_count():
     card = make_voltaic(upgraded=True)
     existing_orb_count = len(combat.orb_queue.orbs)
     combat.hand = [card]
-    combat.energy = TWO_ENERGY
+    combat.energy = 3  # Voltaic.cs: base(3, ...) energy cost in v0.107.1 (was 2)
 
     assert card.exhausts is False
     assert combat.play_card(HAND_CARD_INDEX)
 
+    # Channels one Lightning per owner Lightning channel in combat history (2 here).
     expected_new_orbs = TWO_ENERGY * VOLTAIC_CALC_EXTRA
     assert len(combat.orb_queue.orbs) == existing_orb_count + expected_new_orbs
     assert [orb.orb_type for orb in combat.orb_queue.orbs[-expected_new_orbs:]] == (

@@ -57,7 +57,9 @@ OUTBREAK_UPGRADED_POWER_AMOUNT = 15
 SNEAKY_POWER_AMOUNT = 1
 SNEAKY_UPGRADED_POWER_AMOUNT = 2
 SPEEDSTER_POWER_AMOUNT = 2
-SPEEDSTER_UPGRADED_POWER_AMOUNT = 3
+# Speedster.cs: new PowerVar<SpeedsterPower>(2m); OnUpgrade only AddKeyword(CardKeyword.Innate)
+# — the applied SpeedsterPower amount stays 2 when upgraded.
+SPEEDSTER_UPGRADED_POWER_AMOUNT = 2
 
 
 class _CannotHitPower(PowerInstance):
@@ -263,7 +265,9 @@ class TestSilentCardEffectsReferenceParity:
         combat.discard_cards([first, second])
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == 80
+        # MementoMori.cs: CalculationBaseVar(9m)/ExtraDamageVar(4m), upgraded to 11/5;
+        # CalculatedDamageVar.Calculate = base + extra * discardsThisTurn -> 11 + 5*2 = 21.
+        assert enemy.current_hp == 79
 
     def test_precise_cut_loses_damage_for_each_other_card_in_hand(self):
         combat = _make_combat()
@@ -332,7 +336,10 @@ class TestSilentCardEffectsReferenceParity:
 
         assert card.cost == 2
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == 100 - before_draws - 2
+        # Murder.cs (v0.107.1): CalculationBaseVar(1) + ExtraDamageVar(1) *
+        # CardDrawnEntry count for the owner this combat (CalculatedVar.Calculate
+        # = base + extra * multiplier), i.e. 1 + 1 * (before_draws + 2) here.
+        assert enemy.current_hp == 100 - (before_draws + 3)
 
     def test_upgraded_hidden_daggers_creates_upgraded_shivs(self):
         combat = _make_combat()
@@ -401,6 +408,40 @@ class TestSilentCardEffectsReferenceParity:
         assert enemy.current_hp == 94
         assert shiv.upgraded
         assert non_shiv.upgraded is False
+
+    def test_knife_trap_auto_play_triggers_after_card_played_hooks(self):
+        """KnifeTrap.cs OnPlay: each exhaust-pile Shiv is played via
+        CardCmd.AutoPlay — a full play that fires AfterCardPlayed hooks
+        (KnifeTrap.cs:1810-1820). AfterImage gains block per card played, so
+        KnifeTrap + 1 auto-played Shiv = 2 plays."""
+        combat = _make_combat()
+        enemy = combat.enemies[0]
+        enemy.max_hp = 100
+        enemy.current_hp = 100
+        shiv = silent_cards._make_shiv()
+        combat.exhaust_pile = [shiv]
+        combat.hand = [silent_cards.make_knife_trap()]
+        combat.energy = 2
+        combat.apply_power_to(combat.player, PowerId.AFTERIMAGE, 3)
+
+        assert combat.play_card(0, 0)
+        assert combat.player.block == 6
+        # The auto-played Shiv exhausts back into the exhaust pile.
+        assert any(c is shiv for c in combat.exhaust_pile)
+
+    def test_strangle_applies_strangle_power_not_constrict(self):
+        """Strangle.cs OnPlay: PowerCmd.Apply<StranglePower>(2 / upgraded 3) on
+        the target — StranglePower (powers/remaining_c.py) makes the enemy lose
+        that much HP per card played that turn. CONSTRICT is a monster power
+        and must not be used (Strangle.cs:2110)."""
+        combat = _make_combat()
+        enemy = combat.enemies[0]
+        combat.hand = [silent_cards.make_strangle(upgraded=True)]
+        combat.energy = 1
+
+        assert combat.play_card(0, 0)
+        assert enemy.get_power_amount(PowerId.STRANGLE) == 3
+        assert enemy.get_power_amount(PowerId.CONSTRICT) == 0
 
     def test_tracking_adds_two_first_then_one_when_already_active(self):
         combat = _make_combat()
@@ -698,14 +739,16 @@ class TestSilentCardEffectsReferenceParity:
         flick_combat.energy = 1
 
         assert flick_combat.play_card(0)
-        assert [enemy.current_hp for enemy in flick_combat.enemies] == [91, 91]
+        # FlickFlack.cs: DamageVar(6m) upgraded by 2 -> 8 damage to each enemy.
+        assert [enemy.current_hp for enemy in flick_combat.enemies] == [92, 92]
 
         block_combat = _make_combat()
         block_combat.hand = [make_untouchable(upgraded=True)]
         block_combat.energy = 2
 
         assert block_combat.play_card(0)
-        assert block_combat.player.block == 12
+        # Untouchable.cs: BlockVar(6m) upgraded by 3 -> 9 block.
+        assert block_combat.player.block == 9
 
     def test_silent_direct_power_and_status_cards_match_reference(self):
         abrasive_combat = _make_combat()
@@ -758,7 +801,7 @@ class TestSilentCardEffectsReferenceParity:
         assert combat.play_card(0, 0)
         assert enemy.current_hp == 90
 
-    def test_leading_strike_generates_one_shiv_after_attack(self):
+    def test_leading_strike_generates_two_shivs_after_attack(self):
         combat = _make_combat()
         enemy = combat.enemies[0]
         enemy.max_hp = 100
@@ -767,8 +810,10 @@ class TestSilentCardEffectsReferenceParity:
         combat.energy = 1
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == 90
-        assert sum(1 for card in combat.hand if card.card_id == CardId.SHIV) == 1
+        # LeadingStrike.cs: CardsVar("Shivs", 2) and DamageVar(3m, ValueProp.Move);
+        # OnUpgrade only Damage.UpgradeValueBy(3m) -> 6 damage, still 2 Shivs.
+        assert enemy.current_hp == 94
+        assert sum(1 for card in combat.hand if card.card_id == CardId.SHIV) == 2
 
     def test_mirage_blocks_for_living_enemies_poison_only(self):
         combat = _make_combat(extra_enemies=1)
@@ -813,23 +858,27 @@ class TestSilentCardEffectsReferenceParity:
         assert combat.player.get_power_amount(PowerId.NO_DRAW) == 1
         assert strike.cost == 0
 
-    def test_blade_of_ink_grants_temporary_strength_for_attack_plays_only(self):
+    def test_blade_of_ink_creates_inky_enchanted_shivs_in_hand(self):
+        # BladeOfInk.cs OnPlay: Shiv.CreateInHand(owner, DynamicVars.Cards.IntValue),
+        # then CardCmd.Enchant<Inky>(item, 1m) on each created Shiv.
+        # CardsVar(2); OnUpgrade: Cards.UpgradeValueBy(1m) -> 3.
         combat = _make_combat()
-        strike = make_strike_ironclad()
-        combat.hand = [make_blade_of_ink(), strike, make_deflect()]
-        combat.energy = 2
+        combat.hand = [make_blade_of_ink()]
+        combat.energy = 1
 
         assert combat.play_card(0)
-        assert combat.player.get_power_amount(PowerId.BLADE_OF_INK) == 2
+        shivs = [card for card in combat.hand if card.card_id == CardId.SHIV]
+        assert len(shivs) == 2
+        assert all(card.has_enchantment("Inky") for card in shivs)
 
-        assert combat.play_card(0, 0)
-        assert combat.player.get_power_amount(PowerId.STRENGTH) == 2
+        upgraded_combat = _make_combat()
+        upgraded_combat.hand = [make_blade_of_ink(upgraded=True)]
+        upgraded_combat.energy = 1
 
-        assert combat.play_card(0)
-        assert combat.player.get_power_amount(PowerId.STRENGTH) == 2
-
-        fire_after_turn_end(CombatSide.PLAYER, combat)
-        assert combat.player.get_power_amount(PowerId.STRENGTH) == 0
+        assert upgraded_combat.play_card(0)
+        upgraded_shivs = [card for card in upgraded_combat.hand if card.card_id == CardId.SHIV]
+        assert len(upgraded_shivs) == 3
+        assert all(card.has_enchantment("Inky") for card in upgraded_shivs)
 
     def test_pinpoint_cost_drops_for_owner_skills_played_this_turn(self):
         combat = _make_combat()
@@ -854,7 +903,8 @@ class TestSilentCardEffectsReferenceParity:
 
         assert combat.play_card(0, 0)
         assert combat.energy == 0
-        assert enemy.current_hp == 79
+        # Skewer.cs: DamageVar(8m) per hit, hit count = ResolveEnergyXValue() -> 3*8 = 24.
+        assert enemy.current_hp == 76
 
         zero = make_skewer()
         combat.hand = [zero]

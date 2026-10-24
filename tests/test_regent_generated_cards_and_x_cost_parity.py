@@ -47,7 +47,8 @@ class TestRegentGeneratedCardsAndXCostParity:
         combat.energy = 0
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == start_hp - 9
+        # C# CollisionCourse.cs:17: DamageVar(11).
+        assert enemy.current_hp == start_hp - 11
         assert [card.card_id for card in combat.hand] == [CardId.DEBRIS]
         assert combat.count_generated_cards_this_combat(combat.player) == start_generated + 1
 
@@ -86,7 +87,8 @@ class TestRegentGeneratedCardsAndXCostParity:
         assert combat.play_card(0, 0)
         assert combat.count_generated_cards_this_combat(combat.player) == 1
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == 100 - 9 - 8
+        # C# CollisionCourse.cs:17: Damage 11; Supermassive deals 5 + 3*1 generated.
+        assert enemy.current_hp == 100 - 11 - 8
 
     def test_royal_gamble_requires_star_cost_then_nets_stars_and_exhausts(self):
         """Matches RoyalGamble.cs: spend 5 Stars to play, then gain 9 Stars and Exhaust."""

@@ -92,6 +92,16 @@ def test_necrobinder_factory_upgrade_dynamic_values_match_reference(card_id: Car
     actual = create_card(card_id, upgraded=True)
     expected = create_reference_card(card_id, upgraded=True, allow_generation=True)
 
+    if card_id == CardId.THE_SCYTHE:
+        # docs/CARDS_REFERENCE.md marks TheScythe's Increase var "dynamic", so the
+        # doc-derived reference model yields a bogus increase=1 for the upgraded
+        # state. Assert the decompiled values instead: TheScythe.cs CanonicalVars
+        # has IntVar("Increase", 4) with OnUpgrade Increase.UpgradeValueBy(1m) -> 5,
+        # and base damage 13 is unchanged by the upgrade.
+        assert actual.effect_vars.get("increase") == 5
+        assert actual.base_damage == 13
+        return
+
     for key, expected_value in expected.effect_vars.items():
         actual_value = actual.effect_vars.get(key)
         if key in {"damage", "calc_base"} and actual_value is None:

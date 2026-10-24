@@ -41,6 +41,7 @@ from sts2_env.cards.necrobinder import (
     make_sentry_mode,
     make_shared_fate,
     make_sic_em,
+    make_snap,
     make_sow,
     make_squeeze,
     make_strike_necrobinder,
@@ -67,10 +68,12 @@ SOW_DAMAGE = 8
 SOW_UPGRADED_DAMAGE = 11
 STRIKE_NECROBINDER_DAMAGE = 6
 STRIKE_NECROBINDER_UPGRADED_DAMAGE = 9
-DEBILITATE_DAMAGE = 7
-DEBILITATE_POWER_AMOUNT = 3
-DEBILITATE_UPGRADED_DAMAGE = 9
-DEBILITATE_UPGRADED_POWER_AMOUNT = 4
+# C# Debilitate.cs: DamageVar(10), PowerVar<DebilitatePower>(2);
+# OnUpgrade: Damage +2 (12), DebilitatePower +1 (3).
+DEBILITATE_DAMAGE = 10
+DEBILITATE_POWER_AMOUNT = 2
+DEBILITATE_UPGRADED_DAMAGE = 12
+DEBILITATE_UPGRADED_POWER_AMOUNT = 3
 PARSE_DRAW_COUNT = 3
 PARSE_UPGRADED_DRAW_COUNT = 4
 DEATHS_DOOR_REPEAT = 2
@@ -213,14 +216,16 @@ class TestNecrobinderCardEffectsReferenceParity:
         assert enemy.current_hp == enemy.max_hp - 7
 
     def test_defy_gains_block_and_applies_weak(self):
+        """Matches Defy.cs: BlockVar(6), PowerVar<WeakPower>(1); OnUpgrade: Block +3
+        only (9 block), Weak stays 1."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         combat.hand = [make_defy(upgraded=True)]
         combat.energy = 1
 
         assert combat.play_card(0, 0)
-        assert combat.player.block == 7
-        assert enemy.get_power_amount(PowerId.WEAK) == 2
+        assert combat.player.block == 9
+        assert enemy.get_power_amount(PowerId.WEAK) == 1
 
     def test_debilitate_deals_damage_then_applies_power(self):
         combat = _make_combat()
@@ -412,13 +417,14 @@ class TestNecrobinderCardEffectsReferenceParity:
         assert all(card.rarity.name not in {"BASIC", "ANCIENT"} for card in generated)
 
     def test_banshees_cry_hits_only_hittable_enemies(self):
+        """Matches BansheesCry.cs: base cost 9, DamageVar(33, Move), AllEnemies."""
         combat = _make_combat(extra_enemies=1)
         blocked, hittable = combat.enemies
         blocked.current_hp = blocked.max_hp = 100
         hittable.current_hp = hittable.max_hp = 100
         blocked.powers[PowerId.COVERED] = _CannotHitPower()
         combat.hand = [make_banshees_cry()]
-        combat.energy = 6
+        combat.energy = 9
 
         assert combat.play_card(0)
 
@@ -804,6 +810,8 @@ class TestNecrobinderCardEffectsReferenceParity:
         assert enemy.current_hp == REFERENCE_ENEMY_HP - 5
 
     def test_sculpting_strike_attacks_then_makes_selected_hand_card_ethereal(self):
+        """Matches SculptingStrike.cs: DamageVar(9, Move) attack, then a chosen
+        non-Ethereal hand card gains Ethereal."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         starting_hp = enemy.current_hp
@@ -812,7 +820,7 @@ class TestNecrobinderCardEffectsReferenceParity:
         combat.energy = 1
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == starting_hp - 8
+        assert enemy.current_hp == starting_hp - 9
         assert combat.pending_choice is None
         assert target_card.is_ethereal
 
@@ -995,6 +1003,8 @@ class TestNecrobinderCardEffectsReferenceParity:
         assert other.get_power_amount(PowerId.STRENGTH) == -3
 
     def test_sic_em_uses_osty_damage_and_power_values(self):
+        """Matches SicEm.cs: OstyDamageVar(5) +1 upgraded (6 damage);
+        PowerVar<SicEmPower>(3) +1 upgraded (4 stacks)."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         combat.summon_osty(combat.player, 5)
@@ -1007,7 +1017,48 @@ class TestNecrobinderCardEffectsReferenceParity:
         assert combat.play_card(0, 0)
         assert enemy.current_hp == starting_hp - 6
         assert combat.count_powered_hits_by_dealer_this_turn(osty) == 1
+        assert enemy.get_power_amount(PowerId.SIC_EM) == 4
+
+    def test_sic_em_applies_power_even_without_osty(self):
+        """SicEm.cs OnPlay: the Osty DamageCmd is gated on
+        Osty.CheckMissingWithAnim, but PowerCmd.Apply<SicEmPower> runs
+        unconditionally — with no Osty the target still gets 3 stacks and
+        takes no Osty damage."""
+        combat = _make_combat()
+        enemy = combat.enemies[0]
+        assert combat.get_osty(combat.player) is None
+        starting_hp = enemy.current_hp
+        combat.hand = [make_sic_em()]
+        combat.energy = 1
+
+        assert combat.play_card(0, 0)
+        assert enemy.current_hp == starting_hp
         assert enemy.get_power_amount(PowerId.SIC_EM) == 3
+
+    def test_snap_grants_retain_without_osty(self):
+        """Snap.cs OnPlay: after the (Osty-gated) attack, CardSelectCmd.FromHand
+        filtered to non-Retain cards + CardCmd.ApplyKeyword(CardKeyword.Retain)
+        runs unconditionally — no Osty required (Snap.cs:36-44)."""
+        combat = _make_combat()
+        enemy = combat.enemies[0]
+        assert combat.get_osty(combat.player) is None
+        target_card = make_strike_necrobinder()
+        other = make_defend_necrobinder()
+        already_retain = make_squeeze()
+        already_retain.keywords = frozenset(set(already_retain.keywords) | {"retain"})
+        combat.hand = [make_snap(), target_card, other, already_retain]
+        combat.energy = 1
+
+        assert combat.play_card(0, 0)
+        assert combat.pending_choice is not None
+        options = [option.card for option in combat.pending_choice.options]
+        assert options == [target_card, other]
+
+        assert combat.resolve_pending_choice(0)
+        assert "retain" in target_card.keywords
+        assert "retain" not in other.keywords
+        # No Osty was summoned, so Snap's Osty attack dealt no damage.
+        assert enemy.current_hp == enemy.max_hp
 
     def test_sic_em_summons_even_when_osty_damage_is_fully_blocked(self):
         combat = _make_combat()
@@ -1040,6 +1091,8 @@ class TestNecrobinderCardEffectsReferenceParity:
         assert combat.player.get_power_amount(PowerId.VEILPIERCER) == 0
 
     def test_banshees_cry_cost_drops_for_ethereal_cards_played_this_combat(self):
+        """Matches BansheesCry.cs: base cost 9, EnergyVar(2) — card cost drops by 2
+        for each Ethereal card played this combat (BansheesCryPower semantics)."""
         combat = _make_combat()
         held = make_banshees_cry()
         later = make_banshees_cry()
@@ -1047,17 +1100,17 @@ class TestNecrobinderCardEffectsReferenceParity:
         combat.energy = 2
 
         assert combat.play_card(0, 0)
-        assert held.cost == 4
+        assert held.cost == 7
 
         assert combat.play_card(1, 0)
-        assert held.cost == 2
+        assert held.cost == 5
 
         combat.move_card_to_creature_hand(combat.player, later)
-        assert later.cost == 2
+        assert later.cost == 5
         held.end_of_turn_cleanup()
         later.end_of_turn_cleanup()
-        assert held.cost == 2
-        assert later.cost == 2
+        assert held.cost == 5
+        assert later.cost == 5
 
     def test_banshees_cry_cost_uses_ethereal_state_from_when_card_was_played(self):
         combat = _make_combat()

@@ -42,7 +42,9 @@ def test_ally_believe_in_you_grants_energy_to_target_ally_only():
 
     assert combat.play_card_from_creature(ally, 0, 0)
     assert ally_combat_state.energy == starting_ally_energy
-    assert combat.energy == starting_primary_energy + 3
+    # BelieveInYou.cs:18 defines EnergyVar(2); OnPlay grants the energy to
+    # cardPlay.Target.Player (the primary player here), not the caster.
+    assert combat.energy == starting_primary_energy + 2
 
 
 def test_ally_lift_targets_primary_player_block_without_affecting_ally():
@@ -113,11 +115,13 @@ def test_ally_huddle_up_draws_cards_to_primary_player_hand():
     ally_combat_state.energy = 1
 
     assert combat.play_card_from_creature(ally, 0)
+    # HuddleUp.cs iterates GetTeammatesOf, which includes the caster itself
+    # (CombatState.cs:397): both the primary player and the ally draw 2.
     assert len(combat.hand) == starting_primary_hand + 2
-    assert len(ally_combat_state.hand) == 0
+    assert len(ally_combat_state.hand) == 2
 
 
-def test_ally_rally_grants_block_to_primary_player_only():
+def test_ally_rally_grants_block_to_primary_player_and_self():
     combat = _make_combat()
     ally_state = PlayerState(player_id=2, character_id="Ironclad", max_hp=60, current_hp=60)
     ally = combat.add_ally_player(ally_state)
@@ -131,8 +135,10 @@ def test_ally_rally_grants_block_to_primary_player_only():
     ally_combat_state.energy = 2
 
     assert combat.play_card_from_creature(ally, 0)
+    # Rally.cs iterates GetTeammatesOf, which includes the caster itself
+    # (CombatState.cs:397): both gain Block(12).
     assert combat.primary_player.block == 12
-    assert ally.block == 0
+    assert ally.block == 12
 
 
 def test_any_ally_targeting_indices_resolve_from_ally_owner_perspective():

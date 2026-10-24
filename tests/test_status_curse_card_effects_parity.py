@@ -13,6 +13,7 @@ from sts2_env.cards.status import (
     make_caltrops,
     make_debris,
     make_debt,
+    make_deprecated_card,
     make_decay,
     make_doubt,
     make_entrench,
@@ -42,6 +43,7 @@ from sts2_env.cards.status import (
     make_whistle,
 )
 from sts2_env.core.combat import CombatState
+from sts2_env.core.constants import MAX_HAND_SIZE
 from sts2_env.core.enums import CardId, CardType, CombatSide, PowerId, TargetType
 from sts2_env.core.hooks import fire_after_turn_end
 from sts2_env.core.rng import Rng
@@ -86,15 +88,6 @@ class _FirstRng:
 
     def choice(self, lst):
         return list(lst)[0]
-
-
-class _ReverseShuffleRng:
-    def __init__(self) -> None:
-        self.shuffle_lengths: list[int] = []
-
-    def shuffle(self, seq) -> None:
-        self.shuffle_lengths.append(len(seq))
-        seq.reverse()
 
 
 class TestStatusCurseCardEffectsParity:
@@ -169,25 +162,102 @@ class TestStatusCurseCardEffectsParity:
         assert in_draw.base_damage == 7
         assert in_draw.effect_vars["increase"] == 2
 
-    def test_neows_fury_shuffles_full_discard_pile_before_returning_cards(self):
+    def test_neows_fury_lets_player_select_discard_cards_up_to_cards_var(self):
+        # NeowsFury.cs OnPlay (lines 36-40): after the attack the player selects
+        # 0..num cards from the discard pile via CardSelectCmd.FromCombatPile
+        # with CardSelectorPrefs(prompt, 0, num) — an explicit selection, not an
+        # automatic shuffle-and-take.
         combat = _make_combat()
         first = make_strike_ironclad()
         second = make_strike_ironclad()
         third = make_strike_ironclad()
-        fourth = make_strike_ironclad()
         fury = make_neows_fury()
         combat.hand = [fury]
-        combat.discard_pile = [first, second, third, fourth]
+        combat.discard_pile = [first, second, third]
         combat.energy = 1
-        combat.rng = _ReverseShuffleRng()
 
         assert combat.play_card(0, 0)
 
-        assert combat.rng.shuffle_lengths == [4]
-        assert fourth in combat.hand
-        assert third in combat.hand
-        assert first in combat.discard_pile
-        assert second in combat.discard_pile
+        choice = combat.pending_choice
+        assert choice is not None
+        assert choice.min_choices == 0
+        assert choice.max_choices == 2  # base CardsVar
+        assert [option.card for option in choice.options] == [first, second, third]
+
+        assert combat.resolve_pending_choice(0)
+        assert combat.resolve_pending_choice(1)
+        assert combat.resolve_pending_choice(None)
+
+        assert first in combat.hand
+        assert second in combat.hand
+        assert third in combat.discard_pile
+        assert combat.pending_choice is None
+
+    def test_neows_fury_caps_selection_at_free_hand_slots(self):
+        # NeowsFury.cs line 36: num = min(CardsVar, MaxCardsInHand - hand size),
+        # so with 9 cards already in hand (fury left the hand when played) only
+        # 1 of the 2 discard cards may be taken.
+        combat = _make_combat()
+        discard_cards = [make_strike_ironclad() for _ in range(3)]
+        fury = make_neows_fury()
+        filler = [make_strike_ironclad() for _ in range(MAX_HAND_SIZE - 1)]
+        combat.hand = [fury, *filler]
+        combat.discard_pile = list(discard_cards)
+        combat.energy = 1
+
+        assert combat.play_card(0, 0)
+
+        choice = combat.pending_choice
+        assert choice is not None
+        assert choice.max_choices == 1
+
+        assert combat.resolve_pending_choice(0)
+        assert not combat.resolve_pending_choice(1)
+        assert combat.resolve_pending_choice(None)
+
+        assert sum(1 for c in combat.hand if c in discard_cards) == 1
+        assert len(combat.hand) == MAX_HAND_SIZE
+
+    def test_neows_fury_allows_selecting_no_cards(self):
+        # NeowsFury.cs CardSelectorPrefs(prompt, 0, num): selecting zero cards
+        # is a legal resolution.
+        combat = _make_combat()
+        fury = make_neows_fury()
+        combat.hand = [fury]
+        combat.discard_pile = [make_strike_ironclad() for _ in range(3)]
+        combat.energy = 1
+
+        assert combat.play_card(0, 0)
+
+        assert combat.pending_choice is not None
+        assert combat.resolve_pending_choice(None)
+        assert combat.pending_choice is None
+        assert len(combat.discard_pile) == 3
+        assert combat.hand == []
+
+    def test_deprecated_card_draws_one_and_removes_deck_version(self):
+        # DeprecatedCard.cs OnPlay (lines 26-34): CardPileCmd.Draw(1, owner)
+        # then CardPileCmd.RemoveFromDeck(DeckVersion) — playing the save-file
+        # placeholder draws a card and removes the deck counterpart from the
+        # run deck. The sim has no per-instance DeckVersion tracking, so the
+        # deck copy sharing the card id is removed; the card is unreachable in
+        # normal play (excluded from generation pools).
+        combat = _make_combat()
+        placeholder = make_deprecated_card()
+        deck_copy = make_deprecated_card()
+        state = combat.combat_player_state_for(combat.player)
+        assert state is not None
+        state.player_state.deck.append(deck_copy)
+        combat.hand = [placeholder]
+        combat.draw_pile = [make_strike_ironclad()]
+        combat.energy = 1
+
+        assert combat.play_card(0)
+
+        drawn = next(hand_card for hand_card in combat.hand if hand_card is not placeholder)
+        assert drawn.card_id is CardId.STRIKE_IRONCLAD
+        assert deck_copy not in state.player_state.deck
+        assert placeholder in combat.exhaust_pile
 
     def test_feeding_frenzy_applies_temporary_strength_then_restores(self):
         combat = _make_combat()
@@ -316,7 +386,13 @@ class TestStatusCurseCardEffectsParity:
 
         generated = next(hand_card for hand_card in combat.hand if hand_card is not card)
         assert generated.card_id is not CardId.STRIKE_IRONCLAD
+        # MadScience.cs ExecuteRider Chaos (lines 466-471) uses
+        # SetToFreeThisTurn() (CardModel.cs lines 1266-1270), which is
+        # SetThisTurnOrUntilPlayed(0) — the generated card is free now but its
+        # cost returns at end of turn (or when played).
         assert generated.cost == 0
+        generated.end_of_turn_cleanup()
+        assert generated.cost == generated.original_cost
 
     def test_mad_science_power_type_does_not_require_target_selection(self):
         combat = _make_combat()

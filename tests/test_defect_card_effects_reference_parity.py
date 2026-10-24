@@ -46,6 +46,7 @@ from sts2_env.cards.defect import (
     make_rainbow,
     make_refract,
     make_reboot,
+    make_rocket_punch,
     make_shatter,
     make_shadow_shield,
     make_signal_boost,
@@ -411,8 +412,10 @@ class TestDefectCardEffectsReferenceParity:
 
         assert combat.play_card(0)
 
+        # Hyperbeam.cs CanonicalVars: DamageVar(28m, ValueProp.Move) in v0.107.1
+        # (was 26 in the older decompile); no damage modifiers present, so flat 28.
         assert blocked.current_hp == 100
-        assert hittable.current_hp == 74
+        assert hittable.current_hp == 72
         assert combat.player.get_power_amount(PowerId.FOCUS) == 1
 
     def test_shatter_hits_only_hittable_enemies(self):
@@ -426,8 +429,9 @@ class TestDefectCardEffectsReferenceParity:
 
         assert combat.play_card(0)
 
+        # Shatter.cs CanonicalVars: DamageVar(7m, ValueProp.Move) in v0.107.1 (was 11).
         assert blocked.current_hp == 100
-        assert hittable.current_hp == 89
+        assert hittable.current_hp == 93
 
     def test_go_for_the_eyes_applies_weak_only_if_target_intends_attack(self):
         """Matches GoForTheEyes.cs: Weak is conditional on target attack intent."""
@@ -758,7 +762,7 @@ class TestDefectCardEffectsReferenceParity:
         combat.channel_orb(combat.player, "LIGHTNING")
         combat.channel_orb(combat.player, "LIGHTNING")
         combat.hand = [make_voltaic()]
-        combat.energy = 2
+        combat.energy = 3  # Voltaic.cs: base(3, ...) energy cost in v0.107.1 (was 2)
 
         assert combat.play_card(0)
 
@@ -769,7 +773,7 @@ class TestDefectCardEffectsReferenceParity:
         combat = _make_combat()
         combat.channel_orb(combat.player, "FROST")
         combat.hand = [make_voltaic()]
-        combat.energy = 2
+        combat.energy = 3  # Voltaic.cs: base(3, ...) energy cost in v0.107.1 (was 2)
 
         assert combat.play_card(0)
 
@@ -877,7 +881,8 @@ class TestDefectCardEffectsReferenceParity:
 
         assert combat.play_card(0, 0)
 
-        assert enemy.current_hp == starting_hp - 12
+        # Synthesis.cs CanonicalVars: DamageVar(14m, ValueProp.Move) in v0.107.1 (was 12).
+        assert enemy.current_hp == starting_hp - 14
         assert combat.player.get_power_amount(PowerId.FREE_POWER) == 1
 
     def test_meteor_strike_deals_damage_and_channels_three_plasma(self):
@@ -932,7 +937,9 @@ class TestDefectCardEffectsReferenceParity:
 
         assert combat.play_card(0, 0)
 
-        assert enemy.current_hp == 100 - 10 - 6
+        # Uproar.cs CanonicalVars: DamageVar(6m, ValueProp.Move) in v0.107.1 (was 5),
+        # WithHitCount(2) => 2 x 6, then autoplay Strike (6).
+        assert enemy.current_hp == 100 - 12 - 6
         assert attack in combat.discard_pile
 
     def test_tempest_uses_x_energy_and_upgrade_adds_one_channel(self):
@@ -1107,6 +1114,39 @@ class TestDefectCardEffectsReferenceParity:
 
         assert combat.hand == [first_status, drawn_from_iteration, second_status, undrawn]
         assert combat.draw_pile == []
+
+    def test_rocket_punch_costs_zero_until_played_after_status_generation(self):
+        """RocketPunch.cs AfterCardGeneratedForCombat (v0.107.1): each friendly
+        Status generation calls base.EnergyCost.SetUntilPlayed(0) — a WhenPlayed
+        LocalCostModifier on RocketPunch itself (CardEnergyCost.cs:175), so it
+        costs 0 until it is next played, then reverts to its printed cost."""
+        combat = _make_combat()
+        card = make_rocket_punch()
+        combat.hand = [card]
+        combat.energy = 1
+
+        combat.add_generated_card_to_creature_hand(combat.player, make_burn())
+        assert card.cost == 0
+
+        combat.energy = 5
+        assert combat.play_card(0, 0)
+        assert card.cost == 2
+        assert "_until_played_cost" not in card.combat_vars
+
+    def test_rocket_punch_zero_cost_survives_end_of_turn_cleanup(self):
+        """RocketPunch.cs uses SetUntilPlayed (WhenPlayed), not a this-turn
+        modifier — the 0 cost persists through end-of-turn cleanup until the
+        card is played (RocketPunch.cs:2736-2752, CardEnergyCost.cs:175)."""
+        combat = _make_combat()
+        card = make_rocket_punch()
+        combat.hand = [card]
+        combat.energy = 1
+
+        combat.add_generated_card_to_creature_hand(combat.player, make_slimed())
+        assert card.cost == 0
+
+        combat._cleanup_cards_end_of_turn()
+        assert card.cost == 0
 
     def test_spinner_base_and_upgraded_immediate_channel_match_reference(self):
         combat = _make_combat()

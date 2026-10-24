@@ -75,7 +75,7 @@ def _add_ally(combat: CombatState):
 
 
 class TestColorlessFactoryUpgradeParity:
-    def test_believe_in_you_factory_upgrade_grants_four_energy_to_target_ally(self):
+    def test_believe_in_you_factory_upgrade_grants_three_energy_to_target_ally(self):
         combat = _make_combat()
         ally = _add_ally(combat)
         ally_state = combat.combat_player_state_for(ally)
@@ -86,7 +86,9 @@ class TestColorlessFactoryUpgradeParity:
 
         assert combat.play_card(0, 0)
 
-        assert ally_state.energy == 4
+        # BelieveInYou.cs:18 defines EnergyVar(2) and OnUpgrade (lines 31-34)
+        # adds 1 -> 3; OnPlay grants the energy to cardPlay.Target.Player.
+        assert ally_state.energy == 3
 
     def test_bolas_factory_upgrade_deals_four_and_returns_next_turn(self):
         combat = _make_combat()
@@ -185,23 +187,27 @@ class TestColorlessFactoryUpgradeParity:
         assert combat.player.block == 16
         assert combat.player.get_power_amount(PowerId.RETAIN_HAND) == 1
 
-    def test_eternal_armor_factory_upgrade_applies_nine_plating(self):
+    def test_eternal_armor_factory_upgrade_applies_twelve_plating(self):
         combat = _make_combat()
         combat.hand = [make_eternal_armor(upgraded=True)]
         combat.energy = 3
 
         assert combat.play_card(0)
 
-        assert combat.player.get_power_amount(PowerId.PLATING) == 9
+        # EternalArmor.cs:20 defines PowerVar<PlatingPower>(9m) and OnUpgrade
+        # (lines 32-35) adds 3 -> 12.
+        assert combat.player.get_power_amount(PowerId.PLATING) == 12
 
-    def test_fasten_factory_upgrade_applies_seven_extra_defend_block(self):
+    def test_fasten_factory_upgrade_applies_six_extra_defend_block(self):
         combat = _make_combat()
         combat.hand = [make_fasten(upgraded=True)]
         combat.energy = 1
 
         assert combat.play_card(0)
 
-        assert combat.player.get_power_amount(PowerId.FASTEN) == 7
+        # Fasten.cs:38 defines DynamicVar("ExtraBlock", 4) and OnUpgrade
+        # (lines 50-53) adds 2 -> 6.
+        assert combat.player.get_power_amount(PowerId.FASTEN) == 6
 
     def test_finesse_factory_upgrade_gains_seven_block_and_draws_one(self):
         combat = _make_combat()
@@ -313,18 +319,21 @@ class TestColorlessFactoryUpgradeParity:
         assert combat.player.block == 40
         assert combat.player.get_power_amount(PowerId.NO_BLOCK) == 2
 
-    def test_production_factory_upgrade_does_not_exhaust_and_gains_two_energy(self):
+    def test_production_factory_upgrade_exhausts_and_gains_three_energy(self):
         combat = _make_combat()
         card = make_production(upgraded=True)
         combat.hand = [card]
         combat.energy = 0
 
-        assert not card.exhausts
+        # Production.cs keeps Exhaust on upgrade: CanonicalKeywords is
+        # [CardKeyword.Exhaust] and OnUpgrade (lines 29-32) only bumps Energy
+        # by 1 (EnergyVar(2) -> 3).
+        assert card.exhausts
         assert combat.play_card(0)
 
-        assert combat.energy == 2
-        assert card in combat.discard_pile
-        assert card not in combat.exhaust_pile
+        assert combat.energy == 3
+        assert card in combat.exhaust_pile
+        assert card not in combat.discard_pile
 
     def test_prolong_factory_upgrade_does_not_exhaust_and_keeps_block_next_turn(self):
         combat = _make_combat()
@@ -348,7 +357,10 @@ class TestColorlessFactoryUpgradeParity:
         assert combat.player.get_power_amount(PowerId.STRENGTH) == 2
         assert combat.player.get_power_amount(PowerId.DEXTERITY) == 2
 
-    def test_rally_factory_upgrade_grants_seventeen_block_to_teammates(self):
+    def test_rally_factory_upgrade_grants_seventeen_block_to_owner_and_teammates(self):
+        """Rally.cs OnUpgrade: Block 12 -> 17 for every living player teammate,
+        including the caster (CombatState.GetTeammatesOf includes the creature
+        itself, CombatState.cs:397)."""
         combat = _make_combat()
         ally = _add_ally(combat)
         combat.hand = [make_rally(upgraded=True)]
@@ -356,7 +368,7 @@ class TestColorlessFactoryUpgradeParity:
 
         assert combat.play_card(0)
 
-        assert combat.player.block == 0
+        assert combat.player.block == 17
         assert ally.block == 17
 
     def test_rend_factory_upgrade_uses_eighteen_plus_eight_per_debuff(self):
@@ -395,7 +407,7 @@ class TestColorlessFactoryUpgradeParity:
         assert enemy.current_hp == 84
         assert combat.player.get_power_amount(PowerId.RETAIN_HAND) == 1
 
-    def test_seeker_strike_factory_upgrade_deals_nine_and_reveals_three_draw_cards(self):
+    def test_seeker_strike_factory_upgrade_deals_twelve_and_reveals_three_draw_cards(self):
         combat = _make_combat()
         enemy = combat.enemies[0]
         enemy.current_hp = enemy.max_hp = 100
@@ -410,7 +422,10 @@ class TestColorlessFactoryUpgradeParity:
 
         assert combat.play_card(0, 0)
 
-        assert enemy.current_hp == 91
+        # SeekerStrike.cs:21-24 defines DamageVar(9) + CardsVar(3) and
+        # OnUpgrade (lines 44-47) adds 3 -> 12 damage; the reveal count of 3
+        # is unchanged.
+        assert enemy.current_hp == 88
         assert combat.pending_choice is not None
         assert len(combat.pending_choice.options) == 3
 

@@ -463,7 +463,10 @@ def test_nimble_uses_reference_gains_block_not_base_block_presence():
     alignment = create_card(CardId.ALIGNMENT)
     entrench = create_card(CardId.ENTRENCH)
 
-    assert alignment.base_block == 0
+    # Nimble.cs CanEnchant requires card.GainsBlock (CardModel.cs:670 defaults to
+    # false; Entrench.cs overrides it to true). Alignment has neither a BlockVar
+    # nor a GainsBlock override, so its base_block stays unset (None).
+    assert alignment.base_block is None
     assert not alignment.gains_block
     assert not can_enchant_card(alignment, "Nimble")
 

@@ -40,7 +40,7 @@ def _make_combat(*, extra_enemies: int = 0) -> CombatState:
 
 
 class TestColorlessSupportPowersAndReturningAttacksParity:
-    def test_believe_in_you_upgraded_grants_four_energy_to_target_ally(self):
+    def test_believe_in_you_upgraded_grants_three_energy_to_target_ally(self):
         combat = _make_combat()
         ally_state = PlayerState(player_id=2, character_id="Ironclad", max_hp=60, current_hp=60)
         ally = combat.add_ally_player(ally_state)
@@ -55,7 +55,9 @@ class TestColorlessSupportPowersAndReturningAttacksParity:
         starting_primary_energy = combat.energy
 
         assert combat.play_card_from_creature(ally, 0, 0)
-        assert combat.energy == starting_primary_energy + 4
+        # BelieveInYou.cs:18 defines EnergyVar(2) and OnUpgrade (lines 31-34)
+        # adds 1 -> 3; OnPlay grants the energy to cardPlay.Target.Player.
+        assert combat.energy == starting_primary_energy + 3
         assert ally_combat_state.energy == 0
 
     def test_fasten_base_and_upgraded_stack_expected_amounts(self):
@@ -64,10 +66,12 @@ class TestColorlessSupportPowersAndReturningAttacksParity:
         combat.energy = 2
 
         assert combat.play_card(0)
-        assert combat.player.get_power_amount(PowerId.FASTEN) == 5
+        # Fasten.cs:38 defines DynamicVar("ExtraBlock", 4) and OnUpgrade
+        # (lines 50-53) adds 2 -> 6, so base + upgraded stacks to 10.
+        assert combat.player.get_power_amount(PowerId.FASTEN) == 4
 
         assert combat.play_card(0)
-        assert combat.player.get_power_amount(PowerId.FASTEN) == 12
+        assert combat.player.get_power_amount(PowerId.FASTEN) == 10
 
     def test_fasten_adds_block_to_defend_cards_only(self):
         combat = _make_combat()
@@ -76,10 +80,15 @@ class TestColorlessSupportPowersAndReturningAttacksParity:
 
         assert combat.play_card(0)
         assert combat.play_card(0)
-        assert combat.player.block == 10
+        # FastenPower.ModifyBlockAdditive (FastenPower.cs:17-29) adds the
+        # power amount only when the played card carries CardTag.Defend:
+        # DefendIronclad.cs BlockVar(5) + 4 = 9.
+        assert combat.player.block == 9
 
         assert combat.play_card(0)
-        assert combat.player.block == 14
+        # Finesse.cs BlockVar(4) lacks CardTag.Defend, so Fasten does not
+        # boost it: 9 + 4 = 13.
+        assert combat.player.block == 13
 
     def test_finesse_upgraded_grants_seven_block_and_draws_one(self):
         combat = _make_combat()

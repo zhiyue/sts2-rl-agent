@@ -57,21 +57,25 @@ def _make_combat() -> CombatState:
 
 
 class TestRegentParity:
-    def test_begone_transforms_selected_hand_card_into_upgraded_minion_dive_bomb(self):
-        """Matches Begone.cs: a single eligible hand card is auto-transformed."""
+    def test_begone_transforms_selected_hand_card_into_upgraded_minion_strike(self):
+        """Matches Begone.cs (v0.107.1): Skill / TargetType.Self, deals no damage;
+        the selected hand card is transformed into MinionStrike, upgraded when
+        Begone is upgraded (the older decompile transformed MinionDiveBomb)."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         starting_hp = enemy.current_hp
+        player_starting_hp = combat.player.current_hp
         target_card = make_strike_ironclad()
         combat.hand = [make_begone(upgraded=True), target_card]
         combat.energy = 1
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == starting_hp - 5
+        assert enemy.current_hp == starting_hp
+        assert combat.player.current_hp == player_starting_hp
         assert combat.pending_choice is None
         assert target_card not in combat.hand
         transformed = combat.hand[0]
-        assert transformed.card_id == make_minion_dive_bomb(upgraded=True).card_id
+        assert transformed.card_id == make_minion_strike(upgraded=True).card_id
         assert transformed.upgraded is True
 
     def test_photon_cut_draws_then_puts_selected_hand_card_back_on_top_of_draw(self):
@@ -152,7 +156,8 @@ class TestRegentParity:
         assert combat.play_card(0)
         assert combat.player.get_power_amount(PowerId.ENERGY_NEXT_TURN) == 1
         blade = next(card for card in combat.hand if card.card_id.name == "SOVEREIGN_BLADE")
-        assert blade.base_damage == 16
+        # C# RefineBlade.cs:16: ForgeVar(9) => blade 10 + 9.
+        assert blade.base_damage == 19
 
     def test_seeking_edge_forges_and_applies_seeking_edge_power(self):
         """Matches SeekingEdge.cs: forge immediately, then apply SeekingEdgePower."""
@@ -186,18 +191,25 @@ class TestRegentParity:
         combat.energy = 1
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == starting_hp - 8
+        # C# SolarStrike.cs:18: DamageVar(9).
+        assert enemy.current_hp == starting_hp - 9
         assert combat.stars == 1
 
-    def test_spoils_of_battle_forges_without_other_side_effects(self):
-        """Matches SpoilsOfBattle.cs: only forge by the card's forge amount."""
+    def test_spoils_of_battle_forges_then_draws_cards(self):
+        """Matches SpoilsOfBattle.cs:26-30: forge ForgeVar(5), then draw CardsVar(2)."""
         combat = _make_combat()
+        first_draw = create_card(CardId.DEFEND_REGENT)
+        second_draw = create_card(CardId.DEFEND_REGENT)
         combat.hand = [make_spoils_of_battle()]
+        combat.draw_pile = [first_draw, second_draw]
         combat.energy = 1
 
         assert combat.play_card(0)
         blade = next(card for card in combat.hand if card.card_id.name == "SOVEREIGN_BLADE")
-        assert blade.base_damage == 20
+        # C# SpoilsOfBattle.cs:15: ForgeVar(5) => blade 10 + 5.
+        assert blade.base_damage == 15
+        assert first_draw in combat.hand
+        assert second_draw in combat.hand
 
     def test_wrought_in_war_deals_damage_then_forges(self):
         """Matches WroughtInWar.cs: attack the target, then forge."""
@@ -210,7 +222,8 @@ class TestRegentParity:
 
         assert combat.play_card(0, 0)
         assert enemy.current_hp == starting_hp - 7
-        assert blade.base_damage == 15
+        # C# WroughtInWar.cs:18: ForgeVar(7) => blade 10 + 7.
+        assert blade.base_damage == 17
 
     def test_knockout_blow_gains_stars_only_if_combat_continues_after_kill(self):
         """Matches KnockoutBlow.cs: GainStars is skipped once the final enemy kill makes combat ending."""
@@ -239,7 +252,9 @@ class TestRegentParity:
         assert final_combat.stars == 0
 
     def test_charge_sorts_draw_pile_then_transforms_exact_selected_cards(self):
-        """Matches Charge.cs: sorted draw-pile selection, then transform chosen cards into MinionStrike."""
+        """Matches Charge.cs: sorted draw-pile selection, then transform chosen
+        cards into MinionDiveBomb (Charge.cs:30), upgraded when Charge is
+        upgraded (Charge.cs:35-37 CardCmd.Upgrade(cardAdded))."""
         combat = _make_combat()
         card_a = make_strike_ironclad()
         card_b = make_defend_ironclad()
@@ -259,9 +274,9 @@ class TestRegentParity:
         assert combat.resolve_pending_choice(None)
         assert combat.pending_choice is None
 
-        minion_strikes = [card for card in combat.draw_pile if card.card_id == make_minion_strike().card_id]
-        assert len(minion_strikes) == 2
-        assert all(card.upgraded for card in minion_strikes)
+        dive_bombs = [card for card in combat.draw_pile if card.card_id == make_minion_dive_bomb().card_id]
+        assert len(dive_bombs) == 2
+        assert all(card.upgraded for card in dive_bombs)
 
     def test_guards_transforms_selected_hand_cards_into_minion_sacrifice(self):
         """Matches Guards.cs: choose any number of hand cards, then transform each into MinionSacrifice."""
@@ -385,7 +400,8 @@ class TestRegentParity:
         combat.energy = 2
 
         assert combat.play_card(0)
-        assert combat.player.block == 13
+        # C# Bulwark.cs:18: BlockVar(12).
+        assert combat.player.block == 12
         blade = next(card for card in combat.hand if card.card_id == CardId.SOVEREIGN_BLADE)
         assert blade.base_damage == 20
 
@@ -477,7 +493,8 @@ class TestRegentParity:
         combat.energy = 2
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == starting_hp - 17
+        # C# HeirloomHammer.cs:18: DamageVar(20).
+        assert enemy.current_hp == starting_hp - 20
         assert combat.pending_choice is None
         copies = [card for card in combat.hand if card.card_id == gem.card_id]
         assert len(copies) == 2
@@ -519,14 +536,16 @@ class TestRegentParity:
         assert combat.player.get_power_amount(PowerId.BLACK_HOLE) == card.effect_vars.get("black_hole", 3)
 
     def test_furnace_applies_furnace_power(self):
-        """Matches Furnace.cs: apply FurnacePower with the configured forge amount."""
+        """Matches Furnace.cs (v0.107.1): ForgeVar(5); OnPlay applies FurnacePower
+        with the forge value (the older decompile used 4)."""
         combat = _make_combat()
         card = create_card(CardId.FURNACE)
         combat.hand = [card]
         combat.energy = 1
 
         assert combat.play_card(0)
-        assert combat.player.get_power_amount(PowerId.FURNACE) == card.effect_vars.get("furnace", 4)
+        assert card.effect_vars.get("forge", 5) == 5
+        assert combat.player.get_power_amount(PowerId.FURNACE) == 5
 
     def test_orbit_applies_orbit_power(self):
         """Matches Orbit.cs: apply OrbitPower with the configured energy value."""

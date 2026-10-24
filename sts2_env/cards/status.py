@@ -330,7 +330,7 @@ def make_folly() -> CardInstance:
     return CardInstance(
         card_id=CardId.FOLLY, cost=-1, card_type=CardType.CURSE,
         target_type=TargetType.NONE, rarity=CardRarity.CURSE,
-        keywords=frozenset({"unplayable", "eternal", "innate"}),
+        keywords=frozenset({"unplayable", "eternal", "innate", "ethereal"}),
         instance_id=_get_next_id(),
     )
 
@@ -434,9 +434,9 @@ def make_writhe() -> CardInstance:
 
 def make_deprecated_card() -> CardInstance:
     return CardInstance(
-        card_id=CardId.DEPRECATED_CARD, cost=-1, card_type=CardType.CURSE,
-        target_type=TargetType.NONE, rarity=CardRarity.CURSE,
-        keywords=frozenset({"unplayable"}), instance_id=_get_next_id(),
+        card_id=CardId.DEPRECATED_CARD, cost=0, card_type=CardType.STATUS,
+        target_type=TargetType.NONE, rarity=CardRarity.STATUS,
+        keywords=frozenset({"exhaust"}), instance_id=_get_next_id(),
     )
 
 
@@ -461,7 +461,7 @@ def rip_and_tear_effect(card: CardInstance, combat: CombatState, target: Creatur
 def make_rip_and_tear(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.RIP_AND_TEAR, cost=1, card_type=CardType.ATTACK,
-        target_type=TargetType.RANDOM_ENEMY, rarity=CardRarity.UNCOMMON,
+        target_type=TargetType.RANDOM_ENEMY, rarity=CardRarity.EVENT,
         base_damage=9 if upgraded else 7, upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -554,22 +554,46 @@ def make_maul(upgraded: bool = False) -> CardInstance:
 def neows_fury_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     _deal_damage_single(card, combat, target)
-    count = card.effect_vars.get("cards", 2)
-    candidates = list(combat.discard_pile)
-    if not candidates:
+    # NeowsFury.cs OnPlay (lines 36-40): after the attack, num =
+    # min(CardsVar, MaxCardsInHand - current hand size); when num > 0 the player
+    # selects 0..num cards from the owner's discard pile
+    # (CardSelectCmd.FromCombatPile with CardSelectorPrefs(prompt, 0, num)) and
+    # they are added to hand.
+    from sts2_env.core.constants import MAX_HAND_SIZE
+
+    owner = _owner(card, combat)
+    state = combat.combat_player_state_for(owner)
+    if state is None:
         return
-    combat.combat_card_selection_rng.shuffle(candidates)
-    for selected in candidates[:count]:
-        combat.move_card_to_hand(selected)
+    num = min(card.effect_vars.get("cards", 2), MAX_HAND_SIZE - len(state.hand))
+    candidates = list(state.discard)
+    if num <= 0 or not candidates:
+        return
+
+    def _add_selected_to_hand(selected_cards: list[CardInstance]) -> None:
+        for selected in selected_cards:
+            combat.move_card_to_creature_hand(owner, selected)
+
+    combat.request_multi_card_choice(
+        prompt="Choose discard pile cards to add to hand",
+        cards=candidates,
+        source_pile="discard",
+        resolver=_add_selected_to_hand,
+        min_count=0,
+        max_count=num,
+        owner=owner,
+    )
 
 
 def make_neows_fury(upgraded: bool = False) -> CardInstance:
+    # C# NeowsFury.cs: DamageVar(10, Move), CardsVar(2);
+    # OnUpgrade: Damage +4 (14), Cards.UpgradeValueBy(1m) -> 3.
     return CardInstance(
         card_id=CardId.NEOWS_FURY, cost=1, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.ANCIENT,
         base_damage=14 if upgraded else 10, upgraded=upgraded,
         keywords=frozenset({"exhaust"}),
-        effect_vars={"cards": 2}, instance_id=_get_next_id(),
+        effect_vars={"cards": 3 if upgraded else 2}, instance_id=_get_next_id(),
     )
 
 
@@ -867,7 +891,14 @@ def mad_science_effect(card: CardInstance, combat: CombatState, target: Creature
                 is_multiplayer=combat.is_multiplayer,
             )
             if generated:
-                generated[0].set_combat_cost(0)
+                # MadScience.cs ExecuteRider Chaos (lines 466-471): the generated
+                # card gets SetToFreeThisTurn(), which is
+                # CardEnergyCost.SetThisTurnOrUntilPlayed(0) plus
+                # SetStarCostThisTurn(0) (CardModel.cs lines 1266-1270) — free
+                # until end of turn OR until played, whichever comes first
+                # (CardEnergyCost.cs lines 798-818). Not a permanent combat-cost
+                # reduction.
+                generated[0].set_temporary_free_this_turn()
                 combat.add_generated_card_to_creature_hand(owner, generated[0])
         return
 
@@ -1121,7 +1152,7 @@ def minion_dive_bomb_effect(card: CardInstance, combat: CombatState, target: Cre
 
 def make_minion_dive_bomb(upgraded: bool = False) -> CardInstance:
     return CardInstance(
-        card_id=CardId.MINION_DIVE_BOMB, cost=1, card_type=CardType.ATTACK,
+        card_id=CardId.MINION_DIVE_BOMB, cost=0, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.STATUS,
         base_damage=16 if upgraded else 13, upgraded=upgraded,
         keywords=frozenset({"exhaust"}), instance_id=_get_next_id(),
@@ -1134,10 +1165,11 @@ def minion_sacrifice_effect(card: CardInstance, combat: CombatState, target: Cre
 
 
 def make_minion_sacrifice(upgraded: bool = False) -> CardInstance:
+    # C# MinionSacrifice.cs: BlockVar(8, Move); OnUpgrade: Block.UpgradeValueBy(3m) -> 11.
     return CardInstance(
         card_id=CardId.MINION_SACRIFICE, cost=0, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.STATUS,
-        base_block=12 if upgraded else 9, upgraded=upgraded,
+        base_block=11 if upgraded else 8, upgraded=upgraded,
         keywords=frozenset({"exhaust"}), instance_id=_get_next_id(),
     )
 
@@ -1151,10 +1183,11 @@ def minion_strike_effect(card: CardInstance, combat: CombatState, target: Creatu
 
 
 def make_minion_strike(upgraded: bool = False) -> CardInstance:
+    # C# MinionStrike.cs: DamageVar(6, Move), CardsVar(1); OnUpgrade: Damage.UpgradeValueBy(3m) -> 9.
     return CardInstance(
         card_id=CardId.MINION_STRIKE, cost=0, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.STATUS,
-        base_damage=10 if upgraded else 7, upgraded=upgraded,
+        base_damage=9 if upgraded else 6, upgraded=upgraded,
         keywords=frozenset({"exhaust"}),
         effect_vars={"cards": 1}, instance_id=_get_next_id(),
     )
@@ -1746,8 +1779,25 @@ def writhe_effect(card: CardInstance, combat: CombatState, target: Creature | No
 
 @register_effect(CardId.DEPRECATED_CARD)
 def deprecated_card_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    """Unplayable save placeholder."""
-    pass
+    """DeprecatedCard.cs OnPlay (lines 26-34): draw 1 card, then remove this
+    card's deck version from the run deck via CardPileCmd.RemoveFromDeck(DeckVersion)
+    and null out DeckVersion.
+
+    The sim has no per-instance DeckVersion tracking, so the closest equivalent
+    is dropping one deck copy with the same card id. The card is a save-file
+    placeholder that is unreachable in normal play (excluded from generation
+    pools), so this path only matters for parity coverage."""
+    owner = _owner(card, combat)
+    combat.draw_cards(owner, 1)
+    state = combat.combat_player_state_for(owner)
+    if state is None:
+        return
+    deck_card = next(
+        (c for c in state.player_state.deck if c.card_id == card.card_id),
+        None,
+    )
+    if deck_card is not None:
+        state.player_state.deck.remove(deck_card)
 
 
 # ---------------------------------------------------------------------------
@@ -1865,3 +1915,34 @@ def spoils_map_quest_complete(card: CardInstance, run_state) -> int:
             if point is not None:
                 point.remove_quest(card)
     return gold
+
+
+# --- Wither (game v0.107.1, status; fake-upgraded by the Aeonglass monster) ---
+
+WITHER_DAMAGE = 3
+
+
+def make_wither() -> CardInstance:
+    return CardInstance(
+        card_id=CardId.WITHER, cost=-1, card_type=CardType.STATUS,
+        target_type=TargetType.NONE, rarity=CardRarity.STATUS,
+        keywords=frozenset({"unplayable"}),
+        effect_vars={"damage": WITHER_DAMAGE},
+        instance_id=_get_next_id(),
+    )
+
+
+def wither_fake_upgrade(card: CardInstance) -> None:
+    """C# Wither.FakeUpgrade(): fake level +1, damage +3 (max upgrade level is 0)."""
+    card.effect_vars["damage"] = card.effect_vars.get("damage", WITHER_DAMAGE) + 3
+
+
+@register_effect(CardId.WITHER)
+def wither_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    """Unplayable. End-of-turn self damage is triggered by the hook below."""
+    pass
+
+
+@register_turn_end_in_hand_hook(CardId.WITHER)
+def wither_turn_end_in_hand(card: CardInstance, combat: CombatState, cards_in_hand_at_turn_end: int) -> None:
+    _deal_self_damage(card, combat, card.effect_vars.get("damage", WITHER_DAMAGE))

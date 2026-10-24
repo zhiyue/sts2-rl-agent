@@ -105,7 +105,10 @@ class TestColorlessDrawGenerationAndHittableTargetsParity:
         assert primary.current_hp == primary_start - 5
         assert secondary.current_hp == secondary_start - 8
 
-    def test_rally_grants_block_to_other_allied_players_not_owner(self):
+    def test_rally_grants_block_to_owner_and_allied_players(self):
+        """Rally.cs OnPlay (lines 26-35): every living player teammate gains
+        Block(12); CombatState.GetTeammatesOf (CombatState.cs:397) "includes the
+        creature itself", so the caster gains block too."""
         combat = _make_combat()
         ally_one = combat.add_ally_player(
             PlayerState(player_id=2, character_id="Ironclad", max_hp=60, current_hp=60)
@@ -117,7 +120,7 @@ class TestColorlessDrawGenerationAndHittableTargetsParity:
         combat.energy = 2
 
         assert combat.play_card(0)
-        assert combat.player.block == 0
+        assert combat.player.block == 12
         assert ally_one.block == 12
         assert ally_two.block == 12
 

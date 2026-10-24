@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from sts2_env.cards.base import CardInstance, _get_next_id
+from sts2_env.cards.enchantments import apply_static_enchantment
 from sts2_env.cards.registry import (
     register_after_card_entered_combat_hook,
     register_after_card_played_hook,
@@ -18,7 +19,8 @@ from sts2_env.core.creature import Creature
 from sts2_env.core.combat import CombatState
 
 
-LEADING_STRIKE_SHIVS = 1
+# LeadingStrike.cs: new CardsVar("Shivs", 2) — base and upgraded both create 2 Shivs.
+LEADING_STRIKE_SHIVS = 2
 OUTBREAK_REPEAT = 3
 
 
@@ -102,7 +104,8 @@ def acrobatics(card: CardInstance, combat: CombatState, target: Creature | None)
 
 @register_effect(CardId.ANTICIPATE)
 def anticipate(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    amt = card.effect_vars.get("dexterity", 3)
+    # Anticipate.cs: PowerCmd.Apply<AnticipatePower>(DynamicVars.Dexterity.BaseValue)
+    amt = card.effect_vars.get("dexterity", 2)
     combat.apply_power_to(_owner(card, combat), PowerId.ANTICIPATE, amt)
 
 
@@ -650,11 +653,15 @@ def speedster(card: CardInstance, combat: CombatState, target: Creature | None) 
 
 @register_effect(CardId.STRANGLE)
 def strangle(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # Strangle.cs OnPlay: DamageCmd.Attack(...) then
+    # PowerCmd.Apply<StranglePower>(target, StranglePower base value, applier=owner).
+    # StranglePower (powers/remaining_c.py) = enemy loses Amount HP (unblockable +
+    # unpowered) for each card its owner plays that turn; removed at end of turn.
     assert target is not None
     owner = _owner(card, combat)
     dmg = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
     apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
-    combat.apply_power_to(target, PowerId.CONSTRICT, card.effect_vars.get("strangle_power", 2))
+    combat.apply_power_to(target, PowerId.STRANGLE, card.effect_vars.get("strangle_power", 2))
 
 
 @register_effect(CardId.TACTICIAN)
@@ -715,7 +722,14 @@ def assassinate(card: CardInstance, combat: CombatState, target: Creature | None
 
 @register_effect(CardId.BLADE_OF_INK)
 def blade_of_ink(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(_owner(card, combat), PowerId.BLADE_OF_INK, card.effect_vars.get("strength", 2))
+    # BladeOfInk.cs OnPlay: Shiv.CreateInHand(owner, DynamicVars.Cards.IntValue),
+    # then CardCmd.Enchant<Inky>(item, 1m) on every created Shiv.
+    owner = _owner(card, combat)
+    count = card.effect_vars.get("cards", 2)
+    for _ in range(count):
+        shiv = _make_shiv()
+        apply_static_enchantment(shiv, "Inky", 1)
+        combat.add_generated_card_to_creature_hand(owner, shiv)
 
 
 @register_effect(CardId.BULLET_TIME)
@@ -734,7 +748,8 @@ def burst(card: CardInstance, combat: CombatState, target: Creature | None) -> N
 
 @register_effect(CardId.CORROSIVE_WAVE)
 def corrosive_wave(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    combat.apply_power_to(_owner(card, combat), PowerId.CORROSIVE_WAVE, card.effect_vars.get("corrosive_wave", 3))
+    # CorrosiveWave.cs: PowerCmd.Apply<CorrosiveWavePower>(DynamicVars["CorrosiveWave"].BaseValue)
+    combat.apply_power_to(_owner(card, combat), PowerId.CORROSIVE_WAVE, card.effect_vars.get("corrosive_wave", 2))
 
 
 @register_effect(CardId.ECHOING_SLASH)
@@ -782,14 +797,20 @@ def grand_finale_is_playable(card: CardInstance, owner_state, combat: CombatStat
 
 @register_effect(CardId.KNIFE_TRAP)
 def knife_trap(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # KnifeTrap.cs OnPlay: for every Shiv in the exhaust pile, first
+    # CardCmd.Upgrade(item) when KnifeTrap is upgraded, then
+    # CardCmd.AutoPlay(...) — a full play that triggers AfterCardPlayed hooks.
     owner = _owner(card, combat)
-    for shiv in [exhausted for exhausted in combat.exhaust_pile if exhausted.is_shiv]:
-        if card.upgraded and not shiv.upgraded:
-            shiv.upgraded = True
-            shiv.base_damage = 6
-        if target is not None and target.is_alive:
-            dmg = calculate_damage(shiv.base_damage, owner, target, ValueProp.MOVE, combat)
-            apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
+    for shiv in [c for c in combat.exhaust_pile if c.is_shiv]:
+        if card.upgraded:
+            combat.upgrade_card(shiv)
+        if combat.is_over:
+            break
+        if target is not None and not target.is_alive:
+            break
+        if getattr(owner, "is_dead", False):
+            break
+        combat.auto_play_card(shiv, target=target)
 
 
 @register_effect(CardId.MALAISE)
@@ -809,11 +830,15 @@ def master_planner(card: CardInstance, combat: CombatState, target: Creature | N
 
 @register_effect(CardId.MURDER)
 def murder(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # Murder.cs CanonicalVars: CalculationBaseVar(1) + ExtraDamageVar(1) with
+    # CalculatedDamageVar multiplier = number of CardDrawnEntry entries whose
+    # Actor is the owner this combat. CalculatedVar.Calculate = base + extra *
+    # multiplier, i.e. 1 + 1 * cards drawn (not a product).
     assert target is not None
     owner = _owner(card, combat)
     base = card.effect_vars.get("calc_base", 1)
     extra = card.effect_vars.get("extra_damage", 1)
-    total_dmg = base * extra * combat.count_cards_drawn_this_combat(owner)
+    total_dmg = base + extra * combat.count_cards_drawn_this_combat(owner)
     dmg = calculate_damage(total_dmg, owner, target, ValueProp.MOVE, combat)
     apply_damage(target, dmg, ValueProp.MOVE, combat, owner)
 
@@ -989,7 +1014,7 @@ def make_survivor(upgraded: bool = False) -> CardInstance:
 def make_acrobatics(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.ACROBATICS, cost=1, card_type=CardType.SKILL,
-        target_type=TargetType.SELF, rarity=CardRarity.COMMON,
+        target_type=TargetType.SELF, rarity=CardRarity.UNCOMMON,
         effect_vars={"cards": 4 if upgraded else 3},
         upgraded=upgraded, instance_id=_get_next_id(),
     )
@@ -999,7 +1024,8 @@ def make_anticipate(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.ANTICIPATE, cost=0, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.COMMON,
-        effect_vars={"dexterity": 5 if upgraded else 3},
+        # Anticipate.cs: new PowerVar<DexterityPower>(2m); OnUpgrade: Dexterity.UpgradeValueBy(1m)
+        effect_vars={"dexterity": 3 if upgraded else 2},
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -1080,7 +1106,8 @@ def make_flick_flack(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.FLICK_FLACK, cost=1, card_type=CardType.ATTACK,
         target_type=TargetType.ALL_ENEMIES, rarity=CardRarity.COMMON,
-        base_damage=9 if upgraded else 7, keywords=frozenset({"sly"}),
+        # FlickFlack.cs: new DamageVar(6m, ValueProp.Move); OnUpgrade: Damage.UpgradeValueBy(2m)
+        base_damage=8 if upgraded else 6, keywords=frozenset({"sly"}),
         upgraded=upgraded, instance_id=_get_next_id(),
     )
 
@@ -1089,7 +1116,9 @@ def make_leading_strike(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.LEADING_STRIKE, cost=1, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
-        base_damage=10 if upgraded else 7,
+        # LeadingStrike.cs: new CardsVar("Shivs", 2), new DamageVar(3m);
+        # OnUpgrade: Damage.UpgradeValueBy(3m) (Shivs unchanged).
+        base_damage=6 if upgraded else 3,
         effect_vars={"shivs": LEADING_STRIKE_SHIVS},
         upgraded=upgraded, instance_id=_get_next_id(),
     )
@@ -1166,7 +1195,8 @@ def make_untouchable(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.UNTOUCHABLE, cost=2, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.COMMON,
-        base_block=12 if upgraded else 9, keywords=frozenset({"sly"}),
+        # Untouchable.cs: new BlockVar(6m, ValueProp.Move); OnUpgrade: Block.UpgradeValueBy(3m)
+        base_block=9 if upgraded else 6, keywords=frozenset({"sly"}),
         upgraded=upgraded, instance_id=_get_next_id(),
     )
 
@@ -1365,8 +1395,11 @@ def make_memento_mori(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.MEMENTO_MORI, cost=1, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.UNCOMMON,
-        base_damage=10 if upgraded else 8,
-        effect_vars={"calc_base": 10 if upgraded else 8, "extra_damage": 5 if upgraded else 4},
+        # MementoMori.cs: new CalculationBaseVar(9m), new ExtraDamageVar(4m);
+        # OnUpgrade: CalculationBase.UpgradeValueBy(2m), ExtraDamage.UpgradeValueBy(1m).
+        # CalculatedDamageVar = CalculationBase + ExtraDamage * discardsThisTurn.
+        base_damage=11 if upgraded else 9,
+        effect_vars={"calc_base": 11 if upgraded else 9, "extra_damage": 5 if upgraded else 4},
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -1413,7 +1446,8 @@ def make_pinpoint(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.PINPOINT, cost=3, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.UNCOMMON,
-        base_damage=22 if upgraded else 17,
+        # Pinpoint.cs: new DamageVar(15m, ValueProp.Move); OnUpgrade: Damage.UpgradeValueBy(4m)
+        base_damage=19 if upgraded else 15,
         upgraded=upgraded, instance_id=_get_next_id(),
     )
 
@@ -1422,7 +1456,8 @@ def make_pounce(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.POUNCE, cost=2, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.UNCOMMON,
-        base_damage=18 if upgraded else 12,
+        # Pounce.cs: new DamageVar(14m, ValueProp.Move); OnUpgrade: Damage.UpgradeValueBy(6m)
+        base_damage=20 if upgraded else 14,
         upgraded=upgraded, instance_id=_get_next_id(),
     )
 
@@ -1441,7 +1476,7 @@ def make_precise_cut(upgraded: bool = False) -> CardInstance:
 def make_predator(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.PREDATOR, cost=2, card_type=CardType.ATTACK,
-        target_type=TargetType.ANY_ENEMY, rarity=CardRarity.UNCOMMON,
+        target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
         base_damage=20 if upgraded else 15,
         upgraded=upgraded, instance_id=_get_next_id(),
     )
@@ -1461,7 +1496,8 @@ def make_skewer(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.SKEWER, cost=0, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.UNCOMMON,
-        base_damage=10 if upgraded else 7, upgraded=upgraded,
+        # Skewer.cs: new DamageVar(8m, ValueProp.Move); OnUpgrade: Damage.UpgradeValueBy(3m)
+        base_damage=11 if upgraded else 8, upgraded=upgraded,
         has_energy_cost_x=True, instance_id=_get_next_id(),
     )
 
@@ -1470,7 +1506,10 @@ def make_speedster(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.SPEEDSTER_CARD, cost=2, card_type=CardType.POWER,
         target_type=TargetType.SELF, rarity=CardRarity.UNCOMMON,
-        effect_vars={"speedster_power": 3 if upgraded else 2},
+        # Speedster.cs: new PowerVar<SpeedsterPower>(2m); OnUpgrade only AddKeyword(Innate)
+        # — the power amount does not change on upgrade.
+        keywords=frozenset({"innate"}) if upgraded else frozenset(),
+        effect_vars={"speedster_power": 2},
         upgraded=upgraded, instance_id=_get_next_id(),
     )
 
@@ -1565,7 +1604,9 @@ def make_blade_of_ink(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.BLADE_OF_INK, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.RARE,
-        effect_vars={"strength": 3 if upgraded else 2},
+        # BladeOfInk.cs: new CardsVar(2); OnUpgrade: Cards.UpgradeValueBy(1m).
+        # OnPlay creates that many Shivs in hand, each enchanted with Inky.
+        effect_vars={"cards": 3 if upgraded else 2},
         upgraded=upgraded, instance_id=_get_next_id(),
     )
 
@@ -1591,7 +1632,9 @@ def make_corrosive_wave(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.CORROSIVE_WAVE, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.RARE,
-        effect_vars={"corrosive_wave": 4 if upgraded else 3},
+        # CorrosiveWave.cs: new DynamicVar("CorrosiveWave", 2m);
+        # OnUpgrade: DynamicVars["CorrosiveWave"].UpgradeValueBy(1m)
+        effect_vars={"corrosive_wave": 3 if upgraded else 2},
         upgraded=upgraded, instance_id=_get_next_id(),
     )
 
@@ -1628,7 +1671,8 @@ def make_grand_finale(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.GRAND_FINALE, cost=0, card_type=CardType.ATTACK,
         target_type=TargetType.ALL_ENEMIES, rarity=CardRarity.RARE,
-        base_damage=60 if upgraded else 50,
+        # GrandFinale.cs: new DamageVar(60m, ValueProp.Move); OnUpgrade: Damage.UpgradeValueBy(15m)
+        base_damage=75 if upgraded else 60,
         upgraded=upgraded, instance_id=_get_next_id(),
     )
 
@@ -1682,7 +1726,9 @@ def make_serpent_form(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.SERPENT_FORM_CARD, cost=3, card_type=CardType.POWER,
         target_type=TargetType.SELF, rarity=CardRarity.RARE,
-        effect_vars={"serpent_form_power": 5 if upgraded else 4},
+        # SerpentForm.cs: new PowerVar<SerpentFormPower>(4m);
+        # OnUpgrade: DynamicVars["SerpentFormPower"].UpgradeValueBy(2m)
+        effect_vars={"serpent_form_power": 6 if upgraded else 4},
         upgraded=upgraded, instance_id=_get_next_id(),
     )
 
@@ -1775,3 +1821,27 @@ def create_silent_starter_deck() -> list[CardInstance]:
     deck.append(make_neutralize())
     deck.append(make_survivor())
     return deck
+
+
+# --- Scare (game v0.107.1, Silent uncommon) ---
+
+
+def make_scare(upgraded: bool = False) -> CardInstance:
+    return CardInstance(
+        card_id=CardId.SCARE,
+        cost=0,
+        card_type=CardType.SKILL,
+        target_type=TargetType.ALL_ENEMIES,
+        rarity=CardRarity.UNCOMMON,
+        keywords=frozenset() if upgraded else frozenset({"exhaust"}),
+        effect_vars={"weak": 1},
+        upgraded=upgraded,
+        instance_id=_get_next_id(),
+    )
+
+
+@register_effect(CardId.SCARE)
+def scare_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    """Apply 1 Weak to ALL enemies (C# Scare.OnPlay -> PowerCmd.Apply<WeakPower>)."""
+    for enemy in combat.hittable_enemies:
+        combat.apply_power_to(enemy, PowerId.WEAK, card.effect_vars.get("weak", 1))

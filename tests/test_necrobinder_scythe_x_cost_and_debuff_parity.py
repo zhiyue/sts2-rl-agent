@@ -106,7 +106,8 @@ class TestNecrobinderScytheXCostAndDebuffParity:
         assert enemy.current_hp == 67
 
     def test_sic_em_upgraded_applies_upgraded_sic_em_power_amount(self):
-        """Matches SicEm.cs: apply SicEm debuff by its upgraded stack amount."""
+        """Matches SicEm.cs: OstyDamageVar(5) +1 upgraded (6 damage);
+        PowerVar<SicEmPower>(3) +1 upgraded (4 stacks)."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         enemy.current_hp = 100
@@ -117,10 +118,11 @@ class TestNecrobinderScytheXCostAndDebuffParity:
 
         assert combat.play_card(0, 0)
         assert enemy.current_hp == 94
-        assert enemy.get_power_amount(PowerId.SIC_EM) == 3
+        assert enemy.get_power_amount(PowerId.SIC_EM) == 4
 
     def test_the_scythe_damage_increases_after_each_play(self):
-        """Matches TheScythe.cs: card permanently gains damage each time it is played."""
+        """Matches TheScythe.cs: base damage 13, IntVar("Increase", 4); the card
+        permanently gains Increase damage each time it is played."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         enemy.current_hp = 200
@@ -131,27 +133,29 @@ class TestNecrobinderScytheXCostAndDebuffParity:
 
         assert combat.play_card(0, 0)
         assert enemy.current_hp == 187
-        assert card.base_damage == 16
+        assert card.base_damage == 17
         assert card in combat.exhaust_pile
 
         combat.exhaust_pile.remove(card)
         combat.hand = [card]
         combat.energy = 2
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == 171
-        assert card.base_damage == 19
+        assert enemy.current_hp == 170
+        assert card.base_damage == 21
 
     def test_the_scythe_upgrade_preserves_grown_damage(self):
+        """Matches TheScythe.cs OnUpgrade: only Increase +1 (4 -> 5); CurrentDamage
+        (13 + grown amount) is a SavedProperty and is preserved through the upgrade."""
         combat = _make_combat()
         card = make_the_scythe()
         combat.hand = [card]
         combat.energy = 2
 
         assert combat.play_card(0, 0)
-        assert card.base_damage == 16
+        assert card.base_damage == 17
 
         combat.upgrade_card(card)
 
         assert card.upgraded is True
-        assert card.base_damage == 16
-        assert card.effect_vars["increase"] == 4
+        assert card.base_damage == 17
+        assert card.effect_vars["increase"] == 5

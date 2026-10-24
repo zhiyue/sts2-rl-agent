@@ -100,7 +100,9 @@ def test_ally_sweeping_beam_draws_to_ally_hand_only():
     assert len(combat.hand) == starting_primary_hand
 
 
-def test_energy_surge_grants_energy_to_other_player_allies_only():
+def test_energy_surge_grants_energy_to_every_teammate_including_caster():
+    # EnergySurge.cs OnPlay: GetTeammatesOf(Owner.Creature) (CombatState.cs:397)
+    # covers the whole side filtered to alive players — the caster AND allies.
     combat = _make_combat("Defect")
     ally_state = PlayerState(player_id=2, character_id="Defect", max_hp=70, current_hp=70)
     ally = combat.add_ally_player(ally_state)
@@ -113,7 +115,7 @@ def test_energy_surge_grants_energy_to_other_player_allies_only():
     ally_state_combat.energy = 0
 
     assert combat.play_card(0)
-    assert combat.energy == 0
+    assert combat.energy == 2  # 1 - 1 cost + 2 gained
     assert ally_state_combat.energy == 2
 
 

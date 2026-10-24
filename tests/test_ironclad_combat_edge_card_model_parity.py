@@ -72,13 +72,17 @@ COLOSSUS_BLOCK = 5
 COLOSSUS_UPGRADED_BLOCK = 8
 COLOSSUS_POWER_AMOUNT = 1
 DOMINATE_TARGET_VULNERABLE = 3
-DOMINATE_STRENGTH_GAIN = DOMINATE_TARGET_VULNERABLE
+# Dominate.cs OnPlay: apply Vulnerable (PowerVar, 1) to the target first, then gain
+# Strength equal to the target's total Vulnerable AFTER the application
+# (3 pre-existing + 1 applied = 4).
+DOMINATE_STRENGTH_GAIN = DOMINATE_TARGET_VULNERABLE + 1
 FIGHT_ME_DAMAGE_PER_HIT = 5
 FIGHT_ME_HITS = 2
-FIGHT_ME_SELF_STRENGTH = 2
+# FightMe.cs: PowerVar<StrengthPower>(3), EnemyStrength 1; OnUpgrade: damage +1, Strength +1.
+FIGHT_ME_SELF_STRENGTH = 3
 FIGHT_ME_ENEMY_STRENGTH = 1
 FIGHT_ME_UPGRADED_DAMAGE_PER_HIT = 6
-FIGHT_ME_UPGRADED_SELF_STRENGTH = 3
+FIGHT_ME_UPGRADED_SELF_STRENGTH = 4
 TEST_ENEMY_HP = 100
 EXHAUST_KEYWORD = "exhaust"
 
@@ -134,7 +138,10 @@ class TestIroncladCombatEdgeCardModelParity:
         assert upgraded_combat.player.block == COLOSSUS_UPGRADED_BLOCK
         assert upgraded_combat.player.get_power_amount(PowerId.COLOSSUS) == COLOSSUS_POWER_AMOUNT
 
-    def test_dominate_gains_strength_equal_to_target_vulnerable_and_upgrade_removes_exhaust(self):
+    def test_dominate_applies_vulnerable_then_gains_strength_and_keeps_exhaust_on_upgrade(self):
+        """C# Dominate.cs: OnPlay applies Vulnerable first, then gains Strength equal to
+        the target's total Vulnerable; CanonicalKeywords={Exhaust} and OnUpgrade only
+        upgrades Vulnerable, so the upgraded card keeps Exhaust."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         enemy.apply_power(PowerId.VULNERABLE, DOMINATE_TARGET_VULNERABLE, applier=combat.player)
@@ -143,9 +150,10 @@ class TestIroncladCombatEdgeCardModelParity:
         combat.energy = 1
 
         assert combat.play_card(0, 0)
+        assert enemy.get_power_amount(PowerId.VULNERABLE) == DOMINATE_TARGET_VULNERABLE + 1
         assert combat.player.get_power_amount(PowerId.STRENGTH) == DOMINATE_STRENGTH_GAIN
         assert card in combat.exhaust_pile
-        assert EXHAUST_KEYWORD not in make_dominate(upgraded=True).keywords
+        assert EXHAUST_KEYWORD in make_dominate(upgraded=True).keywords
 
     def test_fight_me_deals_two_hits_and_applies_reference_strength(self):
         combat = _make_combat()
@@ -324,7 +332,8 @@ class TestIroncladCombatEdgeCardModelParity:
         tremble_combat.energy = 1
 
         assert tremble_combat.play_card(0, 0)
-        assert tremble_enemy.get_power_amount(PowerId.VULNERABLE) == 3
+        # Tremble.cs: PowerVar<VulnerablePower>(3), OnUpgrade: +1.
+        assert tremble_enemy.get_power_amount(PowerId.VULNERABLE) == 4
 
         taunt_combat = _make_combat()
         taunt_enemy = taunt_combat.enemies[0]
@@ -349,7 +358,8 @@ class TestIroncladCombatEdgeCardModelParity:
         assert combat.play_card(0, 0)
         assert combat.energy == 0
         assert combat.player.get_power_amount(PowerId.FREE_ATTACK) == 0
-        assert enemy.current_hp == 82
+        # Unrelenting.cs: DamageVar(14) + Strike 6.
+        assert enemy.current_hp == 80
 
     def test_stampede_autoplays_random_attack_before_turn_end(self):
         combat = _make_combat()
@@ -371,21 +381,20 @@ class TestIroncladCombatEdgeCardModelParity:
         assert defend in combat.hand
         assert enemy.current_hp == 94
 
-    def test_cinder_exhausts_top_draw_card_after_shuffle_if_needed(self):
+    def test_cinder_exhausts_random_card_from_hand(self):
+        """C# Cinder.cs OnPlay: after the attack, exhaust one random card from the HAND
+        (PileType.Hand + Rng.CombatCardSelection.NextItem); no-op when the hand is empty."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         enemy.max_hp = 100
         enemy.current_hp = 100
-        kept = make_strike_ironclad()
         to_exhaust = make_defend_ironclad()
-        combat.hand = [make_cinder(), kept]
-        combat.draw_pile = []
-        combat.discard_pile = [to_exhaust]
+        combat.hand = [make_cinder(), to_exhaust]
         combat.energy = 2
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == 83
-        assert combat.hand == [kept]
+        assert enemy.current_hp == 82  # 100 - DamageVar(18)
+        assert combat.hand == []
         assert to_exhaust in combat.exhaust_pile
 
     def test_thunderclap_applies_vulnerable_after_all_damage_to_survivors(self):
@@ -437,18 +446,46 @@ class TestIroncladCombatEdgeCardModelParity:
         assert combat.is_over
         assert combat.player.block == 8
 
-    def test_drum_of_battle_draws_then_applies_power(self):
+    def test_drum_of_battle_draws_two_and_applies_no_power(self):
+        """C# DrumOfBattle.cs: OnPlay draws CardsVar(2) in both upgrade states (OnUpgrade
+        only raises Energy 2 -> 3); the card applies no power."""
         combat = _make_combat()
         drawn = [make_strike_ironclad(), make_defend_ironclad(), make_strike_ironclad()]
         combat.hand = [make_drum_of_battle(upgraded=True)]
         combat.draw_pile = list(drawn)
-        combat.energy = 0
+        # DrumOfBattle.cs constructor: base(1, CardType.Skill, ...).
+        combat.energy = 1
 
         assert combat.play_card(0)
-        assert combat.hand == drawn
-        assert combat.player.get_power_amount(PowerId.DRUM_OF_BATTLE) == 1
+        assert combat.hand == drawn[:2]
+        assert combat.player.get_power_amount(PowerId.DRUM_OF_BATTLE) == 0
 
-    def test_conflagration_scales_with_attacks_played_this_turn(self):
+    def test_drum_of_battle_gains_energy_when_itself_exhausted(self):
+        """C# DrumOfBattle.cs AfterCardExhausted (lines 31-41): when THIS card is
+        exhausted, gain its Energy var per GeneratePlayCount (enchanted replay
+        count + 1, modified by ModifyCardPlayCount hooks). Exhaust keyword comes
+        from ExtraHoverTips; the card must reach the exhaust pile by play (the
+        sim's card-exhaust card hook fires from exhaust_card)."""
+        combat = _make_combat()
+        drum = make_drum_of_battle()
+        combat.hand = [drum]
+        combat.draw_pile = [make_strike_ironclad(), make_defend_ironclad()]
+        combat.energy = 2
+
+        assert combat.play_card(0)
+        # Drum has no Exhaust keyword: it went to discard, no energy gain.
+        assert drum in combat.discard_pile
+        assert combat.energy == 1
+
+        # Explicitly exhaust it (e.g. via an added Exhaust effect): +2 energy
+        # (EnergyVar(2); 3 when upgraded).
+        combat.exhaust_card(drum)
+        assert combat.energy == 1 + 2
+
+    def test_conflagration_hits_all_enemies_fixed_damage_times_repeat(self):
+        """C# Conflagration.cs OnPlay: DamageCmd.Attack(DamageVar(2)).WithHitCount(
+        RepeatVar(4)) targeting ALL opponents — damage does not scale with attacks
+        played this turn. OnUpgrade only raises Repeat to 5."""
         combat = _make_combat(extra_enemies=1)
         for enemy in combat.enemies:
             enemy.max_hp = 100
@@ -459,7 +496,19 @@ class TestIroncladCombatEdgeCardModelParity:
         assert combat.play_card(0, 0)
         assert combat.play_card(0, 0)
         assert combat.play_card(0)
-        assert [enemy.current_hp for enemy in combat.enemies] == [76, 88]
+        # Two strikes (6 each) on enemy 0, then 2 damage x RepeatVar(4) to all enemies.
+        assert [enemy.current_hp for enemy in combat.enemies] == [80, 92]
+
+        upgraded_combat = _make_combat(extra_enemies=1)
+        for enemy in upgraded_combat.enemies:
+            enemy.max_hp = 100
+            enemy.current_hp = 100
+        upgraded_combat.hand = [make_conflagration(upgraded=True)]
+        upgraded_combat.energy = 1
+
+        assert upgraded_combat.play_card(0)
+        # 2 damage x 5 hits after OnUpgrade (Repeat +1).
+        assert [enemy.current_hp for enemy in upgraded_combat.enemies] == [90, 90]
 
     def test_conflagration_hits_only_hittable_enemies(self):
         combat = _make_combat(extra_enemies=1)
@@ -474,7 +523,8 @@ class TestIroncladCombatEdgeCardModelParity:
         assert combat.play_card(0)
 
         assert blocked.current_hp == 100
-        assert hittable.current_hp == 84
+        # Strike 6 + 2 damage x RepeatVar(4).
+        assert hittable.current_hp == 86
 
     def test_fiend_fire_exhausts_all_hand_cards_before_damage_hits(self):
         combat = _make_combat()
@@ -584,7 +634,8 @@ class TestIroncladCombatEdgeCardModelParity:
         combat.energy = 2
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == 75
+        # Break.cs: DamageVar(20), OnUpgrade damage +10; vulnerable 5 -> 7.
+        assert enemy.current_hp == 70
         assert enemy.get_power_amount(PowerId.VULNERABLE) == 7
 
     def test_break_does_not_apply_vulnerable_after_killing_target(self):
@@ -741,7 +792,8 @@ class TestIroncladCombatEdgeCardModelParity:
 
         assert combat.play_card(0, 0)
         assert combat.player.current_hp == hp_before - 2
-        assert enemy.current_hp == 86
+        # Hemokinesis.cs: DamageVar(15), OnUpgrade +5.
+        assert enemy.current_hp == 85
 
     def test_inferno_increments_start_turn_self_damage_when_played(self):
         combat = _make_combat()
@@ -827,7 +879,14 @@ class TestIroncladCombatEdgeCardModelParity:
         assert combat.player.block == 30
         assert any(card.card_id == CardId.IMPERVIOUS for card in combat.exhaust_pile)
 
-    def test_howl_from_beyond_autoplays_from_exhaust_before_hand_draw(self):
+    def test_howl_from_beyond_replays_from_exhaust_at_end_of_turn(self):
+        """C# HowlFromBeyond.cs AfterAutoPostPlayPhaseEntered (lines 30-38): at the
+        start of the end-of-turn phase (CombatManager.EndPlayerTurnPhaseOneInternal
+        enters PlayerTurnPhase.AutoPostPlay before BeforeTurnEnd), when the card is
+        in the owner's exhaust pile it replays itself via CardCmd.AutoPlay. The card
+        has NO canonical Exhaust keyword (docs/CARDS_REFERENCE.md: Keywords None;
+        card text: "At the end of your turn, if this is in your Exhaust Pile, play
+        it."), so it must be placed there by another effect."""
         combat = _make_combat(extra_enemies=1)
         for enemy in combat.enemies:
             enemy.max_hp = 100
@@ -838,10 +897,31 @@ class TestIroncladCombatEdgeCardModelParity:
         combat.draw_pile = []
         combat.exhaust_pile = [card]
 
-        combat._apply_card_before_hand_draw(combat.player)  # noqa: SLF001
+        combat.end_player_turn()
 
         assert [enemy.current_hp for enemy in combat.enemies] == [84, 84]
-        assert card in combat.discard_pile
+        # The replay went through the full play pipeline (no Exhaust keyword, so
+        # it left the exhaust pile and moved on to the next result pile).
+        assert card not in combat.exhaust_pile
+
+    def test_howl_from_beyond_replay_requires_owner_and_exhaust_pile(self):
+        """HowlFromBeyond.cs only replays when `player == base.Owner` and its pile
+        is the Exhaust pile; firing the hook for another creature is a no-op."""
+        combat = _make_combat(extra_enemies=1)
+        for enemy in combat.enemies:
+            enemy.max_hp = 100
+            enemy.current_hp = 100
+        card = make_howl_from_beyond()
+        card.owner = combat.player
+        combat.hand = []
+        combat.draw_pile = []
+        combat.exhaust_pile = [card]
+
+        from sts2_env.cards.registry import fire_card_after_auto_post_play
+
+        fire_card_after_auto_post_play(card, combat.enemies[0], combat)
+        assert [enemy.current_hp for enemy in combat.enemies] == [100, 100]
+        assert card in combat.exhaust_pile
 
     def test_stomp_cost_drops_for_owner_attacks_played_this_turn(self):
         combat = _make_combat()
@@ -913,28 +993,40 @@ class TestIroncladCombatEdgeCardModelParity:
         assert stop in combat.hand
         assert combat.draw_pile == [remaining]
 
-    def test_spite_draws_only_after_owner_took_unblocked_damage_this_turn(self):
+    def test_spite_hits_repeat_times_only_after_owner_took_unblocked_damage_this_turn(self):
+        """C# Spite.cs OnPlay: hitCount = LostHpThisTurn(owner) ? RepeatVar(2) : 1 with
+        DamageVar(5); OnUpgrade only raises Repeat to 3. The card does not draw cards."""
         combat = _make_combat()
         enemy = combat.enemies[0]
-        missed_draw = make_defend_ironclad()
+        enemy.max_hp = 100
+        enemy.current_hp = 100
         combat.hand = [make_spite()]
-        combat.draw_pile = [missed_draw]
         combat.energy = 0
 
         assert combat.play_card(0, 0)
-        assert combat.hand == []
-        assert combat.draw_pile == [missed_draw]
+        assert enemy.current_hp == 95  # single 5-damage hit when owner lost no HP
 
         damaged_combat = _make_combat()
         enemy = damaged_combat.enemies[0]
-        drawn = make_defend_ironclad()
+        enemy.max_hp = 100
+        enemy.current_hp = 100
         damaged_combat.hand = [make_bloodletting(), make_spite()]
-        damaged_combat.draw_pile = [drawn]
         damaged_combat.energy = 1
 
         assert damaged_combat.play_card(0)
         assert damaged_combat.play_card(0, 0)
-        assert damaged_combat.hand == [drawn]
+        assert enemy.current_hp == 90  # RepeatVar(2) hits after unblocked HP loss
+
+        upgraded_combat = _make_combat()
+        enemy = upgraded_combat.enemies[0]
+        enemy.max_hp = 100
+        enemy.current_hp = 100
+        upgraded_combat.hand = [make_bloodletting(), make_spite(upgraded=True)]
+        upgraded_combat.energy = 1
+
+        assert upgraded_combat.play_card(0)
+        assert upgraded_combat.play_card(0, 1)
+        assert enemy.current_hp == 85  # RepeatVar(2) + 1 hits when upgraded
 
     def test_expect_a_fight_gains_energy_for_attacks_in_hand_not_skills(self):
         combat = _make_combat()
@@ -948,6 +1040,39 @@ class TestIroncladCombatEdgeCardModelParity:
 
         assert combat.play_card(0)
         assert combat.energy == 2
+
+    def test_expect_a_fight_blocks_further_energy_gain_until_side_turn_end(self):
+        """C# ExpectAFight.cs OnPlay (lines 36-38): gain CalculatedEnergy (attack
+        count in hand), then PowerCmd.Apply<NoEnergyGainPower>(1) on the owner's
+        own creature. NoEnergyGainPower.cs ModifyEnergyGain returns 0 for the
+        owner's player, and AfterSideTurnEnd removes the power at the end of the
+        owner's side turn."""
+        combat = _make_combat()
+        combat.hand = [
+            make_expect_a_fight(),
+            make_strike_ironclad(),
+            make_strike_ironclad(),
+        ]
+        combat.energy = 2
+
+        assert combat.play_card(0)
+        # Cost 2 paid, then CalculatedEnergy (2 attacks in hand) gained.
+        assert combat.energy == 2
+        assert combat.player.has_power(PowerId.NO_ENERGY_GAIN)
+
+        # Any later energy gain this turn is zeroed (C# ModifyEnergyGain -> 0).
+        combat.gain_energy(combat.player, 3)
+        assert combat.energy == 2
+
+        # The power is removed at the end of the owner's side turn
+        # (AfterSideTurnEnd removes when the owner participates).
+        combat.end_player_turn()
+        assert not combat.player.has_power(PowerId.NO_ENERGY_GAIN)
+
+        # After removal, energy gain works again (round 2 restored base energy).
+        before = combat.energy
+        combat.gain_energy(combat.player, 1)
+        assert combat.energy == before + 1
 
     def test_brand_still_gains_strength_when_selection_returns_none(self):
         combat = _make_combat()
@@ -984,16 +1109,27 @@ class TestIroncladCombatEdgeCardModelParity:
         assert strike not in combat.exhaust_pile
         assert combat.player.get_power_amount(PowerId.STRENGTH) == 0
 
-    def test_pacts_end_requires_three_exhausted_cards(self):
-        combat = _make_combat()
+    def test_pacts_end_always_playable_but_needs_three_exhausted_for_damage(self):
+        """C# PactsEnd.cs: the card is always playable (no IsPlayable override);
+        OnPlay only deals damage when CanDealDamage (exhaust pile >= CardsVar(3))
+        holds — with fewer exhausted cards playing it is legal but does nothing."""
+        combat = _make_combat(extra_enemies=1)
+        for enemy in combat.enemies:
+            enemy.max_hp = 100
+            enemy.current_hp = 100
         card = make_pacts_end()
         combat.hand = [card]
         combat.energy = 0
         combat.exhaust_pile = [make_strike_ironclad(), make_defend_ironclad()]
 
-        assert combat.can_play_card(card) is False
-        combat.exhaust_pile.append(make_anger())
         assert combat.can_play_card(card) is True
+        assert combat.play_card(0) is True
+        assert [enemy.current_hp for enemy in combat.enemies] == [100, 100]
+
+        combat.exhaust_pile.append(make_anger())
+        combat.hand = [make_pacts_end()]
+        assert combat.play_card(0) is True
+        assert [enemy.current_hp for enemy in combat.enemies] == [83, 83]
 
     def test_forgotten_ritual_only_gains_energy_after_owner_exhausted_card_this_turn(self):
         combat = _make_combat()

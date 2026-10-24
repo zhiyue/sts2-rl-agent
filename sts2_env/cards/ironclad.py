@@ -9,10 +9,10 @@ from __future__ import annotations
 from sts2_env.cards.base import CardInstance, _get_next_id, increase_base_damage
 from sts2_env.cards.registry import (
     register_after_card_entered_combat_hook,
+    register_after_auto_post_play_hook,
+    register_after_card_exhausted_hook,
     register_before_card_played_hook,
-    register_before_hand_draw_hook,
     register_effect,
-    register_playability_hook,
     register_self_mutating_damage,
 )
 from sts2_env.core.enums import (
@@ -332,9 +332,12 @@ def make_breakthrough(upgraded: bool = False) -> CardInstance:
 def cinder(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     _deal_damage_to_target(card, combat, target)
-    owner = _owner(card, combat)
-    exhaust_count = card.effect_vars.get("cards_to_exhaust", 1)
-    combat.exhaust_from_draw_pile(owner, exhaust_count)
+    # Cinder.cs OnPlay: exhaust one random card from the HAND
+    # (PileType.Hand + Rng.CombatCardSelection.NextItem; no-op if hand is empty).
+    if not combat.hand:
+        return
+    to_exhaust = combat.combat_card_selection_rng.choice(list(combat.hand))
+    combat.exhaust_card(to_exhaust)
 
 
 def make_cinder(upgraded: bool = False) -> CardInstance:
@@ -344,8 +347,8 @@ def make_cinder(upgraded: bool = False) -> CardInstance:
         card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY,
         rarity=CardRarity.COMMON,
-        base_damage=22 if upgraded else 17,
-        effect_vars={"cards_to_exhaust": 1},
+        # Cinder.cs: DamageVar(18); OnUpgrade: damage +6.
+        base_damage=24 if upgraded else 18,
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -482,6 +485,32 @@ def make_perfected_strike(upgraded: bool = False) -> CardInstance:
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
+
+
+# --- NotYet (game v0.107.1, Ironclad rare) ---
+
+NOT_YET_HEAL = 10
+
+
+def make_not_yet(upgraded: bool = False) -> CardInstance:
+    return CardInstance(
+        card_id=CardId.NOT_YET,
+        cost=2,
+        card_type=CardType.SKILL,
+        target_type=TargetType.SELF,
+        rarity=CardRarity.RARE,
+        keywords=frozenset({"exhaust"}),
+        effect_vars={"heal": NOT_YET_HEAL + (3 if upgraded else 0)},
+        upgraded=upgraded,
+        instance_id=_get_next_id(),
+    )
+
+
+@register_effect(CardId.NOT_YET)
+def not_yet_effect(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    """Heal the owner (C# NotYet.OnPlay -> CreatureCmd.Heal)."""
+    owner = _owner(card, combat)
+    owner.heal(card.effect_vars.get("heal", NOT_YET_HEAL))
 
 
 # --- Pommel Strike ---
@@ -622,7 +651,10 @@ def make_tremble(upgraded: bool = False) -> CardInstance:
         card_type=CardType.SKILL,
         target_type=TargetType.ANY_ENEMY,
         rarity=CardRarity.COMMON,
-        effect_vars={"vulnerable": 3 if upgraded else 2},
+        # Tremble.cs: PowerVar<VulnerablePower>(3); OnUpgrade: +1.
+        # CanonicalKeywords = {Exhaust}; OnUpgrade does not remove it, so Exhaust stays.
+        keywords=frozenset({"exhaust"}),
+        effect_vars={"vulnerable": 4 if upgraded else 3},
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -886,22 +918,27 @@ def make_dismantle(upgraded: bool = False) -> CardInstance:
 @register_effect(CardId.DOMINATE)
 def dominate(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
-    # Gain strength per vulnerable on target
-    strength_per = card.effect_vars.get("strength_per_vulnerable", 1)
-    vuln = target.get_power_amount(PowerId.VULNERABLE)
-    if vuln > 0:
-        combat.apply_power_to(_owner(card, combat), PowerId.STRENGTH, strength_per * vuln)
+    # Dominate.cs OnPlay: apply Vulnerable (PowerVar, 1 / 2 upgraded) to the target,
+    # then gain Strength equal to the target's total Vulnerable AFTER the application.
+    vulnerable = card.effect_vars.get("vulnerable", 1)
+    combat.apply_power_to(target, PowerId.VULNERABLE, vulnerable)
+    total_vulnerable = target.get_power_amount(PowerId.VULNERABLE)
+    if total_vulnerable > 0:
+        combat.apply_power_to(_owner(card, combat), PowerId.STRENGTH, total_vulnerable)
 
 
 def make_dominate(upgraded: bool = False) -> CardInstance:
-    kw = frozenset() if upgraded else frozenset({"exhaust"})
+    # Dominate.cs: PowerVar<VulnerablePower>(1), DynamicVar("StrengthPerVulnerable", 1);
+    # CanonicalKeywords = {Exhaust} and OnUpgrade only upgrades Vulnerable (+1),
+    # so the card keeps Exhaust when upgraded.
+    kw = frozenset({"exhaust"})
     return CardInstance(
         card_id=CardId.DOMINATE,
         cost=1,
         card_type=CardType.SKILL,
         target_type=TargetType.ANY_ENEMY,
         rarity=CardRarity.UNCOMMON,
-        effect_vars={"strength_per_vulnerable": 1},
+        effect_vars={"vulnerable": 2 if upgraded else 1, "strength_per_vulnerable": 1},
         keywords=kw,
         upgraded=upgraded,
         instance_id=_get_next_id(),
@@ -911,19 +948,42 @@ def make_dominate(upgraded: bool = False) -> CardInstance:
 # --- Drum of Battle ---
 @register_effect(CardId.DRUM_OF_BATTLE_CARD)
 def drum_of_battle(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # DrumOfBattle.cs OnPlay: draw Cards (2 in both upgrade states).
+    # The C# card's energy gain happens in AfterCardExhausted (see the
+    # register_after_card_exhausted_hook below), not OnPlay. No power is
+    # applied (no C# DrumOfBattlePower exists).
     draw = card.effect_vars.get("cards", 2)
     _draw_cards(combat, draw)
-    combat.apply_power_to(_owner(card, combat), PowerId.DRUM_OF_BATTLE, card.effect_vars.get("drum_of_battle_power", 1))
+
+
+@register_after_card_exhausted_hook(CardId.DRUM_OF_BATTLE_CARD)
+def drum_of_battle_after_card_exhausted(
+    card: CardInstance, exhausted_card: CardInstance, combat: CombatState
+) -> None:
+    # DrumOfBattle.cs AfterCardExhausted: when THIS card is exhausted, gain its
+    # Energy var (2, or 3 upgraded) per GeneratePlayCount (enchanted replay
+    # count + 1, modified by ModifyCardPlayCount hooks such as Echo Form).
+    if exhausted_card is not card:
+        return
+    from sts2_env.core.hooks import modify_card_play_count
+    from sts2_env.cards.enchantments import enchant_play_count_bonus
+
+    play_count = 1 + enchant_play_count_bonus(card)
+    play_count = modify_card_play_count(play_count, card, combat)
+    energy = card.effect_vars.get("energy", 2)
+    for _ in range(play_count):
+        combat.gain_energy(_owner(card, combat), energy)
 
 
 def make_drum_of_battle(upgraded: bool = False) -> CardInstance:
+    # DrumOfBattle.cs: CardsVar(2), EnergyVar(2); OnUpgrade: energy +1 (cards stay 2).
     return CardInstance(
         card_id=CardId.DRUM_OF_BATTLE_CARD,
-        cost=0,
-        card_type=CardType.POWER,
+        cost=1,
+        card_type=CardType.SKILL,
         target_type=TargetType.SELF,
         rarity=CardRarity.UNCOMMON,
-        effect_vars={"drum_of_battle_power": 1, "cards": 3 if upgraded else 2},
+        effect_vars={"cards": 2, "energy": 3 if upgraded else 2},
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -955,10 +1015,14 @@ def make_evil_eye(upgraded: bool = False) -> CardInstance:
 # --- Expect a Fight ---
 @register_effect(CardId.EXPECT_A_FIGHT)
 def expect_a_fight(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # ExpectAFight.cs OnPlay: gain energy equal to the CalculatedVar multiplier
+    # (count of Attack cards in hand), then apply NoEnergyGainPower(1) to the
+    # owner's own creature — no more energy gain this side's turn.
     owner = _owner(card, combat)
     state = combat.combat_player_state_for(owner)
     attack_count = sum(1 for c in state.hand if c.is_attack) if state is not None else 0
     combat.gain_energy(owner, attack_count)
+    combat.apply_power_to(owner, PowerId.NO_ENERGY_GAIN, 1)
 
 
 def make_expect_a_fight(upgraded: bool = False) -> CardInstance:
@@ -1022,9 +1086,11 @@ def make_fight_me(upgraded: bool = False) -> CardInstance:
         target_type=TargetType.ANY_ENEMY,
         rarity=CardRarity.UNCOMMON,
         base_damage=6 if upgraded else 5,
+        # FightMe.cs: DamageVar(5), RepeatVar(2), PowerVar<StrengthPower>(3), EnemyStrength 1;
+        # OnUpgrade: damage +1, Strength +1.
         effect_vars={
             "repeat": 2,
-            "strength": 3 if upgraded else 2,
+            "strength": 4 if upgraded else 3,
             "enemy_strength": 1,
         },
         upgraded=upgraded,
@@ -1071,6 +1137,7 @@ def make_forgotten_ritual(upgraded: bool = False) -> CardInstance:
         card_type=CardType.SKILL,
         target_type=TargetType.SELF,
         rarity=CardRarity.UNCOMMON,
+        keywords=frozenset({"exhaust"}),
         effect_vars={"energy": 4 if upgraded else 3},
         upgraded=upgraded,
         instance_id=_get_next_id(),
@@ -1116,7 +1183,8 @@ def make_hemokinesis(upgraded: bool = False) -> CardInstance:
         card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY,
         rarity=CardRarity.UNCOMMON,
-        base_damage=19 if upgraded else 14,
+        # Hemokinesis.cs: HpLossVar(2), DamageVar(15); OnUpgrade: damage +5.
+        base_damage=20 if upgraded else 15,
         effect_vars={"hp_loss": 2},
         upgraded=upgraded,
         instance_id=_get_next_id(),
@@ -1129,14 +1197,28 @@ def howl_from_beyond(card: CardInstance, combat: CombatState, target: Creature |
     _deal_damage_all_enemies(card, combat)
 
 
-@register_before_hand_draw_hook(CardId.HOWL_FROM_BEYOND)
-def howl_from_beyond_before_hand_draw(card: CardInstance, drawing_owner: Creature, combat: CombatState) -> None:
-    state = combat.combat_player_state_for(drawing_owner)
-    if getattr(card, "owner", None) is drawing_owner and state is not None and card in state.exhaust:
-        combat.auto_play_card(card)
+@register_after_auto_post_play_hook(CardId.HOWL_FROM_BEYOND)
+def howl_from_beyond_after_auto_post_play(
+    card: CardInstance, player: Creature, combat: CombatState
+) -> None:
+    # HowlFromBeyond.cs AfterAutoPostPlayPhaseEntered: at the start of the
+    # end-of-turn phase, when the card sits in the owner's exhaust pile, it
+    # replays itself via CardCmd.AutoPlay (full play pipeline).
+    if player is not _owner(card, combat):
+        return
+    state = combat.combat_player_state_for(player)
+    if state is None or card not in state.exhaust:
+        return
+    combat.auto_play_card(card)
 
 
 def make_howl_from_beyond(upgraded: bool = False) -> CardInstance:
+    # HowlFromBeyond.cs defines NO CanonicalKeywords (docs/CARDS_REFERENCE.md:
+    # "Keywords: None"); its ExtraHoverTips only advertise the Exhaust tooltip,
+    # and the card text is conditional — "At the end of your turn, if this is in
+    # your Exhaust Pile, play it." The card only reaches the exhaust pile when
+    # another effect exhausts it (e.g. an added Exhaust keyword); it does not
+    # exhaust on play by itself.
     return CardInstance(
         card_id=CardId.HOWL_FROM_BEYOND,
         cost=3,
@@ -1380,21 +1462,31 @@ def make_second_wind(upgraded: bool = False) -> CardInstance:
 def spite(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     assert target is not None
     owner = _owner(card, combat)
-    _deal_damage_to_target(card, combat, target)
-    draw = card.effect_vars.get("cards", 1)
-    if combat.has_unblocked_damage_received_this_turn(owner, side=CombatSide.PLAYER):
-        _draw_cards(combat, draw, owner)
+    # Spite.cs OnPlay: 1 hit normally; if the owner lost unblocked HP this turn
+    # (LostHpThisTurn), hit Repeat times instead (RepeatVar 2, upgraded 3). No draw.
+    repeat = card.effect_vars.get("repeat", 2)
+    hit_count = (
+        repeat
+        if combat.has_unblocked_damage_received_this_turn(owner, side=CombatSide.PLAYER)
+        else 1
+    )
+    for _ in range(hit_count):
+        if owner.is_dead or target.is_dead:
+            break
+        damage = calculate_damage(card.base_damage, owner, target, ValueProp.MOVE, combat)
+        apply_damage(target, damage, ValueProp.MOVE, combat, owner)
 
 
 def make_spite(upgraded: bool = False) -> CardInstance:
+    # Spite.cs: DamageVar(5), RepeatVar(2); OnUpgrade: repeat +1 (damage stays 5).
     return CardInstance(
         card_id=CardId.SPITE,
         cost=0,
         card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY,
         rarity=CardRarity.UNCOMMON,
-        base_damage=9 if upgraded else 6,
-        effect_vars={"cards": 1},
+        base_damage=5,
+        effect_vars={"repeat": 3 if upgraded else 2},
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -1521,7 +1613,9 @@ def make_unrelenting(upgraded: bool = False) -> CardInstance:
         card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY,
         rarity=CardRarity.UNCOMMON,
-        base_damage=18 if upgraded else 12,
+        # Unrelenting.cs: DamageVar(14); OnUpgrade: damage +6. Also applies
+        # FreeAttackPower(1) hardcoded in OnPlay.
+        base_damage=20 if upgraded else 14,
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -1715,7 +1809,7 @@ def make_colossus(upgraded: bool = False) -> CardInstance:
         cost=1,
         card_type=CardType.SKILL,
         target_type=TargetType.SELF,
-        rarity=CardRarity.RARE,
+        rarity=CardRarity.UNCOMMON,
         base_block=8 if upgraded else 5,
         effect_vars={"colossus": 1},
         upgraded=upgraded,
@@ -1726,30 +1820,28 @@ def make_colossus(upgraded: bool = False) -> CardInstance:
 # --- Conflagration ---
 @register_effect(CardId.CONFLAGRATION)
 def conflagration(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    calc_base = card.effect_vars.get("calc_base", 8)
-    extra = card.effect_vars.get("extra_damage", 2)
+    # Conflagration.cs OnPlay: attack ALL opponents for DamageVar(2) with hit
+    # count RepeatVar(4) (5 upgraded). Damage does not scale with attacks played.
     owner = _owner(card, combat)
-    attack_count = combat.count_card_plays_finished_this_turn(owner, card_type=CardType.ATTACK)
-    base = calc_base + extra * attack_count
-    if owner.is_dead:
-        return
-    for enemy in list(combat.hittable_enemies):
-        damage = calculate_damage(base, owner, enemy, ValueProp.MOVE, combat)
-        apply_damage(enemy, damage, ValueProp.MOVE, combat, owner)
+    repeat = card.effect_vars.get("repeat", 4)
+    for _ in range(repeat):
+        if owner.is_dead:
+            return
+        for enemy in list(combat.hittable_enemies):
+            damage = calculate_damage(card.base_damage, owner, enemy, ValueProp.MOVE, combat)
+            apply_damage(enemy, damage, ValueProp.MOVE, combat, owner)
 
 
 def make_conflagration(upgraded: bool = False) -> CardInstance:
+    # Conflagration.cs: DamageVar(2), RepeatVar(4); OnUpgrade: repeat +1.
     return CardInstance(
         card_id=CardId.CONFLAGRATION,
         cost=1,
         card_type=CardType.ATTACK,
         target_type=TargetType.ALL_ENEMIES,
         rarity=CardRarity.RARE,
-        base_damage=8,  # Dynamic
-        effect_vars={
-            "calc_base": 9 if upgraded else 8,
-            "extra_damage": 3 if upgraded else 2,
-        },
+        base_damage=2,
+        effect_vars={"repeat": 5 if upgraded else 4},
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -1936,7 +2028,7 @@ def make_impervious(upgraded: bool = False) -> CardInstance:
 # --- Juggernaut ---
 @register_effect(CardId.JUGGERNAUT_CARD)
 def juggernaut(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    amount = card.effect_vars.get("juggernaut_power", 5)
+    amount = card.effect_vars.get("juggernaut_power", 6)
     combat.apply_power_to(_owner(card, combat), PowerId.JUGGERNAUT, amount)
 
 
@@ -1947,7 +2039,8 @@ def make_juggernaut(upgraded: bool = False) -> CardInstance:
         card_type=CardType.POWER,
         target_type=TargetType.SELF,
         rarity=CardRarity.RARE,
-        effect_vars={"juggernaut_power": 7 if upgraded else 5},
+        # Juggernaut.cs: PowerVar<JuggernautPower>(6); OnUpgrade: +2.
+        effect_vars={"juggernaut_power": 8 if upgraded else 6},
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -2029,12 +2122,13 @@ def make_one_two_punch(upgraded: bool = False) -> CardInstance:
 # --- Pact's End ---
 @register_effect(CardId.PACTS_END)
 def pacts_end(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    _deal_damage_all_enemies(card, combat)
-
-
-@register_playability_hook(CardId.PACTS_END)
-def pacts_end_is_playable(card: CardInstance, owner_state, combat: CombatState, owner: Creature) -> bool:
-    return len(owner_state.exhaust) >= card.effect_vars["cards"]
+    # PactsEnd.cs: the card is always playable. OnPlay only deals damage when
+    # CanDealDamage holds (owner's exhaust pile size >= CardsVar(3)); with
+    # fewer exhausted cards playing it is legal but has no effect.
+    state = combat.combat_player_state_for(_owner(card, combat))
+    exhaust_size = len(state.exhaust) if state is not None else len(combat.exhaust_pile)
+    if exhaust_size >= card.effect_vars.get("cards", 3):
+        _deal_damage_all_enemies(card, combat)
 
 
 def make_pacts_end(upgraded: bool = False) -> CardInstance:
@@ -2097,20 +2191,44 @@ def make_pyre(upgraded: bool = False) -> CardInstance:
 # --- Stoke ---
 @register_effect(CardId.STOKE)
 def stoke(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
+    # Stoke.cs OnPlay: exhaust every card in hand, then generate one random card
+    # per exhausted card from the owner's character card pool into hand
+    # (CardFactory.GetForCombat: random with replacement); when upgraded,
+    # CardCmd.Upgrade upgrades every generated card.
+    from sts2_env.cards.factory import create_character_cards
+
+    owner = _owner(card, combat)
     count = len(combat.hand)
     for hand_card in list(combat.hand):
         combat.exhaust_card(hand_card)
-    _draw_cards(combat, count)
+    if count <= 0 or combat.is_over:
+        return
+    state = combat.combat_player_state_for(owner)
+    if state is None:
+        return
+    generated = create_character_cards(
+        state.character_id,
+        combat.combat_card_generation_rng,
+        count,
+        distinct=False,
+        generation_context="combat",
+        is_multiplayer=combat.is_multiplayer,
+    )
+    if card.upgraded:
+        for generated_card in generated:
+            combat.upgrade_card(generated_card)
+    for generated_card in generated:
+        combat.add_generated_card_to_creature_hand(owner, generated_card)
 
 
 def make_stoke(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.STOKE,
-        cost=0 if upgraded else 1,
+        cost=1,
         card_type=CardType.SKILL,
         target_type=TargetType.SELF,
         rarity=CardRarity.RARE,
-        keywords=frozenset({"exhaust"}),
+        keywords=frozenset(),
         upgraded=upgraded,
         instance_id=_get_next_id(),
     )
@@ -2229,11 +2347,12 @@ def break_card(card: CardInstance, combat: CombatState, target: Creature | None)
 def make_break(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.BREAK,
-        cost=2,
+        cost=1,
         card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY,
         rarity=CardRarity.ANCIENT,
-        base_damage=25 if upgraded else 20,
+        # Break.cs: DamageVar(20), PowerVar<VulnerablePower>(5); OnUpgrade: damage +10, vulnerable +2.
+        base_damage=30 if upgraded else 20,
         effect_vars={"vulnerable": 7 if upgraded else 5},
         upgraded=upgraded,
         instance_id=_get_next_id(),
@@ -2361,6 +2480,7 @@ IRONCLAD_CARD_POOL = {
         make_impervious,
         make_juggernaut,
         make_mangle,
+        make_not_yet,
         make_offering,
         make_one_two_punch,
         make_pacts_end,

@@ -25,6 +25,20 @@ class _NoShuffleRng:
         raise AssertionError("Reave should not use random draw-pile insertion")
 
 
+class _NextIntStubRng:
+    """Shuffle RNG stub returning a fixed insert index for CardPilePosition.Random."""
+
+    def __init__(self, insert_index: int) -> None:
+        self.insert_index = insert_index
+
+    def next_int(self, low: int, high: int) -> int:
+        assert low == 0
+        return min(self.insert_index, max(low, high - 1))
+
+    def shuffle(self, seq) -> None:
+        seq.reverse()
+
+
 class _ReverseShuffleRng:
     def __init__(self) -> None:
         self.shuffle_lengths: list[int] = []
@@ -94,7 +108,9 @@ class TestNecrobinderSoulAndDoomParity:
         assert extra_enemy.get_power_amount(PowerId.DOOM) == 29
 
     def test_glimpse_beyond_adds_souls_to_each_alive_teammate_draw_pile(self):
-        """Matches GlimpseBeyond.cs: generate Soul cards into every alive teammate draw pile."""
+        """Matches GlimpseBeyond.cs: generate Soul cards into every alive
+        teammate draw pile — GetTeammatesOf (CombatState.cs:397) includes the
+        caster, so the owner also receives Souls (GlimpseBeyond.cs:32-38)."""
         combat = _make_combat()
         ally_state = PlayerState(player_id=2, character_id="Necrobinder", max_hp=45, current_hp=45)
         ally = combat.add_ally_player(ally_state)
@@ -112,25 +128,28 @@ class TestNecrobinderSoulAndDoomParity:
         owner_souls = [card for card in combat.draw_pile if card.card_id == CardId.SOUL]
         assert len(ally_combat_state.draw) == ally_start + 4
         assert len(ally_souls) == 4
-        assert len(combat.draw_pile) == owner_start
-        assert len(owner_souls) == 0
+        assert len(combat.draw_pile) == owner_start + 4
+        assert len(owner_souls) == 4
 
-    def test_reave_adds_generated_soul_to_bottom_of_draw_pile(self):
-        """Matches Reave.cs: AddGeneratedCardsToCombat uses the default bottom position."""
+    def test_reave_shuffles_soul_into_random_draw_pile_position(self):
+        """Matches Reave.cs OnPlay: CardPileCmd.AddGeneratedCardsToCombat(
+        souls, PileType.Draw, base.Owner, CardPilePosition.Random) — the Soul
+        is inserted at a random draw-pile position, not pinned to the bottom
+        (Reave.cs:42-43)."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         combat.draw_pile = _with_owner([make_strike_ironclad(), make_defend_ironclad()], combat.player)
         combat.hand = [make_reave()]
         combat.hand[0].owner = combat.player
         combat.energy = 1
-        combat.rng = _NoShuffleRng()
+        combat.rng = _NextIntStubRng(insert_index=1)
 
         assert combat.play_card(0, 0)
 
         assert [card.card_id for card in combat.draw_pile] == [
             CardId.STRIKE_IRONCLAD,
-            CardId.DEFEND_IRONCLAD,
             CardId.SOUL,
+            CardId.DEFEND_IRONCLAD,
         ]
         assert enemy.current_hp < enemy.max_hp
 

@@ -3,6 +3,7 @@
 import sts2_env.powers  # noqa: F401
 
 from sts2_env.cards.base import CardInstance
+from sts2_env.cards.status import make_decay, make_slimed
 from sts2_env.cards.colorless import (
     make_anointed,
     make_automation,
@@ -74,7 +75,9 @@ def _make_combat() -> CombatState:
 
 class TestColorlessCardEffectsReferenceParity:
     def test_anointed_moves_only_rare_draw_pile_cards_to_hand_and_exhausts(self):
-        """Matches Anointed.cs: move all Rare draw-pile cards to hand."""
+        """Matches Anointed.cs OnPlay (lines 22-24): count = MaxCardsInHand -
+        hand size; that many RANDOM rare draw-pile cards (TakeRandom, no
+        replacement) fill the hand's free slots."""
         combat = _make_combat()
         rare = CardInstance(
             card_id=CardId.ALCHEMIZE,
@@ -93,6 +96,32 @@ class TestColorlessCardEffectsReferenceParity:
         assert rare in combat.hand
         assert common in combat.draw_pile
         assert any(card.card_id == CardId.ANOINTED for card in combat.exhaust_pile)
+
+    def test_anointed_only_fills_free_hand_slots(self):
+        """Anointed.cs: `MaxCardsInHand - hand.Count` bounds the move — when the
+        hand already has MaxHandSize-1 free slot, exactly one rare moves."""
+        from sts2_env.core.constants import MAX_HAND_SIZE
+
+        combat = _make_combat()
+        rares = [
+            CardInstance(
+                card_id=CardId.ALCHEMIZE,
+                cost=1,
+                card_type=CardType.SKILL,
+                target_type=TargetType.SELF,
+                rarity=CardRarity.RARE,
+            )
+            for _ in range(3)
+        ]
+        filler = [make_strike_ironclad() for _ in range(MAX_HAND_SIZE - 2)]
+        combat.hand = [make_anointed(), *filler]
+        combat.draw_pile = list(rares)
+        combat.energy = 1
+
+        assert combat.play_card(0)
+        # One free slot after the play (Anointed exhausts), so only one rare moves.
+        assert len(combat.hand) == MAX_HAND_SIZE - 1
+        assert sum(1 for c in combat.draw_pile if c.rarity == CardRarity.RARE) == 2
 
     def test_anointed_plus_adds_retain(self):
         """Matches Anointed.cs: upgraded Anointed adds Retain."""
@@ -201,7 +230,9 @@ class TestColorlessCardEffectsReferenceParity:
 
         assert combat.play_card(0)
 
-        assert combat.player.get_power_amount(PowerId.PLATING) == 7
+        # EternalArmor.cs:20 defines PowerVar<PlatingPower>(9m) (OnUpgrade at
+        # lines 32-35 adds 3 -> 12); v0.107.1 rebalanced the old value of 7.
+        assert combat.player.get_power_amount(PowerId.PLATING) == 9
 
     def test_jackpot_deals_damage_and_adds_three_zero_cost_cards(self):
         combat = _make_combat()
@@ -342,8 +373,11 @@ class TestColorlessCardEffectsReferenceParity:
         assert combat.hand == drawn
         assert combat.draw_pile == []
 
-    def test_huddle_up_draws_for_living_player_teammates_only(self):
-        """Matches HuddleUp.cs: each living player teammate draws cards."""
+    def test_huddle_up_draws_for_owner_and_living_player_teammates(self):
+        """Matches HuddleUp.cs OnPlay (lines 26-34): each living player teammate
+        draws Cards(3 upgraded). CombatState.GetTeammatesOf (CombatState.cs:397)
+        "includes the creature itself", so the caster draws too; dead allies
+        (filtered by c.IsAlive) draw nothing."""
         combat = _make_combat()
         living_ally = combat.add_ally_player(
             PlayerState(player_id=2, character_id="Ironclad", max_hp=60, current_hp=60)
@@ -370,7 +404,9 @@ class TestColorlessCardEffectsReferenceParity:
         assert living_state.draw == []
         assert dead_state.hand == []
         assert dead_state.draw == dead_draw
-        assert combat.hand == []
+        # The caster is its own teammate (C# GetTeammatesOf includes the
+        # creature itself), so the primary player draws 3 upgraded cards too.
+        assert len(combat.hand) == 3
 
     def test_intercept_grants_block_and_covered_to_target_ally(self):
         combat = _make_combat()
@@ -400,7 +436,7 @@ class TestColorlessCardEffectsReferenceParity:
         combat.deal_damage(enemy, combat.primary_player, 10, ValueProp.MOVE)
         assert combat.primary_player.current_hp == hp_before
 
-    def test_production_base_exhausts_and_upgrade_does_not(self):
+    def test_production_base_and_upgraded_both_exhaust(self):
         combat = _make_combat()
         base = make_production()
         upgraded = make_production(upgraded=True)
@@ -411,9 +447,13 @@ class TestColorlessCardEffectsReferenceParity:
         assert combat.energy == 2
         assert any(card.card_id == base.card_id for card in combat.exhaust_pile)
 
+        # Production.cs keeps Exhaust on upgrade: CanonicalKeywords is
+        # [CardKeyword.Exhaust] and OnUpgrade (lines 29-32) only bumps Energy
+        # by 1 (EnergyVar(2) -> 3); the old premise that the upgrade removed
+        # Exhaust no longer holds in v0.107.1.
         assert combat.play_card(0)
-        assert combat.energy == 4
-        assert any(card.card_id == upgraded.card_id for card in combat.discard_pile)
+        assert combat.energy == 5
+        assert any(card.card_id == upgraded.card_id for card in combat.exhaust_pile)
 
     def test_prolong_carries_current_block_to_next_player_turn(self):
         combat = _make_combat()
@@ -465,7 +505,12 @@ class TestColorlessCardEffectsReferenceParity:
         assert combat.play_card(0, 0)
         assert enemy.current_hp == 182
 
-    def test_gold_axe_scales_with_finished_owner_card_plays_only(self):
+    def test_gold_axe_scales_with_all_players_finished_card_plays(self):
+        # GoldAxe.cs CanonicalVars (lines 20-21): the multiplier is
+        # CombatManager.Instance.History.CardPlaysFinished.Count() — the
+        # combat-wide history covering every player's finished plays, so the
+        # ally's strike counts too (multiplayer semantics; single-player
+        # behavior is unchanged because the only player is the owner).
         combat = _make_combat()
         enemy = combat.enemies[0]
         enemy.max_hp = 100
@@ -490,8 +535,11 @@ class TestColorlessCardEffectsReferenceParity:
         assert combat.play_card_from_creature(ally, 0, 0)
         before_gold_axe = enemy.current_hp
 
+        # 2 owner strikes + 1 ally strike finished before Gold Axe resolves;
+        # Gold Axe's own in-flight play is not yet in History (C# appends
+        # CardPlayFinishedEntry after the effect resolves).
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == before_gold_axe - 2
+        assert enemy.current_hp == before_gold_axe - 3
         assert make_gold_axe(upgraded=True).is_retain
 
     def test_fisticuffs_block_uses_normal_block_modifiers(self):
@@ -705,3 +753,70 @@ class TestColorlessCardEffectsReferenceParity:
         assert make_scrawl(upgraded=True).is_retain
         assert combat.hand == [*kept, drawn[0], drawn[1]]
         assert combat.draw_pile == [drawn[2]]
+
+
+def test_hidden_gem_grants_replay_to_eligible_draw_pile_card():
+    """HiddenGem.cs OnPlay (lines 35-45): pick a random draw-pile card that is
+    not Unplayable, not Curse/Quest (CardType 5/6), and has
+    GetEnchantedReplayCount() < 1; grant it BaseReplayCount += Replay(2)."""
+    combat = _make_combat()
+    strike = make_strike_ironclad()
+    decay = make_decay()
+    combat.hand = [make_hidden_gem()]
+    combat.draw_pile = [decay, strike]
+    combat.energy = 1
+
+    assert combat.play_card(0)
+
+    # Curse (CardType.CURSE) is filtered out; the strike is the only eligible
+    # candidate and receives +2 base replay.
+    assert strike.base_replay_count == 2
+    assert decay.base_replay_count == 0
+
+
+def test_hidden_gem_prefers_attack_skill_power_over_other_types():
+    """HiddenGem.cs lines 40-43: cards of CardType 1-3 (Attack/Skill/Power) are
+    preferred; Status/others only serve as fallback when no preferred card
+    exists."""
+    combat = _make_combat()
+    strike = make_strike_ironclad()
+    slimed = make_slimed()
+    combat.hand = [make_hidden_gem()]
+    combat.draw_pile = [slimed, strike]
+    combat.energy = 1
+
+    assert combat.play_card(0)
+
+    assert strike.base_replay_count == 2
+    assert slimed.base_replay_count == 0
+
+
+def test_hidden_gem_skips_cards_that_already_have_replay():
+    """HiddenGem.cs filter `GetEnchantedReplayCount() < 1`: cards already
+    carrying replay (>= 1) are ineligible; with no other candidates the play
+    is a no-op."""
+    combat = _make_combat()
+    strike = make_strike_ironclad()
+    strike.base_replay_count = 1
+    decay = make_decay()
+    combat.hand = [make_hidden_gem()]
+    combat.draw_pile = [strike, decay]
+    combat.energy = 1
+
+    assert combat.play_card(0)
+
+    assert strike.base_replay_count == 1
+    assert decay.base_replay_count == 0
+
+
+def test_hidden_gem_upgraded_grants_three_replay():
+    """HiddenGem.cs OnUpgrade: Replay.UpgradeValueBy(1) -> 3 when upgraded."""
+    combat = _make_combat()
+    strike = make_strike_ironclad()
+    combat.hand = [make_hidden_gem(upgraded=True)]
+    combat.draw_pile = [strike]
+    combat.energy = 1
+
+    assert combat.play_card(0)
+
+    assert strike.base_replay_count == 3

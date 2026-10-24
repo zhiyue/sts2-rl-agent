@@ -75,8 +75,10 @@ def test_card_generation_filters_multiplayer_constraints_like_reference():
 
     assert CardId.BELIEVE_IN_YOU not in singleplayer_colorless
     assert CardId.BELIEVE_IN_YOU in multiplayer_colorless
+    # Stratagem.cs declares no MultiplayerConstraint override; CardModel.cs:295 defaults
+    # to CardMultiplayerConstraint.None, so it is eligible in multiplayer too.
     assert CardId.STRATAGEM in singleplayer_colorless
-    assert CardId.STRATAGEM not in multiplayer_colorless
+    assert CardId.STRATAGEM in multiplayer_colorless
     assert CardId.WELL_LAID_PLANS in singleplayer_silent
     assert CardId.WELL_LAID_PLANS not in multiplayer_silent
 

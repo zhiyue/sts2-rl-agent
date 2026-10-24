@@ -10,6 +10,7 @@ from sts2_env.cards.defect import (
     make_focused_strike,
     make_hotfix,
     make_loop,
+    make_multi_cast,
     make_scrape,
     make_storm,
     make_strike_defect,
@@ -92,8 +93,11 @@ class TestDefectOrbEnergyFocusParity:
         assert len(combat.orb_queue.orbs) == 1
         assert combat.orb_queue.orbs[0].orb_type == OrbType.LIGHTNING
 
-    def test_scrape_discards_drawn_star_cost_and_star_x_cards(self):
-        """Matches Scrape.cs: drawn star-cost and star-X cards are discarded."""
+    def test_scrape_discards_only_nonzero_energy_cost_or_costs_x_cards(self):
+        """Matches Scrape.cs: drawn cards are discarded when
+        c.EnergyCost.GetWithModifiers(CostModifiers.Local) != 0 ||
+        c.EnergyCost.CostsX. Star costs are StarCost, not EnergyCost, so
+        0-energy-cost star and star-X cards stay in hand (Scrape.cs:25-28)."""
         combat = _make_combat()
         zero_cost = make_strike_defect()
         zero_cost.cost = 0
@@ -102,14 +106,19 @@ class TestDefectOrbEnergyFocusParity:
         star_cost.star_cost = 1
         star_x = make_stardust()
         assert star_x.has_star_cost_x is True
+        assert star_x.cost == 0
+        energy_x = make_multi_cast()
+        assert energy_x.has_energy_cost_x is True
         combat.hand = [make_scrape()]
-        combat.draw_pile = [zero_cost, star_cost, star_x]
+        # Scrape draws 4 cards (Scrape.cs CardsVar(4)).
+        combat.draw_pile = [zero_cost, star_cost, star_x, energy_x]
         combat.energy = 1
 
         assert combat.play_card(0, 0)
         assert zero_cost in combat.hand
-        assert star_cost in combat.discard_pile
-        assert star_x in combat.discard_pile
+        assert star_cost in combat.hand
+        assert star_x in combat.hand
+        assert energy_x in combat.discard_pile
 
     def test_scrape_does_not_discard_existing_hand_cards_after_damage_ends_combat(self):
         combat = _make_combat()

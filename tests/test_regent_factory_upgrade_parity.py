@@ -68,6 +68,14 @@ def _regent_card_id(card_id: CardId) -> str:
     return card_id.name
 
 
+# CARDS_REFERENCE.md records these vars as "dynamic", so create_reference_card cannot
+# derive them; the factories carry the canonical values from the decompiled C# instead
+# (Glitterstream.cs:22: BlockVar("BlockNextTurn", 5), OnUpgrade +2 at Glitterstream.cs:43).
+REFERENCE_DYNAMIC_VAR_EXPECTED_OVERRIDES: dict[tuple[CardId, str], int] = {
+    (CardId.GLITTERSTREAM, "block_next_turn"): 7,
+}
+
+
 @pytest.mark.parametrize("card_id", REGENT_FACTORY_UPGRADE_CARD_IDS, ids=_regent_card_id)
 def test_regent_factory_upgrade_core_metadata_matches_reference(card_id: CardId):
     actual = create_card(card_id, upgraded=True)
@@ -90,6 +98,9 @@ def test_regent_factory_upgrade_dynamic_values_match_reference(card_id: CardId):
     expected = create_reference_card(card_id, upgraded=True, allow_generation=True)
 
     for key, expected_value in expected.effect_vars.items():
+        expected_value = REFERENCE_DYNAMIC_VAR_EXPECTED_OVERRIDES.get(
+            (card_id, key), expected_value
+        )
         actual_value = actual.effect_vars.get(key)
         if key in {"damage", "calc_base"} and actual_value is None:
             assert actual.base_damage == expected_value

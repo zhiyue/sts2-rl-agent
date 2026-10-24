@@ -43,11 +43,14 @@ class TestRegentStarCostVoidFormForgeParity:
         assert combat.can_play_card(card) is True
         assert combat.play_card(0)
         assert combat.stars == 0
-        assert enemy_a.current_hp == 86
-        assert enemy_b.current_hp == 86
+        # C# AstralPulse.cs:24-28: Damage 6 with hit count 2 => 12 total damage.
+        assert enemy_a.current_hp == 88
+        assert enemy_b.current_hp == 88
 
-    def test_guiding_star_spends_star_cost_and_applies_draw_next_turn(self):
-        """Matches GuidingStar.cs: StarCost 2, damage target, apply DrawCardsNextTurn."""
+    def test_guiding_star_spends_star_cost_and_draws_immediately(self):
+        """Matches GuidingStar.cs: StarCost 2, damage target, then
+        CardPileCmd.Draw(Cards.BaseValue) — an immediate draw of 2 (upgraded 3),
+        not a DrawCardsNextTurn power (GuidingStar.cs:49)."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         enemy.current_hp = enemy.max_hp = 100
@@ -58,21 +61,24 @@ class TestRegentStarCostVoidFormForgeParity:
         assert card.star_cost == 2
         assert combat.can_play_card(card) is False
         combat.gain_stars(combat.player, 2)
+        draw_before = combat.count_cards_drawn_this_combat(combat.player)
         assert combat.play_card(0, 0)
         assert combat.stars == 0
         assert enemy.current_hp == 87
-        assert combat.player.get_power_amount(PowerId.DRAW_CARDS_NEXT_TURN) == 3
+        assert combat.count_cards_drawn_this_combat(combat.player) == draw_before + 3
+        assert combat.player.get_power_amount(PowerId.DRAW_CARDS_NEXT_TURN) == 0
 
     def test_alignment_spends_stars_and_grants_energy(self):
-        """Matches Alignment.cs: StarCost 2 and gain upgraded Energy."""
+        """Matches Alignment.cs (v0.107.1): CanonicalStarCost 3, EnergyVar(2),
+        OnUpgrade Energy.UpgradeValueBy(1) -> upgraded grants 3 energy."""
         combat = _make_combat()
         card = create_card(CardId.ALIGNMENT, upgraded=True)
         combat.hand = [card]
         combat.energy = 0
 
-        assert card.star_cost == 2
+        assert card.star_cost == 3
         assert combat.can_play_card(card) is False
-        combat.gain_stars(combat.player, 2)
+        combat.gain_stars(combat.player, 3)
         assert combat.play_card(0)
         assert combat.stars == 0
         assert combat.energy == 3

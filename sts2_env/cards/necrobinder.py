@@ -240,8 +240,11 @@ def grave_warden(card: CardInstance, combat: CombatState, target: Creature | Non
 
     owner = _owner(card, combat)
     _gain_block(card, combat)
+    # GraveWarden.cs OnPlay: Soul.Create(base.Owner, Cards, combatState) — plain
+    # Souls; OnUpgrade only bumps the block var by 3, it does not upgrade the
+    # generated Souls.
     for _ in range(max(0, card.effect_vars.get("cards", 1))):
-        soul = make_soul(upgraded=card.upgraded)
+        soul = make_soul()
         soul.owner = owner
         insert_at = combat.shuffle_rng.next_int(0, len(combat.draw_pile))
         combat.draw_pile.insert(insert_at, soul)
@@ -302,11 +305,15 @@ def reave(card: CardInstance, combat: CombatState, target: Creature | None) -> N
 
     assert target is not None
     _deal_damage_single(card, combat, target)
+    # Reave.cs OnPlay: CardPileCmd.AddGeneratedCardsToCombat(souls, PileType.Draw,
+    # base.Owner, CardPilePosition.Random) — Souls shuffle into the draw pile at
+    # random positions. (Reave.cs:38-43 additionally upgrades the Souls when
+    # Reave itself is upgraded, matching make_soul(upgraded=...).)
     for _ in range(max(0, card.effect_vars.get("cards", 1))):
         combat.add_generated_card_to_creature_draw_pile(
             _owner(card, combat),
             make_soul(upgraded=card.upgraded),
-            bottom_position=True,
+            random_position=True,
         )
 
 
@@ -342,9 +349,29 @@ def sculpting_strike(card: CardInstance, combat: CombatState, target: Creature |
 
 @register_effect(CardId.SNAP)
 def snap(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    """OstyAttack — select card from hand."""
+    """OstyAttack — Osty attacks, then one non-Retain hand card gains Retain.
+
+    Snap.cs OnPlay: the Osty DamageCmd only runs when Osty is present
+    (Osty.CheckMissingWithAnim), but the CardSelectCmd.FromHand +
+    CardCmd.ApplyKeyword(CardKeyword.Retain) runs unconditionally.
+    """
     assert target is not None
     _deal_osty_damage_single(card, combat, target, 7)
+    candidates = [c for c in combat.hand if not c.is_retain]
+    if not candidates:
+        return
+
+    def _resolver(selected: CardInstance | None) -> None:
+        if selected is None:
+            return
+        selected.keywords = frozenset(set(selected.keywords) | {"retain"})
+
+    combat.request_card_choice(
+        prompt="Choose a hand card to gain Retain",
+        cards=candidates,
+        source_pile="hand",
+        resolver=_resolver,
+    )
 
 
 @register_effect(CardId.SOW)
@@ -375,10 +402,21 @@ def bone_shards(card: CardInstance, combat: CombatState, target: Creature | None
 
 @register_effect(CardId.BORROWED_TIME)
 def borrowed_time(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    doom = card.effect_vars.get("doom", 3)
-    combat.apply_power_to(_owner(card, combat), PowerId.DOOM, doom)
-    energy = card.effect_vars.get("energy", 1)
-    combat.gain_energy(_owner(card, combat), energy)
+    """C# BorrowedTime.cs OnPlay: PlayerCmd.GainEnergy(Energy), then
+    PowerCmd.Apply<BorrowedTimePower>(ExtraCost, target=Owner.Creature, source=this).
+    BorrowedTimePower.TryModifyEnergyCostInCombat raises the energy cost of every
+    card the owner plays by Amount while active (cards drawn or generated later
+    included), and AfterSideTurnEnd removes the power at the end of the owner's
+    side turn. No Doom. PowerId.BORROWED_TIME is pending in enums.py, so the
+    power registers under the stable BORROWED_TIME_POWER_ID fallback key."""
+    owner = _owner(card, combat)
+    combat.gain_energy(owner, card.effect_vars.get("energy", 4))
+    extra_cost = card.effect_vars.get("extra_cost", 1)
+    if extra_cost <= 0:
+        return
+    from sts2_env.powers.card_play_effects import BORROWED_TIME_POWER_ID
+
+    owner.apply_power(BORROWED_TIME_POWER_ID, extra_cost, source=card)
 
 
 @register_effect(CardId.BURY)
@@ -644,18 +682,55 @@ def putrefy(card: CardInstance, combat: CombatState, target: Creature | None) ->
     combat.apply_power_to(target, PowerId.VULNERABLE, amount)
 
 
+def _record_osty_attack_count(card: CardInstance, attack: object, combat: CombatState) -> None:
+    """Track Osty attack commands per (round, side) for Rattle.
+
+    C# counts history entries: CombatHistory.CreatureAttacked adds one
+    CreatureAttackedEntry per AttackCommand (CombatHistory.cs:73-76,
+    AttackCommand.cs:655) carrying every hit of that command. The engine's
+    analogue of one AttackCommand is one AttackContext, so this hook counts
+    contexts instead of individual damage events.
+    """
+    attacker = getattr(attack, "attacker", None)
+    if attacker is None or not getattr(attacker, "is_osty", False):
+        return
+    if getattr(attacker, "pet_owner", None) is not _owner(card, combat):
+        return
+    counts = getattr(combat, "_osty_attack_command_counts", None)
+    if counts is None:
+        counts = {}
+        combat._osty_attack_command_counts = counts
+    key = (combat.round_number, combat.current_side)
+    counts[key] = counts.get(key, 0) + 1
+
+
+@register_after_attack_hook(CardId.RATTLE)
+def rattle_record_osty_attack(card: CardInstance, attack: object, combat: CombatState) -> None:
+    _record_osty_attack_count(card, attack, combat)
+
+
 @register_effect(CardId.RATTLE)
 def rattle(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    """OstyAttack — deal damage multiple times based on Osty's prior hits this turn."""
+    """OstyAttack — hits = 1 + Osty attack commands this turn.
+
+    Rattle.cs CalculatedVar multiplier: 1 + CreatureAttackedEntry count where
+    e.Actor == card.Owner.Osty and e.HappenedThisTurn (same round + side) —
+    one entry per attack command, not per damage hit. Rattle's own attack is
+    dealt as a single AttackContext (mirroring DamageCmd.WithHitCount), so it
+    adds exactly one entry like C#.
+    """
     osty = _osty(card, combat)
     if osty is None or not osty.is_alive:
         return
     assert target is not None
-    hits = 1 + combat.count_powered_hits_by_dealer_this_turn(osty)
-    for _ in range(hits):
-        if osty.is_dead or target.is_dead:
-            break
-        combat.deal_damage(osty, target, _osty_damage(card, 7), ValueProp.MOVE)
+    counts = getattr(combat, "_osty_attack_command_counts", {})
+    prior_attacks = counts.get((combat.round_number, combat.current_side), 0)
+    with combat.attack_context(osty, target, ValueProp.MOVE):
+        for _ in range(1 + prior_attacks):
+            if osty.is_dead or target.is_dead:
+                break
+            damage = calculate_damage(_osty_damage(card, 7), osty, target, ValueProp.MOVE, combat)
+            apply_damage(target, damage, ValueProp.MOVE, combat, osty)
 
 
 @register_effect(CardId.RIGHT_HAND_HAND)
@@ -701,14 +776,18 @@ def shroud(card: CardInstance, combat: CombatState, target: Creature | None) -> 
 
 @register_effect(CardId.SIC_EM)
 def sic_em(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
-    """OstyAttack — apply SicEm debuff."""
-    osty = _osty(card, combat)
-    if osty is None or not osty.is_alive:
-        return
+    """OstyAttack — apply SicEm debuff.
+
+    SicEm.cs OnPlay: the Osty DamageCmd is gated on Osty.CheckMissingWithAnim,
+    but PowerCmd.Apply<SicEmPower> runs unconditionally — with no Osty the
+    target still gets 3 (upgraded 4) stacks.
+    """
     assert target is not None
     owner = _owner(card, combat)
-    _deal_osty_damage_single(card, combat, target, 5)
-    amount = card.effect_vars.get("sic_em", 2)
+    osty = _osty(card, combat)
+    if osty is not None and osty.is_alive:
+        combat.deal_damage(osty, target, _osty_damage(card, 5), ValueProp.MOVE)
+    amount = card.effect_vars.get("sic_em", 3)
     combat.apply_power_to(target, PowerId.SIC_EM, amount, applier=owner, source=card)
 
 
@@ -737,6 +816,18 @@ def veilpiercer(card: CardInstance, combat: CombatState, target: Creature | None
 # ---------------------------------------------------------------------------
 # Rare cards (26)
 # ---------------------------------------------------------------------------
+
+def make_banshees_cry(upgraded: bool = False) -> CardInstance:
+    """C# BansheesCry: cost 9, Attack, Rare, AllEnemies, DamageVar(33, Move);
+    OnUpgrade: EnergyCost.UpgradeBy(-2)."""
+    return CardInstance(
+        card_id=CardId.BANSHEES_CRY, cost=7 if upgraded else 9,
+        card_type=CardType.ATTACK, target_type=TargetType.ALL_ENEMIES,
+        rarity=CardRarity.RARE, base_damage=33,
+        effect_vars={"energy": 2}, upgraded=upgraded,
+        instance_id=_get_next_id(),
+    )
+
 
 @register_effect(CardId.BANSHEES_CRY)
 def banshees_cry(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
@@ -827,7 +918,14 @@ def eradicate(card: CardInstance, combat: CombatState, target: Creature | None) 
 def glimpse_beyond(card: CardInstance, combat: CombatState, target: Creature | None) -> None:
     from sts2_env.cards.status import make_soul
 
-    for ally in combat.get_player_allies_of(_owner(card, combat)):
+    # GlimpseBeyond.cs OnPlay: for c in CombatState.GetTeammatesOf(Owner.Creature)
+    # where c.IsAlive && c.IsPlayer — GetTeammatesOf (CombatState.cs:397) returns
+    # the whole side, so in single-player the caster shuffles 3 (upgraded 4)
+    # Souls into their own draw pile.
+    owner = _owner(card, combat)
+    for ally in [owner] + combat.get_player_allies_of(owner):
+        if not getattr(ally, "is_alive", True):
+            continue
         for _ in range(max(0, card.effect_vars.get("cards", 3))):
             soul = make_soul()
             combat.add_generated_card_to_creature_draw_pile(ally, soul, random_position=True)
@@ -917,7 +1015,11 @@ def sacrifice(card: CardInstance, combat: CombatState, target: Creature | None) 
     osty = combat.get_osty(owner)
     if osty is None or not osty.is_alive:
         return
-    block_gain = osty.max_hp * 2
+    # C# Sacrifice.cs: CalculatedBlockVar.WithMultiplier(Osty.MaxHp * 2) with
+    # CalculationBaseVar(0) / CalculationExtraVar(1): block = base + extra * (MaxHp * 2).
+    calc_base = card.effect_vars.get("calc_base", 0)
+    calc_extra = card.effect_vars.get("calc_extra", 1)
+    block_gain = calc_base + calc_extra * osty.max_hp * 2
     combat.kill_osty(_owner(card, combat))
     _gain_resolved_block(owner, block_gain, combat)
 
@@ -932,7 +1034,10 @@ def seance(card: CardInstance, combat: CombatState, target: Creature | None) -> 
 
     def _resolver(selected_cards: list[CardInstance]) -> None:
         for selected in selected_cards:
-            transformed = make_soul(upgraded=card.upgraded)
+            # Seance.cs OnPlay: CardCmd.TransformTo<Soul>(item) — plain Souls;
+            # OnUpgrade only reduces the energy cost, it does not upgrade the
+            # transformed Soul.
+            transformed = make_soul()
             combat.transform_card(selected, transformed)
 
     combat.request_multi_card_choice(
@@ -1145,14 +1250,14 @@ def make_defile(upgraded: bool = False) -> CardInstance:
 
 
 def make_defy(upgraded: bool = False) -> CardInstance:
-    blk = 7 if upgraded else 6
-    weak = 2 if upgraded else 1
+    # C# Defy.cs: BlockVar(6), PowerVar<WeakPower>(1); OnUpgrade: Block +3 only.
+    blk = 9 if upgraded else 6
     return CardInstance(
         card_id=CardId.DEFY, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
         base_block=blk, upgraded=upgraded,
         keywords=frozenset({"ethereal"}),
-        effect_vars={"weak": weak}, instance_id=_get_next_id(),
+        effect_vars={"weak": 1}, instance_id=_get_next_id(),
     )
 
 
@@ -1189,10 +1294,11 @@ def make_flatten(upgraded: bool = False) -> CardInstance:
 
 
 def make_grave_warden(upgraded: bool = False) -> CardInstance:
+    # C# GraveWarden.cs: BlockVar(8), CardsVar(1); OnUpgrade: Block.UpgradeValueBy(3m).
     return CardInstance(
         card_id=CardId.GRAVE_WARDEN, cost=1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.COMMON,
-        base_block=10 if upgraded else 8, upgraded=upgraded,
+        base_block=11 if upgraded else 8, upgraded=upgraded,
         effect_vars={"cards": 1}, instance_id=_get_next_id(),
     )
 
@@ -1276,10 +1382,11 @@ def make_scourge(upgraded: bool = False) -> CardInstance:
 
 
 def make_sculpting_strike(upgraded: bool = False) -> CardInstance:
+    # C# SculptingStrike.cs: DamageVar(9, Move); OnUpgrade: Damage.UpgradeValueBy(3m).
     return CardInstance(
         card_id=CardId.SCULPTING_STRIKE, cost=1, card_type=CardType.ATTACK,
         target_type=TargetType.ANY_ENEMY, rarity=CardRarity.COMMON,
-        base_damage=11 if upgraded else 8, upgraded=upgraded,
+        base_damage=12 if upgraded else 9, upgraded=upgraded,
         instance_id=_get_next_id(),
     )
 
@@ -1316,7 +1423,7 @@ def make_wisp(upgraded: bool = False) -> CardInstance:
 def make_seance(upgraded: bool = False) -> CardInstance:
     kw = frozenset({"ethereal"})
     return CardInstance(
-        card_id=CardId.SEANCE, cost=0, card_type=CardType.SKILL,
+        card_id=CardId.SEANCE, cost=0 if upgraded else 1, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.RARE,
         upgraded=upgraded, keywords=kw,
         effect_vars={"cards": 1},
@@ -1359,6 +1466,7 @@ def make_dirge(upgraded: bool = False) -> CardInstance:
     return CardInstance(
         card_id=CardId.DIRGE, cost=0, card_type=CardType.SKILL,
         target_type=TargetType.SELF, rarity=CardRarity.UNCOMMON,
+        keywords=frozenset({"exhaust"}),
         upgraded=upgraded, has_energy_cost_x=True,
         effect_vars={"summon": 4 if upgraded else 3},
         instance_id=_get_next_id(),
@@ -1406,10 +1514,13 @@ def make_necro_mastery(upgraded: bool = False) -> CardInstance:
 
 def make_sacrifice(upgraded: bool = False) -> CardInstance:
     kw = frozenset({"retain"})
+    # C# Sacrifice.cs: CalculationBaseVar(0), CalculationExtraVar(1); block = 0 + 1 * (Osty.MaxHp * 2).
+    # OnUpgrade: EnergyCost.UpgradeBy(-1).
     return CardInstance(
         card_id=CardId.SACRIFICE, cost=0 if upgraded else 1,
         card_type=CardType.SKILL, target_type=TargetType.SELF,
         rarity=CardRarity.RARE, upgraded=upgraded, keywords=kw,
+        effect_vars={"calc_base": 0, "calc_extra": 1},
         instance_id=_get_next_id(),
     )
 
@@ -1472,13 +1583,27 @@ def make_bone_shards(upgraded: bool = False) -> CardInstance:
     return card
 
 
+def make_borrowed_time(upgraded: bool = False) -> CardInstance:
+    """C# BorrowedTime.cs: EnergyVar(4), EnergyVar("ExtraCost", 1);
+    OnUpgrade: Energy.UpgradeValueBy(2m) -> 6. ExtraCost stays 1 in both states
+    (applied as BorrowedTimePower stacks that raise each card's energy cost by 1)."""
+    from sts2_env.cards.factory import create_reference_card
+
+    card = create_reference_card(CardId.BORROWED_TIME, upgraded=upgraded, allow_generation=True)
+    card.effect_vars["energy"] = 6 if upgraded else 4
+    card.effect_vars["extra_cost"] = 1
+    return card
+
+
 def make_death_march(upgraded: bool = False) -> CardInstance:
     from sts2_env.cards.factory import create_reference_card
 
+    # C# DeathMarch.cs: CalculationBaseVar(8), ExtraDamageVar(4);
+    # OnUpgrade: CalculationBase +1, ExtraDamage +2.
     card = create_reference_card(CardId.DEATH_MARCH, upgraded=upgraded, allow_generation=True)
     card.base_damage = 9 if upgraded else 8
     card.effect_vars["calc_base"] = 9 if upgraded else 8
-    card.effect_vars["extra_damage"] = 4 if upgraded else 3
+    card.effect_vars["extra_damage"] = 6 if upgraded else 4
     return card
 
 
@@ -1530,9 +1655,11 @@ def make_rattle(upgraded: bool = False) -> CardInstance:
 def make_sic_em(upgraded: bool = False) -> CardInstance:
     from sts2_env.cards.factory import create_reference_card
 
+    # C# SicEm.cs: OstyDamageVar(5, Move), PowerVar<SicEmPower>(3);
+    # OnUpgrade: OstyDamage +1 (6), SicEmPower +1 (4).
     card = create_reference_card(CardId.SIC_EM, upgraded=upgraded, allow_generation=True)
     card.base_damage = 6 if upgraded else 5
-    card.effect_vars["sic_em"] = 3 if upgraded else 2
+    card.effect_vars["sic_em"] = 4 if upgraded else 3
     card.effect_vars["osty_damage"] = 6 if upgraded else 5
     return card
 
@@ -1580,9 +1707,11 @@ def make_squeeze(upgraded: bool = False) -> CardInstance:
 def make_the_scythe(upgraded: bool = False) -> CardInstance:
     from sts2_env.cards.factory import create_reference_card
 
+    # C# TheScythe.cs: base damage 13, IntVar("Increase", 4);
+    # OnUpgrade: Increase.UpgradeValueBy(1m) -> 5. Upgrade does not change base damage.
     card = create_reference_card(CardId.THE_SCYTHE, upgraded=upgraded, allow_generation=True)
     card.base_damage = 13
-    card.effect_vars["increase"] = 4 if upgraded else 3
+    card.effect_vars["increase"] = 5 if upgraded else 4
     return card
 
 

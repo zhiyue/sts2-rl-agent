@@ -223,10 +223,11 @@ class TestIroncladExhaustSelfDamageCardModelParity:
         combat.energy = 3
 
         assert combat.play_card(0)
-        assert combat.player.get_power_amount(PowerId.JUGGERNAUT) == 5
+        # Juggernaut.cs: PowerVar<JuggernautPower>(6); OnUpgrade +2.
+        assert combat.player.get_power_amount(PowerId.JUGGERNAUT) == 6
         assert combat.play_card(0)
         assert combat.player.block == 8
-        assert enemy.current_hp == start_hp - 5
+        assert enemy.current_hp == start_hp - 6
 
     def test_juggernaut_random_target_uses_only_hittable_enemies(self):
         random.seed(1)
@@ -242,7 +243,8 @@ class TestIroncladExhaustSelfDamageCardModelParity:
         assert combat.play_card(0)
 
         assert blocked.current_hp == 100
-        assert hittable.current_hp == 95
+        # Juggernaut base amount 6 per Juggernaut.cs.
+        assert hittable.current_hp == 94
 
     def test_rupture_gains_strength_when_owner_loses_hp(self):
         """Matches RupturePower.cs: owner HP loss on own turn grants Strength."""
@@ -273,7 +275,8 @@ class TestIroncladExhaustSelfDamageCardModelParity:
         assert combat.play_card(0)
         assert combat.play_card(0, 0)
         assert combat.player.current_hp == start_hp - 2
-        assert enemy.current_hp == 86
+        # Hemokinesis.cs: DamageVar(15).
+        assert enemy.current_hp == 85
         assert combat.player.get_power_amount(PowerId.STRENGTH) == 1
         assert [event[1] for event in combat._damage_events_combat[-2:]] == [combat.player, enemy]  # noqa: SLF001
 

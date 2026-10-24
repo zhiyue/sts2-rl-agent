@@ -47,8 +47,9 @@ class TestSilentPoisonTrackingXCostParity:
         combat.energy = 0
 
         assert combat.play_card(0)
-        assert combat.player.get_power_amount(PowerId.ANTICIPATE) == 5
-        assert combat.player.get_power_amount(PowerId.DEXTERITY) == 5
+        # Anticipate.cs: PowerVar<DexterityPower>(2m); OnUpgrade: Dexterity.UpgradeValueBy(1m) -> 3.
+        assert combat.player.get_power_amount(PowerId.ANTICIPATE) == 3
+        assert combat.player.get_power_amount(PowerId.DEXTERITY) == 3
 
         fire_after_turn_end(CombatSide.PLAYER, combat)
 

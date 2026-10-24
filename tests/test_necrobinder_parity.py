@@ -34,6 +34,7 @@ from sts2_env.core.creature import Creature
 from sts2_env.core.enums import CardId, CombatSide, PowerId, ValueProp
 from sts2_env.core.rng import Rng
 from sts2_env.monsters.act1_weak import create_shrinker_beetle
+from sts2_env.powers.card_play_effects import BORROWED_TIME_POWER_ID
 from sts2_env.run.run_state import PlayerState
 
 
@@ -53,14 +54,25 @@ def _make_combat() -> CombatState:
 
 class TestNecrobinderParity:
     def test_borrowed_time_applies_doom_and_gains_energy(self):
-        """Matches BorrowedTime.cs: apply Doom to the owner, then gain energy immediately."""
+        """Matches BorrowedTime.cs OnPlay (v0.107.1): gain EnergyVar(4) energy, then
+        apply BorrowedTimePower with ExtraCost(1) stack, which raises the energy cost
+        of every card the owner plays by 1 (BorrowedTimePower.cs
+        TryModifyEnergyCostInCombat). No Doom is applied; card costs themselves are
+        untouched (the bump lives on the power, not per-card overrides)."""
         combat = _make_combat()
         combat.hand = [create_card(CardId.BORROWED_TIME)]
-        combat.energy = 0
+        combat.energy = 1
 
         assert combat.play_card(0)
-        assert combat.player.get_power_amount(PowerId.DOOM) == 3
-        assert combat.energy == 1
+        assert combat.energy == 4
+        assert combat.player.get_power_amount(PowerId.DOOM) == 0
+        assert combat.player.get_power_amount(BORROWED_TIME_POWER_ID) == 1
+        strikes = [c for c in combat.draw_pile if c.card_id == CardId.STRIKE_NECROBINDER]
+        assert strikes
+        for strike in strikes:
+            assert strike.cost == 1
+            assert strike.combat_vars.get("_turn_cost_override") is None
+            assert combat.modified_card_cost(combat.player, strike) == 2
 
     def test_countdown_card_applies_countdown_power(self):
         """Matches Countdown.cs: apply CountdownPower to the owner."""
@@ -81,7 +93,8 @@ class TestNecrobinderParity:
         assert combat.player.get_power_amount(PowerId.DANSE_MACABRE) == 3
 
     def test_death_march_scales_with_non_opening_draws_this_turn(self):
-        """Matches DeathMarch.cs: damage = base + extra * non-opening draws this turn."""
+        """Matches DeathMarch.cs: damage = CalculationBase(8) + ExtraDamage(4) *
+        non-opening draws this turn (two drawn here -> 16)."""
         combat = _make_combat()
         enemy = combat.enemies[0]
         starting_hp = enemy.current_hp
@@ -91,7 +104,7 @@ class TestNecrobinderParity:
         combat.draw_cards(combat.player, 2)
 
         assert combat.play_card(0, 0)
-        assert enemy.current_hp == starting_hp - 14
+        assert enemy.current_hp == starting_hp - 16
 
     def test_capture_spirit_deals_unblockable_damage_and_adds_souls_to_draw(self):
         """Matches CaptureSpirit.cs: unblockable damage plus generated Souls to draw pile."""
@@ -413,15 +426,21 @@ class TestNecrobinderParity:
         assert not combat.osty.is_alive
 
     def test_rattle_uses_prior_osty_hits_this_turn_for_hit_count(self):
-        """Matches Rattle.cs: hit count is 1 + prior Osty attacks this turn."""
+        """Matches Rattle.cs: hit count is 1 + prior Osty attack commands this turn.
+
+        Rattle.cs counts CreatureAttackedEntry entries (one per AttackCommand,
+        CombatHistory.cs:73) with HappenedThisTurn; the Python engine records one
+        AttackContext per command, so Rattle must be in a combat pile (as it is
+        from combat start via the draw pile) when the prior attack happens.
+        """
         combat = _make_combat()
         combat.summon_osty(combat.player, 5)
         osty = combat.osty
         assert osty is not None
         enemy = combat.enemies[0]
+        combat.hand = [make_rattle()]
         combat.deal_damage(dealer=osty, target=enemy, amount=4, props=ValueProp.MOVE)
         starting_hp = enemy.current_hp
-        combat.hand = [make_rattle()]
         combat.energy = 1
 
         assert combat.play_card(0, 0)
@@ -453,8 +472,10 @@ class TestNecrobinderParity:
         assert enemy.current_hp == starting_hp - 11
         assert enemy.get_power_amount(PowerId.VULNERABLE) == 2
 
-    def test_seance_sorts_draw_pile_and_transforms_selected_card_into_upgraded_soul(self):
-        """Matches Seance.cs: sorted simple-grid selection, then transform chosen card into Soul."""
+    def test_seance_sorts_draw_pile_and_transforms_selected_card_into_soul(self):
+        """Matches Seance.cs: sorted simple-grid selection, then transform chosen
+        card into Soul. Seance.cs OnUpgrade only reduces the energy cost — the
+        transformed Soul is the plain (non-upgraded) version (Seance.cs:32)."""
         combat = _make_combat()
         source = make_strike_ironclad()
         other = make_undeath()
@@ -472,18 +493,35 @@ class TestNecrobinderParity:
         assert combat.pending_choice is None
         transformed = expected[0]
         assert transformed not in combat.draw_pile
-        assert any(card.card_id == make_soul(upgraded=True).card_id and card.upgraded for card in combat.draw_pile)
+        souls = [card for card in combat.draw_pile if card.card_id == make_soul().card_id]
+        assert souls
+        assert all(not card.upgraded for card in souls)
 
     def test_borrowed_time_applies_doom_and_gains_energy(self):
-        """Matches BorrowedTime.cs: apply Doom to self, then gain energy."""
+        """Matches BorrowedTime.cs OnPlay (v0.107.1): gain EnergyVar(4) energy, then
+        apply BorrowedTimePower with ExtraCost(1) stack, which raises the energy cost
+        of every card the owner plays by 1 (BorrowedTimePower.cs
+        TryModifyEnergyCostInCombat). No Doom is applied; card costs themselves are
+        untouched (the bump lives on the power, not per-card overrides)."""
         combat = _make_combat()
         card = create_card(CardId.BORROWED_TIME)
         combat.hand = [card]
-        combat.energy = 0
+        combat.energy = 1
 
         assert combat.play_card(0)
-        assert combat.player.get_power_amount(PowerId.DOOM) == card.effect_vars.get("doom", 3)
-        assert combat.energy == card.effect_vars.get("energy", 1)
+        assert combat.energy == card.effect_vars.get("energy", 4)
+        assert combat.player.get_power_amount(PowerId.DOOM) == 0
+        assert combat.player.get_power_amount(BORROWED_TIME_POWER_ID) == card.effect_vars.get(
+            "extra_cost", 1
+        )
+        strikes = [c for c in combat.draw_pile if c.card_id == CardId.STRIKE_NECROBINDER]
+        assert strikes
+        for strike in strikes:
+            assert strike.cost == 1
+            assert strike.combat_vars.get("_turn_cost_override") is None
+            assert combat.modified_card_cost(
+                combat.player, strike
+            ) == 1 + card.effect_vars.get("extra_cost", 1)
 
     def test_countdown_applies_countdown_power(self):
         """Matches Countdown.cs: apply CountdownPower with the configured amount."""

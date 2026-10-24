@@ -36,15 +36,15 @@ class _FirstRng:
         return list(lst)[0]
 
 
-def _make_combat(deck, character_id: str) -> CombatState:
+def _make_combat(deck, character_id: str, *, rng_seed: int = 42) -> CombatState:
     combat = CombatState(
         player_hp=80,
         player_max_hp=80,
         deck=deck,
-        rng_seed=42,
+        rng_seed=rng_seed,
         character_id=character_id,
     )
-    creature, ai = create_shrinker_beetle(Rng(42))
+    creature, ai = create_shrinker_beetle(Rng(rng_seed))
     combat.add_enemy(creature, ai)
     return combat
 
@@ -228,7 +228,10 @@ class TestGeneratedChoiceParity:
 
     def test_splash_makes_only_selected_generated_attack_free(self):
         """Matches Splash.cs: SetToFreeThisTurn runs after choosing the generated card."""
-        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
+        # Seed 43 so the generated attacks include a cost > 0 card (the card-pool
+        # order now mirrors the v0.107.1 C# pools, which changed the seed-42 draft
+        # to three 0-cost attacks).
+        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad", rng_seed=43)
         splash = create_card(CardId.SPLASH)
         combat.hand = [splash]
         combat.energy = 1
