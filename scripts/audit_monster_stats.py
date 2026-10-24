@@ -22,8 +22,12 @@ HP_PROP_RE = re.compile(
     r"public override int (?P<prop>MinInitialHp|MaxInitialHp)\s*=>\s*(?P<expr>.*?);",
     re.DOTALL,
 )
+# v0.107.1 decompile uses BOTH `private static int X =>` and the dominant
+# `private int X =>` instance-property form for gameplay constants; matching
+# only the static form silently skipped most of them (the 2026-10-24 blind
+# spot that masked 23 real mismatches).
 STATIC_CONST_RE = re.compile(
-    r"private static int (?P<name>\w+)\s*=>\s*(?P<expr>[^;]+);"
+    r"private (?:static )?int (?P<name>\w+)\s*=>\s*(?P<expr>[^;]+);"
 )
 PYTHON_MONSTER_ID_RE = re.compile(r'(?P<prefix>\w+)_MONSTER_ID = "(?P<mid>[A-Z0-9_]+)"')
 
@@ -51,8 +55,11 @@ def parse_csharp_monsters(monsters_dir: Path) -> dict[str, dict]:
             continue
         info: dict = {"class": path.stem, "consts": {}}
         for prop in HP_PROP_RE.finditer(source):
-            if re.search(rf"{prop.group('prop')}\s*=>\s*MinInitialHp\s*;", prop.group("expr")):
+            if prop.group("expr").strip() == "MinInitialHp":
                 # `MaxInitialHp => MinInitialHp` — fixed HP; max mirrors min.
+                # (The old regex searched for the prop name inside its own
+                # expression and never matched, so fixed-HP monsters lost
+                # their Max value — caught by the golden-sample test.)
                 info[prop.group("prop")] = "ALIAS_MIN"
                 continue
             values = _parse_values(prop.group("expr"))
