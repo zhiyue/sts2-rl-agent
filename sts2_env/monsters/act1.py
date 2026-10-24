@@ -202,9 +202,11 @@ FLYCONID_RANDOM_MOVE = "RAND"
 FLYCONID_VULNERABLE_SPORES_MOVE = "VULNERABLE_SPORES_MOVE"
 FLYCONID_FRAIL_SPORES_MOVE = "FRAIL_SPORES_MOVE"
 FLYCONID_SMASH_MOVE = "SMASH_MOVE"
-FLYCONID_VULNERABLE_SPORES_WEIGHT = 3.0
-FLYCONID_FRAIL_SPORES_WEIGHT = 2.0
-FLYCONID_SMASH_WEIGHT = 1.0
+# C# Flyconid.GenerateMoveStateMachine (Flyconid.cs:33-49): all branch
+# weights are the default 1; VULNERABLE_SPORES uses cooldown 3 and
+# FRAIL_SPORES cooldown 2 (AddBranch(state, cooldown, CannotRepeat)).
+FLYCONID_VULNERABLE_SPORES_COOLDOWN = 3
+FLYCONID_FRAIL_SPORES_COOLDOWN = 2
 
 
 def create_flyconid(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
@@ -263,24 +265,28 @@ def create_flyconid(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Monst
         FLYCONID_BASE_SMASH_DAMAGE,
     )
 
-    # Initial random: FrailSpores(2) or Smash(1)
+    # Initial random: FrailSpores(cooldown 2) or Smash (Flyconid.cs:42-43).
     initial_rand = RandomBranchState(FLYCONID_INITIAL_MOVE)
-    initial_rand.add_branch(FLYCONID_FRAIL_SPORES_MOVE, weight=FLYCONID_FRAIL_SPORES_WEIGHT)
-    initial_rand.add_branch(FLYCONID_SMASH_MOVE, weight=FLYCONID_SMASH_WEIGHT)
+    initial_rand.add_branch(
+        FLYCONID_FRAIL_SPORES_MOVE,
+        MoveRepeatType.CANNOT_REPEAT,
+        cooldown=FLYCONID_FRAIL_SPORES_COOLDOWN,
+    )
+    initial_rand.add_branch(FLYCONID_SMASH_MOVE, MoveRepeatType.CANNOT_REPEAT)
 
-    # Main random: all 3, cannot repeat
+    # Main random: all 3, CannotRepeat with cooldowns (Flyconid.cs:39-41).
     main_rand = RandomBranchState(FLYCONID_RANDOM_MOVE)
     main_rand.add_branch(
         FLYCONID_VULNERABLE_SPORES_MOVE,
         MoveRepeatType.CANNOT_REPEAT,
-        weight=FLYCONID_VULNERABLE_SPORES_WEIGHT,
+        cooldown=FLYCONID_VULNERABLE_SPORES_COOLDOWN,
     )
     main_rand.add_branch(
         FLYCONID_FRAIL_SPORES_MOVE,
         MoveRepeatType.CANNOT_REPEAT,
-        weight=FLYCONID_FRAIL_SPORES_WEIGHT,
+        cooldown=FLYCONID_FRAIL_SPORES_COOLDOWN,
     )
-    main_rand.add_branch(FLYCONID_SMASH_MOVE, MoveRepeatType.CANNOT_REPEAT, weight=FLYCONID_SMASH_WEIGHT)
+    main_rand.add_branch(FLYCONID_SMASH_MOVE, MoveRepeatType.CANNOT_REPEAT)
 
     states: dict[str, MonsterState] = {
         FLYCONID_INITIAL_MOVE: initial_rand,

@@ -53,6 +53,11 @@ def strong_debuff_intent() -> Intent:
     return Intent(IntentType.DEBUFF_STRONG)
 
 
+def card_debuff_intent() -> Intent:
+    """C# CardDebuffIntent (IntentType.CardDebuff), e.g. Queen PUPPET_STRINGS."""
+    return Intent(IntentType.CARD_DEBUFF)
+
+
 def sleep_intent() -> Intent:
     return Intent(IntentType.SLEEP)
 

@@ -12,7 +12,7 @@ from sts2_env.core.constants import MULTIPLAYER_ACT_SCALING
 from sts2_env.core.combat import CombatState
 from sts2_env.core.damage import apply_damage
 from sts2_env.core.enums import CardId, CombatSide, PowerId, RoomType, ValueProp
-from sts2_env.core.enums import MoveRepeatType
+from sts2_env.core.enums import IntentType, MoveRepeatType
 from sts2_env.core.hooks import fire_after_turn_end
 from sts2_env.core.rng import Rng
 from sts2_env.encounters.act2 import (
@@ -120,8 +120,6 @@ from sts2_env.monsters.act4 import (
     GAS_BOMB_MONSTER_ID,
     HAUNTED_SHIP_HAUNT_MOVE,
     HAUNTED_SHIP_MONSTER_ID,
-    HAUNTED_SHIP_RANDOM_STATE,
-    HAUNTED_SHIP_RAMMING_SPEED_MOVE,
     HAUNTED_SHIP_STOMP_MOVE,
     HAUNTED_SHIP_SWIPE_MOVE,
     LAGAVULIN_MATRIARCH_ASLEEP,
@@ -174,9 +172,9 @@ from sts2_env.monsters.act4 import (
     SLUDGE_SPINNER_MONSTER_ID,
     SKULKING_COLONY_INERTIA_MOVE,
     SKULKING_COLONY_MONSTER_ID,
-    SKULKING_COLONY_SMASH_MOVE,
-    SKULKING_COLONY_SUPER_CRAB_MOVE,
+    SKULKING_COLONY_PIERCING_STABS_MOVE,
     SKULKING_COLONY_ZOOM_MOVE,
+    SKULKING_COLONY_ZOOM_MOVE_2,
     TERROR_EEL_CRASH_MOVE,
     TERROR_EEL_MONSTER_ID,
     TERROR_EEL_STUN_MOVE,
@@ -449,7 +447,6 @@ from sts2_env.monsters.act3 import (
     TEST_SUBJECT_BURNING_GROWL_MOVE,
     TEST_SUBJECT_MULTI_CLAW_MOVE,
     TEST_SUBJECT_PHASE3_LACERATE_MOVE,
-    TEST_SUBJECT_POUNCE_MOVE,
     TEST_SUBJECT_RESPAWN_MOVE,
     TEST_SUBJECT_SKULL_BASH_MOVE,
     TURRET_OPERATOR_MONSTER_ID,
@@ -777,7 +774,6 @@ TEST_SUBJECT_ENRAGE_A9 = 3
 TEST_SUBJECT_BITE_DAMAGE_A9 = 22
 TEST_SUBJECT_SKULL_BASH_DAMAGE_A9 = 16
 TEST_SUBJECT_SKULL_BASH_VULNERABLE = 1
-TEST_SUBJECT_POUNCE_DAMAGE_A9 = 32
 TEST_SUBJECT_MULTI_CLAW_DAMAGE_A9 = 11
 TEST_SUBJECT_BASE_MULTI_CLAW_HITS = 3
 TEST_SUBJECT_PHASE3_LACERATE_HITS = 3
@@ -836,12 +832,12 @@ SNEAKY_GREMLIN_A8_HP_RANGE = (11, 15)
 SNEAKY_GREMLIN_TACKLE_DAMAGE_A9 = 10
 FAT_GREMLIN_A8_HP_RANGE = (14, 18)
 HAUNTED_SHIP_A8_HP = 67
-HAUNTED_SHIP_RAMMING_SPEED_DAMAGE_A9 = 11
-HAUNTED_SHIP_RAMMING_SPEED_WOUNDS = 2
 HAUNTED_SHIP_SWIPE_DAMAGE_A9 = 14
 HAUNTED_SHIP_STOMP_DAMAGE_A9 = 5
 HAUNTED_SHIP_STOMP_HITS = 3
-HAUNTED_SHIP_HAUNT_DEBUFF = 2
+# C# HauntedShip.cs:28/32: HauntDazed(5) status cards, Weak 3.
+HAUNTED_SHIP_HAUNT_WEAK = 3
+HAUNTED_SHIP_HAUNT_DAZED = 5
 LIVING_FOG_A8_HP = 82
 LIVING_FOG_ADVANCED_GAS_DAMAGE_A9 = 9
 LIVING_FOG_ADVANCED_GAS_SMOGGY = 1
@@ -858,7 +854,7 @@ PUNCH_CONSTRUCT_A8_HP = 60
 PUNCH_CONSTRUCT_STRONG_PUNCH_DAMAGE_A9 = 16
 PUNCH_CONSTRUCT_FAST_PUNCH_DAMAGE_A9 = 6
 PUNCH_CONSTRUCT_FAST_PUNCH_HITS = 2
-PUNCH_CONSTRUCT_FAST_PUNCH_WEAK = 1
+PUNCH_CONSTRUCT_FAST_PUNCH_FRAIL = 1
 PUNCH_CONSTRUCT_READY_BLOCK = 10
 PUNCH_CONSTRUCT_STARTING_HP_REDUCTION = 7
 TWO_TAILED_RAT_A8_HP_RANGE = (18, 22)
@@ -878,17 +874,16 @@ PHANTASMAL_GARDENER_BASE_SKITTISH = 6
 PHANTASMAL_GARDENER_SKITTISH_A8 = 7
 SKULKING_COLONY_BASE_HP = 75
 SKULKING_COLONY_A8_HP = 80
-SKULKING_COLONY_BASE_SUPER_CRAB_DAMAGE = 6
-SKULKING_COLONY_SUPER_CRAB_DAMAGE_A9 = 7
-SKULKING_COLONY_SUPER_CRAB_HITS = 2
+# C# SkulkingColony.cs:28-36 property values (base / DeadlyEnemies).
 SKULKING_COLONY_BASE_ZOOM_DAMAGE = 14
 SKULKING_COLONY_ZOOM_DAMAGE_A9 = 16
-SKULKING_COLONY_BASE_SMASH_DAMAGE = 9
-SKULKING_COLONY_SMASH_DAMAGE_A9 = 11
-SKULKING_COLONY_SMASH_DAZED = 4
-SKULKING_COLONY_BASE_INERTIA_BLOCK = 10
-SKULKING_COLONY_INERTIA_BLOCK_A8 = 13
-SKULKING_COLONY_INERTIA_STRENGTH = 3
+SKULKING_COLONY_BASE_INERTIA_DAMAGE = 9
+SKULKING_COLONY_INERTIA_DAMAGE_A9 = 11
+SKULKING_COLONY_BASE_INERTIA_STRENGTH = 2
+SKULKING_COLONY_INERTIA_STRENGTH_A9 = 4
+SKULKING_COLONY_BASE_PIERCING_STABS_DAMAGE = 7
+SKULKING_COLONY_PIERCING_STABS_DAMAGE_A9 = 8
+SKULKING_COLONY_PIERCING_STABS_HITS = 2
 SKULKING_COLONY_HARDENED_SHELL = 20
 TERROR_EEL_BASE_HP = 140
 TERROR_EEL_A8_HP = 150
@@ -2116,15 +2111,17 @@ class TestFixedRotation:
         assert not creature.is_alive
         assert not creature.is_dead
 
-    def test_punch_construct_supports_strong_punch_start_and_hp_reduction(self):
+    def test_punch_construct_supports_fast_punch_start_and_hp_reduction(self):
+        # C# PunchOffEventEncounter.cs:16 sets StartsWithFastPunch; the
+        # monster starts at FAST_PUNCH_MOVE (PunchConstruct.cs:92).
         creature, ai = create_punch_construct(
             Rng(5),
-            starts_with_strong_punch=True,
+            starts_with_fast_punch=True,
             starting_hp_reduction=7,
         )
 
         assert creature.current_hp == creature.max_hp - 7
-        assert ai.current_move.state_id == "STRONG_PUNCH_MOVE"
+        assert ai.current_move.state_id == "FAST_PUNCH_MOVE"
 
     def test_bygone_effigy_uses_original_move_ids_and_wake_buff(self):
         combat = _make_combat(10)
@@ -4458,7 +4455,8 @@ class TestFixedRotation:
 
     def test_act3_monster_block_moves_trigger_after_block_gained_hooks(self):
         cases = [
-            (create_axebot(Rng(1), start_with_boot_up=True), "BOOT_UP_MOVE", 10),
+            # Axebot BOOT_UP gains block (C# Axebot.cs:87/103).
+            (create_axebot(Rng(1)), "BOOT_UP_MOVE", 10),
             (create_the_forgotten(Rng(2)), "MIASMA", 8),
             (create_magi_knight(Rng(3)), MAGI_KNIGHT_FIRST_POWER_SHIELD_MOVE, 5),
             (create_magi_knight(Rng(4)), MAGI_KNIGHT_PREP_MOVE, 5),
@@ -5359,10 +5357,26 @@ class TestFixedRotation:
         combat.kill_creature(second_replacement)
         assert not [enemy for enemy in combat.enemies if enemy.monster_id == "AXEBOT" and enemy.is_alive]
 
-    def test_initial_random_branch_uses_monster_rng(self):
-        moves = [create_axebot(Rng(seed))[1].current_move.state_id for seed in range(10)]
+    def test_axebot_fixed_chain_starts_at_hammer_uppercut(self):
+        # C# Axebot.cs:84-99: no random branch. The default initial state is
+        # HAMMER_UPPERCUT_MOVE and the chain loops
+        # HAMMER_UPPERCUT -> ONE_TWO -> HAMMER_UPPERCUT ...
+        for seed in range(10):
+            creature, ai = create_axebot(Rng(seed))
+            assert ai.current_move.state_id == "HAMMER_UPPERCUT_MOVE"
+            assert set(ai.states) == {"BOOT_UP_MOVE", "ONE_TWO_MOVE", "HAMMER_UPPERCUT_MOVE"}
 
-        assert set(moves) == {"ONE_TWO_MOVE", "SHARPEN_MOVE", "HAMMER_UPPERCUT_MOVE"}
+        # A stock override (StockPower respawn, Axebot.cs:96-98) starts at
+        # BOOT_UP_MOVE instead, then follows the same chain.
+        override_creature, override_ai = create_axebot(Rng(3), stock_amount=1)
+        assert override_creature.get_power_amount(PowerId.STOCK) == 1
+        assert override_ai.current_move.state_id == "BOOT_UP_MOVE"
+        assert _run_ai(override_ai, Rng(3), 4) == [
+            "BOOT_UP_MOVE",
+            "HAMMER_UPPERCUT_MOVE",
+            "ONE_TWO_MOVE",
+            "HAMMER_UPPERCUT_MOVE",
+        ]
 
     def test_axebot_moves_use_original_player_targets_with_osty_redirect(self):
         rng_seed = 136
@@ -5370,10 +5384,11 @@ class TestFixedRotation:
         ally_character_id = "Silent"
         ally_hp = 70
         osty_hp = 40
-        one_two_damage = 5
+        # C# Axebot.cs:30/36/48-52 base values (no ascension in _make_combat).
+        one_two_damage = 9
         one_two_hits = 2
-        hammer_uppercut_damage = 8
-        hammer_uppercut_debuff = 1
+        hammer_uppercut_damage = 12
+        hammer_uppercut_debuff = 2
         no_debuff = 0
         combat = _make_combat(rng_seed)
         ally = combat.add_ally_player(
@@ -5783,11 +5798,9 @@ class TestFixedRotation:
         assert combat.player.get_power_amount(PowerId.VULNERABLE) == TEST_SUBJECT_SKULL_BASH_VULNERABLE
         combat.player.powers.pop(PowerId.VULNERABLE, None)
 
-        pounce = subject_ai.states[TEST_SUBJECT_POUNCE_MOVE]
-        assert pounce.intents[0].damage == TEST_SUBJECT_POUNCE_DAMAGE_A9
-        player_hp_before_pounce = combat.player.current_hp
-        pounce.perform(combat)
-        assert combat.player.current_hp == player_hp_before_pounce - TEST_SUBJECT_POUNCE_DAMAGE_A9
+        # C# TestSubject.cs:205: MULTI_CLAW FollowUpState is itself — it
+        # self-loops while Respawns < 2 (no plain POUNCE move exists).
+        assert subject_ai.states[TEST_SUBJECT_MULTI_CLAW_MOVE].follow_up_id == TEST_SUBJECT_MULTI_CLAW_MOVE
 
         multi_claw = subject_ai.states[TEST_SUBJECT_MULTI_CLAW_MOVE]
         assert multi_claw.intents[0].damage == TEST_SUBJECT_MULTI_CLAW_DAMAGE_A9
@@ -6169,22 +6182,26 @@ class TestFixedRotation:
         ship_combat.add_enemy(ship, ship_ai)
 
         assert ship.max_hp == HAUNTED_SHIP_A8_HP
-        assert ship_ai.current_move.state_id == HAUNTED_SHIP_RAMMING_SPEED_MOVE
+        # C# HauntedShip.cs:39-51: fixed HAUNT -> SWIPE -> STOMP chain,
+        # initial HAUNT_MOVE.
+        assert ship_ai.current_move.state_id == HAUNTED_SHIP_HAUNT_MOVE
         assert {
-            HAUNTED_SHIP_RANDOM_STATE,
-            HAUNTED_SHIP_RAMMING_SPEED_MOVE,
             HAUNTED_SHIP_SWIPE_MOVE,
             HAUNTED_SHIP_STOMP_MOVE,
             HAUNTED_SHIP_HAUNT_MOVE,
         }.issubset(ship_ai.states)
-        ramming_speed = ship_ai.states[HAUNTED_SHIP_RAMMING_SPEED_MOVE]
-        assert ramming_speed.intents[0].damage == HAUNTED_SHIP_RAMMING_SPEED_DAMAGE_A9
-        assert ramming_speed.intents[1].hits == HAUNTED_SHIP_RAMMING_SPEED_WOUNDS
+        # HAUNT intents = DebuffIntent + StatusIntent(HauntDazed)
+        # (HauntedShip.cs:44).
+        haunt = ship_ai.states[HAUNTED_SHIP_HAUNT_MOVE]
+        assert haunt.intents[0].intent_type == IntentType.DEBUFF
+        assert haunt.intents[1].intent_type == IntentType.STATUS_CARD
+        assert haunt.intents[1].hits == HAUNTED_SHIP_HAUNT_DAZED
         ship_combat.discard_pile.clear()
-        player_hp_before_ramming = ship_combat.player.current_hp
-        ramming_speed.perform(ship_combat)
-        assert ship_combat.player.current_hp == player_hp_before_ramming - HAUNTED_SHIP_RAMMING_SPEED_DAMAGE_A9
-        assert [card.card_id for card in ship_combat.discard_pile] == [CardId.WOUND] * HAUNTED_SHIP_RAMMING_SPEED_WOUNDS
+        player_hp_before_haunt = ship_combat.player.current_hp
+        haunt.perform(ship_combat)
+        assert ship_combat.player.current_hp == player_hp_before_haunt
+        assert ship_combat.player.get_power_amount(PowerId.WEAK) == HAUNTED_SHIP_HAUNT_WEAK
+        assert [card.card_id for card in ship_combat.discard_pile] == [CardId.DAZED] * HAUNTED_SHIP_HAUNT_DAZED
 
         ship_combat = _make_combat(rng_seed)
         ship_combat.ascension_level = 9
@@ -6206,9 +6223,7 @@ class TestFixedRotation:
         )
 
         ship_ai.states[HAUNTED_SHIP_HAUNT_MOVE].perform(ship_combat)
-        assert ship_combat.player.get_power_amount(PowerId.WEAK) == HAUNTED_SHIP_HAUNT_DEBUFF
-        assert ship_combat.player.get_power_amount(PowerId.FRAIL) == HAUNTED_SHIP_HAUNT_DEBUFF
-        assert ship_combat.player.get_power_amount(PowerId.VULNERABLE) == HAUNTED_SHIP_HAUNT_DEBUFF
+        assert ship_combat.player.get_power_amount(PowerId.WEAK) == HAUNTED_SHIP_HAUNT_WEAK
 
         fog_combat = _make_combat(rng_seed)
         fog_combat.ascension_level = 9
@@ -6327,15 +6342,16 @@ class TestFixedRotation:
         assert punch_combat.player.current_hp == (
             player_hp_before_fast - PUNCH_CONSTRUCT_FAST_PUNCH_DAMAGE_A9 * PUNCH_CONSTRUCT_FAST_PUNCH_HITS
         )
-        assert punch_combat.player.get_power_amount(PowerId.WEAK) == PUNCH_CONSTRUCT_FAST_PUNCH_WEAK
+        # FAST_PUNCH applies Frail 1 (PunchConstruct.cs:118).
+        assert punch_combat.player.get_power_amount(PowerId.FRAIL) == PUNCH_CONSTRUCT_FAST_PUNCH_FRAIL
 
-        strong_start_punch, strong_start_ai = create_punch_construct(
+        fast_start_punch, fast_start_ai = create_punch_construct(
             Rng(rng_seed),
             ascension_level=9,
-            starts_with_strong_punch=True,
+            starts_with_fast_punch=True,
         )
-        assert strong_start_punch.max_hp == PUNCH_CONSTRUCT_A8_HP
-        assert strong_start_ai.current_move.state_id == PUNCH_CONSTRUCT_STRONG_PUNCH_MOVE
+        assert fast_start_punch.max_hp == PUNCH_CONSTRUCT_A8_HP
+        assert fast_start_ai.current_move.state_id == PUNCH_CONSTRUCT_FAST_PUNCH_MOVE
 
         rat_combat = _make_combat(rng_seed)
         rat_combat.ascension_level = 9
@@ -6652,10 +6668,11 @@ class TestFixedRotation:
         punch_combat.add_enemy(punch, punch_ai)
         assert punch.max_hp == 55
         assert punch.get_power_amount(PowerId.ARTIFACT) == 1
+        # C# PunchConstruct.cs:81-92: READY -> FAST_PUNCH -> STRONG_PUNCH -> READY.
         assert _run_ai(punch_ai, Rng(68), 4) == [
             "READY_MOVE",
-            "STRONG_PUNCH_MOVE",
             "FAST_PUNCH_MOVE",
+            "STRONG_PUNCH_MOVE",
             "READY_MOVE",
         ]
         punch_ai.states["READY_MOVE"].perform(punch_combat)
@@ -6668,9 +6685,10 @@ class TestFixedRotation:
         assert counter.calls == [10]
         punch_ai.states["STRONG_PUNCH_MOVE"].perform(punch_combat)
         assert punch_combat.player.current_hp == 66
+        # FAST_PUNCH applies Frail 1 (PunchConstruct.cs:118).
         punch_ai.states["FAST_PUNCH_MOVE"].perform(punch_combat)
         assert punch_combat.player.current_hp == 56
-        assert punch_combat.player.get_power_amount(PowerId.WEAK) == 1
+        assert punch_combat.player.get_power_amount(PowerId.FRAIL) == 1
 
         clam, clam_ai = create_sewer_clam(Rng(69))
         clam_combat = _make_combat(69)
@@ -6693,31 +6711,30 @@ class TestFixedRotation:
         ship_combat = _make_combat(70)
         ship_combat.add_enemy(ship, ship_ai)
         assert ship.max_hp == 63
-        assert ship_ai.current_move.state_id == "RAMMING_SPEED_MOVE"
-        assert {"RAND", "RAMMING_SPEED_MOVE", "SWIPE_MOVE", "STOMP_MOVE", "HAUNT_MOVE"}.issubset(
-            ship_ai.states
-        )
+        # C# HauntedShip.cs:39-51: fixed chain HAUNT -> SWIPE -> STOMP ->
+        # SWIPE <-> STOMP, initial HAUNT_MOVE (no random branch).
+        assert ship_ai.current_move.state_id == "HAUNT_MOVE"
+        assert {"SWIPE_MOVE", "STOMP_MOVE", "HAUNT_MOVE"}.issubset(ship_ai.states)
+        # HAUNT = Weak 3 + HauntDazed(5) Dazed into the discard
+        # (HauntedShip.cs:44/118-127).
         ship_ai.current_move.perform(ship_combat)
-        assert ship_combat.player.current_hp == 70
-        assert [card.card_id for card in ship_combat.discard_pile] == [CardId.WOUND, CardId.WOUND]
+        assert ship_combat.player.current_hp == 80
+        assert ship_combat.player.get_power_amount(PowerId.WEAK) == 3
+        assert [card.card_id for card in ship_combat.discard_pile] == [CardId.DAZED] * 5
+        assert _run_ai(ship_ai, Rng(70), 4) == [
+            "HAUNT_MOVE",
+            "SWIPE_MOVE",
+            "STOMP_MOVE",
+            "SWIPE_MOVE",
+        ]
 
         lethal_ship, lethal_ship_ai = create_haunted_ship(Rng(170))
         lethal_ship_combat = _make_combat(170)
         lethal_ship_combat.add_enemy(lethal_ship, lethal_ship_ai)
         lethal_ship_combat.player.current_hp = 10
-        lethal_ship_ai.states["RAMMING_SPEED_MOVE"].perform(lethal_ship_combat)
+        lethal_ship_ai.states["SWIPE_MOVE"].perform(lethal_ship_combat)
         assert lethal_ship_combat.is_over
         assert lethal_ship_combat.player_won is False
-        assert lethal_ship_combat.discard_pile == []
-
-        ship_combat.round_number = 2
-        ship_ai.on_move_performed()
-        ship_ai.roll_move(Rng(70))
-        assert ship_ai.current_move.state_id == "HAUNT_MOVE"
-        ship_ai.current_move.perform(ship_combat)
-        assert ship_combat.player.get_power_amount(PowerId.WEAK) == 2
-        assert ship_combat.player.get_power_amount(PowerId.FRAIL) == 2
-        assert ship_combat.player.get_power_amount(PowerId.VULNERABLE) == 2
 
         ship_effect, ship_effect_ai = create_haunted_ship(Rng(71))
         ship_effect_combat = _make_combat(71)
@@ -6823,15 +6840,17 @@ class TestFixedRotation:
         oil_spray_weak = 1
         tackle_frail = 1
         double_smash_weak = 2
-        haunt_debuff = 2
+        # C# HauntedShip.HauntMove (HauntedShip.cs:118-127): Weak 3 only.
+        haunt_weak = 3
         advanced_gas_smoggy = 1
-        fast_punch_weak = 1
+        # C# PunchConstruct.FastPunchMove (PunchConstruct.cs:118): Frail 1.
+        fast_punch_frail = 1
         screech_frail = 1
         giant_stomp_weak = 1
         no_debuff = 0
-        expected_weak = oil_spray_weak + double_smash_weak + haunt_debuff + fast_punch_weak + giant_stomp_weak
-        expected_frail = goop_frail + tackle_frail + haunt_debuff + screech_frail
-        expected_vulnerable = haunt_debuff
+        expected_weak = oil_spray_weak + double_smash_weak + haunt_weak + giant_stomp_weak
+        expected_frail = goop_frail + tackle_frail + screech_frail + fast_punch_frail
+        expected_vulnerable = no_debuff
         expected_smoggy = advanced_gas_smoggy
         expected_damage = (
             oil_spray_damage
@@ -6850,7 +6869,7 @@ class TestFixedRotation:
         stalker, stalker_ai = create_fossil_stalker(Rng(rng_seed))
         merc, merc_ai = create_gremlin_merc(Rng(rng_seed))
         fog, fog_ai = create_living_fog(Rng(rng_seed))
-        punch, punch_ai = create_punch_construct(Rng(rng_seed), starts_with_strong_punch=True)
+        punch, punch_ai = create_punch_construct(Rng(rng_seed), starts_with_fast_punch=True)
         giant, giant_ai = create_waterfall_giant(Rng(rng_seed))
         ship, ship_ai = create_haunted_ship(Rng(rng_seed))
         rat, rat_ai = create_two_tailed_rat(Rng(rng_seed), starter_move_idx=2)
@@ -6900,11 +6919,10 @@ class TestFixedRotation:
         rng_seed = 1245
         ally_hp = 100
         osty_hp = 100
-        ramming_speed_damage = 10
-        smash_damage = 9
-        ramming_speed_wounds = 2
-        smash_dazed = 4
-        expected_damage = ramming_speed_damage + smash_damage
+        # C# HauntedShip.cs:118-127: HAUNT adds HauntDazed(5) Dazed to each
+        # living player's discard (no damage).
+        haunt_dazed = 5
+        expected_damage = 0
         combat = _make_combat(rng_seed)
         ally = _add_test_ally(combat, hp=ally_hp)
         primary_state = combat.combat_player_state_for(combat.primary_player)
@@ -6916,25 +6934,18 @@ class TestFixedRotation:
         osty = combat.summon_osty(combat.primary_player, osty_hp)
         assert osty is not None
         ship, ship_ai = create_haunted_ship(Rng(rng_seed))
-        colony, colony_ai = create_skulking_colony(Rng(rng_seed))
         combat.add_enemy(ship, ship_ai)
-        combat.add_enemy(colony, colony_ai)
 
         primary_hp_before = combat.primary_player.current_hp
         ally_hp_before = ally.current_hp
         osty_hp_before = osty.current_hp
-        ship_ai.states["RAMMING_SPEED_MOVE"].perform(combat)
-        colony_ai.states["SMASH_MOVE"].perform(combat)
+        ship_ai.states["HAUNT_MOVE"].perform(combat)
 
-        assert combat.primary_player.current_hp == primary_hp_before
+        assert combat.primary_player.current_hp == primary_hp_before - expected_damage
         assert ally.current_hp == ally_hp_before - expected_damage
         assert osty.current_hp == osty_hp_before - expected_damage
-        assert [card.card_id for card in primary_state.discard] == (
-            [CardId.WOUND] * ramming_speed_wounds + [CardId.DAZED] * smash_dazed
-        )
-        assert [card.card_id for card in ally_state.discard] == (
-            [CardId.WOUND] * ramming_speed_wounds + [CardId.DAZED] * smash_dazed
-        )
+        assert [card.card_id for card in primary_state.discard] == [CardId.DAZED] * haunt_dazed
+        assert [card.card_id for card in ally_state.discard] == [CardId.DAZED] * haunt_dazed
         assert combat.combat_player_state_for(osty) is None
 
     def test_act4_elite_and_boss_debuffs_use_original_player_targets_not_pets(self):
@@ -7025,36 +7036,36 @@ class TestFixedRotation:
         colony_combat.add_enemy(colony, colony_ai)
         assert colony.max_hp == SKULKING_COLONY_BASE_HP
         assert colony.get_power_amount(PowerId.HARDENED_SHELL) == SKULKING_COLONY_HARDENED_SHELL
+        # C# SkulkingColony.cs:59-74: fixed loop ZOOM -> ZOOM_2 -> INERTIA ->
+        # PIERCING_STABS -> ZOOM starting at ZOOM_MOVE.
         assert _run_ai(colony_ai, Rng(79), 5) == [
-            SKULKING_COLONY_SMASH_MOVE,
             SKULKING_COLONY_ZOOM_MOVE,
+            SKULKING_COLONY_ZOOM_MOVE_2,
             SKULKING_COLONY_INERTIA_MOVE,
-            SKULKING_COLONY_SUPER_CRAB_MOVE,
-            SKULKING_COLONY_SMASH_MOVE,
+            SKULKING_COLONY_PIERCING_STABS_MOVE,
+            SKULKING_COLONY_ZOOM_MOVE,
         ]
-        player_hp_before_smash = colony_combat.player.current_hp
-        colony_ai.states[SKULKING_COLONY_SMASH_MOVE].perform(colony_combat)
-        assert colony_combat.player.current_hp == player_hp_before_smash - SKULKING_COLONY_BASE_SMASH_DAMAGE
-        assert [card.card_id for card in colony_combat.discard_pile] == [CardId.DAZED] * SKULKING_COLONY_SMASH_DAZED
 
-        lethal_colony, lethal_colony_ai = create_skulking_colony(Rng(80))
-        lethal_colony_combat = _make_combat(80)
-        lethal_colony_combat.add_enemy(lethal_colony, lethal_colony_ai)
-        lethal_colony_combat.player.current_hp = 9
-        lethal_colony_ai.states[SKULKING_COLONY_SMASH_MOVE].perform(lethal_colony_combat)
-        assert lethal_colony_combat.is_over
-        assert lethal_colony_combat.player_won is False
-        assert lethal_colony_combat.discard_pile == []
+        # Zoom attack (SkulkingColony.cs:98-104).
+        player_hp_before_zoom = colony_combat.player.current_hp
+        colony_ai.states[SKULKING_COLONY_ZOOM_MOVE].perform(colony_combat)
+        assert colony_combat.player.current_hp == player_hp_before_zoom - SKULKING_COLONY_BASE_ZOOM_DAMAGE
 
+        # INERTIA = attack + self Strength, no block (SkulkingColony.cs:78-86).
+        player_hp_before_inertia = colony_combat.player.current_hp
         colony_ai.states[SKULKING_COLONY_INERTIA_MOVE].perform(colony_combat)
-        assert colony.block == SKULKING_COLONY_BASE_INERTIA_BLOCK
-        assert colony.get_power_amount(PowerId.STRENGTH) == SKULKING_COLONY_INERTIA_STRENGTH
-        counter = _BlockHookCounterPower()
-        colony.powers[PowerId.JUGGERNAUT] = counter
-        colony.block = 0
-        colony_ai.states[SKULKING_COLONY_INERTIA_MOVE].perform(colony_combat)
-        assert colony.block == SKULKING_COLONY_BASE_INERTIA_BLOCK
-        assert counter.calls == [SKULKING_COLONY_BASE_INERTIA_BLOCK]
+        assert colony_combat.player.current_hp == player_hp_before_inertia - SKULKING_COLONY_BASE_INERTIA_DAMAGE
+        assert colony.get_power_amount(PowerId.STRENGTH) == SKULKING_COLONY_BASE_INERTIA_STRENGTH
+
+        # PIERCING_STABS = 2 hits (SkulkingColony.cs:88-96); the Strength
+        # gained by INERTIA adds 2 per hit.
+        player_hp_before_stabs = colony_combat.player.current_hp
+        colony_ai.states[SKULKING_COLONY_PIERCING_STABS_MOVE].perform(colony_combat)
+        assert colony_combat.player.current_hp == (
+            player_hp_before_stabs
+            - (SKULKING_COLONY_BASE_PIERCING_STABS_DAMAGE + SKULKING_COLONY_BASE_INERTIA_STRENGTH)
+            * SKULKING_COLONY_PIERCING_STABS_HITS
+        )
 
         colony_zoom, colony_zoom_ai = create_skulking_colony(Rng(80))
         colony_zoom_combat = _make_combat(80)
@@ -7062,11 +7073,6 @@ class TestFixedRotation:
         player_hp_before_zoom = colony_zoom_combat.player.current_hp
         colony_zoom_ai.states[SKULKING_COLONY_ZOOM_MOVE].perform(colony_zoom_combat)
         assert colony_zoom_combat.player.current_hp == player_hp_before_zoom - SKULKING_COLONY_BASE_ZOOM_DAMAGE
-        player_hp_before_super_crab = colony_zoom_combat.player.current_hp
-        colony_zoom_ai.states[SKULKING_COLONY_SUPER_CRAB_MOVE].perform(colony_zoom_combat)
-        assert colony_zoom_combat.player.current_hp == (
-            player_hp_before_super_crab - SKULKING_COLONY_BASE_SUPER_CRAB_DAMAGE * SKULKING_COLONY_SUPER_CRAB_HITS
-        )
 
         eel, eel_ai = create_terror_eel(Rng(81))
         eel_combat = _make_combat(81)
@@ -7127,31 +7133,30 @@ class TestFixedRotation:
 
         assert colony.max_hp == SKULKING_COLONY_A8_HP
         assert colony.get_power_amount(PowerId.HARDENED_SHELL) == SKULKING_COLONY_HARDENED_SHELL
-        smash = colony_ai.states[SKULKING_COLONY_SMASH_MOVE]
-        assert smash.intents[0].damage == SKULKING_COLONY_SMASH_DAMAGE_A9
-        player_hp_before_smash = colony_combat.player.current_hp
-        smash.perform(colony_combat)
-        assert colony_combat.player.current_hp == player_hp_before_smash - SKULKING_COLONY_SMASH_DAMAGE_A9
-        assert [card.card_id for card in colony_combat.discard_pile] == [CardId.DAZED] * SKULKING_COLONY_SMASH_DAZED
 
+        # Zoom attack (SkulkingColony.cs:98-104, ZoomDamage 14/16).
         zoom = colony_ai.states[SKULKING_COLONY_ZOOM_MOVE]
         assert zoom.intents[0].damage == SKULKING_COLONY_ZOOM_DAMAGE_A9
         player_hp_before_zoom = colony_combat.player.current_hp
         zoom.perform(colony_combat)
         assert colony_combat.player.current_hp == player_hp_before_zoom - SKULKING_COLONY_ZOOM_DAMAGE_A9
 
-        super_crab = colony_ai.states[SKULKING_COLONY_SUPER_CRAB_MOVE]
-        assert super_crab.intents[0].damage == SKULKING_COLONY_SUPER_CRAB_DAMAGE_A9
-        assert super_crab.intents[0].hits == SKULKING_COLONY_SUPER_CRAB_HITS
-        player_hp_before_super_crab = colony_combat.player.current_hp
-        super_crab.perform(colony_combat)
+        # PIERCING_STABS = 2 hits (SkulkingColony.cs:88-96, 7/8).
+        piercing_stabs = colony_ai.states[SKULKING_COLONY_PIERCING_STABS_MOVE]
+        assert piercing_stabs.intents[0].damage == SKULKING_COLONY_PIERCING_STABS_DAMAGE_A9
+        assert piercing_stabs.intents[0].hits == SKULKING_COLONY_PIERCING_STABS_HITS
+        player_hp_before_stabs = colony_combat.player.current_hp
+        piercing_stabs.perform(colony_combat)
         assert colony_combat.player.current_hp == (
-            player_hp_before_super_crab - SKULKING_COLONY_SUPER_CRAB_DAMAGE_A9 * SKULKING_COLONY_SUPER_CRAB_HITS
+            player_hp_before_stabs - SKULKING_COLONY_PIERCING_STABS_DAMAGE_A9 * SKULKING_COLONY_PIERCING_STABS_HITS
         )
 
+        # INERTIA = attack + self Strength, no block (SkulkingColony.cs:78-86,
+        # 9/11 damage, 2/4 Strength gained after the hit).
+        player_hp_before_inertia = colony_combat.player.current_hp
         colony_ai.states[SKULKING_COLONY_INERTIA_MOVE].perform(colony_combat)
-        assert colony.block == SKULKING_COLONY_INERTIA_BLOCK_A8
-        assert colony.get_power_amount(PowerId.STRENGTH) == SKULKING_COLONY_INERTIA_STRENGTH
+        assert colony_combat.player.current_hp == player_hp_before_inertia - SKULKING_COLONY_INERTIA_DAMAGE_A9
+        assert colony.get_power_amount(PowerId.STRENGTH) == SKULKING_COLONY_INERTIA_STRENGTH_A9
 
         eel_combat = _make_combat(rng_seed)
         eel_combat.ascension_level = 9
@@ -7934,3 +7939,259 @@ class TestCooldown:
                 assert "A" not in window, (
                     f"A appeared within cooldown at index {i}: {moves[i:i+4]}"
                 )
+
+
+# ========================================================================
+# 9. v0.107.1 monster AI parity fixes (C# line-number citations)
+# ========================================================================
+
+class TestMonsterAIParityFixes:
+    def _branch_for(self, rand: RandomBranchState, state_id: str):
+        return next(b for b in rand.branches if b.state_id == state_id)
+
+    def test_flail_knight_rand_uses_can_repeat_x_times_two(self):
+        from sts2_env.monsters.act3 import FLAIL_KNIGHT_FLAIL_MOVE, FLAIL_KNIGHT_RANDOM_STATE, FLAIL_KNIGHT_RAM_MOVE, FLAIL_KNIGHT_WAR_CHANT_MOVE
+        from sts2_env.monsters.act3 import create_flail_knight
+
+        # C# FlailKnight.cs:49-51: WAR_CHANT=CannotRepeat; FLAIL/RAM use
+        # AddBranch(state, 2) which RandomBranchState.cs:74-77 resolves to
+        # CanRepeatXTimes(maxTimes=2) with weight 1.
+        _, ai = create_flail_knight(Rng(50))
+        rand = ai.states[FLAIL_KNIGHT_RANDOM_STATE]
+        war_chant = self._branch_for(rand, FLAIL_KNIGHT_WAR_CHANT_MOVE)
+        flail = self._branch_for(rand, FLAIL_KNIGHT_FLAIL_MOVE)
+        ram = self._branch_for(rand, FLAIL_KNIGHT_RAM_MOVE)
+        assert war_chant.repeat_type == MoveRepeatType.CANNOT_REPEAT
+        assert flail.repeat_type == MoveRepeatType.CAN_REPEAT_X_TIMES and flail.max_times == 2
+        assert ram.repeat_type == MoveRepeatType.CAN_REPEAT_X_TIMES and ram.max_times == 2
+        assert flail.base_weight == 1.0 and ram.base_weight == 1.0
+        # Two consecutive FLAILs exhaust the branch (RandomBranchState.cs
+        # GetStateWeight: last maxTimes log entries all equal -> weight 0).
+        assert flail.get_weight([FLAIL_KNIGHT_FLAIL_MOVE, FLAIL_KNIGHT_FLAIL_MOVE]) == 0.0
+        assert flail.get_weight([FLAIL_KNIGHT_RAM_MOVE, FLAIL_KNIGHT_FLAIL_MOVE]) == 1.0
+
+    def test_mysterious_knight_rand_uses_can_repeat_x_times_two(self):
+        from sts2_env.monsters.shared import (
+            MYSTERIOUS_KNIGHT_FLAIL_MOVE,
+            MYSTERIOUS_KNIGHT_RANDOM_STATE,
+            MYSTERIOUS_KNIGHT_RAM_MOVE,
+            create_mysterious_knight,
+        )
+
+        # C# MysteriousKnight : FlailKnight inherits GenerateMoveStateMachine
+        # (MysteriousKnight.cs:10) — same CanRepeatXTimes(2) RAND branches.
+        _, ai = create_mysterious_knight(Rng(51))
+        rand = ai.states[MYSTERIOUS_KNIGHT_RANDOM_STATE]
+        flail = self._branch_for(rand, MYSTERIOUS_KNIGHT_FLAIL_MOVE)
+        ram = self._branch_for(rand, MYSTERIOUS_KNIGHT_RAM_MOVE)
+        assert flail.repeat_type == MoveRepeatType.CAN_REPEAT_X_TIMES and flail.max_times == 2
+        assert ram.repeat_type == MoveRepeatType.CAN_REPEAT_X_TIMES and ram.max_times == 2
+
+    def test_fossil_stalker_rand_all_branches_can_repeat_x_times_two(self):
+        from sts2_env.monsters.act4 import (
+            FOSSIL_STALKER_LASH_MOVE,
+            FOSSIL_STALKER_LATCH_MOVE,
+            FOSSIL_STALKER_RANDOM_STATE,
+            FOSSIL_STALKER_TACKLE_MOVE,
+            create_fossil_stalker,
+        )
+
+        # C# FossilStalker.cs:58-60: LATCH/TACKLE/LASH all AddBranch(state, 2)
+        # = CanRepeatXTimes(2), weight 1.
+        _, ai = create_fossil_stalker(Rng(52))
+        rand = ai.states[FOSSIL_STALKER_RANDOM_STATE]
+        for state_id in (FOSSIL_STALKER_LATCH_MOVE, FOSSIL_STALKER_TACKLE_MOVE, FOSSIL_STALKER_LASH_MOVE):
+            branch = self._branch_for(rand, state_id)
+            assert branch.repeat_type == MoveRepeatType.CAN_REPEAT_X_TIMES
+            assert branch.max_times == 2
+            assert branch.base_weight == 1.0
+
+    def test_spectral_knight_soul_slash_can_repeat_x_times_two(self):
+        from sts2_env.monsters.act3 import (
+            SPECTRAL_KNIGHT_RANDOM_STATE,
+            SPECTRAL_KNIGHT_SOUL_FLAME_MOVE,
+            SPECTRAL_KNIGHT_SOUL_SLASH_MOVE,
+            create_spectral_knight,
+        )
+
+        # C# SpectralKnight.cs:52-53: SOUL_SLASH=AddBranch(state, 2)
+        # (CanRepeatXTimes(2)); SOUL_FLAME=CannotRepeat.
+        _, ai = create_spectral_knight(Rng(53))
+        rand = ai.states[SPECTRAL_KNIGHT_RANDOM_STATE]
+        soul_slash = self._branch_for(rand, SPECTRAL_KNIGHT_SOUL_SLASH_MOVE)
+        soul_flame = self._branch_for(rand, SPECTRAL_KNIGHT_SOUL_FLAME_MOVE)
+        assert soul_slash.repeat_type == MoveRepeatType.CAN_REPEAT_X_TIMES and soul_slash.max_times == 2
+        assert soul_flame.repeat_type == MoveRepeatType.CANNOT_REPEAT
+        assert soul_slash.base_weight == 1.0 and soul_flame.base_weight == 1.0
+
+    def test_scroll_of_biting_chew_can_repeat_x_times_two(self):
+        from sts2_env.monsters.act3 import create_scroll_of_biting
+
+        # C# ScrollOfBiting.cs:89-90: rand branches CHOMP=CannotRepeat,
+        # CHEW=AddBranch(state, 2) = CanRepeatXTimes(2), weight 1.
+        _, ai = create_scroll_of_biting(Rng(54))
+        rand = ai.states["rand"]
+        chomp = self._branch_for(rand, "CHOMP")
+        chew = self._branch_for(rand, "CHEW")
+        assert chomp.repeat_type == MoveRepeatType.CANNOT_REPEAT
+        assert chew.repeat_type == MoveRepeatType.CAN_REPEAT_X_TIMES and chew.max_times == 2
+        assert chew.base_weight == 1.0
+        assert chew.get_weight(["CHEW", "CHEW"]) == 0.0
+        assert chew.get_weight(["MORE_TEETH", "CHEW"]) == 1.0
+
+    def test_flyconid_spore_branches_use_cooldowns_and_unit_weights(self):
+        from sts2_env.monsters.act1 import (
+            FLYCONID_FRAIL_SPORES_COOLDOWN,
+            FLYCONID_FRAIL_SPORES_MOVE,
+            FLYCONID_INITIAL_MOVE,
+            FLYCONID_RANDOM_MOVE,
+            FLYCONID_SMASH_MOVE,
+            FLYCONID_VULNERABLE_SPORES_COOLDOWN,
+            FLYCONID_VULNERABLE_SPORES_MOVE,
+            create_flyconid,
+        )
+
+        # C# Flyconid.cs:39-43: VULN branch cooldown 3, FRAIL cooldown 2,
+        # SMASH none (AddBranch(state, cooldown, CannotRepeat)); all weights
+        # are the default 1.
+        _, ai = create_flyconid(Rng(55))
+        main_rand = ai.states[FLYCONID_RANDOM_MOVE]
+        initial_rand = ai.states[FLYCONID_INITIAL_MOVE]
+        vuln = self._branch_for(main_rand, FLYCONID_VULNERABLE_SPORES_MOVE)
+        frail = self._branch_for(main_rand, FLYCONID_FRAIL_SPORES_MOVE)
+        smash = self._branch_for(main_rand, FLYCONID_SMASH_MOVE)
+        assert vuln.cooldown == FLYCONID_VULNERABLE_SPORES_COOLDOWN == 3
+        assert frail.cooldown == FLYCONID_FRAIL_SPORES_COOLDOWN == 2
+        assert smash.cooldown == 0
+        for branch in (vuln, frail, smash):
+            assert branch.repeat_type == MoveRepeatType.CANNOT_REPEAT
+            assert branch.base_weight == 1.0
+        initial_frail = self._branch_for(initial_rand, FLYCONID_FRAIL_SPORES_MOVE)
+        assert initial_frail.cooldown == 2
+        # Cooldown zeroes the weight while the move is inside the window
+        # (last 3 log entries for VULN); it recovers once outside.
+        assert vuln.get_weight(["SMASH_MOVE", "FRAIL_SPORES_MOVE", "VULNERABLE_SPORES_MOVE"]) == 0.0
+        assert vuln.get_weight(["VULNERABLE_SPORES_MOVE", "SMASH_MOVE", "FRAIL_SPORES_MOVE", "SMASH_MOVE"]) == 1.0
+
+    def test_two_tailed_rat_screech_cooldown_and_weights(self):
+        from sts2_env.monsters.act4 import (
+            TWO_TAILED_RAT_SCREECH_COOLDOWN,
+            TWO_TAILED_RAT_SCREECH_MOVE,
+            TWO_TAILED_RAT_SCRATCH_MOVE,
+            create_two_tailed_rat,
+        )
+
+        # C# TwoTailedRat.cs:125-128: SCREECH = AddBranch(state, 3,
+        # CannotRepeat, weight) — cooldown 3; every attack weight is
+        # can_summon ? 1/12 : 1, CALL_FOR_BACKUP is UseOnlyOnce 0.75 : 0.
+        _, ai = create_two_tailed_rat(Rng(56))
+        rand = ai.states["RAND"]
+        screech = self._branch_for(rand, TWO_TAILED_RAT_SCREECH_MOVE)
+        scratch = self._branch_for(rand, TWO_TAILED_RAT_SCRATCH_MOVE)
+        assert screech.cooldown == TWO_TAILED_RAT_SCREECH_COOLDOWN == 3
+        assert screech.repeat_type == MoveRepeatType.CANNOT_REPEAT
+        assert scratch.repeat_type == MoveRepeatType.CANNOT_REPEAT
+        # Without a combat the creature cannot summon -> weight 1.
+        assert screech.base_weight() == 1.0
+        assert scratch.base_weight() == 1.0
+        assert screech.get_weight([TWO_TAILED_RAT_SCRATCH_MOVE, "X", TWO_TAILED_RAT_SCREECH_MOVE]) == 0.0
+        assert screech.get_weight([TWO_TAILED_RAT_SCREECH_MOVE, "X", "Y", "Z"]) == 1.0
+
+    def test_infested_prism_pulsate_is_attack_buff_defend(self):
+        from sts2_env.monsters.act2 import INFESTED_PRISM_PULSATE_MOVE, create_infested_prism
+        from sts2_env.powers.base import PowerId
+
+        combat = _make_combat(57)
+        creature, ai = create_infested_prism(Rng(57))
+        combat.add_enemy(creature, ai)
+
+        # C# InfestedPrism.cs:68: PULSATE_MOVE = SingleAttackIntent
+        # (PulsateDamage, line 42: 8 / 10 deadly) + BuffIntent + DefendIntent.
+        pulsate = ai.states[INFESTED_PRISM_PULSATE_MOVE]
+        assert pulsate.intents[0].intent_type == IntentType.ATTACK
+        assert pulsate.intents[0].damage == 8
+        assert pulsate.intents[1].intent_type == IntentType.BUFF
+        assert pulsate.intents[2].intent_type == IntentType.DEFEND
+
+        # PulsateMove (InfestedPrism.cs:108-115): attack 8, block 20,
+        # re-apply VitalSpark 2.
+        player_hp_before = combat.player.current_hp
+        pulsate.perform(combat)
+        assert combat.player.current_hp == player_hp_before - 8
+        assert creature.block == 20
+        assert creature.get_power_amount(PowerId.VITAL_SPARK) == 2 + 2
+
+    def test_nibbit_slice_move_has_defend_intent(self):
+        from sts2_env.monsters.act1_weak import NIBBIT_SLICE_MOVE, create_nibbit
+
+        combat = _make_combat(58)
+        creature, ai = create_nibbit(Rng(58), is_front=True, is_alone=False)
+        combat.add_enemy(creature, ai)
+
+        # C# Nibbit.cs:72: SLICE_MOVE = SingleAttackIntent(SliceDamage 6) +
+        # DefendIntent; the effect attacks and gains SliceBlock 5
+        # (Nibbit.cs:107-113).
+        slice_state = ai.states[NIBBIT_SLICE_MOVE]
+        assert [i.intent_type for i in slice_state.intents] == [IntentType.ATTACK, IntentType.DEFEND]
+        assert slice_state.intents[0].damage == 6
+        player_hp_before = combat.player.current_hp
+        slice_state.perform(combat)
+        assert combat.player.current_hp == player_hp_before - 6
+        assert creature.block == 5
+
+    def test_queen_puppet_strings_uses_card_debuff_intent(self):
+        from sts2_env.monsters.act3 import QUEEN_PUPPET_STRINGS_MOVE, create_queen
+
+        _, ai = create_queen(Rng(59))
+        # C# Queen.cs:135: PUPPET_STRINGS_MOVE uses CardDebuffIntent
+        # (IntentType.CardDebuff), not DebuffStrongIntent.
+        puppet_strings = ai.states[QUEEN_PUPPET_STRINGS_MOVE]
+        assert puppet_strings.intents[0].intent_type == IntentType.CARD_DEBUFF
+
+    def test_punch_construct_cycles_ready_fast_strong(self):
+        from sts2_env.monsters.act4 import create_punch_construct
+
+        combat = _make_combat(60)
+        creature, ai = create_punch_construct(Rng(60))
+        combat.add_enemy(creature, ai)
+
+        # C# PunchConstruct.cs:84-92: READY -> FAST_PUNCH -> STRONG_PUNCH
+        # -> READY; FAST_PUNCH debuffs Frail 1 (line 118).
+        assert _run_ai(ai, Rng(60), 5) == [
+            "READY_MOVE",
+            "FAST_PUNCH_MOVE",
+            "STRONG_PUNCH_MOVE",
+            "READY_MOVE",
+            "FAST_PUNCH_MOVE",
+        ]
+        fast_punch = ai.states["FAST_PUNCH_MOVE"]
+        assert [i.intent_type for i in fast_punch.intents] == [IntentType.MULTI_ATTACK, IntentType.DEBUFF]
+        fast_punch.perform(combat)
+        assert combat.player.get_power_amount(PowerId.FRAIL) == 1
+
+    def test_test_subject_multi_claw_self_loops_until_second_respawn(self):
+        from sts2_env.monsters.act3 import TEST_SUBJECT_REVIVE_BRANCH
+
+        combat = _make_combat(61)
+        creature, ai = create_test_subject(Rng(61))
+        combat.add_enemy(creature, ai)
+
+        # C# TestSubject.cs:205/210: MULTI_CLAW FollowUpState is itself and
+        # REVIVE_BRANCH routes back to MULTI_CLAW while Respawns < 2.
+        multi_claw = ai.states[TEST_SUBJECT_MULTI_CLAW_MOVE]
+        assert multi_claw.follow_up_id == TEST_SUBJECT_MULTI_CLAW_MOVE
+        assert ai.states[TEST_SUBJECT_RESPAWN_MOVE].follow_up_id == TEST_SUBJECT_REVIVE_BRANCH
+        assert _run_ai(ai, Rng(61), 3) == [
+            TEST_SUBJECT_BITE_MOVE,
+            TEST_SUBJECT_SKULL_BASH_MOVE,
+            TEST_SUBJECT_BITE_MOVE,
+        ]
+        # MULTI_CLAW never routes to another move: force the phase-2 state
+        # (reachable via REVIVE_BRANCH after a respawn) and keep rolling.
+        ai._current_state_id = TEST_SUBJECT_MULTI_CLAW_MOVE  # noqa: SLF001
+        ai.on_move_performed()
+        for _ in range(4):
+            ai.roll_move(Rng(61))
+            assert ai.current_move.state_id == TEST_SUBJECT_MULTI_CLAW_MOVE
+            ai.states[TEST_SUBJECT_MULTI_CLAW_MOVE].perform(combat)
+            ai.on_move_performed()

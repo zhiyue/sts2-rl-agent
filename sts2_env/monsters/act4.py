@@ -15,7 +15,6 @@ from sts2_env.cards.status import (
     WITHER_DAMAGE,
     make_dazed,
     make_wither,
-    make_wound,
 )
 from sts2_env.monsters.intents import (
     Intent, IntentType, attack_intent, multi_attack_intent,
@@ -657,7 +656,7 @@ FOSSIL_STALKER_RANDOM_STATE = "RAND"
 FOSSIL_STALKER_TACKLE_MOVE = "TACKLE_MOVE"
 FOSSIL_STALKER_LATCH_MOVE = "LATCH_MOVE"
 FOSSIL_STALKER_LASH_MOVE = "LASH_MOVE"
-FOSSIL_STALKER_MOVE_WEIGHT = 2.0
+FOSSIL_STALKER_MAX_REPEATS = 2
 
 
 def create_fossil_stalker(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
@@ -728,10 +727,13 @@ def create_fossil_stalker(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
         FOSSIL_STALKER_BASE_LASH_DAMAGE,
     )
 
+    # C# FossilStalker.GenerateMoveStateMachine (FossilStalker.cs:51-65):
+    # every RAND branch is AddBranch(state, 2) = CanRepeatXTimes(2),
+    # weight 1; initial LATCH_MOVE.
     rand = RandomBranchState(FOSSIL_STALKER_RANDOM_STATE)
-    rand.add_branch(FOSSIL_STALKER_LATCH_MOVE, weight=FOSSIL_STALKER_MOVE_WEIGHT)
-    rand.add_branch(FOSSIL_STALKER_TACKLE_MOVE, weight=FOSSIL_STALKER_MOVE_WEIGHT)
-    rand.add_branch(FOSSIL_STALKER_LASH_MOVE, weight=FOSSIL_STALKER_MOVE_WEIGHT)
+    rand.add_branch(FOSSIL_STALKER_LATCH_MOVE, MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=FOSSIL_STALKER_MAX_REPEATS)
+    rand.add_branch(FOSSIL_STALKER_TACKLE_MOVE, MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=FOSSIL_STALKER_MAX_REPEATS)
+    rand.add_branch(FOSSIL_STALKER_LASH_MOVE, MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=FOSSIL_STALKER_MAX_REPEATS)
 
     states: dict[str, MonsterState] = {
         FOSSIL_STALKER_RANDOM_STATE: rand,
@@ -993,17 +995,13 @@ def create_gremlin_merc(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
 HAUNTED_SHIP_MONSTER_ID = "HAUNTED_SHIP"
 HAUNTED_SHIP_BASE_HP = 63
 HAUNTED_SHIP_TOUGH_HP = 67
-HAUNTED_SHIP_BASE_RAMMING_SPEED_DAMAGE = 10
-HAUNTED_SHIP_DEADLY_RAMMING_SPEED_DAMAGE = 11
-HAUNTED_SHIP_RAMMING_SPEED_STATUS_COUNT = 2
 HAUNTED_SHIP_BASE_SWIPE_DAMAGE = 13
 HAUNTED_SHIP_DEADLY_SWIPE_DAMAGE = 14
 HAUNTED_SHIP_BASE_STOMP_DAMAGE = 4
 HAUNTED_SHIP_DEADLY_STOMP_DAMAGE = 5
 HAUNTED_SHIP_STOMP_REPEAT = 3
-HAUNTED_SHIP_HAUNT_DEBUFF = 2
-HAUNTED_SHIP_RANDOM_STATE = "RAND"
-HAUNTED_SHIP_RAMMING_SPEED_MOVE = "RAMMING_SPEED_MOVE"
+HAUNTED_SHIP_HAUNT_WEAK = 3
+HAUNTED_SHIP_HAUNT_DAZED = 5
 HAUNTED_SHIP_SWIPE_MOVE = "SWIPE_MOVE"
 HAUNTED_SHIP_STOMP_MOVE = "STOMP_MOVE"
 HAUNTED_SHIP_HAUNT_MOVE = "HAUNT_MOVE"
@@ -1017,30 +1015,6 @@ def create_haunted_ship(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
         HAUNTED_SHIP_BASE_HP,
     )
     creature = Creature(max_hp=hp, monster_id=HAUNTED_SHIP_MONSTER_ID)
-
-    def _odd_round_weight() -> float:
-        combat = creature.combat_state
-        return 1.0 if combat is None or combat.round_number % 2 != 0 else 0.0
-
-    def _even_round_weight() -> float:
-        combat = creature.combat_state
-        return 1.0 if combat is not None and combat.round_number % 2 == 0 else 0.0
-
-    def ramming_speed(combat: CombatState) -> None:
-        ramming_speed_dmg = _ascension_value(
-            _combat_ascension_level(combat),
-            DEADLY_ENEMIES_ASCENSION_LEVEL,
-            HAUNTED_SHIP_DEADLY_RAMMING_SPEED_DAMAGE,
-            HAUNTED_SHIP_BASE_RAMMING_SPEED_DAMAGE,
-        )
-        _deal_damage_to_player(combat, creature, ramming_speed_dmg)
-        if combat.is_over:
-            return
-        add_generated_cards_to_living_player_discards(
-            combat,
-            make_wound,
-            HAUNTED_SHIP_RAMMING_SPEED_STATUS_COUNT,
-        )
 
     def swipe(combat: CombatState) -> None:
         swipe_dmg = _ascension_value(
@@ -1061,16 +1035,13 @@ def create_haunted_ship(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
         _deal_damage_to_player(combat, creature, stomp_dmg, hits=HAUNTED_SHIP_STOMP_REPEAT)
 
     def haunt(combat: CombatState) -> None:
-        apply_power_to_living_player_targets(combat, PowerId.WEAK, HAUNTED_SHIP_HAUNT_DEBUFF, applier=creature)
-        apply_power_to_living_player_targets(combat, PowerId.FRAIL, HAUNTED_SHIP_HAUNT_DEBUFF, applier=creature)
-        apply_power_to_living_player_targets(combat, PowerId.VULNERABLE, HAUNTED_SHIP_HAUNT_DEBUFF, applier=creature)
+        # C# HauntedShip.HauntMove (HauntedShip.cs:118-127): Weak 3 on the
+        # player + HauntDazed(5) Dazed added to the discard pile.
+        apply_power_to_living_player_targets(combat, PowerId.WEAK, HAUNTED_SHIP_HAUNT_WEAK, applier=creature)
+        if combat.is_over:
+            return
+        add_generated_cards_to_living_player_discards(combat, make_dazed, HAUNTED_SHIP_HAUNT_DAZED)
 
-    ramming_speed_intent_damage = _ascension_value(
-        ascension_level,
-        DEADLY_ENEMIES_ASCENSION_LEVEL,
-        HAUNTED_SHIP_DEADLY_RAMMING_SPEED_DAMAGE,
-        HAUNTED_SHIP_BASE_RAMMING_SPEED_DAMAGE,
-    )
     swipe_intent_damage = _ascension_value(
         ascension_level,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
@@ -1084,41 +1055,30 @@ def create_haunted_ship(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
         HAUNTED_SHIP_BASE_STOMP_DAMAGE,
     )
 
-    rand = RandomBranchState(HAUNTED_SHIP_RANDOM_STATE)
-    rand.add_branch(HAUNTED_SHIP_RAMMING_SPEED_MOVE, MoveRepeatType.CANNOT_REPEAT, weight=_odd_round_weight)
-    rand.add_branch(HAUNTED_SHIP_SWIPE_MOVE, MoveRepeatType.CANNOT_REPEAT, weight=_odd_round_weight)
-    rand.add_branch(HAUNTED_SHIP_STOMP_MOVE, MoveRepeatType.CANNOT_REPEAT, weight=_odd_round_weight)
-    rand.add_branch(HAUNTED_SHIP_HAUNT_MOVE, MoveRepeatType.USE_ONLY_ONCE, weight=_even_round_weight)
-
+    # C# HauntedShip.GenerateMoveStateMachine (HauntedShip.cs:39-51):
+    # HAUNT -> SWIPE -> STOMP -> SWIPE <-> STOMP, initial HAUNT_MOVE.
     states: dict[str, MonsterState] = {
-        HAUNTED_SHIP_RANDOM_STATE: rand,
-        HAUNTED_SHIP_RAMMING_SPEED_MOVE: MoveState(
-            HAUNTED_SHIP_RAMMING_SPEED_MOVE,
-            ramming_speed,
-            [attack_intent(ramming_speed_intent_damage), status_intent()],
-            follow_up_id=HAUNTED_SHIP_RANDOM_STATE,
-        ),
         HAUNTED_SHIP_SWIPE_MOVE: MoveState(
             HAUNTED_SHIP_SWIPE_MOVE,
             swipe,
             [attack_intent(swipe_intent_damage)],
-            follow_up_id=HAUNTED_SHIP_RANDOM_STATE,
+            follow_up_id=HAUNTED_SHIP_STOMP_MOVE,
         ),
         HAUNTED_SHIP_STOMP_MOVE: MoveState(
             HAUNTED_SHIP_STOMP_MOVE,
             stomp,
             [multi_attack_intent(stomp_intent_damage, HAUNTED_SHIP_STOMP_REPEAT)],
-            follow_up_id=HAUNTED_SHIP_RANDOM_STATE,
+            follow_up_id=HAUNTED_SHIP_SWIPE_MOVE,
         ),
         HAUNTED_SHIP_HAUNT_MOVE: MoveState(
             HAUNTED_SHIP_HAUNT_MOVE,
             haunt,
-            [debuff_intent()],
-            follow_up_id=HAUNTED_SHIP_RANDOM_STATE,
+            [debuff_intent(), status_intent()],
+            follow_up_id=HAUNTED_SHIP_SWIPE_MOVE,
         ),
     }
-    states[HAUNTED_SHIP_RAMMING_SPEED_MOVE].intents[1].hits = HAUNTED_SHIP_RAMMING_SPEED_STATUS_COUNT
-    return creature, MonsterAI(states, HAUNTED_SHIP_RAMMING_SPEED_MOVE)
+    states[HAUNTED_SHIP_HAUNT_MOVE].intents[1].hits = HAUNTED_SHIP_HAUNT_DAZED
+    return creature, MonsterAI(states, HAUNTED_SHIP_HAUNT_MOVE)
 
 
 # ---- LivingFog (HP 80 / 82 asc) + GasBomb ----
@@ -1289,7 +1249,7 @@ PUNCH_CONSTRUCT_DEADLY_STRONG_PUNCH_DAMAGE = 16
 PUNCH_CONSTRUCT_BASE_FAST_PUNCH_DAMAGE = 5
 PUNCH_CONSTRUCT_DEADLY_FAST_PUNCH_DAMAGE = 6
 PUNCH_CONSTRUCT_FAST_PUNCH_REPEAT = 2
-PUNCH_CONSTRUCT_FAST_PUNCH_WEAK = 1
+PUNCH_CONSTRUCT_FAST_PUNCH_FRAIL = 1
 PUNCH_CONSTRUCT_READY_BLOCK = 10
 PUNCH_CONSTRUCT_ARTIFACT = 1
 PUNCH_CONSTRUCT_READY_MOVE = "READY_MOVE"
@@ -1300,7 +1260,7 @@ PUNCH_CONSTRUCT_FAST_PUNCH_MOVE = "FAST_PUNCH_MOVE"
 def create_punch_construct(
     rng: Rng,
     *,
-    starts_with_strong_punch: bool = False,
+    starts_with_fast_punch: bool = False,
     starting_hp_reduction: int = 0,
     ascension_level: int = 0,
 ) -> tuple[Creature, MonsterAI]:
@@ -1336,10 +1296,11 @@ def create_punch_construct(
             PUNCH_CONSTRUCT_BASE_FAST_PUNCH_DAMAGE,
         )
         _deal_damage_to_player(combat, creature, fast_punch_dmg, hits=PUNCH_CONSTRUCT_FAST_PUNCH_REPEAT)
+        # C# PunchConstruct.FastPunchMove (PunchConstruct.cs:118): Frail 1.
         apply_power_to_living_player_targets(
             combat,
-            PowerId.WEAK,
-            PUNCH_CONSTRUCT_FAST_PUNCH_WEAK,
+            PowerId.FRAIL,
+            PUNCH_CONSTRUCT_FAST_PUNCH_FRAIL,
             applier=creature,
         )
 
@@ -1356,27 +1317,30 @@ def create_punch_construct(
         PUNCH_CONSTRUCT_BASE_FAST_PUNCH_DAMAGE,
     )
 
+    # C# PunchConstruct.GenerateMoveStateMachine (PunchConstruct.cs:81-92):
+    # READY -> FAST_PUNCH -> STRONG_PUNCH -> READY.
     states: dict[str, MonsterState] = {
         PUNCH_CONSTRUCT_READY_MOVE: MoveState(
             PUNCH_CONSTRUCT_READY_MOVE,
             ready,
             [defend_intent()],
-            follow_up_id=PUNCH_CONSTRUCT_STRONG_PUNCH_MOVE,
+            follow_up_id=PUNCH_CONSTRUCT_FAST_PUNCH_MOVE,
         ),
         PUNCH_CONSTRUCT_STRONG_PUNCH_MOVE: MoveState(
             PUNCH_CONSTRUCT_STRONG_PUNCH_MOVE,
             strong_punch,
             [attack_intent(strong_punch_intent_damage)],
-            follow_up_id=PUNCH_CONSTRUCT_FAST_PUNCH_MOVE,
+            follow_up_id=PUNCH_CONSTRUCT_READY_MOVE,
         ),
         PUNCH_CONSTRUCT_FAST_PUNCH_MOVE: MoveState(
             PUNCH_CONSTRUCT_FAST_PUNCH_MOVE,
             fast_punch,
             [multi_attack_intent(fast_punch_intent_damage, PUNCH_CONSTRUCT_FAST_PUNCH_REPEAT), debuff_intent()],
-            follow_up_id=PUNCH_CONSTRUCT_READY_MOVE,
+            follow_up_id=PUNCH_CONSTRUCT_STRONG_PUNCH_MOVE,
         ),
     }
-    initial = PUNCH_CONSTRUCT_STRONG_PUNCH_MOVE if starts_with_strong_punch else PUNCH_CONSTRUCT_READY_MOVE
+    # C# PunchConstruct.cs:92: StartsWithFastPunch ? FAST_PUNCH : READY.
+    initial = PUNCH_CONSTRUCT_FAST_PUNCH_MOVE if starts_with_fast_punch else PUNCH_CONSTRUCT_READY_MOVE
     return creature, MonsterAI(states, initial)
 
 
@@ -1463,7 +1427,7 @@ TWO_TAILED_RAT_CALL_FOR_BACKUP_LIMIT = 3
 TWO_TAILED_RAT_MAX_ALIVE_RATS = 5
 TWO_TAILED_RAT_ATTACK_WEIGHT_WHEN_SUMMONABLE = 1.0 / 12.0
 TWO_TAILED_RAT_ATTACK_WEIGHT = 1.0
-TWO_TAILED_RAT_SCREECH_WEIGHT = 3.0
+TWO_TAILED_RAT_SCREECH_COOLDOWN = 3
 TWO_TAILED_RAT_CALL_FOR_BACKUP_WEIGHT = 0.75
 TWO_TAILED_RAT_TURNS_UNTIL_SUMMONABLE_KEY = "turns_until_summonable"
 TWO_TAILED_RAT_CALL_FOR_BACKUP_COUNT_KEY = "call_for_backup_count"
@@ -1584,6 +1548,10 @@ def create_two_tailed_rat(
         TWO_TAILED_RAT_BASE_DISEASE_BITE_DAMAGE,
     )
 
+    # C# TwoTailedRat.GenerateMoveStateMachine (TwoTailedRat.cs:125-128):
+    # SCRATCH/DISEASE_BITE = CannotRepeat with weight can_summon ? 1/12 : 1;
+    # SCREECH = cooldown 3 + CannotRepeat with the same weight lambda;
+    # CALL_FOR_BACKUP = UseOnlyOnce with weight can_summon ? 0.75 : 0.
     rand = RandomBranchState(TWO_TAILED_RAT_RANDOM_STATE)
     rand.add_branch(
         TWO_TAILED_RAT_SCRATCH_MOVE,
@@ -1598,7 +1566,8 @@ def create_two_tailed_rat(
     rand.add_branch(
         TWO_TAILED_RAT_SCREECH_MOVE,
         MoveRepeatType.CANNOT_REPEAT,
-        weight=lambda: TWO_TAILED_RAT_ATTACK_WEIGHT_WHEN_SUMMONABLE if can_summon() else TWO_TAILED_RAT_SCREECH_WEIGHT,
+        cooldown=TWO_TAILED_RAT_SCREECH_COOLDOWN,
+        weight=lambda: TWO_TAILED_RAT_ATTACK_WEIGHT_WHEN_SUMMONABLE if can_summon() else TWO_TAILED_RAT_ATTACK_WEIGHT,
     )
     rand.add_branch(
         TWO_TAILED_RAT_CALL_FOR_BACKUP_MOVE,
@@ -1757,27 +1726,27 @@ def create_phantasmal_gardener(
     return creature, MonsterAI(states, PHANTASMAL_GARDENER_INIT_MOVE, rng)
 
 
-# ---- SkulkingColony (HP 79 / 84 asc) ----
+# ---- SkulkingColony (HP 75 / 80 asc) ----
+# C# SkulkingColony.cs:59-74: fixed loop ZOOM -> ZOOM_2 -> INERTIA ->
+# PIERCING_STABS -> ZOOM, initial ZOOM_MOVE.
 
 SKULKING_COLONY_MONSTER_ID = "SKULKING_COLONY"
 SKULKING_COLONY_BASE_HP = 75
 SKULKING_COLONY_TOUGH_HP = 80
-SKULKING_COLONY_BASE_SUPER_CRAB_DAMAGE = 6
-SKULKING_COLONY_DEADLY_SUPER_CRAB_DAMAGE = 7
-SKULKING_COLONY_SUPER_CRAB_REPEAT = 2
 SKULKING_COLONY_BASE_ZOOM_DAMAGE = 14
 SKULKING_COLONY_DEADLY_ZOOM_DAMAGE = 16
-SKULKING_COLONY_BASE_SMASH_DAMAGE = 9
-SKULKING_COLONY_DEADLY_SMASH_DAMAGE = 11
-SKULKING_COLONY_SMASH_DAZED = 4
-SKULKING_COLONY_BASE_INERTIA_BLOCK = 10
-SKULKING_COLONY_TOUGH_INERTIA_BLOCK = 13
+SKULKING_COLONY_BASE_INERTIA_DAMAGE = 9
+SKULKING_COLONY_DEADLY_INERTIA_DAMAGE = 11
+SKULKING_COLONY_BASE_INERTIA_STRENGTH = 2
+SKULKING_COLONY_DEADLY_INERTIA_STRENGTH = 4
+SKULKING_COLONY_BASE_PIERCING_STABS_DAMAGE = 7
+SKULKING_COLONY_DEADLY_PIERCING_STABS_DAMAGE = 8
+SKULKING_COLONY_PIERCING_STABS_REPEAT = 2
 SKULKING_COLONY_HARDENED_SHELL = 20
-SKULKING_COLONY_INERTIA_STRENGTH = 3
-SKULKING_COLONY_INERTIA_MOVE = "INERTIA_MOVE"
 SKULKING_COLONY_ZOOM_MOVE = "ZOOM_MOVE"
-SKULKING_COLONY_SUPER_CRAB_MOVE = "SUPER_CRAB_MOVE"
-SKULKING_COLONY_SMASH_MOVE = "SMASH_MOVE"
+SKULKING_COLONY_ZOOM_MOVE_2 = "ZOOM_MOVE_2"
+SKULKING_COLONY_INERTIA_MOVE = "INERTIA_MOVE"
+SKULKING_COLONY_PIERCING_STABS_MOVE = "PIERCING_STABS_MOVE"
 
 
 def create_skulking_colony(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
@@ -1789,16 +1758,6 @@ def create_skulking_colony(rng: Rng, ascension_level: int = 0) -> tuple[Creature
     )
     creature = Creature(max_hp=hp, monster_id=SKULKING_COLONY_MONSTER_ID)
 
-    def inertia(combat: CombatState) -> None:
-        inertia_block = _ascension_value(
-            _combat_ascension_level(combat),
-            TOUGH_ENEMIES_ASCENSION_LEVEL,
-            SKULKING_COLONY_TOUGH_INERTIA_BLOCK,
-            SKULKING_COLONY_BASE_INERTIA_BLOCK,
-        )
-        _gain_block(creature, inertia_block, combat)
-        creature.apply_power(PowerId.STRENGTH, SKULKING_COLONY_INERTIA_STRENGTH, applier=creature)
-
     def zoom(combat: CombatState) -> None:
         zoom_dmg = _ascension_value(
             _combat_ascension_level(combat),
@@ -1808,74 +1767,85 @@ def create_skulking_colony(rng: Rng, ascension_level: int = 0) -> tuple[Creature
         )
         _deal_damage_to_player(combat, creature, zoom_dmg)
 
-    def super_crab(combat: CombatState) -> None:
-        super_crab_dmg = _ascension_value(
+    def inertia(combat: CombatState) -> None:
+        # C# SkulkingColony.InertiaMove (SkulkingColony.cs:78-86): attack
+        # then Strength on self (no block).
+        inertia_dmg = _ascension_value(
             _combat_ascension_level(combat),
             DEADLY_ENEMIES_ASCENSION_LEVEL,
-            SKULKING_COLONY_DEADLY_SUPER_CRAB_DAMAGE,
-            SKULKING_COLONY_BASE_SUPER_CRAB_DAMAGE,
+            SKULKING_COLONY_DEADLY_INERTIA_DAMAGE,
+            SKULKING_COLONY_BASE_INERTIA_DAMAGE,
         )
-        _deal_damage_to_player(combat, creature, super_crab_dmg, hits=SKULKING_COLONY_SUPER_CRAB_REPEAT)
-
-    def smash(combat: CombatState) -> None:
-        smash_dmg = _ascension_value(
+        _deal_damage_to_player(combat, creature, inertia_dmg)
+        inertia_strength = _ascension_value(
             _combat_ascension_level(combat),
             DEADLY_ENEMIES_ASCENSION_LEVEL,
-            SKULKING_COLONY_DEADLY_SMASH_DAMAGE,
-            SKULKING_COLONY_BASE_SMASH_DAMAGE,
+            SKULKING_COLONY_DEADLY_INERTIA_STRENGTH,
+            SKULKING_COLONY_BASE_INERTIA_STRENGTH,
         )
-        _deal_damage_to_player(combat, creature, smash_dmg)
-        if combat.is_over:
-            return
-        add_generated_cards_to_living_player_discards(combat, make_dazed, SKULKING_COLONY_SMASH_DAZED)
+        creature.apply_power(PowerId.STRENGTH, inertia_strength, applier=creature)
 
-    super_crab_intent_damage = _ascension_value(
-        ascension_level,
-        DEADLY_ENEMIES_ASCENSION_LEVEL,
-        SKULKING_COLONY_DEADLY_SUPER_CRAB_DAMAGE,
-        SKULKING_COLONY_BASE_SUPER_CRAB_DAMAGE,
-    )
+    def piercing_stabs(combat: CombatState) -> None:
+        stabs_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            SKULKING_COLONY_DEADLY_PIERCING_STABS_DAMAGE,
+            SKULKING_COLONY_BASE_PIERCING_STABS_DAMAGE,
+        )
+        _deal_damage_to_player(
+            combat,
+            creature,
+            stabs_dmg,
+            hits=SKULKING_COLONY_PIERCING_STABS_REPEAT,
+        )
+
     zoom_intent_damage = _ascension_value(
         ascension_level,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
         SKULKING_COLONY_DEADLY_ZOOM_DAMAGE,
         SKULKING_COLONY_BASE_ZOOM_DAMAGE,
     )
-    smash_intent_damage = _ascension_value(
+    inertia_intent_damage = _ascension_value(
         ascension_level,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
-        SKULKING_COLONY_DEADLY_SMASH_DAMAGE,
-        SKULKING_COLONY_BASE_SMASH_DAMAGE,
+        SKULKING_COLONY_DEADLY_INERTIA_DAMAGE,
+        SKULKING_COLONY_BASE_INERTIA_DAMAGE,
+    )
+    piercing_stabs_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        SKULKING_COLONY_DEADLY_PIERCING_STABS_DAMAGE,
+        SKULKING_COLONY_BASE_PIERCING_STABS_DAMAGE,
     )
 
     states: dict[str, MonsterState] = {
-        SKULKING_COLONY_INERTIA_MOVE: MoveState(
-            SKULKING_COLONY_INERTIA_MOVE,
-            inertia,
-            [defend_intent(), buff_intent()],
-            follow_up_id=SKULKING_COLONY_SUPER_CRAB_MOVE,
-        ),
         SKULKING_COLONY_ZOOM_MOVE: MoveState(
             SKULKING_COLONY_ZOOM_MOVE,
             zoom,
             [attack_intent(zoom_intent_damage)],
+            follow_up_id=SKULKING_COLONY_ZOOM_MOVE_2,
+        ),
+        SKULKING_COLONY_ZOOM_MOVE_2: MoveState(
+            SKULKING_COLONY_ZOOM_MOVE_2,
+            zoom,
+            [attack_intent(zoom_intent_damage)],
             follow_up_id=SKULKING_COLONY_INERTIA_MOVE,
         ),
-        SKULKING_COLONY_SUPER_CRAB_MOVE: MoveState(
-            SKULKING_COLONY_SUPER_CRAB_MOVE,
-            super_crab,
-            [multi_attack_intent(super_crab_intent_damage, SKULKING_COLONY_SUPER_CRAB_REPEAT)],
-            follow_up_id=SKULKING_COLONY_SMASH_MOVE,
+        SKULKING_COLONY_INERTIA_MOVE: MoveState(
+            SKULKING_COLONY_INERTIA_MOVE,
+            inertia,
+            [attack_intent(inertia_intent_damage), buff_intent()],
+            follow_up_id=SKULKING_COLONY_PIERCING_STABS_MOVE,
         ),
-        SKULKING_COLONY_SMASH_MOVE: MoveState(
-            SKULKING_COLONY_SMASH_MOVE,
-            smash,
-            [attack_intent(smash_intent_damage), status_intent()],
+        SKULKING_COLONY_PIERCING_STABS_MOVE: MoveState(
+            SKULKING_COLONY_PIERCING_STABS_MOVE,
+            piercing_stabs,
+            [multi_attack_intent(piercing_stabs_intent_damage, SKULKING_COLONY_PIERCING_STABS_REPEAT)],
             follow_up_id=SKULKING_COLONY_ZOOM_MOVE,
         ),
     }
     creature.apply_power(PowerId.HARDENED_SHELL, SKULKING_COLONY_HARDENED_SHELL)
-    return creature, MonsterAI(states, SKULKING_COLONY_SMASH_MOVE)
+    return creature, MonsterAI(states, SKULKING_COLONY_ZOOM_MOVE)
 
 
 # ---- TerrorEel (HP 140 / 150 asc) ----

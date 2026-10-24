@@ -2102,6 +2102,8 @@ INFESTED_PRISM_DEADLY_RADIATE_BLOCK = 13
 INFESTED_PRISM_BASE_WHIRLWIND_DAMAGE = 5
 INFESTED_PRISM_DEADLY_WHIRLWIND_DAMAGE = 6
 INFESTED_PRISM_WHIRLWIND_REPEAT = 3
+INFESTED_PRISM_BASE_PULSATE_DAMAGE = 8
+INFESTED_PRISM_DEADLY_PULSATE_DAMAGE = 10
 INFESTED_PRISM_BASE_PULSATE_BLOCK = 20
 INFESTED_PRISM_TOUGH_PULSATE_BLOCK = 22
 # C# InfestedPrism.VitalSparkAmount (InfestedPrism.cs:40): 2, 3 on
@@ -2159,6 +2161,14 @@ def create_infested_prism(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
         _deal_damage_to_player(combat, creature, whirlwind_dmg, hits=INFESTED_PRISM_WHIRLWIND_REPEAT)
 
     def pulsate(combat: CombatState) -> None:
+        # C# InfestedPrism.PulsateMove (InfestedPrism.cs:108-115): attack,
+        # then block, then re-apply VitalSpark.
+        pulsate_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            INFESTED_PRISM_DEADLY_PULSATE_DAMAGE,
+            INFESTED_PRISM_BASE_PULSATE_DAMAGE,
+        )
         pulsate_block = _ascension_value(
             _combat_ascension_level(combat),
             TOUGH_ENEMIES_ASCENSION_LEVEL,
@@ -2172,6 +2182,7 @@ def create_infested_prism(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
             INFESTED_PRISM_DEADLY_VITAL_SPARK,
             INFESTED_PRISM_BASE_VITAL_SPARK,
         )
+        _deal_damage_to_player(combat, creature, pulsate_dmg)
         _gain_block(creature, pulsate_block, combat)
         creature.apply_power(PowerId.VITAL_SPARK, vital_spark_amount)
 
@@ -2192,6 +2203,14 @@ def create_infested_prism(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
         INFESTED_PRISM_DEADLY_WHIRLWIND_DAMAGE,
         INFESTED_PRISM_BASE_WHIRLWIND_DAMAGE,
+    )
+    # C# InfestedPrism.cs:68: PULSATE_MOVE = SingleAttackIntent(PulsateDamage)
+    # + BuffIntent + DefendIntent.
+    pulsate_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        INFESTED_PRISM_DEADLY_PULSATE_DAMAGE,
+        INFESTED_PRISM_BASE_PULSATE_DAMAGE,
     )
 
     states: dict[str, MonsterState] = {
@@ -2216,7 +2235,7 @@ def create_infested_prism(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
         INFESTED_PRISM_PULSATE_MOVE: MoveState(
             INFESTED_PRISM_PULSATE_MOVE,
             pulsate,
-            [buff_intent(), defend_intent()],
+            [attack_intent(pulsate_intent_damage), buff_intent(), defend_intent()],
             follow_up_id=INFESTED_PRISM_JAB_MOVE,
         ),
     }

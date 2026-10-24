@@ -160,7 +160,6 @@ from sts2_env.monsters.act1 import create_eye_with_teeth, create_parafright
 from sts2_env.monsters.act3 import create_door
 from sts2_env.monsters.act3 import (
     TEST_SUBJECT_MULTI_CLAW_MOVE,
-    TEST_SUBJECT_POUNCE_MOVE,
     TEST_SUBJECT_PHASE3_LACERATE_MOVE,
     TEST_SUBJECT_RESPAWN_MOVE,
     create_doormaker,
@@ -596,7 +595,7 @@ class TestMonsterDeathBroadcast:
         combat.start_combat()
 
         assert combat.kill_creature(ally)
-        assert owner.get_power_amount(PowerId.STRENGTH) == 5
+        assert owner.get_power_amount(PowerId.STRENGTH) == 6  # Crusher.cs:118 PowerVar<StrengthPower>(6)
         assert owner.block == 99
         assert PowerId.CRAB_RAGE not in owner.powers
 
@@ -609,7 +608,7 @@ class TestMonsterDeathBroadcast:
         combat.start_combat()
 
         assert combat.kill_creature(door)
-        assert owner.get_power_amount(PowerId.STRENGTH) == 5
+        assert owner.get_power_amount(PowerId.STRENGTH) == 6  # Crusher.cs:118 PowerVar<StrengthPower>(6)
         assert owner.block == 99
         assert PowerId.CRAB_RAGE not in owner.powers
 
@@ -1125,13 +1124,16 @@ class TestUntargetableReviveStates:
         subject_ai.current_move.perform(combat)
         subject_ai.on_move_performed()
         subject_ai.roll_move(combat.rng)
-        assert subject_ai.current_move.state_id == TEST_SUBJECT_POUNCE_MOVE
+        # C# TestSubject.cs:205: MULTI_CLAW FollowUpState is itself — while
+        # Respawns < 2 it repeats MULTI_CLAW every turn (hit count grows via
+        # ExtraMultiClawCount, TestSubject.cs:296).
+        assert subject_ai.current_move.state_id == TEST_SUBJECT_MULTI_CLAW_MOVE
 
         subject_ai.current_move.perform(combat)
         subject_ai.on_move_performed()
         subject_ai.roll_move(combat.rng)
         assert subject_ai.current_move.state_id == TEST_SUBJECT_MULTI_CLAW_MOVE
-        assert subject_ai.current_move.intents[0].hits == 4
+        assert subject_ai.current_move.intents[0].hits == 5
 
     def test_test_subject_second_respawn_removes_adaptable(self):
         combat = CombatState(

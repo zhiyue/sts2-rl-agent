@@ -872,7 +872,10 @@ class TestDamageModifierInteractions:
         simple_combat.deal_damage(enemy, player, 3, ValueProp.MOVE)
         assert enemy_ai.current_move.state_id == stunned_move_id
 
-    def test_slippery_decrements_when_damage_is_blocked(self, simple_combat):
+    def test_slippery_does_not_decrement_on_fully_blocked_hit(self, simple_combat):
+        """SlipperyPower.cs AfterDamageReceived: decrements only when
+        result.UnblockedDamage >= 1. A fully blocked hit (3 dmg vs 5 block)
+        has UnblockedDamage == 0 -> no decrement."""
         player = simple_combat.player
         enemy = simple_combat.enemies[0]
         enemy.apply_power(PowerId.SLIPPERY, 2)
@@ -880,6 +883,21 @@ class TestDamageModifierInteractions:
 
         simple_combat.deal_damage(player, enemy, 3, ValueProp.MOVE)
 
+        assert enemy.get_power_amount(PowerId.SLIPPERY) == 2
+        assert enemy.current_hp == enemy.max_hp
+
+    def test_slippery_decrements_and_caps_hp_loss_on_unblocked_damage(self, simple_combat):
+        """SlipperyPower.cs: ModifyHpLostAfterOsty clamps HP loss (>=1) to 1;
+        AfterDamageReceived decrements once when UnblockedDamage >= 1."""
+        player = simple_combat.player
+        enemy = simple_combat.enemies[0]
+        enemy.apply_power(PowerId.SLIPPERY, 2)
+        enemy.block = 2
+
+        simple_combat.deal_damage(player, enemy, 9, ValueProp.MOVE)
+
+        # 9 damage vs 2 block -> 7 unblocked, HP loss clamped to 1.
+        assert enemy.current_hp == enemy.max_hp - 1
         assert enemy.get_power_amount(PowerId.SLIPPERY) == 1
 
     # VitalSpark's March-era energy-on-damage tests were removed:

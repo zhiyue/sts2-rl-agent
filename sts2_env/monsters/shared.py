@@ -250,10 +250,13 @@ def create_mysterious_knight(rng: Rng, ascension_level: int = 0) -> tuple[Creatu
         MYSTERIOUS_KNIGHT_BASE_RAM_DAMAGE,
     )
 
+    # C# MysteriousKnight inherits FlailKnight's state machine
+    # (FlailKnight.cs:42-56): WAR_CHANT CannotRepeat; FLAIL/RAM
+    # CanRepeatXTimes(2) via AddBranch(state, 2), weight 1.
     rand = RandomBranchState(MYSTERIOUS_KNIGHT_RANDOM_STATE)
     rand.add_branch(MYSTERIOUS_KNIGHT_WAR_CHANT_MOVE, MoveRepeatType.CANNOT_REPEAT)
-    rand.add_branch(MYSTERIOUS_KNIGHT_FLAIL_MOVE, MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
-    rand.add_branch(MYSTERIOUS_KNIGHT_RAM_MOVE, MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
+    rand.add_branch(MYSTERIOUS_KNIGHT_FLAIL_MOVE, MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=2)
+    rand.add_branch(MYSTERIOUS_KNIGHT_RAM_MOVE, MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=2)
 
     states: dict[str, MonsterState] = {
         MYSTERIOUS_KNIGHT_RANDOM_STATE: rand,

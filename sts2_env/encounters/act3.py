@@ -74,7 +74,7 @@ WEAK_ENCOUNTERS: list[EncounterSetup] = [
 
 def setup_axebots_normal(combat: CombatState, rng: Rng) -> None:
     for _ in range(2):
-        creature, ai = create_axebot(rng)
+        creature, ai = create_axebot(rng, ascension_level=getattr(combat, "ascension_level", 0))
         combat.add_enemy(creature, ai)
 
 

@@ -13,8 +13,8 @@ from sts2_env.core.damage import calculate_damage, apply_damage
 from sts2_env.core.rng import Rng
 from sts2_env.monsters.intents import (
     Intent, IntentType, attack_intent, multi_attack_intent,
-    buff_intent, debuff_intent, strong_debuff_intent, status_intent,
-    defend_intent, sleep_intent,
+    buff_intent, card_debuff_intent, debuff_intent, strong_debuff_intent,
+    status_intent, defend_intent, sleep_intent,
 )
 from sts2_env.monsters.state_machine import (
     ConditionalBranchState, MonsterAI, MonsterState, MoveState, RandomBranchState,
@@ -149,9 +149,12 @@ def create_scroll_of_biting(rng: Rng, starter_move_idx: int = 0) -> tuple[Creatu
     def more_teeth(combat: CombatState) -> None:
         creature.apply_power(PowerId.STRENGTH, 2, applier=creature)
 
+    # C# ScrollOfBiting.GenerateMoveStateMachine (ScrollOfBiting.cs:79-99):
+    # rand branches CHOMP=CannotRepeat, CHEW=AddBranch(state, 2) i.e.
+    # CanRepeatXTimes(2), weight 1 for both.
     rand = RandomBranchState("rand")
     rand.add_branch("CHOMP", MoveRepeatType.CANNOT_REPEAT)
-    rand.add_branch("CHEW", weight=2.0)
+    rand.add_branch("CHEW", MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=2)
 
     states: dict[str, MonsterState] = {
         "CHOMP": MoveState("CHOMP", chomp, [attack_intent(chomp_dmg)], follow_up_id="MORE_TEETH"),
@@ -233,56 +236,146 @@ def create_turret_operator(rng: Rng, ascension_level: int = 0) -> tuple[Creature
 # NORMAL ENCOUNTERS
 # ========================================================================
 
-# ---- Axebot (HP 40-44 / 42-46 asc) ----
+# ---- Axebot (HP 70-78 / 76-86 asc) ----
+# C# Axebot.cs:84-99: fixed chain BOOT_UP -> HAMMER_UPPERCUT -> ONE_TWO ->
+# HAMMER_UPPERCUT -> ... (no random branch). Default initial state is
+# HAMMER_UPPERCUT_MOVE; a stock override (StockPower respawn sets
+# StockAmount, Axebot.cs:96-98) starts with BOOT_UP_MOVE instead.
+
+AXEBOT_MONSTER_ID = "AXEBOT"
+AXEBOT_BASE_MIN_HP = 70
+AXEBOT_BASE_MAX_HP = 78
+AXEBOT_TOUGH_MIN_HP = 76
+AXEBOT_TOUGH_MAX_HP = 86
+AXEBOT_ONE_TWO_REPEAT = 2
+AXEBOT_BASE_BOOT_UP_BLOCK = 10
+AXEBOT_DEADLY_BOOT_UP_BLOCK = 15
+AXEBOT_BASE_ONE_TWO_DAMAGE = 9
+AXEBOT_DEADLY_ONE_TWO_DAMAGE = 10
+AXEBOT_BASE_BOOT_UP_STR_GAIN = 3
+AXEBOT_DEADLY_BOOT_UP_STR_GAIN = 4
+AXEBOT_BASE_HAMMER_UPPERCUT_DAMAGE = 12
+AXEBOT_DEADLY_HAMMER_UPPERCUT_DAMAGE = 14
+AXEBOT_HAMMER_UPPERCUT_DEBUFF = 2
+AXEBOT_DEFAULT_STOCK_AMOUNT = 2
+AXEBOT_BOOT_UP_MOVE = "BOOT_UP_MOVE"
+AXEBOT_ONE_TWO_MOVE = "ONE_TWO_MOVE"
+AXEBOT_HAMMER_UPPERCUT_MOVE = "HAMMER_UPPERCUT_MOVE"
+
 
 def create_axebot(
     rng: Rng,
-    start_with_boot_up: bool = False,
     stock_amount: int | None = None,
+    ascension_level: int = 0,
 ) -> tuple[Creature, MonsterAI]:
-    hp = rng.next_int(40, 44)
-    creature = Creature(max_hp=hp, monster_id="AXEBOT")
-    one_two_dmg = 5
-    hammer_uppercut_dmg = 8
-    hammer_uppercut_debuff = 1
-    boot_up_block = 10
-    boot_up_strength = 1
-    sharpen_strength = 4
+    min_hp = _ascension_value(
+        ascension_level,
+        TOUGH_ENEMIES_ASCENSION_LEVEL,
+        AXEBOT_TOUGH_MIN_HP,
+        AXEBOT_BASE_MIN_HP,
+    )
+    max_hp = _ascension_value(
+        ascension_level,
+        TOUGH_ENEMIES_ASCENSION_LEVEL,
+        AXEBOT_TOUGH_MAX_HP,
+        AXEBOT_BASE_MAX_HP,
+    )
+    hp = rng.next_int(min_hp, max_hp)
+    creature = Creature(max_hp=hp, monster_id=AXEBOT_MONSTER_ID)
+    effective_stock = AXEBOT_DEFAULT_STOCK_AMOUNT if stock_amount is None else stock_amount
 
     def boot_up(combat: CombatState) -> None:
+        # C# Axebot.BootUpMove (Axebot.cs:101-108): block + Strength gated by
+        # remaining stock (BootUpStrGain * (2 - StockAmount)).
+        boot_up_block = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_DEADLY_BOOT_UP_BLOCK,
+            AXEBOT_BASE_BOOT_UP_BLOCK,
+        )
+        boot_up_str_gain = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_DEADLY_BOOT_UP_STR_GAIN,
+            AXEBOT_BASE_BOOT_UP_STR_GAIN,
+        )
         _gain_block(creature, boot_up_block, combat)
-        creature.apply_power(PowerId.STRENGTH, boot_up_strength)
+        strength_amount = boot_up_str_gain * (AXEBOT_DEFAULT_STOCK_AMOUNT - effective_stock)
+        if strength_amount > 0:
+            creature.apply_power(PowerId.STRENGTH, strength_amount)
 
     def one_two(combat: CombatState) -> None:
-        _deal_damage_to_player(combat, creature, one_two_dmg, hits=2)
-
-    def sharpen(combat: CombatState) -> None:
-        creature.apply_power(PowerId.STRENGTH, sharpen_strength)
+        one_two_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_DEADLY_ONE_TWO_DAMAGE,
+            AXEBOT_BASE_ONE_TWO_DAMAGE,
+        )
+        _deal_damage_to_player(combat, creature, one_two_dmg, hits=AXEBOT_ONE_TWO_REPEAT)
 
     def hammer_uppercut(combat: CombatState) -> None:
+        hammer_uppercut_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AXEBOT_DEADLY_HAMMER_UPPERCUT_DAMAGE,
+            AXEBOT_BASE_HAMMER_UPPERCUT_DAMAGE,
+        )
         _deal_damage_to_player(combat, creature, hammer_uppercut_dmg)
-        apply_power_to_living_player_targets(combat, PowerId.WEAK, hammer_uppercut_debuff, applier=creature)
-        apply_power_to_living_player_targets(combat, PowerId.FRAIL, hammer_uppercut_debuff, applier=creature)
+        apply_power_to_living_player_targets(
+            combat,
+            PowerId.WEAK,
+            AXEBOT_HAMMER_UPPERCUT_DEBUFF,
+            applier=creature,
+        )
+        apply_power_to_living_player_targets(
+            combat,
+            PowerId.FRAIL,
+            AXEBOT_HAMMER_UPPERCUT_DEBUFF,
+            applier=creature,
+        )
 
-    rand = RandomBranchState("RAND_MOVE")
-    rand.add_branch("ONE_TWO_MOVE", MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
-    rand.add_branch("SHARPEN_MOVE", MoveRepeatType.CANNOT_REPEAT)
-    rand.add_branch("HAMMER_UPPERCUT_MOVE", MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
+    one_two_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        AXEBOT_DEADLY_ONE_TWO_DAMAGE,
+        AXEBOT_BASE_ONE_TWO_DAMAGE,
+    )
+    hammer_uppercut_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        AXEBOT_DEADLY_HAMMER_UPPERCUT_DAMAGE,
+        AXEBOT_BASE_HAMMER_UPPERCUT_DAMAGE,
+    )
 
     states: dict[str, MonsterState] = {
-        "RAND_MOVE": rand,
-        "BOOT_UP_MOVE": MoveState("BOOT_UP_MOVE", boot_up, [defend_intent(), buff_intent()], follow_up_id="RAND_MOVE"),
-        "ONE_TWO_MOVE": MoveState("ONE_TWO_MOVE", one_two, [multi_attack_intent(one_two_dmg, 2)], follow_up_id="RAND_MOVE"),
-        "SHARPEN_MOVE": MoveState("SHARPEN_MOVE", sharpen, [buff_intent()], follow_up_id="RAND_MOVE"),
-        "HAMMER_UPPERCUT_MOVE": MoveState("HAMMER_UPPERCUT_MOVE", hammer_uppercut, [attack_intent(hammer_uppercut_dmg), debuff_intent()], follow_up_id="RAND_MOVE"),
+        AXEBOT_BOOT_UP_MOVE: MoveState(
+            AXEBOT_BOOT_UP_MOVE,
+            boot_up,
+            [defend_intent(), buff_intent()],
+            follow_up_id=AXEBOT_HAMMER_UPPERCUT_MOVE,
+        ),
+        AXEBOT_ONE_TWO_MOVE: MoveState(
+            AXEBOT_ONE_TWO_MOVE,
+            one_two,
+            [multi_attack_intent(one_two_intent_damage, AXEBOT_ONE_TWO_REPEAT)],
+            follow_up_id=AXEBOT_HAMMER_UPPERCUT_MOVE,
+        ),
+        AXEBOT_HAMMER_UPPERCUT_MOVE: MoveState(
+            AXEBOT_HAMMER_UPPERCUT_MOVE,
+            hammer_uppercut,
+            [attack_intent(hammer_uppercut_intent_damage), debuff_intent()],
+            follow_up_id=AXEBOT_ONE_TWO_MOVE,
+        ),
     }
 
-    if stock_amount is None:
-        creature.apply_power(PowerId.STOCK, 2)
-    elif stock_amount > 0:
-        creature.apply_power(PowerId.STOCK, stock_amount)
+    # C# Axebot.AfterAddedToRoom (Axebot.cs:73-77): apply Stock when
+    # StockAmount > 0. Default StockAmount is 2 (Axebot.cs:44).
+    if effective_stock > 0:
+        creature.apply_power(PowerId.STOCK, effective_stock)
 
-    initial = "BOOT_UP_MOVE" if start_with_boot_up or stock_amount is not None else "RAND_MOVE"
+    # C# Axebot.GenerateMoveStateMachine (Axebot.cs:96-99): stock override
+    # starts at BOOT_UP_MOVE, otherwise HAMMER_UPPERCUT_MOVE.
+    initial = AXEBOT_BOOT_UP_MOVE if stock_amount is not None else AXEBOT_HAMMER_UPPERCUT_MOVE
     return creature, MonsterAI(states, initial, rng)
 
 
@@ -1310,10 +1403,14 @@ def create_flail_knight(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
         FLAIL_KNIGHT_BASE_RAM_DAMAGE,
     )
 
+    # C# FlailKnight.GenerateMoveStateMachine (FlailKnight.cs:42-56): RAND
+    # branches WAR_CHANT=CannotRepeat, FLAIL=CanRepeatXTimes(2),
+    # RAM=CanRepeatXTimes(2); AddBranch(state, int maxRepeats) implies
+    # weight 1 for all three.
     rand = RandomBranchState(FLAIL_KNIGHT_RANDOM_STATE)
     rand.add_branch(FLAIL_KNIGHT_WAR_CHANT_MOVE, MoveRepeatType.CANNOT_REPEAT)
-    rand.add_branch(FLAIL_KNIGHT_FLAIL_MOVE, MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
-    rand.add_branch(FLAIL_KNIGHT_RAM_MOVE, MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
+    rand.add_branch(FLAIL_KNIGHT_FLAIL_MOVE, MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=2)
+    rand.add_branch(FLAIL_KNIGHT_RAM_MOVE, MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=2)
 
     states: dict[str, MonsterState] = {
         FLAIL_KNIGHT_RANDOM_STATE: rand,
@@ -1357,10 +1454,12 @@ def create_mysterious_knight(rng: Rng) -> tuple[Creature, MonsterAI]:
     def ram(combat: CombatState) -> None:
         _deal_damage_to_player(combat, creature, ram_dmg)
 
+    # Same RAND shape as FlailKnight (C# MysteriousKnight : FlailKnight):
+    # WAR_CHANT CannotRepeat, FLAIL/RAM CanRepeatXTimes(2), weight 1.
     rand = RandomBranchState("RAND")
     rand.add_branch("WAR_CHANT", MoveRepeatType.CANNOT_REPEAT)
-    rand.add_branch("FLAIL_MOVE", MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
-    rand.add_branch("RAM_MOVE", MoveRepeatType.CAN_REPEAT_FOREVER, weight=2.0)
+    rand.add_branch("FLAIL_MOVE", MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=2)
+    rand.add_branch("RAM_MOVE", MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=2)
 
     states: dict[str, MonsterState] = {
         "RAND": rand,
@@ -1582,8 +1681,11 @@ def create_spectral_knight(rng: Rng, ascension_level: int = 0) -> tuple[Creature
         SPECTRAL_KNIGHT_BASE_SOUL_FLAME_DAMAGE,
     )
 
+    # C# SpectralKnight.GenerateMoveStateMachine (SpectralKnight.cs:42-58):
+    # RAND branches SOUL_SLASH=AddBranch(state, 2) i.e. CanRepeatXTimes(2)
+    # weight 1; SOUL_FLAME=CannotRepeat weight 1.
     rand = RandomBranchState(SPECTRAL_KNIGHT_RANDOM_STATE)
-    rand.add_branch(SPECTRAL_KNIGHT_SOUL_SLASH_MOVE, weight=2.0)
+    rand.add_branch(SPECTRAL_KNIGHT_SOUL_SLASH_MOVE, MoveRepeatType.CAN_REPEAT_X_TIMES, max_times=2)
     rand.add_branch(SPECTRAL_KNIGHT_SOUL_FLAME_MOVE, MoveRepeatType.CANNOT_REPEAT)
 
     states: dict[str, MonsterState] = {
@@ -2104,7 +2206,8 @@ def create_queen(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterA
         QUEEN_PUPPET_STRINGS_MOVE: MoveState(
             QUEEN_PUPPET_STRINGS_MOVE,
             puppet_strings,
-            [strong_debuff_intent()],
+            # C# Queen.cs:135: PUPPET_STRINGS_MOVE uses CardDebuffIntent.
+            [card_debuff_intent()],
             follow_up_id=QUEEN_YOUR_MINE_MOVE,
         ),
         QUEEN_YOUR_MINE_MOVE: MoveState(
@@ -2159,8 +2262,6 @@ TEST_SUBJECT_DEADLY_BITE_DAMAGE = 22
 TEST_SUBJECT_BASE_SKULL_BASH_DAMAGE = 14
 TEST_SUBJECT_DEADLY_SKULL_BASH_DAMAGE = 16
 TEST_SUBJECT_SKULL_BASH_VULNERABLE = 1
-TEST_SUBJECT_BASE_POUNCE_DAMAGE = 30
-TEST_SUBJECT_DEADLY_POUNCE_DAMAGE = 32
 TEST_SUBJECT_BASE_MULTI_CLAW_DAMAGE = 10
 TEST_SUBJECT_DEADLY_MULTI_CLAW_DAMAGE = 11
 TEST_SUBJECT_BASE_MULTI_CLAW_COUNT = 3
@@ -2180,7 +2281,6 @@ TEST_SUBJECT_RESPAWN_MOVE = "RESPAWN_MOVE"
 TEST_SUBJECT_REVIVE_BRANCH = "REVIVE_BRANCH"
 TEST_SUBJECT_BITE_MOVE = "BITE_MOVE"
 TEST_SUBJECT_SKULL_BASH_MOVE = "SKULL_BASH_MOVE"
-TEST_SUBJECT_POUNCE_MOVE = "POUNCE_MOVE"
 TEST_SUBJECT_MULTI_CLAW_MOVE = "MULTI_CLAW_MOVE"
 TEST_SUBJECT_PHASE3_LACERATE_MOVE = "PHASE3_LACERATE_MOVE"
 TEST_SUBJECT_BIG_POUNCE_MOVE = "BIG_POUNCE_MOVE"
@@ -2260,15 +2360,6 @@ def create_test_subject(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
             applier=creature,
         )
 
-    def pounce(combat: CombatState) -> None:
-        pounce_dmg = _ascension_value(
-            _combat_ascension_level(combat),
-            DEADLY_ENEMIES_ASCENSION_LEVEL,
-            TEST_SUBJECT_DEADLY_POUNCE_DAMAGE,
-            TEST_SUBJECT_BASE_POUNCE_DAMAGE,
-        )
-        _deal_damage_to_player(combat, creature, pounce_dmg)
-
     def multi_claw(combat: CombatState) -> None:
         multi_claw_dmg = _ascension_value(
             _combat_ascension_level(combat),
@@ -2321,12 +2412,6 @@ def create_test_subject(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
         TEST_SUBJECT_DEADLY_SKULL_BASH_DAMAGE,
         TEST_SUBJECT_BASE_SKULL_BASH_DAMAGE,
     )
-    pounce_intent_damage = _ascension_value(
-        ascension_level,
-        DEADLY_ENEMIES_ASCENSION_LEVEL,
-        TEST_SUBJECT_DEADLY_POUNCE_DAMAGE,
-        TEST_SUBJECT_BASE_POUNCE_DAMAGE,
-    )
     multi_claw_intent_damage = _ascension_value(
         ascension_level,
         DEADLY_ENEMIES_ASCENSION_LEVEL,
@@ -2371,17 +2456,13 @@ def create_test_subject(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
             [attack_intent(skull_bash_intent_damage), debuff_intent()],
             follow_up_id=TEST_SUBJECT_BITE_MOVE,
         ),
-        TEST_SUBJECT_POUNCE_MOVE: MoveState(
-            TEST_SUBJECT_POUNCE_MOVE,
-            pounce,
-            [attack_intent(pounce_intent_damage)],
-            follow_up_id=TEST_SUBJECT_MULTI_CLAW_MOVE,
-        ),
+        # C# TestSubject.cs:205: MULTI_CLAW FollowUpState is itself — while
+        # Respawns < 2 the monster keeps repeating MULTI_CLAW every turn.
         TEST_SUBJECT_MULTI_CLAW_MOVE: MoveState(
             TEST_SUBJECT_MULTI_CLAW_MOVE,
             multi_claw,
             [multi_attack_intent(multi_claw_intent_damage, _multi_claw_total_count())],
-            follow_up_id=TEST_SUBJECT_POUNCE_MOVE,
+            follow_up_id=TEST_SUBJECT_MULTI_CLAW_MOVE,
         ),
         TEST_SUBJECT_PHASE3_LACERATE_MOVE: MoveState(
             TEST_SUBJECT_PHASE3_LACERATE_MOVE,

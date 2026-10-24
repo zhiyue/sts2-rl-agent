@@ -87,23 +87,21 @@ def setup_mysterious_knight(combat: CombatState, rng: Rng) -> None:
 
 
 # ---- PunchOffEventEncounter ----
-# Two PunchConstructs:
-#   - First starts with strong punch, HP reduced by random 2-10
-#   - Second starts normally (READY), HP reduced by random 2-10
-# The existing create_punch_construct doesn't expose these params,
-# so we apply the modifiers after creation.
+# Two PunchConstructs (C# PunchOffEventEncounter.cs:12-21):
+#   - First has StartsWithFastPunch=true, StartingHpReduction = Rng.NextInt(2, 10)
+#   - Second starts normally (READY), StartingHpReduction = Rng.NextInt(2, 10)
 
 def setup_punch_off(combat: CombatState, rng: Rng) -> None:
     c1, a1 = create_punch_construct(
         rng,
-        starts_with_strong_punch=True,
+        starts_with_fast_punch=True,
         starting_hp_reduction=rng.next_int_exclusive(2, 10),
     )
     combat.add_enemy(c1, a1)
 
     c2, a2 = create_punch_construct(
         rng,
-        starts_with_strong_punch=False,
+        starts_with_fast_punch=False,
         starting_hp_reduction=rng.next_int_exclusive(2, 10),
     )
     combat.add_enemy(c2, a2)
