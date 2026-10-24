@@ -120,11 +120,20 @@ register_event(WarHistorianRepy())
 class Neow(EventModel):
     """Starting event: choose from 3 relic options (2 positive, 1 cursed).
 
-    Positive relics: ArcaneScroll, BoomingConch, Pomander, GoldenPearl,
-    LeadPaperweight, NewLeaf, NeowsTorment, PreciseScissors, LostCoffer,
-    NutritiousOyster, StoneHumidifier, LavaRock, SmallCapsule.
-    Cursed relics: CursedPearl, LargeCapsule, LeafyPoultice, PrecariousShears,
-    SilverCrucible, ScrollBoxes.
+    C# Neow.cs:66-82 PositiveOptions: ArcaneScroll, BoomingConch, FishingRod,
+    GoldenPearl, Kaleidoscope, LeadPaperweight, LostCoffer, MassiveScroll,
+    NeowsTorment, NewLeaf, PhialHolster, PreciseScissors, ScrollBoxes,
+    WingedBoots.
+    C# Neow.cs:96-106 CurseOptions: CursedPearl, HeftyTablet, LargeCapsule,
+    LeafyPoultice, NeowsBones, PrecariousShears, SilkenTress, SilverCrucible.
+    C# Neow.cs:253-268 appends three mutually exclusive pairs to the positive
+    list: LavaRock xor SmallCapsule, NutritiousOyster xor StoneHumidifier,
+    NeowsTalisman xor Pomander.
+    MassiveScroll (Players.Count > 1, C# MassiveScroll.cs:19), SilverCrucible
+    (Players.Count == 1, C# SilverCrucible.cs:81), WingedBoots
+    (Players.Count == 1, C# WingedBoots.cs:47) and ScrollBoxes
+    (CanGenerateBundles, C# ScrollBoxes.cs:23) are filtered per run through
+    IsAllowedAtNeow (C# RelicModel.cs:443).
     """
 
     event_id = "Neow"
@@ -132,19 +141,25 @@ class Neow(EventModel):
     _POSITIVE_POOL = (
         RelicId.ARCANE_SCROLL.name,
         RelicId.BOOMING_CONCH.name,
-        RelicId.POMANDER.name,
+        RelicId.FISHING_ROD.name,
         RelicId.GOLDEN_PEARL.name,
+        RelicId.KALEIDOSCOPE.name,
         RelicId.LEAD_PAPERWEIGHT.name,
+        RelicId.LOST_COFFER.name,
         RelicId.NEW_LEAF.name,
         RelicId.NEOWS_TORMENT.name,
+        RelicId.PHIAL_HOLSTER.name,
         RelicId.PRECISE_SCISSORS.name,
-        RelicId.LOST_COFFER.name,
+        RelicId.WINGED_BOOTS.name,
     )
     _CURSED_POOL = (
         RelicId.CURSED_PEARL.name,
+        RelicId.HEFTY_TABLET.name,
         RelicId.LARGE_CAPSULE.name,
         RelicId.LEAFY_POULTICE.name,
+        RelicId.NEOWS_BONES.name,
         RelicId.PRECARIOUS_SHEARS.name,
+        RelicId.SILKEN_TRESS.name,
     )
 
     def __init__(self) -> None:
@@ -173,8 +188,6 @@ class Neow(EventModel):
         from sts2_env.relics.shop_event import ScrollBoxes
 
         cursed_pool = list(self._CURSED_POOL)
-        if ScrollBoxes.can_generate_bundles(run_state.player):
-            cursed_pool.append(RelicId.SCROLL_BOXES.name)
         if len(run_state.players) == 1:
             cursed_pool.append(RelicId.SILVER_CRUCIBLE.name)
         rng = self.get_rng(run_state)
@@ -183,15 +196,20 @@ class Neow(EventModel):
         positive_pool = list(self._POSITIVE_POOL)
         if cursed_choice == RelicId.CURSED_PEARL.name and RelicId.GOLDEN_PEARL.name in positive_pool:
             positive_pool.remove(RelicId.GOLDEN_PEARL.name)
+        if cursed_choice == RelicId.HEFTY_TABLET.name and RelicId.ARCANE_SCROLL.name in positive_pool:
+            positive_pool.remove(RelicId.ARCANE_SCROLL.name)
         if cursed_choice == RelicId.PRECARIOUS_SHEARS.name and RelicId.PRECISE_SCISSORS.name in positive_pool:
             positive_pool.remove(RelicId.PRECISE_SCISSORS.name)
         if cursed_choice == RelicId.LEAFY_POULTICE.name and RelicId.NEW_LEAF.name in positive_pool:
             positive_pool.remove(RelicId.NEW_LEAF.name)
         if len(run_state.players) > 1:
             positive_pool.append(RelicId.MASSIVE_SCROLL.name)
-        positive_pool.append(rng.choice([RelicId.NUTRITIOUS_OYSTER.name, RelicId.STONE_HUMIDIFIER.name]))
+        if ScrollBoxes.can_generate_bundles(run_state.player):
+            positive_pool.append(RelicId.SCROLL_BOXES.name)
         if cursed_choice != RelicId.LARGE_CAPSULE.name:
             positive_pool.append(rng.choice([RelicId.LAVA_ROCK.name, RelicId.SMALL_CAPSULE.name]))
+        positive_pool.append(rng.choice([RelicId.NUTRITIOUS_OYSTER.name, RelicId.STONE_HUMIDIFIER.name]))
+        positive_pool.append(rng.choice([RelicId.NEOWS_TALISMAN.name, RelicId.POMANDER.name]))
         rng.shuffle(positive_pool)
         positives = positive_pool[:2]
         self._choices = {

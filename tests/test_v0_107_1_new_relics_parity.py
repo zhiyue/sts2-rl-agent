@@ -21,6 +21,7 @@ from sts2_env.monsters.act1_weak import create_shrinker_beetle
 from sts2_env.relics.base import RelicId, RelicPool
 from sts2_env.relics.registry import coerce_relic_id, create_relic_by_name
 from sts2_env.run.reward_objects import AddCardsReward, CardReward, RelicReward
+from sts2_env.run.modifiers import FlightModifier
 from sts2_env.run.rooms import CombatRoom
 from sts2_env.run.run_state import RunState
 
@@ -458,3 +459,56 @@ class TestWingedBootsParity:
         relic = create_relic_by_name("WingedBoots")
         assert relic.should_allow_free_travel() is True
         assert relic.is_used_up is False
+
+    def test_map_layer_reaches_any_node_in_next_row_while_charges_remain(self):
+        # C# MapTravel.cs:14-21 GetTravelablePointsFrom: when
+        # Hook.ShouldAllowFreeTravel is true, every point in
+        # currentPoint.coord.row + 1 is travelable instead of just
+        # currentPoint.Children. The hook ORs across all listeners
+        # (C# Hook.cs:2485-2492), including WingedBoots with charges
+        # (C# WingedBoots.cs:52-55).
+        run_state = _make_run(seed=119)
+        run_state.generate_map()
+        run_state.player.obtain_relic("WingedBoots")
+
+        start = run_state.map.start_point.children[0]
+        run_state.add_visited_coord(start.coord)
+        run_state.map.get_point(start.coord)  # sanity: point exists
+
+        expected = {point.coord for point in run_state.map.get_row(start.coord.row + 1)}
+        children = {child.coord for child in start.children}
+        assert expected - children, "map row must contain off-path nodes"
+        assert set(run_state.get_available_next_coords()) == expected
+
+    def test_map_layer_falls_back_to_children_when_used_up(self):
+        run_state = _make_run(seed=120)
+        run_state.generate_map()
+        run_state.player.obtain_relic("WingedBoots")
+        relic = run_state.player.get_relic_objects()[-1]
+        relic._times_used = 3  # IsUsedUp: TimesUsed >= 3
+
+        start = run_state.map.start_point.children[0]
+        run_state.add_visited_coord(start.coord)
+
+        assert relic.should_allow_free_travel() is False
+        assert set(run_state.get_available_next_coords()) == {
+            child.coord for child in start.children
+        }
+
+    def test_run_state_should_allow_free_travel_or_accumulates_listeners(self):
+        # C# Hook.cs:2485-2492: Hook.ShouldAllowFreeTravel ORs across every
+        # hook listener, so either the Flight modifier (C# Flight.cs:5) or a
+        # WingedBoots with charges enables free travel.
+        run_state = _make_run(seed=121)
+        run_state.generate_map()
+        assert run_state.should_allow_free_travel() is False
+
+        run_state.player.obtain_relic("WingedBoots")
+        assert run_state.should_allow_free_travel() is True
+
+        spent = run_state.player.get_relic_objects()[-1]
+        spent._times_used = 3
+        assert run_state.should_allow_free_travel() is False
+
+        run_state.modifiers = [FlightModifier()]
+        assert run_state.should_allow_free_travel() is True

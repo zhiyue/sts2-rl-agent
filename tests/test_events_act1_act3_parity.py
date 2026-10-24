@@ -55,14 +55,17 @@ INSANITY_EXPECTED_DECK_SIZE = INSANITY_EXPECTED_CARD_COUNT
 class _NeowChoiceRng:
     def __init__(self, preferred_relic: str):
         self._preferred_relic = preferred_relic
+        self.choice_seqs: list[list[str]] = []
+        self.shuffled_positive_pool: list[str] | None = None
 
     def choice(self, seq):
+        self.choice_seqs.append(list(seq))
         if self._preferred_relic in seq:
             return self._preferred_relic
         return seq[0]
 
     def shuffle(self, seq) -> None:
-        pass
+        self.shuffled_positive_pool = list(seq)
 
 
 def test_neow_is_not_pool_allowed_but_exposes_three_choices():
@@ -102,22 +105,111 @@ def test_neow_positive_pool_respects_cursed_choice_conflicts():
     assert not any("NEW LEAF" in option.label.upper() for option in options if option.option_id != "cursed")
 
 
-def test_neow_cursed_pool_adds_scroll_boxes_when_bundles_are_possible_and_skips_silver_crucible_in_multiplayer():
+def test_neow_positive_pool_offers_scroll_boxes_when_bundles_are_possible_and_skips_silver_crucible_in_multiplayer():
+    # C# Neow.cs:80 lists ScrollBoxes among PositiveOptions, gated by
+    # CanGenerateBundles via IsAllowedAtNeow (C# ScrollBoxes.cs:23-28);
+    # C# Neow.cs:96-106 has no ScrollBoxes in CurseOptions.
+    # C# SilverCrucible.cs:81 IsAllowed requires Players.Count == 1
+    # (filtered at Neow via IsAllowedAtNeow, C# RelicModel.cs:443).
     run_state = RunState(seed=809, character_id="Ironclad")
     run_state.initialize_run()
     event = Neow()
-    event.rng = _NeowChoiceRng(RelicId.SCROLL_BOXES.name)
+    recorder = _NeowChoiceRng(RelicId.CURSED_PEARL.name)
+    event.rng = recorder
 
-    options = event.generate_initial_options(run_state)
-    assert any("SCROLL BOXES" in option.label.upper() for option in options)
+    event.generate_initial_options(run_state)
+    cursed_pool = recorder.choice_seqs[0]
+    assert RelicId.SILVER_CRUCIBLE.name in cursed_pool  # single player
+    assert RelicId.SCROLL_BOXES.name not in cursed_pool
+    assert RelicId.SCROLL_BOXES.name in (recorder.shuffled_positive_pool or [])
 
     multiplayer = RunState(seed=810, character_id="Ironclad")
     multiplayer.initialize_run()
     multiplayer.players.append(multiplayer.player)
     multiplayer_event = Neow()
-    multiplayer_event.rng = _NeowChoiceRng(RelicId.SILVER_CRUCIBLE.name)
-    multiplayer_options = multiplayer_event.generate_initial_options(multiplayer)
-    assert not any("SILVER CRUCIBLE" in option.label.upper() for option in multiplayer_options)
+    multiplayer_recorder = _NeowChoiceRng(RelicId.CURSED_PEARL.name)
+    multiplayer_event.rng = multiplayer_recorder
+    multiplayer_event.generate_initial_options(multiplayer)
+    assert RelicId.SILVER_CRUCIBLE.name not in multiplayer_recorder.choice_seqs[0]
+    # C# MassiveScroll.cs:19 IsAllowed requires Players.Count > 1.
+    assert RelicId.MASSIVE_SCROLL.name in (multiplayer_recorder.shuffled_positive_pool or [])
+    assert RelicId.MASSIVE_SCROLL.name not in (recorder.shuffled_positive_pool or [])
+
+
+def test_neow_static_pool_matches_csharp_neow_options():
+    # C# Neow.cs:66-82 PositiveOptions and Neow.cs:96-106 CurseOptions.
+    # MassiveScroll (multiplayer only, C# MassiveScroll.cs:19) and
+    # SilverCrucible (single player only, C# SilverCrucible.cs:81) are
+    # appended per run after the IsAllowedAtNeow filter
+    # (C# RelicModel.cs:443), so they are absent from the static pools here.
+    # ScrollBoxes is gated on CanGenerateBundles (C# ScrollBoxes.cs:23-28)
+    # and appended per run for the same reason.
+    assert Neow._POSITIVE_POOL == (
+        RelicId.ARCANE_SCROLL.name,
+        RelicId.BOOMING_CONCH.name,
+        RelicId.FISHING_ROD.name,
+        RelicId.GOLDEN_PEARL.name,
+        RelicId.KALEIDOSCOPE.name,
+        RelicId.LEAD_PAPERWEIGHT.name,
+        RelicId.LOST_COFFER.name,
+        RelicId.NEW_LEAF.name,
+        RelicId.NEOWS_TORMENT.name,
+        RelicId.PHIAL_HOLSTER.name,
+        RelicId.PRECISE_SCISSORS.name,
+        RelicId.WINGED_BOOTS.name,
+    )
+    assert Neow._CURSED_POOL == (
+        RelicId.CURSED_PEARL.name,
+        RelicId.HEFTY_TABLET.name,
+        RelicId.LARGE_CAPSULE.name,
+        RelicId.LEAFY_POULTICE.name,
+        RelicId.NEOWS_BONES.name,
+        RelicId.PRECARIOUS_SHEARS.name,
+        RelicId.SILKEN_TRESS.name,
+    )
+
+
+def test_neow_hefty_tablet_cursed_choice_excludes_arcane_scroll():
+    # C# Neow.cs:230-233: if the cursed option is HeftyTablet,
+    # ArcaneScroll is removed from the positive list.
+    run_state = RunState(seed=813, character_id="Ironclad")
+    run_state.initialize_run()
+    event = Neow()
+    recorder = _NeowChoiceRng(RelicId.HEFTY_TABLET.name)
+    event.rng = recorder
+
+    options = event.generate_initial_options(run_state)
+
+    labels = {option.label for option in options}
+    assert any("HEFTY TABLET" in label.upper() for label in labels)
+    assert not any("ARCANE SCROLL" in option.label.upper() for option in options)
+    assert RelicId.ARCANE_SCROLL.name not in (recorder.shuffled_positive_pool or [])
+
+
+def test_neow_appends_neows_talisman_xor_pomander_pair():
+    # C# Neow.cs:261-268: after the LavaRock/SmallCapsule and
+    # NutritiousOyster/StoneHumidifier pairs, exactly one of
+    # NeowsTalisman or Pomander is appended to the positive list
+    # (NeowsTalisman is new in v0.107.1, C# Neow.cs:57/86).
+    run_state = RunState(seed=814, character_id="Ironclad")
+    run_state.initialize_run()
+    event = Neow()
+    recorder = _NeowChoiceRng(RelicId.CURSED_PEARL.name)
+    event.rng = recorder
+
+    event.generate_initial_options(run_state)
+
+    positive_pool = recorder.shuffled_positive_pool or []
+    assert RelicId.NEOWS_TALISMAN.name in positive_pool
+    assert RelicId.POMANDER.name not in positive_pool
+    # C# draw order for the exclusive pairs (Neow.cs:242-268): capsule pair,
+    # then oyster pair, then talisman pair.
+    pair_choices = [seq for seq in recorder.choice_seqs if len(seq) == 2]
+    assert pair_choices == [
+        [RelicId.LAVA_ROCK.name, RelicId.SMALL_CAPSULE.name],
+        [RelicId.NUTRITIOUS_OYSTER.name, RelicId.STONE_HUMIDIFIER.name],
+        [RelicId.NEOWS_TALISMAN.name, RelicId.POMANDER.name],
+    ]
 
 
 def test_neow_modifier_path_exposes_sequential_modifier_options():

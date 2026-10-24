@@ -1850,9 +1850,26 @@ class RunState:
         last_point = self.map.get_point(last_coord)
         if last_point is None:
             return []
-        if any(getattr(modifier, "modifier_id", None) == "flight" for modifier in self.modifiers):
+        # C# MapTravel.GetTravelablePointsFrom (MapTravel.cs:14-21): when any
+        # hook listener allows free travel, every point in the next row is
+        # travelable instead of just the current point's children.
+        if self.should_allow_free_travel():
             return [point.coord for point in self.map.get_row(last_coord.row + 1)]
         return [c.coord for c in last_point.children]
+
+    def should_allow_free_travel(self) -> bool:
+        """C# Hook.ShouldAllowFreeTravel (Hook.cs:2485-2492): OR across all
+        hook listeners. The Flight modifier (Flight.cs:5) and WingedBoots
+        with charges remaining (WingedBoots.cs:52-55) allow ignoring map
+        paths when travelling."""
+        if any(getattr(modifier, "modifier_id", None) == "flight" for modifier in self.modifiers):
+            return True
+        for player in self.players:
+            for relic in player.get_relic_objects():
+                allows_free_travel = getattr(relic, "should_allow_free_travel", None)
+                if callable(allows_free_travel) and allows_free_travel():
+                    return True
+        return False
 
     def resolve_room_type(self, point_type: MapPointType, blacklist: set[RoomType] | None = None) -> RoomType:
         """Convert a MapPointType to a RoomType, rolling for Unknown rooms."""

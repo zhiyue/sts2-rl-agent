@@ -125,13 +125,13 @@ def test_web_session_starts_at_neow_and_advances_to_map() -> None:
     assert state["phase"] == RunManager.PHASE_EVENT
     assert state["screen"]["type"] == "event"
     assert state["screen"]["title"] == "Neow"
-    assert state["actions"][0]["label"] == "Booming Conch - Gain a positive relic"
+    assert state["actions"][0]["label"] == "Fishing Rod - Gain a positive relic"
 
     reward = session.take_action(0)
     assert reward["phase"] == RunManager.PHASE_CARD_REWARD
     assert reward["screen"]["type"] == "reward"
     assert reward["screen"]["items"] == [
-        {"name": "Booming Conch", "action_index": 0},
+        {"name": "Fishing Rod", "action_index": 0},
     ]
 
     map_state = session.take_action(0)

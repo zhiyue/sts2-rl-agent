@@ -132,7 +132,7 @@ def test_interactive_cli_displays_reward_contents(capsys) -> None:
 
     assert "REWARD:" in output
     assert "Relic:" in output
-    assert "Booming Conch" in output
+    assert "Fishing Rod" in output
 
 
 def test_interactive_cli_displays_shop_inventory(capsys) -> None:
