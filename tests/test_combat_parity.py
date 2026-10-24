@@ -270,6 +270,37 @@ class TestRelicTurnHooks:
         assert normal.cost == 1
         assert retained.cost == 0
 
+    def test_bookmark_discount_expires_when_card_is_played(self):
+        """C# Bookmark.cs:30 EnergyCost.AddUntilPlayed(-1): the -1 modifier
+        expires on play, restoring the printed cost."""
+        combat = _make_combat(["Bookmark"])
+        retained = make_strike_ironclad()
+        retained.keywords = frozenset({"retain"})
+        combat.hand = [retained]
+        combat.end_player_turn()
+        assert retained.cost == 0
+
+        combat.energy = 0
+        assert combat.play_card(0)
+        assert retained.cost == 1
+
+    def test_bookmark_discounts_stack_until_played(self):
+        """C# Bookmark.cs:30 AddUntilPlayed(-1) can stack while the card stays
+        retained; playing it restores the full printed cost."""
+        combat = _make_combat(["Bookmark"])
+        retained = make_strike_ironclad()
+        retained.keywords = frozenset({"retain"})
+        combat.hand = [retained]
+
+        combat.end_player_turn()
+        combat.end_player_turn()
+
+        assert retained.cost == 0
+
+        combat.energy = 0
+        assert combat.play_card(0)
+        assert retained.cost == 1
+
 
 class TestPowerTurnHooks:
     def test_generated_status_dispatches_power_and_card_hooks(self):

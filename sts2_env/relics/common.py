@@ -33,14 +33,15 @@ def _gain_unpowered_block(owner: Creature, amount: int, combat: CombatState) -> 
 
 @register_relic
 class AmethystAubergine(RelicInstance):
-    """Gain 10 gold after non-boss combat rooms."""
+    """Gain 15 gold after non-boss combat rooms."""
     relic_id = RelicId.AMETHYST_AUBERGINE
     rarity = RelicRarity.COMMON
     pool = RelicPool.SHARED
 
     def is_allowed(self, run_state: RunState) -> bool:
         return self.is_before_act3_treasure_chest(run_state)
-    GOLD = 10
+    # C# AmethystAubergine.cs:18 CanonicalVars: new GoldVar(15)
+    GOLD = 15
 
     def modify_rewards(
         self,
@@ -289,22 +290,40 @@ class OddlySmoothStone(RelicInstance):
 
 @register_relic
 class Pendulum(RelicInstance):
-    """Draw 1 card on shuffle."""
+    """Every 3rd player turn: draw 1 card."""
     relic_id = RelicId.PENDULUM
     rarity = RelicRarity.COMMON
     pool = RelicPool.SHARED
+    # C# Pendulum.cs:75-89 AfterPlayerTurnStart: TurnsSeen = (TurnsSeen + 1) % 3;
+    # when it wraps to 0, draw CardsVar(1). CanonicalVars (Pendulum.cs:57-60):
+    # CardsVar(1), DynamicVar("Turns", 3m).
+    # NOTE: C# keeps TurnsSeen as a [SavedProperty] across combats; the sim
+    # resets the counter per combat.
+    TURNS = 3
+    CARDS = 1
 
-    def after_shuffle(self, owner: Creature, combat: CombatState) -> None:
-        combat.draw_cards(owner, 1)
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._turns_seen: int = 0
+
+    def after_player_turn_start(self, owner: Creature, combat: CombatState) -> None:
+        self._turns_seen = (self._turns_seen + 1) % self.TURNS
+        if self._turns_seen == 0:
+            combat.draw_cards(owner, self.CARDS)
+
+    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        self._turns_seen = 0
 
 
 @register_relic
 class Permafrost(RelicInstance):
-    """First Power card played per combat: gain 6 block."""
+    """First Power card played per combat: gain 7 block."""
     relic_id = RelicId.PERMAFROST
-    rarity = RelicRarity.COMMON
+    # C# Permafrost.cs:18 Rarity => RelicRarity.Uncommon
+    rarity = RelicRarity.UNCOMMON
     pool = RelicPool.SHARED
-    BLOCK = 6
+    # C# Permafrost.cs:33 CanonicalVars: new BlockVar(7m, ValueProp.Unpowered)
+    BLOCK = 7
 
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)
@@ -404,7 +423,9 @@ class SneckoSkull(RelicInstance):
         source: object | None,
         combat: CombatState,
     ) -> int:
-        if giver is owner and power_id == PowerId.POISON and amount > 0:
+        if giver is owner and power_id == PowerId.POISON:
+            # C# SneckoSkull.cs:19-29 ModifyPowerAmountGivenAdditive has no
+            # amount > 0 guard: any owner-applied Poison gains +1.
             return amount + self.EXTRA_POISON
         return amount
 
@@ -445,10 +466,13 @@ class StrikeDummy(RelicInstance):
 
 @register_relic
 class TinyMailbox(RelicInstance):
-    """Add potion reward at rest site."""
+    """Add 2 potion rewards at rest site."""
     relic_id = RelicId.TINY_MAILBOX
-    rarity = RelicRarity.COMMON
+    # C# TinyMailbox.cs:12 Rarity => RelicRarity.Uncommon
+    rarity = RelicRarity.UNCOMMON
     pool = RelicPool.SHARED
+    # C# TinyMailbox.cs:20-21: rewards.Add(new PotionReward(player)); x2
+    POTION_REWARDS = 2
 
     def modify_rest_site_heal_rewards(
         self,
@@ -460,7 +484,7 @@ class TinyMailbox(RelicInstance):
     ) -> list[object]:
         from sts2_env.run.reward_objects import PotionReward
 
-        return [*rewards, PotionReward(owner.player_id)]
+        return [*rewards, *(PotionReward(owner.player_id) for _ in range(self.POTION_REWARDS))]
 
 
 @register_relic
@@ -531,7 +555,7 @@ class Whetstone(RelicInstance):
 
 @register_relic
 class BookOfFiveRings(RelicInstance):
-    """Every 5 cards added to deck, heal 15."""
+    """Every 5 cards added to deck, heal 20."""
     relic_id = RelicId.BOOK_OF_FIVE_RINGS
     rarity = RelicRarity.COMMON
     pool = RelicPool.SHARED
@@ -539,7 +563,8 @@ class BookOfFiveRings(RelicInstance):
     def is_allowed(self, run_state: RunState) -> bool:
         return self.is_before_act3_treasure_chest(run_state)
     CARDS_THRESHOLD = 5
-    HEAL = 15
+    # C# BookOfFiveRings.cs:69 CanonicalVars: new HealVar(20m)
+    HEAL = 20
 
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)

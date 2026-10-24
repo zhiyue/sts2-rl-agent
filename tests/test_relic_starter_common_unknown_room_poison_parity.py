@@ -55,7 +55,8 @@ class TestRelicStarterCommonUnknownRoomPoisonParity:
         assert run_state.resolve_room_type(MapPointType.UNKNOWN) == RoomType.EVENT
 
     def test_snecko_skull_adds_one_extra_poison_to_owned_applications(self):
-        """Matches SneckoSkull.cs: owner-applied Poison gains +1 amount."""
+        """Matches SneckoSkull.cs:19-29 ModifyPowerAmountGivenAdditive: any
+        owner-applied Poison gains +1 — there is no amount > 0 guard."""
         combat = _make_silent_combat(["SneckoSkull"], seed=1703)
         enemy = combat.enemies[0]
         deadly_poison = make_deadly_poison()
@@ -65,3 +66,15 @@ class TestRelicStarterCommonUnknownRoomPoisonParity:
 
         assert combat.play_card(0, 0)
         assert enemy.get_power_amount(PowerId.POISON) == 6
+
+    def test_snecko_skull_applies_even_to_zero_amount_poison(self):
+        """C# SneckoSkull.cs has no `amount > 0` guard: a 0-amount owner Poison
+        application still gains +1."""
+        combat = _make_silent_combat(["SneckoSkull"], seed=1713)
+        relic = next(r for r in combat.relics if r.relic_id.name == "SNECKO_SKULL")
+        enemy = combat.enemies[0]
+
+        modified = relic.modify_power_amount_given(
+            combat.player, PowerId.POISON, 0, combat.player, enemy, None, combat,
+        )
+        assert modified == 1

@@ -5,7 +5,7 @@ import sts2_env.powers  # noqa: F401
 from sts2_env.cards.defect import create_defect_starter_deck
 from sts2_env.cards.ironclad import create_ironclad_starter_deck, make_inflame
 from sts2_env.core.combat import CombatState
-from sts2_env.core.enums import OrbType, PowerId, RoomType, ValueProp
+from sts2_env.core.enums import OrbType, PowerId, RelicRarity, RoomType, ValueProp
 from sts2_env.core.rng import Rng
 from sts2_env.monsters.act1_weak import create_shrinker_beetle, create_twig_slime_s
 from sts2_env.run.rooms import RoomVisitContext
@@ -75,7 +75,7 @@ class TestRelicStarterCommonOpeningTurnHooksParity:
         assert len(combat.hand) == 5
 
     def test_infused_core_channels_three_lightning_on_first_turn_only(self):
-        """Matches InfusedCore.cs: channel 3 Lightning at first player-turn start."""
+        """Matches InfusedCore.cs:35-43: channel 3 Lightning at first player-turn start."""
         combat = _make_defect_combat(["InfusedCore"], seed=302)
 
         assert combat.orb_queue is not None
@@ -86,18 +86,39 @@ class TestRelicStarterCommonOpeningTurnHooksParity:
         assert combat.round_number == 2
         assert len(combat.orb_queue.orbs) == 3
 
+    def test_infused_core_lightning_orb_values_gain_plus_one(self):
+        """Matches InfusedCore.cs:46-55 ModifyOrbValue: the owner's LightningOrb
+        passive and evoke values gain +ExtraDamage(1)."""
+        combat = _make_defect_combat(["InfusedCore"], seed=312)
+        orb = combat.orb_queue.orbs[0]
+
+        # LightningOrb base passive 3 / evoke 8; no Focus in play.
+        assert orb.get_passive_value(combat) == 4
+        assert orb.get_evoke_value(combat) == 9
+
+    def test_cracked_core_does_not_modify_orb_values(self):
+        """C# CrackedCore.cs has no ModifyOrbValue override; base RelicModel
+        default is a no-op (AbstractModel.cs:1796)."""
+        combat = _make_defect_combat(["CrackedCore"], seed=313)
+        orb = combat.orb_queue.orbs[0]
+
+        assert orb.get_passive_value(combat) == 3
+        assert orb.get_evoke_value(combat) == 8
+
     def test_permafrost_triggers_block_once_for_first_power_each_combat(self):
-        """Matches Permafrost.cs: first Power card in combat grants 6 block once."""
+        """Matches Permafrost.cs:33 BlockVar(7m, Unpowered) and :18 Uncommon:
+        first Power card in combat grants 7 block once."""
         combat = _make_ironclad_combat(["Permafrost"], seed=303)
+        assert combat.current_player_state.relics[0].rarity == RelicRarity.UNCOMMON
         combat.hand = [make_inflame(), make_inflame()]
         combat.energy = 2
 
         assert combat.player.block == 0
         assert combat.play_card(0)
-        assert combat.player.block == 6
+        assert combat.player.block == 7
 
         assert combat.play_card(0)
-        assert combat.player.block == 6
+        assert combat.player.block == 7
 
     def test_permafrost_block_triggers_after_block_gained_hooks(self):
         combat = _make_ironclad_combat(["Permafrost"], seed=306)
@@ -109,7 +130,7 @@ class TestRelicStarterCommonOpeningTurnHooksParity:
 
         assert combat.play_card(0)
 
-        assert combat.player.block == 6
+        assert combat.player.block == 7
         assert enemy.current_hp == start_hp - 5
 
     def test_red_skull_applies_and_removes_strength_when_crossing_hp_threshold(self):

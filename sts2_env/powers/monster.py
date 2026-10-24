@@ -95,11 +95,13 @@ class MinionPower(PowerInstance):
 # SlipperyPower
 # ---------------------------------------------------------------------------
 class SlipperyPower(PowerInstance):
-    """Each hit can only deal 1 damage (damage cap). Decrements on any hit.
+    """Each hit can only make the owner lose 1 HP. Decrements on unblocked hits.
 
     C# ref: SlipperyPower.cs
-    - ModifyDamageCap: cap at 1 if target == owner.
-    - AfterDamageReceived: if target == owner and total damage != 0, decrement.
+    - ModifyHpLostAfterOsty (SlipperyPower.cs:19-30): if target == owner and
+      amount >= 1, cap the HP loss at 1 (same hook shape as Intangible).
+    - AfterDamageReceived (SlipperyPower.cs:32-39): if target == owner and
+      result.UnblockedDamage >= 1, decrement.
     StackType.Counter.
     """
 
@@ -110,17 +112,20 @@ class SlipperyPower(PowerInstance):
     def __init__(self, amount: int):
         super().__init__(PowerId.SLIPPERY, amount)
 
-    def modify_damage_cap(
+    def modify_hp_lost(
         self,
         owner: Creature,
-        dealer: Creature | None,
         target: Creature,
-        damage: float,
+        amount: float,
+        dealer: Creature | None,
         props: ValueProp,
     ) -> float:
-        if target is owner:
-            return 1.0
-        return float("inf")
+        # C# SlipperyPower.cs:19-30 ModifyHpLostAfterOsty.
+        if target is not owner:
+            return amount
+        if amount < 1:
+            return amount
+        return 1.0
 
     def after_damage_received(
         self,
@@ -131,9 +136,10 @@ class SlipperyPower(PowerInstance):
         props: ValueProp,
         combat: CombatState,
     ) -> None:
-        result = getattr(combat, "_active_damage_result", None)
-        total_damage = getattr(result, "total_damage", damage)
-        if target is owner and total_damage != 0:
+        # ``damage`` is the DamageResult.UnblockedDamage of the hit fired by
+        # core/damage.py (fire_after_damage_received).
+        # C# SlipperyPower.cs:34: result.UnblockedDamage >= 1.
+        if target is owner and damage >= 1:
             self.amount -= 1
             if self.amount <= 0:
                 owner.powers.pop(self.power_id, None)
@@ -207,12 +213,13 @@ class TerritorialPower(PowerInstance):
 # HardenedShellPower
 # ---------------------------------------------------------------------------
 class HardenedShellPower(PowerInstance):
-    """Limits total HP loss per turn to Amount. Resets each player turn start.
+    """Limits total HP loss per turn to Amount. Resets each side's turn start.
 
     C# ref: HardenedShellPower.cs
     - ModifyHpLostBeforeOstyLate: cap HP loss at (Amount - damage_taken_so_far).
     - AfterDamageReceived: track unblocked damage taken this turn.
-    - BeforeSideTurnStart (Player side): reset tracker.
+    - BeforeSideTurnStart (HardenedShellPower.cs:71-77): reset tracker on
+      every side's turn start.
     StackType.Counter.
     """
 
@@ -252,8 +259,9 @@ class HardenedShellPower(PowerInstance):
     def before_side_turn_start(
         self, owner: Creature, side: CombatSide, combat: CombatState
     ) -> None:
-        if side == CombatSide.PLAYER:
-            self._damage_taken_this_turn = 0
+        # C# HardenedShellPower.cs:71-77 BeforeSideTurnStart resets the
+        # tracker on every side's turn start (no side filter).
+        self._damage_taken_this_turn = 0
 
 
 # ---------------------------------------------------------------------------
@@ -423,11 +431,13 @@ class SurprisePower(PowerInstance):
 # ---------------------------------------------------------------------------
 class PlowPower(PowerInstance):
     """When the owner's HP drops to or below Amount after taking unblocked
-    damage, remove all Strength, stun the owner, and remove this power.
+    damage, remove all Strength (temporary first), stun the owner, and remove
+    this power.
 
-    C# ref: PlowPower.cs
-    - AfterDamageReceived: if owner HP <= Amount and unblocked > 0, stun
-      and remove Strength.
+    C# ref: PlowPower.cs:28-52
+    - AfterDamageReceived: if owner HP <= Amount and unblocked > 0, remove
+      every TemporaryStrengthPower instance (PlowPower.cs:35-39) before
+      removing StrengthPower (PlowPower.cs:40), then stun and remove self.
     StackType.Counter.
 
     Simplified: Strength removal and stun are applied. The specific
@@ -455,6 +465,14 @@ class PlowPower(PowerInstance):
             and damage > 0
             and owner.current_hp <= self.amount
         ):
+            # Remove all TemporaryStrengthPower instances first
+            # (C# PlowPower.cs:35-39). Removing via PowerCmd does not run the
+            # turn-end reversal; direct pops match that here.
+            from sts2_env.powers.turn_effects import TemporaryStrengthPower
+
+            for pid, power in list(owner.powers.items()):
+                if isinstance(power, TemporaryStrengthPower):
+                    del owner.powers[pid]
             # Remove all Strength
             strength = owner.powers.get(PowerId.STRENGTH)
             if strength is not None:
@@ -590,12 +608,13 @@ class InfestedPower(PowerInstance):
 # ---------------------------------------------------------------------------
 class IllusionPower(PowerInstance):
     """On death, the owner revives at full HP. The owner is treated as a
-    minion (applies MinionPower). Debuffs are removed on death.
+    minion (applies MinionPower). Non-temporary debuffs are removed on death.
     The creature cannot be hit while reviving.
 
     C# ref: IllusionPower.cs
     - AfterDeath: heal to full HP, set reviving state.
-    - ShouldPowerBeRemovedOnDeath: removes debuffs only.
+    - ShouldPowerBeRemovedOnDeath (IllusionPower.cs:59-66): removes only
+      non-temporary (non ITemporaryPower) debuffs.
     - AfterApplied: applies MinionPower.
     - ShouldAllowHitting: false while reviving.
     - ShouldCreatureBeRemovedFromCombatAfterDeath: false for owner.
@@ -640,10 +659,14 @@ class IllusionPower(PowerInstance):
         from sts2_env.monsters.state_machine import MoveState
 
         self.is_reviving = True
+        # C# IllusionPower.cs:59-66 ShouldPowerBeRemovedOnDeath: debuffs are
+        # removed only when they are NOT ITemporaryPower; temporary debuffs
+        # (PowerInstance.is_temporary here) survive death so their turn-end
+        # reversal still runs. Buffs are never removed.
         debuff_ids = [
             pid
             for pid, p in owner.powers.items()
-            if p.power_type == PowerType.DEBUFF
+            if p.power_type == PowerType.DEBUFF and not p.is_temporary
         ]
         for pid in debuff_ids:
             del owner.powers[pid]
@@ -914,19 +937,20 @@ class SuckPower(PowerInstance):
 # CrabRagePower
 # ---------------------------------------------------------------------------
 class CrabRagePower(PowerInstance):
-    """When an allied creature dies, gain 5 Strength and 99 Block.
+    """When an allied creature dies, gain 6 Strength and 99 Block.
     Then remove this power. Single-use.
 
     C# ref: CrabRagePower.cs
     - AfterDeath: if ally (not self) on same side dies, gain Strength + Block.
+    - CanonicalVars: PowerVar<StrengthPower>(6m) (CrabRagePower.cs:27).
     StackType.Single.
     """
 
     power_type = PowerType.BUFF
     stack_type = PowerStackType.SINGLE
 
-    # Hard-coded values from C# DynamicVars
-    STRENGTH_GAIN = 5
+    # C# CrabRagePower.cs:27: new PowerVar<StrengthPower>(6m).
+    STRENGTH_GAIN = 6
     BLOCK_GAIN = 99
 
     def __init__(self, amount: int = 1):

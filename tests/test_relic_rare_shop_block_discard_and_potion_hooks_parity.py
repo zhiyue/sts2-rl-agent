@@ -11,6 +11,7 @@ from sts2_env.core.hooks import (
     fire_after_block_cleared,
     fire_after_card_discarded,
     fire_after_shuffle,
+    fire_after_side_turn_start,
     fire_before_side_turn_start,
 )
 from sts2_env.core.rng import Rng
@@ -204,6 +205,25 @@ def test_booming_conch_adds_draw_only_for_round_one_elite():
     combat.round_number = 1
     combat.is_elite = False
     assert relic.modify_hand_draw(combat.player, 5, combat) == 5
+
+
+def test_booming_conch_grants_one_energy_on_round_one_elite_side_turn_start():
+    """C# BoomingConch.cs:45-55 AfterSideTurnStart: on turn <= 1 of an elite
+    combat the owner's side gains EnergyVar(1)."""
+    combat = _make_ironclad_combat(["BoomingConch"], seed=1015)
+    relic = next(relic for relic in combat.relics if relic.relic_id.name == "BOOMING_CONCH")
+    combat.is_elite = True
+    combat.round_number = 1
+    energy_before = combat.current_player_state.energy
+
+    fire_after_side_turn_start(CombatSide.PLAYER, combat)
+    assert combat.current_player_state.energy == energy_before + 1
+
+    # Only the first turn of the elite combat grants energy.
+    combat.round_number = 2
+    energy_before = combat.current_player_state.energy
+    fire_after_side_turn_start(CombatSide.PLAYER, combat)
+    assert combat.current_player_state.energy == energy_before
 
 
 def test_empty_cage_removes_two_cards_immediately_or_queues_choice_reward():

@@ -29,13 +29,14 @@ if TYPE_CHECKING:
     from sts2_env.run.reward_objects import CardReward, Reward
     from sts2_env.run.rewards import CardRewardGenerationOptions
     from sts2_env.run.rooms import Room
-    from sts2_env.run.run_state import RunState
+    from sts2_env.run.run_state import PlayerState, RunState
 
 from sts2_env.run.run_state import (
     SCROLL_BOXES_BUNDLE_COUNT,
     SCROLL_BOXES_COMMON_CARDS_PER_BUNDLE,
     SCROLL_BOXES_UNCOMMON_CARDS_PER_BUNDLE,
 )
+from sts2_env.run.rest_site import RestSiteOption
 
 
 def _gain_unpowered_block(owner: Creature, amount: int, combat: CombatState) -> int:
@@ -1218,16 +1219,27 @@ class BoneTea(RelicInstance):
 
 @register_relic
 class BoomingConch(RelicInstance):
-    """Round 1 in elite: draw +2."""
+    """Round 1 in elite: draw +2 and gain 1 energy."""
     relic_id = RelicId.BOOMING_CONCH
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
+    # C# BoomingConch.cs:22-26 CanonicalVars: CardsVar(2), EnergyVar(1)
     EXTRA_CARDS = 2
+    ENERGY = 1
 
     def modify_hand_draw(self, owner: Creature, draw: int, combat: CombatState) -> int:
         if combat.round_number == 1 and getattr(combat, "is_elite", False):
             return draw + self.EXTRA_CARDS
         return draw
+
+    def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        # C# BoomingConch.cs:45-55 AfterSideTurnStart: on turn <= 1 of an elite
+        # combat, the owner's side gains EnergyVar(1) energy.
+        if side != owner.side:
+            return
+        if combat.round_number > 1 or not getattr(combat, "is_elite", False):
+            return
+        combat.gain_energy(owner, self.ENERGY)
 
 
 @register_relic
@@ -2040,6 +2052,25 @@ class FurCoat(RelicInstance):
         for enemy in combat.hittable_enemies:
             enemy.current_hp = min(enemy.current_hp, 1)
 
+    def after_creature_added_to_combat(
+        self,
+        owner: Creature,
+        creature: Creature,
+        combat: CombatState,
+    ) -> None:
+        # C# FurCoat.cs:130-142 AfterCreatureAddedToCombat: enemies added to a
+        # marked combat mid-fight are also set to 1 HP.
+        if getattr(creature, "side", None) != CombatSide.ENEMY:
+            return
+        state = combat.combat_player_state_for(owner)
+        run_state = getattr(getattr(state, "player_state", None), "run_state", None)
+        if run_state is None:
+            return
+        current_coord = run_state.visited_map_coords[-1] if run_state.visited_map_coords else None
+        if current_coord not in self._marked_map_coords():
+            return
+        creature.current_hp = min(creature.current_hp, 1)
+
 
 @register_relic
 class GlassEye(RelicInstance):
@@ -2326,11 +2357,12 @@ class LeadPaperweight(RelicInstance):
 
 @register_relic
 class LeafyPoultice(RelicInstance):
-    """Lose 10 max HP, transform 1 Strike and 1 Defend."""
+    """Lose 12 max HP, transform 1 Strike and 1 Defend."""
     relic_id = RelicId.LEAFY_POULTICE
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    MAX_HP_LOSS = 10
+    # C# LeafyPoultice.cs:17 CanonicalVars: new MaxHpVar(12m)
+    MAX_HP_LOSS = 12
 
     def after_obtained(self, owner: Creature) -> None:
         owner.lose_max_hp(self.MAX_HP_LOSS)
@@ -2412,6 +2444,10 @@ class MassiveScroll(RelicInstance):
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     CARDS = 3
+
+    def is_allowed(self, run_state: RunState) -> bool:
+        # C# MassiveScroll.cs:19-20 IsAllowed: runState.Players.Count > 1.
+        return len(getattr(run_state, "players", ()) or ()) > 1
 
     def after_obtained(self, owner: Creature) -> None:
         owner.offer_multiplayer_cards(self.CARDS)
@@ -2950,13 +2986,14 @@ class Pomander(RelicInstance):
 
 @register_relic
 class PrecariousShears(RelicInstance):
-    """Remove 2 cards, take 13 damage."""
+    """Remove 2 cards, take 16 damage."""
     relic_id = RelicId.PRECARIOUS_SHEARS
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     has_upon_pickup_effect = True
     CARDS = 2
-    DAMAGE = 13
+    # C# PrecariousShears.cs:21 CanonicalVars: new DamageVar(16m, ValueProp.Unpowered)
+    DAMAGE = 16
 
     def after_obtained(self, owner: Creature) -> None:
         candidates = owner.removable_deck_cards()
@@ -2985,11 +3022,12 @@ class PreciseScissors(RelicInstance):
 
 @register_relic
 class PreservedFog(RelicInstance):
-    """Remove 5 cards, add Folly curse."""
+    """Remove 3 cards, add Folly curse."""
     relic_id = RelicId.PRESERVED_FOG
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
-    CARDS = 5
+    # C# PreservedFog.cs:18 CanonicalVars: new CardsVar(3)
+    CARDS = 3
 
     def after_obtained(self, owner: Creature) -> None:
         candidates = owner.removable_deck_cards()
@@ -3062,39 +3100,87 @@ class PrismaticGem(RelicInstance):
         )
 
 
+class _KindleRestSiteOption(RestSiteOption):
+    """Rest-site Rekindle option added by PumpkinCandle.
+
+    C# KindleRestSiteOption.cs: OptionId "KINDLE", OnSelect calls
+    PumpkinCandle.Rekindle() (+5 charges) and consumes the rest action.
+    """
+
+    OPTION_ID = "KINDLE"
+
+    def __init__(self) -> None:
+        super().__init__(
+            option_id=self.OPTION_ID,
+            label="Kindle",
+            description=f"Rekindle the Pumpkin Candle (+{PumpkinCandle.KINDLE_AMOUNT} combats of +1 energy)",
+        )
+
+    def execute(self, player: PlayerState, **kwargs: object) -> str:
+        for relic in player.get_relic_objects():
+            if isinstance(relic, PumpkinCandle):
+                relic.rekindle()
+                return f"Rekindled: +{PumpkinCandle.KINDLE_AMOUNT} combats of +1 energy"
+        return "No Pumpkin Candle to rekindle"
+
+
 @register_relic
 class PumpkinCandle(RelicInstance):
-    """+1 max energy in act obtained."""
+    """+1 max energy while Kindle charges remain; loses 1 charge per combat.
+
+    Starts with 5 charges on obtain (C# PumpkinCandle.cs:52-55 AfterObtained ->
+    Rekindle, :87-90 KindleCount += 5). Rest sites offer a Rekindle option that
+    restores 5 charges (C# PumpkinCandle.cs:77-85 TryModifyRestSiteOptions,
+    KindleRestSiteOption.cs:24-28 OnSelect -> Rekindle).
+    """
     relic_id = RelicId.PUMPKIN_CANDLE
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
     has_upon_pickup_effect = True
+    # C# PumpkinCandle.cs:15 kindleAmount = 5
+    KINDLE_AMOUNT = 5
+    # C# PumpkinCandle.cs:29-32 CanonicalVars: CombatCount(5), EnergyVar(1)
     ENERGY = 1
 
     def __init__(self, relic_id: RelicId):
         super().__init__(relic_id)
-        self._active_act: int = -1
+        # C# PumpkinCandle.cs:35 [SavedProperty] KindleCount. Note: the sim
+        # keeps the counter on the relic instance, so (unlike C#) it resets if
+        # the relic object cache is rebuilt (e.g. when another relic is added).
+        self._kindle_count: int = 0
 
-    @staticmethod
-    def _current_act_index(owner: Creature) -> int | None:
-        run_state = getattr(owner, "run_state", None)
-        if run_state is None:
-            combat = getattr(owner, "combat_state", None)
-            state = combat.combat_player_state_for(owner) if combat is not None else None
-            run_state = getattr(getattr(state, "player_state", None), "run_state", None)
-        return getattr(run_state, "current_act_index", None)
+    @property
+    def kindle_count(self) -> int:
+        return self._kindle_count
+
+    def rekindle(self) -> None:
+        # C# PumpkinCandle.cs:87-90 Rekindle: KindleCount += 5.
+        self._kindle_count += self.KINDLE_AMOUNT
 
     def after_obtained(self, owner: Creature) -> None:
-        current_act = self._current_act_index(owner)
-        self._active_act = 0 if current_act is None else current_act
+        # C# PumpkinCandle.cs:52-55 AfterObtained -> Rekindle().
+        self.rekindle()
 
     def modify_max_energy(self, owner: Creature, energy: int) -> int:
-        current_act = self._current_act_index(owner)
-        if current_act is None and self._active_act < 0:
-            return energy + self.ENERGY
-        if current_act == self._active_act:
-            return energy + self.ENERGY
-        return energy
+        # C# PumpkinCandle.cs:58-68 ModifyMaxEnergy: +EnergyVar(1) while
+        # KindleCount > 0.
+        if self._kindle_count <= 0:
+            return energy
+        return energy + self.ENERGY
+
+    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        # C# PumpkinCandle.cs:71-75 AfterCombatEnd: KindleCount = max(-1, 0).
+        self._kindle_count = max(self._kindle_count - 1, 0)
+
+    def modify_rest_site_options(
+        self,
+        owner: Creature,
+        options: list[object],
+        run_state: RunState,
+    ) -> list[object]:
+        # C# PumpkinCandle.cs:77-85 TryModifyRestSiteOptions adds
+        # KindleRestSiteOption (Rekindle: +5 charges).
+        return [*options, _KindleRestSiteOption()]
 
 
 @register_relic
@@ -3166,7 +3252,7 @@ class SandCastle(RelicInstance):
 
 @register_relic
 class ScrollBoxes(RelicInstance):
-    """Lose all gold, choose from 2 bundles of cards."""
+    """Choose from 2 bundles of cards."""
     relic_id = RelicId.SCROLL_BOXES
     rarity = RelicRarity.ANCIENT
     pool = RelicPool.EVENT
@@ -3185,7 +3271,8 @@ class ScrollBoxes(RelicInstance):
         )
 
     def after_obtained(self, owner: Creature) -> None:
-        owner.lose_all_gold()
+        # C# ScrollBoxes.cs:34-46 AfterObtained only offers the bundle choice;
+        # there is no gold loss.
         owner.offer_card_bundles()
 
 
@@ -3325,6 +3412,10 @@ class SilverCrucible(RelicInstance):
     @property
     def is_used_up(self) -> bool:
         return self._times_used >= self.CARD_REWARDS and self._treasure_rooms_entered > 0
+
+    def is_allowed(self, run_state: RunState) -> bool:
+        # C# SilverCrucible.cs:81-82 IsAllowed: runState.Players.Count == 1.
+        return len(getattr(run_state, "players", ()) or ()) == 1
 
     def _refresh_enabled(self) -> None:
         if self.is_used_up:
@@ -3561,7 +3652,7 @@ class TeaOfDiscourtesy(RelicInstance):
 
 @register_relic
 class TheBoot(RelicInstance):
-    """Owner's powered attacks deal min 5 damage."""
+    """Owner's (or owner's Osty's) powered attacks deal min 5 damage."""
     relic_id = RelicId.THE_BOOT
     rarity = RelicRarity.EVENT
     pool = RelicPool.EVENT
@@ -3571,9 +3662,17 @@ class TheBoot(RelicInstance):
         self, owner: Creature, target: Creature, amount: float,
         dealer: Creature | None, props: ValueProp
     ) -> float:
-        if (dealer is owner
-                and props.is_powered_attack()
-                and 0 < amount < self.DAMAGE_MINIMUM):
+        # C# TheBoot.cs:28-29: dealer must be the owner's Creature or the
+        # owner's Osty pet.
+        osty = None
+        combat_state = getattr(owner, "combat_state", None)
+        if combat_state is not None and hasattr(combat_state, "get_osty"):
+            osty = combat_state.get_osty(owner)
+        if dealer is not owner and dealer is not osty:
+            return amount
+        if not props.is_powered_attack():
+            return amount
+        if 0 < amount < self.DAMAGE_MINIMUM:
             return float(self.DAMAGE_MINIMUM)
         return amount
 

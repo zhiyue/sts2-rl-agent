@@ -487,7 +487,9 @@ def test_jungle_maze_adventure_truncates_gold_gain_after_decimal_relic_hooks():
     result = event.choose(run_state, "join")
 
     assert result.finished
-    assert run_state.player.gold == 76
+    # BowlerHat.cs:29-34 ModifyGoldGained returns amount * 1.25m; the run
+    # truncates the final decimal once: int(64.5 * 1.25) == 80.
+    assert run_state.player.gold == 80
 
 
 def test_whispering_hollow_hug_uses_run_level_transform_reward_in_run_manager():

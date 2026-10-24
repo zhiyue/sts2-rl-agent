@@ -783,6 +783,14 @@ class RelicInstance:
         """Return False to prevent death. None = no opinion."""
         return None
 
+    # ─── Orb Hooks ──────────────────────────────────────────────────────
+
+    def modify_orb_value(self, owner: Creature, orb: object, value: int) -> int:
+        # C# RelicModel.ModifyOrbValue (AbstractModel.cs:1796): default no-op.
+        # Dispatched from OrbInstance for the orb owner's relics (see
+        # sts2_env/orbs/base.py), so `owner` already owns `orb`.
+        return value
+
     # ─── Energy Hooks ───────────────────────────────────────────────────
 
     def after_energy_reset(self, owner: Creature, combat: CombatState) -> None:

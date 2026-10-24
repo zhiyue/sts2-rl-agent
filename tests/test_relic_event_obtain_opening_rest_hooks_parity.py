@@ -11,6 +11,7 @@ from sts2_env.core.enums import CardId, CombatSide, PowerId
 from sts2_env.core.hooks import fire_after_card_played, fire_before_turn_end, should_flush
 from sts2_env.core.rng import Rng
 from sts2_env.monsters.act1_weak import create_shrinker_beetle
+from sts2_env.relics.shop_event import PumpkinCandle
 from sts2_env.run.reward_objects import AddCardsReward, RelicReward, RemoveCardReward, UpgradeCardsReward
 from sts2_env.run.rest_site import generate_rest_site_options
 from sts2_env.run.run_state import RunState
@@ -286,7 +287,8 @@ class TestRelicEventObtainOpeningRestHooksParity:
         assert isinstance(reward, UpgradeCardsReward)
         assert reward.count == 1
 
-    def test_preserved_fog_queues_remove_five_and_folly_reward(self):
+    def test_preserved_fog_queues_remove_three_and_folly_reward(self):
+        """Matches PreservedFog.cs:18 CardsVar(3)."""
         run_state = RunState(seed=883, character_id="Ironclad")
         run_state.defer_followup_rewards = True
 
@@ -294,14 +296,23 @@ class TestRelicEventObtainOpeningRestHooksParity:
         assert len(run_state.pending_rewards) == 1
         reward = run_state.pending_rewards[0]
         assert isinstance(reward, RemoveCardReward)
-        assert reward.count == 5
+        assert reward.count == 3
         assert reward.after_remove_card_names == ("Folly",)
 
-    def test_pumpkin_candle_only_grants_energy_in_act_obtained(self):
+    def test_pumpkin_candle_energy_while_kindle_charges_remain(self):
+        """Matches PumpkinCandle.cs:52-55 AfterObtained -> Rekindle (+5),
+        :58-68 ModifyMaxEnergy while KindleCount > 0, :71-75 AfterCombatEnd
+        decrements, :77-85 rest-site Rekindle option."""
         run_state = RunState(seed=884, character_id="Ironclad")
-        run_state.current_act_index = 1
         run_state.player.deck = create_ironclad_starter_deck()
         assert run_state.player.obtain_relic("PUMPKIN_CANDLE")
+        relic = next(
+            relic for relic in run_state.player.get_relic_objects()
+            if relic.relic_id.name == "PUMPKIN_CANDLE"
+        )
+
+        # 5 charges from AfterObtained -> Rekindle.
+        assert relic.kindle_count == 5
 
         combat = CombatState(
             player_hp=80,
@@ -313,16 +324,42 @@ class TestRelicEventObtainOpeningRestHooksParity:
         )
         assert combat.max_energy == 4
 
-        run_state.current_act_index = 2
-        next_act_combat = CombatState(
-            player_hp=80,
-            player_max_hp=80,
-            deck=list(run_state.player.deck),
-            rng_seed=885,
-            character_id="Ironclad",
-            player_state=run_state.player,
+        # Each combat end consumes one charge; 0 charges means base energy.
+        combat.is_over = True
+        relic.after_combat_end(combat.player, combat)
+        assert relic.kindle_count == 4
+        assert combat.max_energy == 4
+
+        for _ in range(3):
+            relic.after_combat_end(combat.player, combat)
+        assert relic.kindle_count == 1
+        assert combat.max_energy == 4
+
+        relic.after_combat_end(combat.player, combat)
+        assert relic.kindle_count == 0
+        assert combat.max_energy == 3
+
+    def test_pumpkin_candle_rekindle_rest_site_option_restores_five_charges(self):
+        """Matches PumpkinCandle.cs:77-85 TryModifyRestSiteOptions +
+        KindleRestSiteOption.cs:24-28 OnSelect -> Rekindle (+5)."""
+        run_state = RunState(seed=894, character_id="Ironclad")
+        run_state.player.deck = create_ironclad_starter_deck()
+        assert run_state.player.obtain_relic("PUMPKIN_CANDLE")
+        relic = next(
+            relic for relic in run_state.player.get_relic_objects()
+            if relic.relic_id.name == "PUMPKIN_CANDLE"
         )
-        assert next_act_combat.max_energy == 3
+
+        options = generate_rest_site_options(run_state.player)
+        kindle_options = [option for option in options if getattr(option, "option_id", "") == "KINDLE"]
+        assert len(kindle_options) == 1
+
+        for _ in range(PumpkinCandle.KINDLE_AMOUNT):
+            relic.after_combat_end(run_state.player, None)
+        assert relic.kindle_count == 0
+
+        assert kindle_options[0].execute(run_state.player).startswith("Rekindled")
+        assert relic.kindle_count == PumpkinCandle.KINDLE_AMOUNT
 
     def test_radiant_pearl_adds_luminesce_to_hand_on_round_one(self):
         combat = _make_combat(["RadiantPearl"], seed=885)

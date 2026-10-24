@@ -418,6 +418,8 @@ def test_merchant_card_creation_hooks_upgrade_and_enchant_cards_for_sale():
 
 
 def test_scroll_boxes_enqueues_choose_one_card_bundle_reward():
+    # C# ScrollBoxes.cs:34-46 AfterObtained only offers the bundle choice;
+    # no gold is lost.
     run_state = RunState(seed=213, character_id="Ironclad")
     starting_gold = run_state.player.gold
 
@@ -425,8 +427,7 @@ def test_scroll_boxes_enqueues_choose_one_card_bundle_reward():
 
     bundles = [reward for reward in run_state.pending_rewards if isinstance(reward, CardBundlesReward)]
     assert len(bundles) == 1
-    assert run_state.player.gold == 0
-    assert starting_gold > run_state.player.gold
+    assert run_state.player.gold == starting_gold
     assert len(bundles[0].bundles) == 2
     assert all(len(bundle) == 3 for bundle in bundles[0].bundles)
     assert all(
@@ -771,6 +772,8 @@ def test_lead_paperweight_uses_colorless_only_regenerable_reward_and_supports_re
 
 
 def test_amethyst_aubergine_adds_bonus_gold_reward_object():
+    # C# AmethystAubergine.cs:18 GoldVar(15); :25-46 TryModifyRewards adds a
+    # GoldReward for non-final-boss combat rooms.
     run_state = RunState(seed=217, character_id="Ironclad")
     assert run_state.player.obtain_relic("AMETHYST_AUBERGINE")
 
@@ -779,13 +782,13 @@ def test_amethyst_aubergine_adds_bonus_gold_reward_object():
 
     gold_rewards = [reward for reward in generated if isinstance(reward, GoldReward)]
     assert len(gold_rewards) == 2
-    assert any(reward.min_gold == 10 and reward.max_gold == 10 for reward in gold_rewards)
+    assert any(reward.min_gold == 15 and reward.max_gold == 15 for reward in gold_rewards)
 
     run_state.current_act_index = 0
     boss_rewards = RewardsSet(run_state.player.player_id).with_rewards_from_room(create_room(RoomType.BOSS), run_state)
     boss_generated = boss_rewards.generate_without_offering(run_state)
     assert any(
-        isinstance(reward, GoldReward) and reward.min_gold == 10 and reward.max_gold == 10
+        isinstance(reward, GoldReward) and reward.min_gold == 15 and reward.max_gold == 15
         for reward in boss_generated
     )
 
@@ -796,7 +799,7 @@ def test_amethyst_aubergine_adds_bonus_gold_reward_object():
     )
     final_boss_generated = final_boss_rewards.generate_without_offering(run_state)
     assert not any(
-        isinstance(reward, GoldReward) and reward.min_gold == 10 and reward.max_gold == 10
+        isinstance(reward, GoldReward) and reward.min_gold == 15 and reward.max_gold == 15
         for reward in final_boss_generated
     )
 

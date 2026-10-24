@@ -94,16 +94,29 @@ class CrackedCore(RelicInstance):
 
 @register_relic
 class InfusedCore(RelicInstance):
-    """Upgraded CrackedCore."""
+    """Upgraded CrackedCore: 3 Lightning on turn 1; owner's Lightning orbs +1 damage."""
     relic_id = RelicId.INFUSED_CORE
     rarity = RelicRarity.STARTER
     pool = RelicPool.EVENT
     LIGHTNING_COUNT = 3
+    # C# InfusedCore.cs:19-24 CanonicalVars: Lightning(3), ExtraDamage(1)
+    EXTRA_DAMAGE = 1
 
     def after_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
+        # C# InfusedCore.cs:35-43 AfterSideTurnStart: channel 3 Lightning on
+        # turn <= 1 (round_number starts at 1 and only grows, so == 1).
         if side == CombatSide.PLAYER and combat.round_number == 1:
             for _ in range(self.LIGHTNING_COUNT):
                 combat.channel_orb(owner, OrbType.LIGHTNING)
+
+    def modify_orb_value(self, owner: Creature, orb: object, value: int) -> int:
+        # C# InfusedCore.cs:46-55 ModifyOrbValue: the owner's LightningOrb
+        # passive and evoke values gain +ExtraDamage(1). (Dispatch is scoped
+        # to the orb owner's relics, so the C# `orb.Owner != base.Owner`
+        # check is inherent in the dispatch.)
+        if getattr(orb, "orb_type", None) == OrbType.LIGHTNING:
+            return value + self.EXTRA_DAMAGE
+        return value
 
 
 # ─── Necrobinder Starter ────────────────────────────────────────────────

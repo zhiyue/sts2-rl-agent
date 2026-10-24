@@ -248,6 +248,31 @@ def test_the_boot_runs_before_tungsten_rod_regardless_of_relic_order():
     assert modify_hp_lost(1, player, player, ValueProp.MOVE, combat) == 4
 
 
+def test_the_boot_covers_owner_osty_dealer_but_not_other_pets():
+    """C# TheBoot.cs:28-29: dealer may be the owner's Creature OR the owner's
+    Osty pet; unrelated pets do not qualify."""
+    combat = _make_combat(character_id="Ironclad", relics=["TheBoot"], seed=1140)
+    player = combat.player
+    enemy = combat.enemies[0]
+    enemy.max_hp = 200
+    enemy.current_hp = 200
+    enemy.block = 0
+
+    osty = combat.summon_osty(player, 1)
+    assert osty is not None
+
+    start_hp = enemy.current_hp
+    combat.deal_damage(osty, enemy, 1, ValueProp.MOVE)
+    assert enemy.current_hp == start_hp - 5
+
+    # A non-Osty pet owned by the player is not covered by TheBoot.
+    pet = combat.summon_event_pet(player, "PAELS_LEGION")
+    if pet is not None:
+        next_hp = enemy.current_hp
+        combat.deal_damage(pet, enemy, 1, ValueProp.MOVE)
+        assert enemy.current_hp == next_hp - 1
+
+
 def test_touch_of_orobas_upgrades_existing_starter_relic():
     run_state = RunState(seed=1108, character_id="Ironclad")
     assert run_state.player.obtain_relic("BURNING_BLOOD")
@@ -327,6 +352,40 @@ def test_fur_coat_marks_combat_rooms_and_sets_marked_enemies_to_one_hp():
     combat.start_combat()
 
     assert enemy.current_hp == 1
+
+    # C# FurCoat.cs:130-142 AfterCreatureAddedToCombat: an enemy added to a
+    # marked combat mid-fight is also set to 1 HP.
+    late_enemy, late_ai = create_twig_slime_s(Rng(1128))
+    late_enemy.max_hp = 50
+    late_enemy.current_hp = 50
+    combat.add_enemy(late_enemy, late_ai)
+    assert late_enemy.current_hp == 1
+
+    # Unmarked rooms do not set late arrivals to 1 HP.
+    unmarked_point = next(
+        point for point in run_state.map.room_points()
+        if point.point_type in (MapPointType.MONSTER, MapPointType.ELITE)
+        and point.coord != marked[0]
+    )
+    run_state.visited_map_coords = [unmarked_point.coord]
+    other_combat = CombatState(
+        player_hp=run_state.player.current_hp,
+        player_max_hp=run_state.player.max_hp,
+        deck=list(run_state.player.deck),
+        rng_seed=1129,
+        character_id="Ironclad",
+        player_state=run_state.player,
+    )
+    other_enemy, other_ai = create_shrinker_beetle(Rng(1129))
+    other_enemy.max_hp = 50
+    other_enemy.current_hp = 50
+    other_combat.add_enemy(other_enemy, other_ai)
+    other_combat.start_combat()
+    late2, late2_ai = create_twig_slime_s(Rng(1130))
+    late2.max_hp = 50
+    late2.current_hp = 50
+    other_combat.add_enemy(late2, late2_ai)
+    assert late2.current_hp == 50
 
 
 def test_paels_wing_sacrifices_card_rewards_and_obtains_relic_every_two():

@@ -98,17 +98,25 @@ class TestRelicUncommonOpeningGoldStarHooksParity:
         assert combat.round_number == 2
         assert any(not card.upgraded for card in combat.hand)
 
-    def test_bowler_hat_grants_floor_twenty_percent_bonus_without_recursive_chaining(self):
-        """Matches BowlerHat.cs: gain floor(20%) bonus gold after each non-bonus gain."""
+    def test_bowler_hat_multiplies_gold_gained_by_one_point_two_five(self):
+        """Matches BowlerHat.cs:18 GoldIncrease 1.25m and :29-34 ModifyGoldGained:
+        gold gained becomes floor(amount * 1.25); bonus gold is a standard gain
+        so it does not recurse."""
         run_state = RunState(seed=1002, character_id="Ironclad")
         run_state.player.gold = 0
         assert run_state.player.obtain_relic("BOWLER_HAT")
 
         run_state.player.gain_gold(11)
+        # floor(11 * 1.25) = 13
         assert run_state.player.gold == 13
 
         run_state.player.gain_gold(1)
+        # floor(1 * 1.25) = 1: no bonus on fractional-only gains
         assert run_state.player.gold == 14
+
+        run_state.player.gain_gold(4)
+        # floor(4 * 1.25) = 5
+        assert run_state.player.gold == 19
 
     def test_eternal_feather_heals_at_rest_site_by_deck_size_quanta(self):
         """Matches EternalFeather.cs: rest-site heal is 3 * floor(deck_size / 5)."""

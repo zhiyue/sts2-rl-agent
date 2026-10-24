@@ -229,6 +229,7 @@ def test_arcane_scroll_applies_dingy_rug_card_pool_hook():
 
 
 def test_precarious_shears_deck_choice_mode_queues_remove_reward_and_applies_damage():
+    # C# PrecariousShears.cs:21 DamageVar(16m, Unpowered).
     run_state = RunState(seed=908, character_id="Ironclad")
     run_state.enable_deck_choice_requests = True
     run_state.player.deck = create_ironclad_starter_deck()
@@ -236,7 +237,7 @@ def test_precarious_shears_deck_choice_mode_queues_remove_reward_and_applies_dam
     starting_deck_size = len(run_state.player.deck)
 
     assert run_state.player.obtain_relic("PRECARIOUS_SHEARS")
-    assert run_state.player.current_hp == start_hp - 13
+    assert run_state.player.current_hp == start_hp - 16
     assert len(run_state.player.deck) == starting_deck_size
 
     remove_rewards = [reward for reward in run_state.pending_rewards if isinstance(reward, RemoveCardReward)]

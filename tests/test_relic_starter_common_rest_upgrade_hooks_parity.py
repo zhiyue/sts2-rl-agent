@@ -11,7 +11,7 @@ from sts2_env.cards.ironclad import (
 from sts2_env.cards.necrobinder import create_necrobinder_starter_deck
 from sts2_env.cards.regent import create_regent_starter_deck
 from sts2_env.core.combat import CombatState
-from sts2_env.core.enums import CardId, CardType, CombatSide, ValueProp
+from sts2_env.core.enums import CardId, CardType, CombatSide, RelicRarity, ValueProp
 from sts2_env.core.rng import Rng
 from sts2_env.monsters.act1_weak import create_shrinker_beetle
 from sts2_env.relics.common import BookOfFiveRings
@@ -130,17 +130,35 @@ class TestRelicStarterCommonRestUpgradeHooksParity:
         assert len(blades) == 1
         assert blades[0].base_damage == 20
 
-    def test_pendulum_draws_one_extra_when_shuffle_happens(self):
-        """Matches Pendulum.cs: after shuffling discard into draw, draw 1 card."""
+    def test_pendulum_draws_one_on_every_third_player_turn(self):
+        """Matches Pendulum.cs:75-89 AfterPlayerTurnStart: TurnsSeen = (n+1) % 3;
+        every 3rd player turn draws CardsVar(1) (Pendulum.cs:57-60)."""
         combat = _make_ironclad_combat(["Pendulum"], seed=1604)
+        hand_size_after_start = len(combat.hand)
+
+        # Turns 1 and 2: no draw.
+        combat.end_player_turn()
+        assert combat.round_number == 2
+        assert len(combat.hand) == hand_size_after_start
+
+        combat.end_player_turn()
+        assert combat.round_number == 3
+        assert len(combat.hand) == hand_size_after_start + 1
+
+    def test_pendulum_does_not_draw_on_shuffle(self):
+        """Pendulum is an AfterPlayerTurnStart relic, not an AfterShuffle one
+        (C# Pendulum.cs has no AfterShuffle override)."""
+        combat = _make_ironclad_combat(["Pendulum"], seed=1614)
         combat.hand.clear()
         combat.draw_pile.clear()
         combat.discard_pile = [make_strike_ironclad(), make_defend_ironclad()]
 
         combat.draw_cards(combat.player, 1)
 
-        assert len(combat.hand) == 2
-        assert len(combat.draw_pile) == 0
+        # The shuffle itself draws nothing extra: only the requested card was
+        # drawn; the second shuffled card stays in the draw pile.
+        assert len(combat.hand) == 1
+        assert len(combat.draw_pile) == 1
         assert len(combat.discard_pile) == 0
 
     def test_regal_pillow_adds_fifteen_to_rest_site_heal_amount(self):
@@ -155,16 +173,19 @@ class TestRelicStarterCommonRestUpgradeHooksParity:
         assert result == "Healed 39 HP"
         assert run_state.player.current_hp == 59
 
-    def test_tiny_mailbox_adds_potion_reward_to_rest_site_heal(self):
-        """Matches TinyMailbox.cs: healing at rest site adds a Potion reward."""
+    def test_tiny_mailbox_adds_two_potion_rewards_to_rest_site_heal(self):
+        """Matches TinyMailbox.cs:14-22: healing at rest site adds two Potion
+        rewards (rewards.Add(new PotionReward(player)); x2). Also
+        TinyMailbox.cs:12 Rarity => Uncommon."""
         run_state = RunState(seed=1606, character_id="Ironclad")
         assert run_state.player.obtain_relic("TINY_MAILBOX")
+        assert run_state.player.get_relic_objects()[-1].rarity == RelicRarity.UNCOMMON
         run_state.pending_rewards.clear()
 
         HealOption().execute(run_state.player)
 
         potion_rewards = [reward for reward in run_state.pending_rewards if isinstance(reward, PotionReward)]
-        assert len(potion_rewards) == 1
+        assert len(potion_rewards) == 2
 
     def test_war_paint_upgrades_two_random_skill_cards_on_obtain(self):
         """Matches WarPaint.cs: obtain upgrades 2 Skill cards."""
@@ -206,7 +227,8 @@ class TestRelicStarterCommonRestUpgradeHooksParity:
         assert upgraded == {CardId.BLOOD_WALL, CardId.DEFEND_IRONCLAD}
 
     def test_book_of_five_rings_heals_on_every_fifth_card_added_and_keeps_total_counter(self):
-        """Matches BookOfFiveRings.cs: CardsAdded is cumulative; trigger uses modulo 5."""
+        """Matches BookOfFiveRings.cs:69 HealVar(20m): CardsAdded is cumulative;
+        trigger uses modulo 5 and heals 20."""
         run_state = RunState(seed=1608, character_id="Ironclad")
         run_state.player.max_hp = 80
         run_state.player.current_hp = 20
@@ -219,10 +241,10 @@ class TestRelicStarterCommonRestUpgradeHooksParity:
         assert relic._cards_added == BookOfFiveRings.CARDS_THRESHOLD - 1
 
         run_state.player.add_card_instance_to_deck(make_strike_ironclad())
-        assert run_state.player.current_hp == 35
+        assert run_state.player.current_hp == 40
         assert relic._cards_added == BookOfFiveRings.CARDS_THRESHOLD
 
         for _ in range(5):
             run_state.player.add_card_instance_to_deck(make_strike_ironclad())
-        assert run_state.player.current_hp == 50
+        assert run_state.player.current_hp == 60
         assert relic._cards_added == BookOfFiveRings.CARDS_THRESHOLD * 2

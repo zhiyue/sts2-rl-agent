@@ -45,14 +45,31 @@ class OrbInstance(ABC):
     def get_passive_value(self, combat: CombatState) -> int:
         """Get Focus-modified passive value. Override for Plasma (no focus)."""
         focus = combat.player.get_power_amount(PowerId.FOCUS)
-        return max(0, self.base_passive + focus)
+        return self._apply_modify_orb_value(combat, max(0, self.base_passive + focus))
 
     def get_evoke_value(self, combat: CombatState) -> int:
         """Get Focus-modified evoke value. Override for Plasma/Dark."""
         if self._evoke_override is not None:
             return self._evoke_override
         focus = combat.player.get_power_amount(PowerId.FOCUS)
-        return max(0, self.base_evoke + focus)
+        return self._apply_modify_orb_value(combat, max(0, self.base_evoke + focus))
+
+    def _apply_modify_orb_value(self, combat: CombatState, value: int) -> int:
+        # C# Hook.ModifyOrbValue (Hook.cs:1874-1881): every relic listener may
+        # adjust an orb's value; RelicModel.ModifyOrbValue (AbstractModel.cs:1796)
+        # defaults to no-op (InfusedCore.cs:46-55 adds +1 to the owner's
+        # LightningOrb passive/evoke values). Dispatched to the relics of the
+        # player whose orb queue contains this orb, which is where C# relics
+        # get their `orb.Owner == base.Owner` check from.
+        for state in getattr(combat, "combat_player_states", ()):
+            queue = getattr(state, "orb_queue", None)
+            if queue is None or self not in getattr(queue, "orbs", ()):
+                continue
+            for relic in getattr(state, "relics", ()):
+                modify = getattr(relic, "modify_orb_value", None)
+                if callable(modify):
+                    value = modify(state.creature, self, value)
+        return value
 
     @abstractmethod
     def on_passive(self, combat: CombatState) -> None:

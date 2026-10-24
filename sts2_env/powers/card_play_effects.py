@@ -160,10 +160,12 @@ class DarkEmbracePower(PowerInstance):
 # FeelNoPainPower
 # ---------------------------------------------------------------------------
 class FeelNoPainPower(PowerInstance):
-    """Whenever a card is Exhausted, gain Amount Block (unpowered).
+    """Whenever one of the owner's cards is Exhausted, gain Amount Block
+    (unpowered).
 
-    C# ref: FeelNoPainPower.cs
-    - AfterCardExhausted: GainBlock(Amount, Unpowered).
+    C# ref: FeelNoPainPower.cs:19-25
+    - AfterCardExhausted: only when card.Owner.Creature == base.Owner, gain
+      Block(Amount, Unpowered).
     StackType.Counter.
     """
 
@@ -176,6 +178,9 @@ class FeelNoPainPower(PowerInstance):
     def after_card_exhausted(
         self, owner: Creature, card: object, combat: CombatState
     ) -> None:
+        # C# FeelNoPainPower.cs:21: card.Owner.Creature == base.Owner.
+        if getattr(card, "owner", None) is not owner:
+            return
         _gain_unpowered_block(owner, self.amount, combat)
 
 
@@ -429,12 +434,13 @@ class PhantomBladesPower(PowerInstance):
     """Shivs gain Retain. The first Shiv played each turn deals +Amount damage.
 
     C# ref: PhantomBladesPower.cs
-    - AfterCardEnteredCombat: add Retain to Shivs
+    - AfterApplied (PhantomBladesPower.cs:42-49): add Retain to all Shivs the
+      owner's player already owns.
+    - AfterCardEnteredCombat (PhantomBladesPower.cs:28-40): Shivs owned by the
+      power holder's player gain Retain as they enter combat (covers Shivs
+      generated after this power was applied).
     - ModifyDamageAdditive: +Amount for first Shiv played per turn
     StackType.Counter.
-
-    NOTE: Shiv-specific Retain is handled by the card system. This power
-    provides the damage bonus for the first Shiv each turn.
     """
 
     power_type = PowerType.BUFF
@@ -463,6 +469,16 @@ class PhantomBladesPower(PowerInstance):
             for card in pile:
                 if getattr(card, "is_shiv", False):
                     card.keywords = frozenset(set(card.keywords) | {"retain"})
+
+    def after_card_entered_combat(self, owner: Creature, card: object, combat: CombatState) -> None:
+        # C# PhantomBladesPower.cs:28-40 AfterCardEnteredCombat: Shivs owned
+        # by the holder's player get Retain when they enter combat, so Shivs
+        # generated after application keep the buff.
+        if not getattr(card, "is_shiv", False):
+            return
+        if getattr(card, "owner", None) is not owner:
+            return
+        card.keywords = frozenset(set(card.keywords) | {"retain"})
 
     def modify_damage_additive(
         self,

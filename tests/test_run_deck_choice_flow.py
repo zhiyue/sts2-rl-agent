@@ -369,12 +369,14 @@ def test_treasure_relic_with_remove_reward_and_followup_add_card_resumes_to_map(
     assert result["phase"] == RunManager.PHASE_CARD_REWARD
     assert not any(card.card_id.name == "FOLLY" for card in mgr.run_state.player.deck)
     assert mgr.run_state.pending_choice is not None
-    for idx in range(5):
+    # PreservedFog.cs AfterObtained: CardSelectCmd.FromDeckForRemoval with
+    # CardsVar(3) — remove 3 cards, then add 1 Folly curse to the deck.
+    for idx in range(3):
         mgr.take_action({"action": "choose", "index": idx})
     final = mgr.take_action({"action": "confirm_choice"})
 
     assert final["phase"] == RunManager.PHASE_MAP_CHOICE
-    assert len(mgr.run_state.player.deck) == starting_deck - 4
+    assert len(mgr.run_state.player.deck) == starting_deck - 2
     assert any(card.card_id.name == "FOLLY" for card in mgr.run_state.player.deck)
 
 

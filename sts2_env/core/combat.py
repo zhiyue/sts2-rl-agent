@@ -2174,7 +2174,23 @@ class CombatState:
         if not candidates:
             return
         card = self.combat_card_selection_rng.choice(candidates)
-        card.cost -= 1
+        # C# Bookmark.cs:30 EnergyCost.AddUntilPlayed(-1): the -1 is a local
+        # cost modifier that expires when the card is played, restoring its
+        # printed cost. Multiple triggers stack until then. Tracked with
+        # combat_vars markers (RocketPunch pattern) so end_of_turn_cleanup
+        # does not clear them.
+        base_cost = card.combat_vars.setdefault("_until_played_base_cost", card.cost)
+        delta = card.combat_vars.get("_until_played_cost_delta", 0) - 1
+        card.combat_vars["_until_played_cost_delta"] = delta
+        card.cost = max(0, base_cost + delta)
+
+    def restore_until_played_cost(self, card: CardInstance) -> None:
+        """Restore a card's printed cost when its AddUntilPlayed modifier expires."""
+        base_cost = card.combat_vars.pop("_until_played_base_cost", None)
+        if base_cost is None:
+            return
+        card.combat_vars.pop("_until_played_cost_delta", None)
+        card.cost = base_cost
 
     def gain_energy(self, owner: Creature, amount: int) -> None:
         state = self.combat_player_state_for(owner)

@@ -141,7 +141,7 @@ class BigHat(RelicInstance):
 
 @register_relic
 class Bookmark(RelicInstance):
-    """End of turn: reduce cost of random Retained card by 1."""
+    """End of turn: a random Retained card costs 1 less until it is played."""
     relic_id = RelicId.BOOKMARK
     rarity = RelicRarity.RARE
     pool = RelicPool.NECROBINDER
@@ -149,6 +149,13 @@ class Bookmark(RelicInstance):
     def after_turn_end(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
         if side == CombatSide.PLAYER:
             combat.reduce_retained_card_cost(owner)
+
+    def after_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
+        # C# Bookmark.cs:30 EnergyCost.AddUntilPlayed(-1): the cost modifier
+        # expires when the card is played, restoring its printed cost.
+        restore = getattr(combat, "restore_until_played_cost", None)
+        if callable(restore):
+            restore(card)
 
 
 @register_relic
@@ -478,7 +485,8 @@ class Kunai(RelicInstance):
 class LastingCandy(RelicInstance):
     """Every 2nd combat: extra Power in card rewards."""
     relic_id = RelicId.LASTING_CANDY
-    rarity = RelicRarity.RARE
+    # C# LastingCandy.cs:24 Rarity => RelicRarity.Uncommon
+    rarity = RelicRarity.UNCOMMON
     pool = RelicPool.SHARED
     COMBATS = 2
     CARDS = 1

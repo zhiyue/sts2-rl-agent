@@ -78,7 +78,9 @@ class TestColorlessParity:
         assert combat.player.max_hp == 81
 
     def test_hand_of_greed_bowler_hat_bonus_uses_combat_gold_pipeline(self):
-        """Matches BowlerHat.cs + DragonFruit.cs: bonus gold is a nested standard gold gain."""
+        """Matches BowlerHat.cs:18 GoldIncrease 1.25m + :29-34 ModifyGoldGained:
+        gold gained is multiplied by 1.25; the bonus is a nested standard gold
+        gain (DragonFruit.cs)."""
         combat = _make_combat(["BowlerHat", "DragonFruit"])
         enemy = combat.enemies[0]
         hand_of_greed = make_hand_of_greed()
@@ -88,7 +90,7 @@ class TestColorlessParity:
         combat.energy = hand_of_greed.cost
         starting_max_hp = combat.player.max_hp
         hand_of_greed_gold = hand_of_greed.effect_vars["gold"]
-        bowler_hat_bonus_gold = int(hand_of_greed_gold * BowlerHat.MULTIPLIER)
+        bowler_hat_bonus_gold = int(hand_of_greed_gold * BowlerHat.MULTIPLIER) - hand_of_greed_gold
 
         assert combat.play_card(0, 0)
         assert enemy.is_dead
