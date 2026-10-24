@@ -30,6 +30,7 @@ from sts2_env.monsters.act4 import (
     create_waterfall_giant,
     create_soul_fysh,
     create_lagavulin_matriarch,
+    create_aeonglass,
 )
 
 EncounterSetup = Callable[..., None]
@@ -119,6 +120,22 @@ def setup_punch_construct_normal(combat: CombatState, rng: Rng) -> None:
     combat.add_enemy(creature, ai)
 
 
+def setup_seapunk_normal(combat: CombatState, rng: Rng) -> None:
+    # C# SeapunkNormal.GenerateMonsters: CalcifiedCultist first, then Seapunk.
+    cultist, cultist_ai = create_calcified_cultist(rng, ascension_level=combat.ascension_level)
+    combat.add_enemy(cultist, cultist_ai)
+    creature, ai = create_seapunk(rng, ascension_level=combat.ascension_level)
+    combat.add_enemy(creature, ai)
+
+
+def setup_seapunk_normal(combat: CombatState, rng: Rng) -> None:
+    # C# SeapunkNormal.GenerateMonsters: CalcifiedCultist first, then Seapunk.
+    cultist, cultist_ai = create_calcified_cultist(rng, ascension_level=combat.ascension_level)
+    combat.add_enemy(cultist, cultist_ai)
+    creature, ai = create_seapunk(rng, ascension_level=combat.ascension_level)
+    combat.add_enemy(creature, ai)
+
+
 def setup_sewer_clam_normal(combat: CombatState, rng: Rng) -> None:
     creature, ai = create_sewer_clam(rng, ascension_level=combat.ascension_level)
     combat.add_enemy(creature, ai)
@@ -150,6 +167,7 @@ NORMAL_ENCOUNTERS: list[EncounterSetup] = [
     setup_haunted_ship_normal,
     setup_living_fog_normal,
     setup_punch_construct_normal,
+    setup_seapunk_normal,
     setup_sewer_clam_normal,
     setup_toadpoles_normal,
     setup_two_tailed_rats_normal,
@@ -198,10 +216,17 @@ def setup_lagavulin_matriarch_boss(combat: CombatState, rng: Rng) -> None:
     combat.add_enemy(creature, ai)
 
 
+def setup_aeonglass_boss(combat: CombatState, rng: Rng) -> None:
+    # C# AeonglassBoss.GenerateMonsters: single Aeonglass, RoomType.Boss.
+    creature, ai = create_aeonglass(rng, ascension_level=combat.ascension_level)
+    combat.add_enemy(creature, ai)
+
+
 BOSS_ENCOUNTERS: list[EncounterSetup] = [
     setup_waterfall_giant_boss,
     setup_soul_fysh_boss,
     setup_lagavulin_matriarch_boss,
+    setup_aeonglass_boss,
 ]
 
 

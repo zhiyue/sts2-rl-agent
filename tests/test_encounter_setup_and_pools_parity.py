@@ -130,7 +130,7 @@ RUBY_RAIDER_TOUGH_HP_RANGES = {
     "TRACKER_RUBY_RAIDER": (22, 26),
 }
 BYGONE_EFFIGY_TOUGH_HP = 132
-BYRDONIS_TOUGH_HP = 99
+BYRDONIS_TOUGH_HP = 90
 PHROG_PARASITE_TOUGH_MIN_HP = 66
 PHROG_PARASITE_TOUGH_MAX_HP = 68
 VANTOM_TOUGH_HP = 183
@@ -970,16 +970,16 @@ class TestAct4Pools:
         assert len(ACT4_WEAK) == 4
 
     def test_normal_encounter_count(self):
-        assert len(ACT4_NORMAL) == 10
+        assert len(ACT4_NORMAL) == 11
 
     def test_elite_encounter_count(self):
         assert len(ACT4_ELITE) == 3
 
     def test_boss_encounter_count(self):
-        assert len(ACT4_BOSS) == 3
+        assert len(ACT4_BOSS) == 4
 
     def test_all_act4_total(self):
-        assert len(ALL_ACT4_ENCOUNTERS) == 4 + 10 + 3 + 3  # 20
+        assert len(ALL_ACT4_ENCOUNTERS) == 4 + 11 + 3 + 4  # 22
 
 
 # ========================================================================
@@ -1016,14 +1016,15 @@ class TestAllEncountersSetup:
 
     @pytest.mark.parametrize("act_name, encounters", ALL_ENCOUNTERS_BY_ACT)
     def test_hp_values_within_bounds(self, act_name, encounters):
-        """All monster HP values should be between 1 and 500."""
+        """All monster HP values should be between 1 and 550."""
         for seed in range(10):
             rng = Rng(seed)
             for encounter in encounters:
                 combat = _make_combat(seed)
                 encounter(combat, rng)
                 for enemy in combat.enemies:
-                    assert 1 <= enemy.max_hp <= 500, (
+                    # Upper bound raised for Aeonglass (C# MinInitialHp 512/535).
+                    assert 1 <= enemy.max_hp <= 550, (
                         f"{act_name}: unreasonable HP {enemy.max_hp} for {enemy.monster_id}"
                     )
                     assert enemy.current_hp == enemy.max_hp
@@ -1055,8 +1056,8 @@ class TestAllActsHaveEncounters:
             len(ALL_ACT3_ENCOUNTERS) +
             len(ALL_ACT4_ENCOUNTERS)
         )
-        # 22 + 21 + 18 + 20 = 81
-        assert total == 81
+        # 22 + 21 + 18 + 22 = 83
+        assert total == 83
 
     def test_each_act_has_all_tiers(self):
         """Each act should have weak, normal, elite, and boss encounters."""

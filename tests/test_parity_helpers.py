@@ -1163,7 +1163,9 @@ class TestUntargetableReviveStates:
         combat.add_enemy(giant, giant_ai)
         combat.start_combat()
 
-        assert giant.max_hp == 250
+        # v0.107.1: WaterfallGiant base HP 240 (tough 250) —
+        # decompiled/MegaCrit.Sts2.Core.Models.Monsters/WaterfallGiant.cs MinInitialHp.
+        assert giant.max_hp == 240
         giant_ai.current_move.perform(combat)
         giant_ai.on_move_performed()
         giant_ai.roll_move(combat.rng)
@@ -1749,7 +1751,8 @@ class TestResolvedCardStubs:
 
         assert combat.play_card(0, 0)
 
-        assert enemy.current_hp == starting_hp - 8
+        # C# SolarStrike.cs:18: DamageVar(9).
+        assert enemy.current_hp == starting_hp - 9
         assert combat.stars == 1
 
     def test_bodyguard_summons_osty(self):
@@ -1784,7 +1787,8 @@ class TestResolvedCardStubs:
         combat.energy = 1
 
         assert combat.play_card(0)
-        assert combat.player.block == 7
+        # C# GatherLight.cs:17: BlockVar(8).
+        assert combat.player.block == 8
         assert combat.stars == 1
 
     def test_glow_gains_star_and_draws_cards(self):
@@ -1795,7 +1799,10 @@ class TestResolvedCardStubs:
 
         assert combat.play_card(0)
         assert combat.stars == 1
-        assert len(combat.hand) == 2
+        # C# Glow.cs:16,28-29: CardsVar(1) — draw one now, apply
+        # DrawCardsNextTurnPower(1) for the rest.
+        assert len(combat.hand) == 1
+        assert combat.player.get_power_amount(PowerId.DRAW_CARDS_NEXT_TURN) == 1
 
 
 class TestPendingChoiceFlow:
@@ -1963,7 +1970,9 @@ class TestPendingChoiceFlow:
 
         assert combat.play_card(0, 0)
         assert combat.pending_choice is None
-        assert any(card.card_id == make_minion_dive_bomb().card_id for card in combat.hand)
+        # Begone.cs (v0.107.1): the selected hand card becomes MinionStrike
+        # (the older decompile produced MinionDiveBomb); non-upgraded here.
+        assert any(card.card_id == make_minion_strike().card_id for card in combat.hand)
 
     def test_seance_auto_transforms_when_all_draw_cards_are_required(self):
         combat = _make_combat(create_necrobinder_starter_deck(), "Necrobinder")
@@ -2113,7 +2122,8 @@ class TestPendingChoiceFlow:
         combat.energy = 2
 
         assert combat.play_card(0)
-        assert combat.player.block == 13
+        # C# Bulwark.cs:18: BlockVar(12).
+        assert combat.player.block == 12
         assert any(c.card_id == CardId.SOVEREIGN_BLADE for c in combat.hand)
 
     def test_conqueror_applies_power_and_forges(self):
@@ -2191,6 +2201,7 @@ class TestPendingChoiceFlow:
         assert debris_count == 10
 
     def test_charge_transforms_exact_number_of_draw_cards(self):
+        # Charge.cs OnPlay: transforms into MinionDiveBomb (Charge.cs:30).
         combat = _make_combat(create_regent_starter_deck(), "Regent")
         card = make_charge()
         card_a = make_strike_ironclad()
@@ -2207,8 +2218,8 @@ class TestPendingChoiceFlow:
         assert combat.resolve_pending_choice(1)
         assert combat.resolve_pending_choice(None)
 
-        minion_strikes = [c for c in combat.draw_pile if c.card_id == make_minion_strike().card_id]
-        assert len(minion_strikes) == 2
+        dive_bombs = [c for c in combat.draw_pile if c.card_id == make_minion_dive_bomb().card_id]
+        assert len(dive_bombs) == 2
 
     def test_guards_can_transform_any_number_of_hand_cards(self):
         combat = _make_combat(create_regent_starter_deck(), "Regent")
@@ -2521,7 +2532,9 @@ class TestDynamicColorlessParity:
         assert combat.play_card(0, 0)
         ally_state = combat.combat_player_state_for(ally)
         assert ally_state is not None
-        assert ally_state.energy == 3
+        # BelieveInYou.cs:18 defines EnergyVar(2) and OnPlay grants it to
+        # cardPlay.Target.Player (the selected ally here).
+        assert ally_state.energy == 2
         assert combat.energy == 0
 
     def test_lift_grants_block_to_selected_ally(self):
@@ -2827,18 +2840,38 @@ class TestStatusParity:
         assert any(c.card_id == CardId.GIANT_ROCK for c in combat.hand)
         assert any(c.card_id == skill.card_id for c in combat.hand)
 
-    def test_stoke_exhausts_hand_then_draws_same_count(self):
+    def test_stoke_exhausts_hand_then_generates_random_character_cards(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
         card = make_stoke()
         a = make_strike_ironclad()
         b = make_gather_light()
         combat.hand = [card, a, b]
-        combat.draw_pile = [make_venerate(), make_gather_light(), make_solar_strike()]
+        kept_draw = list(combat.draw_pile)
+        combat.energy = 1
+
+        assert combat.play_card(0)
+        # C# Stoke.cs OnPlay (lines 19-34): exhaust every card in hand, then
+        # CardFactory.GetForCombat generates one random character card per
+        # exhausted card into hand (random with replacement); the draw pile is
+        # untouched.
+        assert len(combat.hand) == 2
+        assert a in combat.exhaust_pile and b in combat.exhaust_pile
+        for generated in combat.hand:
+            assert generated not in kept_draw
+            assert generated is not a and generated is not b
+        assert combat.draw_pile == kept_draw
+
+    def test_stoke_upgraded_upgrades_generated_cards(self):
+        """Stoke.cs OnPlay: `if (base.IsUpgraded) CardCmd.Upgrade(cards, ...)` —
+        every generated card is upgraded."""
+        combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
+        card = make_stoke(upgraded=True)
+        combat.hand = [card, make_strike_ironclad(), make_defend_ironclad()]
         combat.energy = 1
 
         assert combat.play_card(0)
         assert len(combat.hand) == 2
-        assert a in combat.exhaust_pile and b in combat.exhaust_pile
+        assert all(generated.upgraded for generated in combat.hand)
 
     def test_juggling_applies_juggling_power(self):
         combat = _make_combat(create_ironclad_starter_deck(), "Ironclad")
@@ -3444,7 +3477,10 @@ class TestStatusParity:
 
         assert not combat.can_play_card(card)
 
-    def test_glimpse_beyond_has_no_effect_without_player_allies(self):
+    def test_glimpse_beyond_shuffles_souls_into_own_draw_pile_without_allies(self):
+        # GlimpseBeyond.cs OnPlay iterates CombatState.GetTeammatesOf(Owner.Creature)
+        # (CombatState.cs:397 returns the whole side), so in single-player the
+        # caster shuffles 3 Souls into their own draw pile (CardPilePosition.Random).
         combat = _make_combat(create_necrobinder_starter_deck(), "Necrobinder")
         card = CardInstance(
             card_id=CardId.GLIMPSE_BEYOND,
@@ -3458,8 +3494,7 @@ class TestStatusParity:
         combat.energy = 1
 
         assert combat.play_card(0)
-        assert not any(c.card_id == CardId.SOUL for c in combat.draw_pile)
-
+        assert len([c for c in combat.draw_pile if c.card_id == CardId.SOUL]) == 3
     def test_largesse_targets_ally_player_hand(self):
         combat = _make_combat(create_regent_starter_deck(), "Regent")
         ally = Creature(max_hp=50, current_hp=50, side=CombatSide.PLAYER, is_player=True)

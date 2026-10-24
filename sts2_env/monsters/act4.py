@@ -8,10 +8,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sts2_env.core.creature import Creature
-from sts2_env.core.enums import CombatSide, MoveRepeatType, PowerId, ValueProp
+from sts2_env.core.enums import CardId, CombatSide, MoveRepeatType, PowerId, ValueProp
 from sts2_env.core.damage import calculate_damage, apply_damage
 from sts2_env.core.rng import Rng
-from sts2_env.cards.status import make_dazed, make_wound
+from sts2_env.cards.status import (
+    WITHER_DAMAGE,
+    make_dazed,
+    make_wither,
+    make_wound,
+)
 from sts2_env.monsters.intents import (
     Intent, IntentType, attack_intent, multi_attack_intent,
     buff_intent, debuff_intent, strong_debuff_intent, status_intent,
@@ -176,7 +181,7 @@ SEAPUNK_BASE_MAX_HP = 46
 SEAPUNK_TOUGH_MIN_HP = 47
 SEAPUNK_TOUGH_MAX_HP = 49
 SEAPUNK_BASE_SEA_KICK_DAMAGE = 11
-SEAPUNK_DEADLY_SEA_KICK_DAMAGE = 12
+SEAPUNK_DEADLY_SEA_KICK_DAMAGE = 13
 SEAPUNK_SPINNING_KICK_DAMAGE = 2
 SEAPUNK_SPINNING_KICK_REPEAT = 4
 SEAPUNK_BASE_BUBBLE_BLOCK = 7
@@ -1120,8 +1125,8 @@ def create_haunted_ship(rng: Rng, ascension_level: int = 0) -> tuple[Creature, M
 
 GAS_BOMB_MONSTER_ID = "GAS_BOMB"
 GAS_BOMB_MINION_AMOUNT = 1
-GAS_BOMB_BASE_HP = 10
-GAS_BOMB_TOUGH_HP = 12
+GAS_BOMB_BASE_HP = 7
+GAS_BOMB_TOUGH_HP = 8
 GAS_BOMB_BASE_EXPLODE_DAMAGE = 8
 GAS_BOMB_DEADLY_EXPLODE_DAMAGE = 9
 GAS_BOMB_EXPLODE_MOVE = "EXPLODE_MOVE"
@@ -1647,10 +1652,10 @@ def create_two_tailed_rat(
 # ---- PhantasmalGardener (HP 28-32 / 29-33 asc) ----
 
 PHANTASMAL_GARDENER_MONSTER_ID = "PHANTASMAL_GARDENER"
-PHANTASMAL_GARDENER_BASE_MIN_HP = 28
-PHANTASMAL_GARDENER_BASE_MAX_HP = 32
-PHANTASMAL_GARDENER_TOUGH_MIN_HP = 29
-PHANTASMAL_GARDENER_TOUGH_MAX_HP = 33
+PHANTASMAL_GARDENER_BASE_MIN_HP = 26
+PHANTASMAL_GARDENER_BASE_MAX_HP = 31
+PHANTASMAL_GARDENER_TOUGH_MIN_HP = 27
+PHANTASMAL_GARDENER_TOUGH_MAX_HP = 32
 PHANTASMAL_GARDENER_BITE_DAMAGE = 5
 PHANTASMAL_GARDENER_LASH_DAMAGE = 7
 PHANTASMAL_GARDENER_FLAIL_DAMAGE = 1
@@ -1755,13 +1760,13 @@ def create_phantasmal_gardener(
 # ---- SkulkingColony (HP 79 / 84 asc) ----
 
 SKULKING_COLONY_MONSTER_ID = "SKULKING_COLONY"
-SKULKING_COLONY_BASE_HP = 79
-SKULKING_COLONY_TOUGH_HP = 84
+SKULKING_COLONY_BASE_HP = 75
+SKULKING_COLONY_TOUGH_HP = 80
 SKULKING_COLONY_BASE_SUPER_CRAB_DAMAGE = 6
 SKULKING_COLONY_DEADLY_SUPER_CRAB_DAMAGE = 7
 SKULKING_COLONY_SUPER_CRAB_REPEAT = 2
-SKULKING_COLONY_BASE_ZOOM_DAMAGE = 16
-SKULKING_COLONY_DEADLY_ZOOM_DAMAGE = 17
+SKULKING_COLONY_BASE_ZOOM_DAMAGE = 14
+SKULKING_COLONY_DEADLY_ZOOM_DAMAGE = 16
 SKULKING_COLONY_BASE_SMASH_DAMAGE = 9
 SKULKING_COLONY_DEADLY_SMASH_DAMAGE = 11
 SKULKING_COLONY_SMASH_DAZED = 4
@@ -1880,8 +1885,8 @@ TERROR_EEL_BASE_HP = 140
 TERROR_EEL_TOUGH_HP = 150
 TERROR_EEL_BASE_SHRIEK = 70
 TERROR_EEL_TOUGH_SHRIEK = 75
-TERROR_EEL_BASE_CRASH_DAMAGE = 17
-TERROR_EEL_DEADLY_CRASH_DAMAGE = 19
+TERROR_EEL_BASE_CRASH_DAMAGE = 16
+TERROR_EEL_DEADLY_CRASH_DAMAGE = 18
 TERROR_EEL_BASE_THRASH_DAMAGE = 3
 TERROR_EEL_DEADLY_THRASH_DAMAGE = 4
 TERROR_EEL_THRASH_REPEAT = 3
@@ -1988,8 +1993,8 @@ def create_terror_eel(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Mon
 # ---- WaterfallGiant ----
 
 WATERFALL_GIANT_MONSTER_ID = "WATERFALL_GIANT"
-WATERFALL_GIANT_BASE_HP = 250
-WATERFALL_GIANT_TOUGH_HP = 260
+WATERFALL_GIANT_BASE_HP = 240
+WATERFALL_GIANT_TOUGH_HP = 250
 WATERFALL_GIANT_BASE_PRESSURIZE = 15
 WATERFALL_GIANT_DEADLY_PRESSURIZE = 20
 WATERFALL_GIANT_BASE_STOMP_DAMAGE = 15
@@ -2003,7 +2008,8 @@ WATERFALL_GIANT_BASE_PRESSURE_GUN_DAMAGE = 20
 WATERFALL_GIANT_DEADLY_PRESSURE_GUN_DAMAGE = 23
 WATERFALL_GIANT_PRESSURE_GUN_INCREASE = 5
 WATERFALL_GIANT_PRESSURE_BUILDUP = 3
-WATERFALL_GIANT_SIPHON_HEAL = 15
+WATERFALL_GIANT_BASE_SIPHON_HEAL = 10
+WATERFALL_GIANT_TOUGH_SIPHON_HEAL = 15
 WATERFALL_GIANT_CURRENT_PRESSURE_GUN_DAMAGE_KEY = "current_pressure_gun_damage"
 WATERFALL_GIANT_STEAM_ERUPTION_DAMAGE_KEY = "steam_eruption_damage"
 WATERFALL_GIANT_ABOUT_TO_BLOW_HP = 999_999_999
@@ -2071,7 +2077,13 @@ def create_waterfall_giant(rng: Rng, ascension_level: int = 0) -> tuple[Creature
         _gain_pressure(combat, WATERFALL_GIANT_PRESSURE_BUILDUP)
 
     def siphon(combat: CombatState) -> None:
-        creature.heal(WATERFALL_GIANT_SIPHON_HEAL * len(combat.combat_player_states))
+        siphon_heal = _ascension_value(
+            _combat_ascension_level(combat),
+            TOUGH_ENEMIES_ASCENSION_LEVEL,
+            WATERFALL_GIANT_TOUGH_SIPHON_HEAL,
+            WATERFALL_GIANT_BASE_SIPHON_HEAL,
+        )
+        creature.heal(siphon_heal * len(combat.combat_player_states))
         _gain_pressure(combat, WATERFALL_GIANT_PRESSURE_BUILDUP)
 
     def pressure_gun(combat: CombatState) -> None:
@@ -2177,8 +2189,8 @@ SOUL_FYSH_BASE_HP = 211
 SOUL_FYSH_TOUGH_HP = 221
 SOUL_FYSH_BASE_DE_GAS_DAMAGE = 16
 SOUL_FYSH_DEADLY_DE_GAS_DAMAGE = 17
-SOUL_FYSH_BASE_SCREAM_DAMAGE = 11
-SOUL_FYSH_DEADLY_SCREAM_DAMAGE = 12
+SOUL_FYSH_BASE_SCREAM_DAMAGE = 13
+SOUL_FYSH_DEADLY_SCREAM_DAMAGE = 15
 SOUL_FYSH_BASE_GAZE_DAMAGE = 7
 SOUL_FYSH_DEADLY_GAZE_DAMAGE = 8
 SOUL_FYSH_BECKON_STATUS_COUNT = 2
@@ -2453,3 +2465,216 @@ def create_lagavulin_matriarch(rng: Rng, ascension_level: int = 0) -> tuple[Crea
     creature.apply_power(PowerId.PLATING, LAGAVULIN_MATRIARCH_PLATING)
     creature.apply_power(PowerId.ASLEEP, LAGAVULIN_MATRIARCH_ASLEEP)
     return creature, MonsterAI(states, LAGAVULIN_MATRIARCH_SLEEP_MOVE)
+
+
+# ---- Aeonglass (HP 512 / 535 asc) ----
+# C# ref: decompiled/MegaCrit.Sts2.Core.Models.Monsters/Aeonglass.cs (v0.107.1).
+# Queen-tier act 4 boss (CustomBgm "act3_boss_queen", music param "queen_progress").
+# Fixed HP: MaxInitialHp => MinInitialHp.
+# AfterAddedToRoom: WitheringPresencePower (Amount 6) targeting each opposing
+# player (the sim tracks it as a single instance on the Aeonglass creature —
+# see WitheringPresencePower docstring) plus Artifact(3) on itself.
+# Move cycle: EBB -> EYE_LASERS -> INCREASING_INTENSITY -> EBB ...
+# INCREASING_INTENSITY fake-upgrades every Wither in the players' combat card
+# lists (C# loops PlayerCombatState.AllCards calling Wither.FakeUpgrade, then
+# increments WitherUpgradeCount, so newly generated Withers are matched to the
+# same count via Aeonglass.AfterCardGeneratedForCombat /
+# MatchWitherToUpgradeCount).
+
+AEONGLASS_MONSTER_ID = "AEONGLASS"
+AEONGLASS_BASE_HP = 512
+AEONGLASS_TOUGH_HP = 535
+AEONGLASS_BASE_EBB_DAMAGE = 26
+AEONGLASS_DEADLY_EBB_DAMAGE = 32
+AEONGLASS_EBB_BLOCK = 33
+AEONGLASS_BASE_EYE_LASERS_DAMAGE = 11
+AEONGLASS_DEADLY_EYE_LASERS_DAMAGE = 12
+AEONGLASS_EYE_LASERS_REPEAT = 2
+AEONGLASS_BASE_INTENSITY_STRENGTH = 3
+AEONGLASS_DEADLY_INTENSITY_STRENGTH = 4
+AEONGLASS_BASE_WITHER_AMOUNT = 1
+AEONGLASS_DEADLY_WITHER_AMOUNT = 2
+AEONGLASS_WITHERING_PRESENCE_AMOUNT = 6
+AEONGLASS_ARTIFACT = 3
+AEONGLASS_WITHER_UPGRADE_STEP = 3  # C# Wither.FakeUpgrade: Damage.UpgradeValueBy(3m)
+AEONGLASS_WITHER_UPGRADE_COUNT_KEY = "wither_upgrade_count"
+AEONGLASS_ADDITIONAL_STRENGTH_KEY = "additional_strength"
+AEONGLASS_EBB_MOVE = "EBB_MOVE"
+AEONGLASS_EYE_LASERS_MOVE = "EYE_LASERS_MOVE"
+AEONGLASS_INCREASING_INTENSITY_MOVE = "INCREASING_INTENSITY_MOVE"
+
+
+def _aeonglass_match_wither_to_upgrade_count(card: object, upgrade_count: int) -> None:
+    """C# Aeonglass.MatchWitherToUpgradeCount: a Wither that received
+    `upgrade_count` fake upgrades deals WITHER_DAMAGE + STEP * count damage."""
+    card.effect_vars["damage"] = (  # type: ignore[union-attr]
+        WITHER_DAMAGE + AEONGLASS_WITHER_UPGRADE_STEP * upgrade_count
+    )
+
+
+def _aeonglass_normalize_player_withers(combat: CombatState, upgrade_count: int) -> None:
+    """Force every Wither in each player's combat card piles to the damage the
+    C# model would have at `upgrade_count` fake upgrades (idempotent equivalent
+    of looping AllCards and calling FakeUpgrade per count step)."""
+    for state in combat.combat_player_states:
+        for pile in state.all_piles:
+            for card in pile:
+                if card.card_id is CardId.WITHER:
+                    _aeonglass_match_wither_to_upgrade_count(card, upgrade_count)
+
+
+def _attach_aeonglass_wither_generation_matching(
+    creature: Creature,
+    ai_state: dict[str, int],
+) -> None:
+    """C# Aeonglass.AfterCardGeneratedForCombat fires MatchWitherToUpgradeCount
+    for every Wither generated while Aeonglass is in combat. The sim dispatches
+    generation through power listeners (fire_after_card_generated_for_combat),
+    so attach the matching to the WitheringPresence instance this monster owns.
+    """
+    from sts2_env.powers.monster import WITHERING_PRESENCE_POWER_ID
+
+    power = creature.powers.get(WITHERING_PRESENCE_POWER_ID)
+    if power is None:
+        return
+
+    def after_card_generated_for_combat(
+        owner: Creature,
+        card: object,
+        added_by_player: bool,
+        combat: CombatState,
+    ) -> None:
+        if card is None or getattr(card, "card_id", None) is not CardId.WITHER:
+            return
+        _aeonglass_match_wither_to_upgrade_count(
+            card,
+            ai_state[AEONGLASS_WITHER_UPGRADE_COUNT_KEY],
+        )
+
+    power.after_card_generated_for_combat = after_card_generated_for_combat  # type: ignore[method-assign]
+
+
+def create_aeonglass(rng: Rng, ascension_level: int = 0) -> tuple[Creature, MonsterAI]:
+    from sts2_env.powers.monster import WITHERING_PRESENCE_POWER_ID
+
+    hp = _ascension_value(
+        ascension_level,
+        TOUGH_ENEMIES_ASCENSION_LEVEL,
+        AEONGLASS_TOUGH_HP,
+        AEONGLASS_BASE_HP,
+    )
+    creature = Creature(max_hp=hp, monster_id=AEONGLASS_MONSTER_ID)
+    ai_state = {
+        AEONGLASS_WITHER_UPGRADE_COUNT_KEY: 0,
+        AEONGLASS_ADDITIONAL_STRENGTH_KEY: 0,
+    }
+
+    def ebb(combat: CombatState) -> None:
+        ebb_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AEONGLASS_DEADLY_EBB_DAMAGE,
+            AEONGLASS_BASE_EBB_DAMAGE,
+        )
+        _deal_damage_to_player(combat, creature, ebb_dmg)
+        if combat.is_over:
+            return
+        _gain_block(creature, AEONGLASS_EBB_BLOCK, combat)
+
+    def eye_lasers(combat: CombatState) -> None:
+        eye_lasers_dmg = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AEONGLASS_DEADLY_EYE_LASERS_DAMAGE,
+            AEONGLASS_BASE_EYE_LASERS_DAMAGE,
+        )
+        _deal_damage_to_player(
+            combat,
+            creature,
+            eye_lasers_dmg,
+            hits=AEONGLASS_EYE_LASERS_REPEAT,
+        )
+
+    def increasing_intensity(combat: CombatState) -> None:
+        # C# order: FakeUpgrade every existing Wither, WitherUpgradeCount++,
+        # add WitherAmount Withers to each target's discard, gain Strength,
+        # AdditionalStrength++.
+        new_count = ai_state[AEONGLASS_WITHER_UPGRADE_COUNT_KEY] + 1
+        ai_state[AEONGLASS_WITHER_UPGRADE_COUNT_KEY] = new_count
+        _aeonglass_normalize_player_withers(combat, new_count)
+        wither_amount = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AEONGLASS_DEADLY_WITHER_AMOUNT,
+            AEONGLASS_BASE_WITHER_AMOUNT,
+        )
+        add_generated_cards_to_living_player_discards(combat, make_wither, wither_amount)
+        # Re-normalize so the added Withers carry the new upgrade count even if
+        # the generation listener is unavailable (e.g. power stripped).
+        _aeonglass_normalize_player_withers(combat, new_count)
+        intensity_strength = _ascension_value(
+            _combat_ascension_level(combat),
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            AEONGLASS_DEADLY_INTENSITY_STRENGTH,
+            AEONGLASS_BASE_INTENSITY_STRENGTH,
+        )
+        combat.apply_power_to(
+            creature,
+            PowerId.STRENGTH,
+            intensity_strength + ai_state[AEONGLASS_ADDITIONAL_STRENGTH_KEY],
+            applier=creature,
+        )
+        ai_state[AEONGLASS_ADDITIONAL_STRENGTH_KEY] += 1
+
+    ebb_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        AEONGLASS_DEADLY_EBB_DAMAGE,
+        AEONGLASS_BASE_EBB_DAMAGE,
+    )
+    eye_lasers_intent_damage = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        AEONGLASS_DEADLY_EYE_LASERS_DAMAGE,
+        AEONGLASS_BASE_EYE_LASERS_DAMAGE,
+    )
+    initial_wither_amount = _ascension_value(
+        ascension_level,
+        DEADLY_ENEMIES_ASCENSION_LEVEL,
+        AEONGLASS_DEADLY_WITHER_AMOUNT,
+        AEONGLASS_BASE_WITHER_AMOUNT,
+    )
+
+    states: dict[str, MonsterState] = {
+        AEONGLASS_EBB_MOVE: MoveState(
+            AEONGLASS_EBB_MOVE,
+            ebb,
+            [attack_intent(ebb_intent_damage), defend_intent()],
+            follow_up_id=AEONGLASS_EYE_LASERS_MOVE,
+        ),
+        AEONGLASS_EYE_LASERS_MOVE: MoveState(
+            AEONGLASS_EYE_LASERS_MOVE,
+            eye_lasers,
+            [multi_attack_intent(eye_lasers_intent_damage, AEONGLASS_EYE_LASERS_REPEAT)],
+            follow_up_id=AEONGLASS_INCREASING_INTENSITY_MOVE,
+        ),
+        AEONGLASS_INCREASING_INTENSITY_MOVE: MoveState(
+            AEONGLASS_INCREASING_INTENSITY_MOVE,
+            increasing_intensity,
+            [status_intent(), buff_intent()],
+            follow_up_id=AEONGLASS_EBB_MOVE,
+        ),
+    }
+    # C# StatusIntent(WitherAmount) carries the status card count.
+    states[AEONGLASS_INCREASING_INTENSITY_MOVE].intents[0].hits = initial_wither_amount
+
+    # C# AfterAddedToRoom: WitheringPresence(6) on the opposing players (sim:
+    # single instance on Aeonglass; see power docstring) and Artifact(3).
+    creature.apply_power(
+        WITHERING_PRESENCE_POWER_ID,
+        AEONGLASS_WITHERING_PRESENCE_AMOUNT,
+        applier=creature,
+    )
+    creature.apply_power(PowerId.ARTIFACT, AEONGLASS_ARTIFACT, applier=creature)
+    _attach_aeonglass_wither_generation_matching(creature, ai_state)
+    return creature, MonsterAI(states, AEONGLASS_EBB_MOVE)
