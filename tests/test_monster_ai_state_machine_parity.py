@@ -654,8 +654,11 @@ INFESTED_PRISM_RADIATE_BLOCK_A9 = 13
 INFESTED_PRISM_WHIRLWIND_DAMAGE_A9 = 6
 INFESTED_PRISM_WHIRLWIND_HITS = 3
 INFESTED_PRISM_PULSATE_BLOCK_A8 = 22
-INFESTED_PRISM_PULSATE_STRENGTH_A9 = 5
-INFESTED_PRISM_VITAL_SPARK = 1
+# C# InfestedPrism.VitalSparkAmount (InfestedPrism.cs:40): 2, 3 on
+# DeadlyEnemies; applied in AfterAddedToRoom (line 59) and PulsateMove
+# (line 114). PulsateMove grants no Strength in v0.107.1.
+INFESTED_PRISM_VITAL_SPARK_A0 = 2
+INFESTED_PRISM_VITAL_SPARK_A9 = 3
 THE_INSATIABLE_BASE_HP = 321
 THE_INSATIABLE_A8_HP = 341
 THE_INSATIABLE_THRASH_DAMAGE_A9 = 9
@@ -3790,7 +3793,12 @@ class TestFixedRotation:
         prism.block = 0
         prism_ai.states[INFESTED_PRISM_PULSATE_MOVE].perform(prism_combat)
         assert prism.block == INFESTED_PRISM_PULSATE_BLOCK_A8
-        assert prism.get_power_amount(PowerId.STRENGTH) == INFESTED_PRISM_PULSATE_STRENGTH_A9
+        # InfestedPrism.cs:114: PulsateMove re-applies VitalSpark (A9: 3) and
+        # grants no Strength (v0.107.1 PulsateMove has no Strength gain).
+        assert prism.get_power_amount(PowerId.STRENGTH) == 0
+        assert prism.get_power_amount(PowerId.VITAL_SPARK) == (
+            INFESTED_PRISM_VITAL_SPARK_A9 + INFESTED_PRISM_VITAL_SPARK_A9
+        )
 
         prism_encounter_combat = _make_combat(rng_seed)
         prism_encounter_combat.ascension_level = 9
@@ -4117,7 +4125,8 @@ class TestFixedRotation:
         combat.add_enemy(creature, ai)
 
         assert creature.max_hp == INFESTED_PRISM_BASE_HP
-        assert creature.get_power_amount(PowerId.VITAL_SPARK) == INFESTED_PRISM_VITAL_SPARK
+        # InfestedPrism.cs:59: AfterAddedToRoom applies VitalSpark (A0: 2).
+        assert creature.get_power_amount(PowerId.VITAL_SPARK) == INFESTED_PRISM_VITAL_SPARK_A0
         assert ai.current_move.state_id == INFESTED_PRISM_JAB_MOVE
 
         moves = []
@@ -4134,7 +4143,12 @@ class TestFixedRotation:
             INFESTED_PRISM_PULSATE_MOVE,
         ]
         assert creature.block == 31
-        assert creature.get_power_amount(PowerId.STRENGTH) == 4
+        # InfestedPrism.cs:114: PulsateMove re-applies VitalSpark (A0: 2 on top
+        # of the initial 2) and grants no Strength (v0.107.1).
+        assert creature.get_power_amount(PowerId.STRENGTH) == 0
+        assert creature.get_power_amount(PowerId.VITAL_SPARK) == (
+            INFESTED_PRISM_VITAL_SPARK_A0 + INFESTED_PRISM_VITAL_SPARK_A0
+        )
         assert all(card.card_id not in (CardId.INFECTION, CardId.PARASITE) for card in combat.discard_pile)
 
         encounter_combat = _make_combat(18)

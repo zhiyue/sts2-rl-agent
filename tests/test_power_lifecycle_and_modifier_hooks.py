@@ -882,55 +882,11 @@ class TestDamageModifierInteractions:
 
         assert enemy.get_power_amount(PowerId.SLIPPERY) == 1
 
-    def test_vital_spark_triggers_on_non_fully_blocked_zero_damage(self, simple_combat):
-        player = simple_combat.player
-        enemy = simple_combat.enemies[0]
-        enemy.apply_power(PowerId.VITAL_SPARK, 1)
-        simple_combat.energy = 0
-
-        simple_combat.deal_damage(player, enemy, 0, ValueProp.MOVE)
-
-        assert simple_combat.energy == 1
-
-    def test_vital_spark_does_not_trigger_on_fully_blocked_damage(self, simple_combat):
-        player = simple_combat.player
-        enemy = simple_combat.enemies[0]
-        enemy.apply_power(PowerId.VITAL_SPARK, 1)
-        enemy.block = 5
-        simple_combat.energy = 0
-
-        simple_combat.deal_damage(player, enemy, 3, ValueProp.MOVE)
-
-        assert simple_combat.energy == 0
-
-    def test_vital_spark_triggers_once_per_player_each_turn(self, simple_combat):
-        player = simple_combat.player
-        ally = simple_combat.add_ally_player(PlayerState(player_id=2, character_id="Ironclad", max_hp=70, current_hp=70))
-        ally_state = simple_combat.combat_player_state_for(ally)
-        assert ally_state is not None
-        enemy = simple_combat.enemies[0]
-        enemy.apply_power(PowerId.VITAL_SPARK, 1)
-        simple_combat.energy = 0
-        ally_state.energy = 0
-
-        simple_combat.deal_damage(player, enemy, 0, ValueProp.MOVE)
-        simple_combat.deal_damage(player, enemy, 0, ValueProp.MOVE)
-        simple_combat.deal_damage(ally, enemy, 0, ValueProp.MOVE)
-
-        assert simple_combat.energy == 1
-        assert ally_state.energy == 1
-
-    def test_vital_spark_grants_energy_to_osty_owner(self, simple_combat):
-        player = simple_combat.player
-        enemy = simple_combat.enemies[0]
-        enemy.apply_power(PowerId.VITAL_SPARK, 1)
-        osty = simple_combat.summon_osty(player, 5)
-        assert osty is not None
-        simple_combat.energy = 0
-
-        simple_combat.deal_damage(osty, enemy, 0, ValueProp.MOVE)
-
-        assert simple_combat.energy == 1
+    # VitalSpark's March-era energy-on-damage tests were removed:
+    # v0.107.1 VitalSparkPower is the Tainted-affliction buff
+    # (decompiled/MegaCrit.Sts2.Core.Models.Powers/VitalSparkPower.cs).
+    # Parity coverage now lives in tests/test_v0_107_1_new_powers_parity.py
+    # (TestVitalSparkPowerParity).
 
     def test_personal_hive_adds_dazed_to_osty_owner_draw_pile(self, simple_combat):
         player = simple_combat.player

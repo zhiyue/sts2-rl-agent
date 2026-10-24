@@ -1873,47 +1873,124 @@ class VeilpiercerPower(PowerInstance):
 # VitalSparkPower
 # ---------------------------------------------------------------------------
 class VitalSparkPower(PowerInstance):
-    """When the owner takes unblocked powered-attack damage from a player,
-    that player gains 1 energy. Tracks per-player, once per turn.
+    """Afflicts every player ally's Skill cards with the Tainted affliction;
+    playing an afflicted Skill inflicts TaintedPower on its owner.
 
-    C# ref: VitalSparkPower.cs
-    - AfterDamageReceived: if owner took unblocked powered damage from a
-      player (or player's pet), grant energy. Once per player per turn.
-    - BeforeSideTurnStart (Enemy): reset triggered set.
-    StackType.Counter. CanonicalVars: EnergyVar(1).
+    C# ref: VitalSparkPower.cs (v0.107.1)
+    - PowerType.Buff, PowerStackType.Counter.
+    - BeforeCombatStart (lines 25-39): for each player ally
+      (CombatState.Allies filtered to IsPlayer, i.e. the player side),
+      Afflict<Tainted>(Amount) every Skill card in PlayerCombatState.AllCards.
+    - AfterCardEnteredCombat (lines 41-47): a card entering combat with
+      Affliction == null and Type == Skill gets Afflict<Tainted>(Amount).
+    - AfterCardPlayed (lines 49-56): if the played card's Affliction is
+      Tainted, Apply<TaintedPower>(cardPlay.Card.Owner.Creature, Amount) —
+      the card's OWNER takes the debuff.
+    - AfterRemoved (lines 58-77): when the power is removed, clear Tainted
+      from player allies' cards.
+    - AfterPowerAmountChanged (lines 79-98): re-sync existing Tainted card
+      affliction Amounts to the power's new Amount.
+
+    Applier: InfestedPrism.AfterAddedToRoom (InfestedPrism.cs:56-60,
+    VitalSparkAmount 2, 3 on DeadlyEnemies) and PulsateMove
+    (InfestedPrism.cs:114).
+
+    C# CardCmd.Afflict (CardCmd.cs:625-659): Tainted.IsStackable is true
+    (Tainted.cs:13) and CanAfflictCardType is Skill-only (Tainted.cs:19-22);
+    re-afflicting a card that already holds Tainted stacks Amount (line 656)
+    while a different existing affliction makes the Afflict fail. The sim
+    carries the affliction on CardInstance.combat_vars ("_affliction" +
+    "_affliction_amount"); the runtime debuff is TaintedPower
+    (damage_modifiers.py), which removes itself at the end of the enemy
+    side's turn (TaintedPower.cs:31-38).
     """
 
     power_type = PowerType.BUFF
     stack_type = PowerStackType.COUNTER
-    ENERGY_GAIN = 1
+    _AFFLICTION = "tainted"
 
     def __init__(self, amount: int):
         super().__init__(PowerId.VITAL_SPARK, amount)
-        self._triggered_players_this_turn: set[Creature] = set()
 
-    def after_damage_received(
-        self, owner: Creature, target: Creature, dealer: Creature | None,
-        damage: int, props: ValueProp, combat: CombatState
+    def _player_allies(self, combat: CombatState) -> list[Creature]:
+        # C# iterates Owner.CombatState.Allies filtered to IsPlayer
+        # (VitalSparkPower.cs:27-32); Allies is the player side
+        # (CombatState.cs:58-60) regardless of the power owner's own side.
+        return [state.creature for state in combat.combat_player_states]
+
+    def _all_cards(self, creature: Creature, combat: CombatState) -> list:
+        state = combat.combat_player_state_for(creature)
+        if state is None:
+            return []
+        return list(combat.unique_cards_in_piles(state.all_piles))
+
+    def _afflict_card(self, card: object) -> None:
+        # Skill-only gate mirrors the .Where(c => c.Type == CardType.Skill)
+        # at the C# call sites plus Tainted.CanAfflictCardType; the
+        # stackable=True afflict mirrors CardCmd.Afflict's Amount stacking
+        # (CardCmd.cs:656) and its no-op on a different existing affliction.
+        if not getattr(card, "is_skill", False):
+            return
+        afflict = getattr(card, "afflict", None)
+        if callable(afflict):
+            afflict(self._AFFLICTION, stackable=True, amount=self.amount)
+
+    def before_combat_start(self, owner: Creature, combat: CombatState) -> None:
+        # C# BeforeCombatStart (VitalSparkPower.cs:25-39).
+        for ally in self._player_allies(combat):
+            for card in self._all_cards(ally, combat):
+                self._afflict_card(card)
+
+    def after_card_entered_combat(self, owner: Creature, card: object, combat: CombatState) -> None:
+        # C# AfterCardEnteredCombat (VitalSparkPower.cs:41-47): only cards
+        # with no affliction yet; Skills only.
+        if getattr(card, "affliction", None) is not None:
+            return
+        self._afflict_card(card)
+
+    def after_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
+        # C# AfterCardPlayed (VitalSparkPower.cs:49-56): the played card's
+        # owner creature receives TaintedPower(Amount) — the player debuffs
+        # themselves by playing afflicted Skills.
+        if getattr(card, "affliction", None) != self._AFFLICTION:
+            return
+        card_owner = getattr(card, "owner", None)
+        if card_owner is None:
+            return
+        card_owner.apply_power(PowerId.TAINTED, self.amount)
+
+    def _clear_afflictions(self, combat: CombatState) -> None:
+        # C# AfterRemoved (VitalSparkPower.cs:58-77): strip Tainted from
+        # player allies' cards.
+        for ally in self._player_allies(combat):
+            for card in self._all_cards(ally, combat):
+                clear_affliction = getattr(card, "clear_affliction", None)
+                if callable(clear_affliction):
+                    clear_affliction(self._AFFLICTION)
+
+    def on_removed(self, owner: Creature, combat: CombatState) -> None:
+        # C# AfterRemoved, dispatched via CombatState._remove_power
+        # (creature death removes all powers through the same path).
+        self._clear_afflictions(combat)
+
+    def after_power_amount_changed(
+        self,
+        owner: Creature,
+        target: Creature,
+        power_id: PowerId,
+        amount: int,
+        applier: Creature | None,
+        source: object | None,
+        combat: CombatState,
     ) -> None:
-        if target is not owner:
+        # C# AfterPowerAmountChanged (VitalSparkPower.cs:79-98): keep existing
+        # Tainted card affliction Amounts at the power's current Amount.
+        if power_id != PowerId.VITAL_SPARK or owner is not target:
             return
-        result = getattr(combat, "_active_damage_result", None)
-        if dealer is None or not props.is_powered_attack() or getattr(result, "was_fully_blocked", False):
-            return
-        attacker = dealer
-        if getattr(dealer, "is_pet", False):
-            pet_owner = getattr(dealer, "pet_owner", None)
-            if pet_owner is not None:
-                attacker = pet_owner
-        if getattr(attacker, "is_player", False):
-            if attacker in self._triggered_players_this_turn:
-                return
-            self._triggered_players_this_turn.add(attacker)
-            combat.gain_energy(attacker, self.ENERGY_GAIN)
-
-    def before_side_turn_start(self, owner: Creature, side: CombatSide, combat: CombatState) -> None:
-        if side == CombatSide.ENEMY:
-            self._triggered_players_this_turn.clear()
+        for ally in self._player_allies(combat):
+            for card in self._all_cards(ally, combat):
+                if getattr(card, "affliction", None) == self._AFFLICTION:
+                    card.combat_vars["_affliction_amount"] = self.amount
 
 
 # ---------------------------------------------------------------------------

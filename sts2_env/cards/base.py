@@ -346,14 +346,36 @@ class CardInstance:
     def has_affliction(self, name: str) -> bool:
         return self.affliction == name
 
+    @property
+    def affliction_amount(self) -> int:
+        """Stacked amount of this card's affliction (C# AfflictionModel.Amount).
+
+        Afflictions stamped before amounts existed (bare combat_vars writes)
+        carry the default 1; unafflicted cards report 0.
+        """
+        if self.affliction is None:
+            return 0
+        amount = self.combat_vars.get("_affliction_amount")
+        return amount if isinstance(amount, int) else 1
+
     def can_afflict(self, name: str, *, stackable: bool = False) -> bool:
         current = self.affliction
         return current is None or (stackable and current == name)
 
-    def afflict(self, name: str, *, stackable: bool = False) -> bool:
+    def afflict(self, name: str, *, stackable: bool = False, amount: int = 1) -> bool:
+        """Attach (or stack) an affliction.
+
+        Mirrors C# CardCmd.Afflict (CardCmd.cs:625-659): afflicting a card
+        that already holds a different affliction fails; re-afflicting the
+        same stackable affliction adds ``amount`` to its Amount (line 656).
+        """
         if not self.can_afflict(name, stackable=stackable):
             return False
+        if self.affliction == name and stackable:
+            self.combat_vars["_affliction_amount"] = self.affliction_amount + amount
+            return True
         self.combat_vars["_affliction"] = name
+        self.combat_vars["_affliction_amount"] = amount
         if name == "bound":
             self.bound = True
         return True
@@ -365,6 +387,7 @@ class CardInstance:
         if current == "bound" or name == "bound":
             self.bound = False
         self.combat_vars.pop("_affliction", None)
+        self.combat_vars.pop("_affliction_amount", None)
 
     def clone(self, new_id: int) -> CardInstance:
         """Create a copy with a new instance_id."""
@@ -493,6 +516,7 @@ class CardInstance:
         self.bound = False
         if self.combat_vars.get("_affliction") == "bound":
             self.combat_vars.pop("_affliction", None)
+            self.combat_vars.pop("_affliction_amount", None)
         self.combat_vars.pop("sly_this_turn", None)
         if "_turn_cost_override" in self.combat_vars:
             self.combat_vars.pop("_turn_cost_override", None)

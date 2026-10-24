@@ -2104,9 +2104,11 @@ INFESTED_PRISM_DEADLY_WHIRLWIND_DAMAGE = 6
 INFESTED_PRISM_WHIRLWIND_REPEAT = 3
 INFESTED_PRISM_BASE_PULSATE_BLOCK = 20
 INFESTED_PRISM_TOUGH_PULSATE_BLOCK = 22
-INFESTED_PRISM_BASE_PULSATE_STRENGTH = 4
-INFESTED_PRISM_DEADLY_PULSATE_STRENGTH = 5
-INFESTED_PRISM_VITAL_SPARK = 1
+# C# InfestedPrism.VitalSparkAmount (InfestedPrism.cs:40): 2, 3 on
+# DeadlyEnemies. Applied in AfterAddedToRoom (line 59) and PulsateMove
+# (line 114); the power afflicts player Skills with Tainted.
+INFESTED_PRISM_BASE_VITAL_SPARK = 2
+INFESTED_PRISM_DEADLY_VITAL_SPARK = 3
 INFESTED_PRISM_JAB_MOVE = "JAB_MOVE"
 INFESTED_PRISM_RADIATE_MOVE = "RADIATE_MOVE"
 INFESTED_PRISM_WHIRLWIND_MOVE = "WHIRLWIND_MOVE"
@@ -2163,14 +2165,15 @@ def create_infested_prism(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
             INFESTED_PRISM_TOUGH_PULSATE_BLOCK,
             INFESTED_PRISM_BASE_PULSATE_BLOCK,
         )
-        pulsate_str = _ascension_value(
+        # C# PulsateMove re-applies VitalSpark (InfestedPrism.cs:114).
+        vital_spark_amount = _ascension_value(
             _combat_ascension_level(combat),
             DEADLY_ENEMIES_ASCENSION_LEVEL,
-            INFESTED_PRISM_DEADLY_PULSATE_STRENGTH,
-            INFESTED_PRISM_BASE_PULSATE_STRENGTH,
+            INFESTED_PRISM_DEADLY_VITAL_SPARK,
+            INFESTED_PRISM_BASE_VITAL_SPARK,
         )
         _gain_block(creature, pulsate_block, combat)
-        creature.apply_power(PowerId.STRENGTH, pulsate_str)
+        creature.apply_power(PowerId.VITAL_SPARK, vital_spark_amount)
 
     jab_intent_damage = _ascension_value(
         ascension_level,
@@ -2218,7 +2221,16 @@ def create_infested_prism(rng: Rng, ascension_level: int = 0) -> tuple[Creature,
         ),
     }
 
-    creature.apply_power(PowerId.VITAL_SPARK, INFESTED_PRISM_VITAL_SPARK)
+    # C# InfestedPrism.AfterAddedToRoom (InfestedPrism.cs:56-60).
+    creature.apply_power(
+        PowerId.VITAL_SPARK,
+        _ascension_value(
+            ascension_level,
+            DEADLY_ENEMIES_ASCENSION_LEVEL,
+            INFESTED_PRISM_DEADLY_VITAL_SPARK,
+            INFESTED_PRISM_BASE_VITAL_SPARK,
+        ),
+    )
     return creature, MonsterAI(states, INFESTED_PRISM_JAB_MOVE)
 
 
