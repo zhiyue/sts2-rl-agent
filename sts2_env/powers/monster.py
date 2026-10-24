@@ -16,6 +16,7 @@ import math
 from typing import TYPE_CHECKING
 
 from sts2_env.core.enums import (
+    CardId,
     CardType,
     CombatSide,
     OrbType,
@@ -1590,6 +1591,70 @@ class BackAttackRightPower(PowerInstance):
 
 
 # ---------------------------------------------------------------------------
+# WitheringPresencePower
+# ---------------------------------------------------------------------------
+# PowerId.WITHERING_PRESENCE is not yet present in sts2_env/core/enums.py
+# (v0.107.1 gap, reported). Until the enum member lands, fall back to a stable
+# string key; the key is registered either way so apply_power can create
+# instances (import WITHERING_PRESENCE_POWER_ID, never hardcode the raw key).
+WITHERING_PRESENCE_POWER_ID = (
+    PowerId.WITHERING_PRESENCE
+    if "WITHERING_PRESENCE" in PowerId.__members__
+    else "WITHERING_PRESENCE"
+)
+
+
+class WitheringPresencePower(PowerInstance):
+    """Aeonglass's presence: every 6 cards played by the tracked player, add a
+    Wither status card to that player's hand and restart the count.
+
+    C# ref: WitheringPresencePower.cs (v0.107.1)
+    - PowerType.Buff, PowerStackType.Counter, PowerInstanceType.Instanced.
+    - CanonicalVars: DynamicVar "CardsLeft" = 6; DisplayAmount = CardsLeft.
+    - Applied by Aeonglass.AfterAddedToRoom: for each opponent creature, the
+      power (Amount 6) is applied to Aeonglass itself with Target set to that
+      opponent (so each instance tracks one opposing player).
+    - AfterCardPlayed: `if (cardPlay.Card.Owner == base.Target.Player)` —
+      decrement CardsLeft; when it reaches <= 0, add 1 Wither to the played
+      card's owner's hand (CardPileCmd.AddToCombatAndPreview<Wither>,
+      PileType.Hand), flash, and reset CardsLeft to 6.
+
+    Sim wiring: fire_after_card_played reaches every power in combat, so a
+    single instance tracks the opposing player: the C# Target.Player check
+    becomes "the played card belongs to a player creature on the opposing
+    side". Aeonglass.MatchWitherToUpgradeCount upgrade matching lives with the
+    (unimplemented) monster, so this power adds plain Wither cards via the
+    standard card factory. The C# Amount stays 6 while the CardsLeft dynamic
+    var counts down; the sim uses amount itself as the live counter (it starts
+    at the Apply amount of 6 and resets to the canonical 6, so the observable
+    behavior is identical).
+    """
+
+    power_type = PowerType.BUFF
+    stack_type = PowerStackType.COUNTER
+
+    #: C# `private const int _baseCardsLeft = 6;` and CardsLeft canonical var.
+    BASE_CARDS_LEFT = 6
+
+    def __init__(self, amount: int = BASE_CARDS_LEFT):
+        super().__init__(WITHERING_PRESENCE_POWER_ID, amount)
+
+    def after_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
+        card_owner = getattr(card, "owner", None)
+        if card_owner is None or not getattr(card_owner, "is_player", False):
+            return
+        if card_owner is owner or getattr(card_owner, "side", None) == owner.side:
+            return
+        self.amount -= 1
+        if self.amount > 0:
+            return
+        from sts2_env.cards.factory import create_card
+
+        combat.add_generated_card_to_creature_hand(card_owner, create_card(CardId.WITHER))
+        self.amount = self.BASE_CARDS_LEFT
+
+
+# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 from sts2_env.core.creature import register_power_class  # noqa: E402
@@ -1626,6 +1691,8 @@ _ALL_POWERS: dict[PowerId, type[PowerInstance]] = {
     PowerId.BACK_ATTACK_LEFT: BackAttackLeftPower,
     PowerId.BACK_ATTACK_RIGHT: BackAttackRightPower,
 }
+
+_ALL_POWERS[WITHERING_PRESENCE_POWER_ID] = WitheringPresencePower
 
 for _pid, _cls in _ALL_POWERS.items():
     register_power_class(_pid, _cls)

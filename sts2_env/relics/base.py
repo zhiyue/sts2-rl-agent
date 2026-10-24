@@ -330,6 +330,16 @@ class RelicId(Enum):
     # Rare (additions)
     CLOAK_CLASP = auto()
 
+    # Ancient (v0.107.1 Neow relic additions)
+    FISHING_ROD = auto()
+    HEFTY_TABLET = auto()
+    KALEIDOSCOPE = auto()
+    NEOWS_BONES = auto()
+    NEOWS_TALISMAN = auto()
+    PHIAL_HOLSTER = auto()
+    SILKEN_TRESS = auto()
+    WINGED_BOOTS = auto()
+
     # Special
     CIRCLET = auto()
     DEPRECATED_RELIC = auto()

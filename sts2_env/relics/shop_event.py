@@ -6,6 +6,7 @@ All Shop-rarity, Event-rarity, and Ancient-rarity relics, plus special relics
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from sts2_env.cards.base import new_card_instance_id, new_card_instance_id_after
@@ -46,6 +47,32 @@ def _gain_unpowered_block(owner: Creature, amount: int, combat: CombatState) -> 
 
         fire_after_block_gained(owner, gained, combat)
     return gained
+
+
+@lru_cache(maxsize=1)
+def _reference_entry_by_card_id() -> dict[CardId, str]:
+    """C# ModelId.Entry (ModelDb.GetEntry, ModelDb.cs:497-499) is
+    StringHelper.Slugify of the card model class name (StringHelper.cs:90-95):
+    the upper snake case of the decompiled class file stem, e.g. Thunder ->
+    "THUNDER" (not the CardId enum text "THUNDER_CARD")."""
+    from sts2_env.cards.reference_static_metadata import (
+        REFERENCE_CARD_DIR,
+        REPO_ROOT,
+        card_id_for_reference_class,
+        snake_case,
+    )
+
+    entries: dict[CardId, str] = {}
+    for path in sorted((REPO_ROOT / REFERENCE_CARD_DIR).glob("*.cs")):
+        try:
+            entries[card_id_for_reference_class(path.stem)] = snake_case(path.stem).upper()
+        except KeyError:
+            continue
+    return entries
+
+
+def _reference_entry(card_id: CardId) -> str:
+    return _reference_entry_by_card_id().get(card_id, reference_card_entry(card_id))
 
 
 def _build_named_cards(owner: Creature, *names: str) -> list[CardInstance]:
@@ -2776,7 +2803,8 @@ class PaelsTooth(RelicInstance):
         self._stored_cards: list[CardInstance] = []
 
     def _store_and_remove_cards(self, owner: Creature, cards: list[CardInstance]) -> int:
-        selected = sorted(cards[:self.CARDS], key=lambda card: reference_card_entry(card.card_id))
+        # PaelsTooth.cs AfterObtained: OrderBy((c) => c.Id.Entry, StringComparer.Ordinal).
+        selected = sorted(cards[:self.CARDS], key=lambda card: _reference_entry(card.card_id))
         stored_cards: list[CardInstance] = []
         for card in selected:
             stored_cards.append(card.clone(new_card_instance_id_after([*owner.deck, *stored_cards])))
@@ -3926,3 +3954,519 @@ class DeprecatedRelic(RelicInstance):
     rarity = RelicRarity.COMMON
     pool = RelicPool.DEPRECATED
     is_stackable = True
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ANCIENT RELICS (v0.107.1 Neow relic additions)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def _relic_owner_player_state(owner: object, combat: CombatState | None = None) -> object | None:
+    """Resolve the persistent PlayerState behind a hook owner.
+
+    Combat relic hooks receive the combat Creature; run-level hooks receive
+    the PlayerState itself. PlayerState owns `deck` and the upgrade helpers.
+    """
+    if hasattr(owner, "upgrade_card_instance") and hasattr(owner, "deck"):
+        return owner
+    if combat is not None:
+        state = combat.combat_player_state_for(owner)
+        if state is not None and getattr(state, "player_state", None) is not None:
+            return state.player_state
+    return getattr(owner, "player_state", None)
+
+
+def _run_state_for_relic_owner(owner: object, combat: CombatState | None = None) -> object | None:
+    run_state = getattr(owner, "run_state", None)
+    if run_state is not None:
+        return run_state
+    player_state = _relic_owner_player_state(owner, combat)
+    return getattr(player_state, "run_state", None)
+
+
+@register_relic
+class FishingRod(RelicInstance):
+    """Every 3 normal combats, upgrade a random upgradable card in the deck.
+
+    C# FishingRod.cs: AfterCombatEnd counts only Monster-room encounters
+    (`room.Encounter.RoomType != RoomType.Monster` bails out), increments the
+    persisted CombatsSeen counter, and on every 3rd combat upgrades a random
+    upgradable deck card drawn with Rng.Niche.
+    """
+    relic_id = RelicId.FISHING_ROD
+    rarity = RelicRarity.ANCIENT
+    pool = RelicPool.EVENT
+    COMBATS = 3
+
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._combats_seen: int = 0
+
+    @property
+    def combats_seen(self) -> int:
+        return self._combats_seen
+
+    def after_combat_end(self, owner: Creature, combat: CombatState) -> None:
+        from sts2_env.core.enums import RoomType
+
+        room = getattr(combat, "room", None)
+        room_type = getattr(room, "room_type", None)
+        if room_type is not None and room_type is not RoomType.MONSTER:
+            return
+        self._combats_seen += 1
+        if self._combats_seen % self.COMBATS != 0:
+            return
+        player_state = _relic_owner_player_state(owner, combat)
+        if player_state is None or not hasattr(player_state, "upgradable_deck_cards"):
+            return
+        candidates = player_state.upgradable_deck_cards()
+        if not candidates:
+            return
+        run_state = _run_state_for_relic_owner(owner, combat)
+        rng = getattr(getattr(run_state, "rng", None), "niche", None)
+        if rng is None:
+            rng = getattr(combat, "rng", None)
+        chosen = rng.choice(candidates) if rng is not None else candidates[0]
+        player_state.upgrade_card_instance(chosen)
+
+
+@register_relic
+class HeftyTablet(RelicInstance):
+    """Upon pickup choose 1 of 3 Rare cards, then add 1 Injury to the deck.
+
+    C# HeftyTablet.cs: AfterObtained creates 3 uniform-odds Rare cards from
+    the owner's card pool with CardCreationFlags.NoUpgradeRoll, shows a
+    choose-a-card screen with canSkip=true, then adds [chosen, Injury] to the
+    deck (Injury always).
+    """
+    relic_id = RelicId.HEFTY_TABLET
+    rarity = RelicRarity.ANCIENT
+    pool = RelicPool.EVENT
+    has_upon_pickup_effect = True
+    CARDS = 3
+
+    def after_obtained(self, owner: Creature) -> None:
+        from sts2_env.cards.factory import create_card
+        from sts2_env.run.rewards import (
+            CARD_CREATION_SOURCE_OTHER,
+            CardRewardGenerationOptions,
+            generate_uniform_noncombat_reward_cards_with_options,
+        )
+
+        options = CardRewardGenerationOptions(
+            num_cards=self.CARDS,
+            card_creation_source=CARD_CREATION_SOURCE_OTHER,
+            generation_context=None,
+            roll_upgrade=False,
+            card_pool_rarity_filter=CardRarity.RARE,
+        )
+        for relic in owner.get_relic_objects():
+            options = relic.modify_card_reward_creation_options(
+                owner,
+                options,
+                None,
+                None,
+                owner.run_state,
+            )
+        for modifier in owner.run_state.modifiers:
+            options = modifier.modify_card_reward_creation_options(
+                owner,
+                options,
+                None,
+                None,
+                owner.run_state,
+            )
+        cards = generate_uniform_noncombat_reward_cards_with_options(
+            owner.run_state,
+            options,
+            default_character_id=owner.character_id,
+            num_cards=self.CARDS,
+        )
+        if cards:
+            owner.offer_custom_card_reward(
+                cards=cards,
+                skippable=True,
+                generation_context=None,
+                card_creation_source="other",
+                roll_upgrade=False,
+                use_default_character_pool=False,
+            )
+        injury = create_card(CardId.INJURY)
+        if getattr(owner.run_state, "defer_followup_rewards", False):
+            owner.offer_add_cards_reward([injury])
+            return
+        owner.add_card_instance_to_deck(injury)
+
+
+@register_relic
+class Kaleidoscope(RelicInstance):
+    """Upon pickup obtain 2 card rewards drawn from other characters.
+
+    C# Kaleidoscope.cs: AfterObtained builds CardsVar(2) card rewards; each
+    reward contains one card from each of 3 other character card pools
+    (StableShuffle with Rng.Niche), rolled with CardRarityOddsType.RegularEncounter
+    and CardCreationFlags.NoCardPoolModifications. IsAllowedAtNeow requires
+    every character's card pool to be unlocked; the simulator assumes all
+    characters are unlocked.
+    """
+    relic_id = RelicId.KALEIDOSCOPE
+    rarity = RelicRarity.ANCIENT
+    pool = RelicPool.EVENT
+    has_upon_pickup_effect = True
+    CARDS = 2
+    POOLS_PER_REWARD = 3
+
+    def is_allowed(self, run_state: RunState) -> bool:
+        return True
+
+    def after_obtained(self, owner: Creature) -> None:
+        from sts2_env.characters.all import ALL_CHARACTERS
+        from sts2_env.run.rewards import generate_noncombat_reward_cards
+
+        other_character_ids = [
+            config.character_id
+            for config in ALL_CHARACTERS
+            if config.character_id != owner.character_id
+        ]
+        rng = owner.run_state.rng.niche
+        rng.shuffle(other_character_ids)
+        chosen_pools = other_character_ids[: self.POOLS_PER_REWARD]
+        for _ in range(self.CARDS):
+            cards: list[CardInstance] = []
+            for character_id in chosen_pools:
+                cards.extend(
+                    generate_noncombat_reward_cards(
+                        owner.run_state,
+                        num_cards=1,
+                        character_ids=(character_id,),
+                        roll_upgrade=True,
+                    )
+                )
+            if not cards:
+                continue
+            owner.offer_custom_card_reward(
+                cards=cards,
+                skippable=True,
+                generation_context=None,
+                card_creation_source="other",
+                roll_upgrade=False,
+                use_default_character_pool=False,
+            )
+
+
+@register_relic
+class NeowsBones(RelicInstance):
+    """Upon pickup gain 2 random Neow relics and add 1 random curse.
+
+    C# NeowsBones.cs: GetValidRelics draws from the Neow event's
+    AllPossibleOptions (relic-bearing options, IsAllowedAtNeow, excluding
+    NeowsBones itself). PlayerRng.Rewards shuffles the list, the first
+    RelicsVar(2) entries are offered with skipping disallowed, then
+    CursesVar(1) random curses (CanBeGeneratedByModifiers, ordered by card Id)
+    are drawn with Rng.Niche and added to the deck.
+    """
+    relic_id = RelicId.NEOWS_BONES
+    rarity = RelicRarity.ANCIENT
+    pool = RelicPool.EVENT
+    RELICS = 2
+    CURSES = 1
+
+    # Neow.AllPossibleOptions relic set (Neow.cs) minus NeowsBones itself.
+    NEOW_RELIC_IDS: tuple[str, ...] = (
+        # PositiveOptions
+        "ARCANE_SCROLL",
+        "BOOMING_CONCH",
+        "FISHING_ROD",
+        "GOLDEN_PEARL",
+        "KALEIDOSCOPE",
+        "LEAD_PAPERWEIGHT",
+        "LOST_COFFER",
+        "MASSIVE_SCROLL",
+        "NEOWS_TORMENT",
+        "NEW_LEAF",
+        "PHIAL_HOLSTER",
+        "PRECISE_SCISSORS",
+        "SCROLL_BOXES",
+        "WINGED_BOOTS",
+        # LavaRock / NeowsTalisman / NutritiousOyster / Pomander /
+        # SmallCapsule / StoneHumidifier options
+        "LAVA_ROCK",
+        "NEOWS_TALISMAN",
+        "NUTRITIOUS_OYSTER",
+        "POMANDER",
+        "SMALL_CAPSULE",
+        "STONE_HUMIDIFIER",
+        # CurseOptions
+        "CURSED_PEARL",
+        "HEFTY_TABLET",
+        "LARGE_CAPSULE",
+        "LEAFY_POULTICE",
+        "PRECARIOUS_SHEARS",
+        "SILKEN_TRESS",
+        "SILVER_CRUCIBLE",
+    )
+
+    def after_obtained(self, owner: Creature) -> None:
+        from sts2_env.relics.registry import create_relic_by_name
+        from sts2_env.run.reward_objects import RelicReward
+
+        candidates: list[str] = []
+        for relic_id_name in self.NEOW_RELIC_IDS:
+            if relic_id_name == self.relic_id.name:
+                continue
+            try:
+                relic = create_relic_by_name(relic_id_name)
+            except KeyError:
+                continue
+            if not relic.is_allowed(owner.run_state):
+                continue
+            candidates.append(relic_id_name)
+        rng = owner.run_state.rng.rewards
+        rng.shuffle(candidates)
+        for chosen in candidates[: self.RELICS]:
+            owner.run_state.pending_rewards.append(
+                RelicReward(owner.player_id, relic_id=chosen, skippable=False)
+            )
+
+        from sts2_env.cards.factory import create_card
+        from sts2_env.core.card_pools import CURSE_CARD_POOL
+
+        available_curses = sorted(
+            (
+                card_id
+                for card_id in CURSE_CARD_POOL
+                if create_card(card_id).can_be_generated_by_modifiers
+            ),
+            key=lambda card_id: card_id.name,
+        )
+        niche_rng = owner.run_state.rng.niche
+        for _ in range(self.CURSES):
+            if not available_curses:
+                break
+            curse_id = niche_rng.choice(available_curses)
+            available_curses.remove(curse_id)
+            curse_card = create_card(curse_id)
+            if getattr(owner.run_state, "defer_followup_rewards", False):
+                owner.offer_add_cards_reward([curse_card])
+                continue
+            owner.add_card_instance_to_deck(curse_card)
+
+
+@register_relic
+class NeowsTalisman(RelicInstance):
+    """Upon pickup upgrade 1 Strike and 1 Defend.
+
+    C# NeowsTalisman.cs: AfterObtained collects the deck's Basic-rarity cards
+    and upgrades the last Strike-tagged and last Defend-tagged card
+    (LastOrDefault over deck order).
+    """
+    relic_id = RelicId.NEOWS_TALISMAN
+    rarity = RelicRarity.ANCIENT
+    pool = RelicPool.EVENT
+    has_upon_pickup_effect = True
+
+    def after_obtained(self, owner: Creature) -> None:
+        basics = [card for card in owner.deck if card.rarity == CardRarity.BASIC]
+        strike = next(
+            (card for card in reversed(basics) if CardTag.STRIKE in card.tags),
+            None,
+        )
+        defend = next(
+            (card for card in reversed(basics) if CardTag.DEFEND in card.tags),
+            None,
+        )
+        for card in (strike, defend):
+            if card is not None:
+                owner.upgrade_card_instance(card)
+
+
+@register_relic
+class PhialHolster(RelicInstance):
+    """Upon pickup gain 1 potion slot and procure 2 random potions.
+
+    C# PhialHolster.cs: AfterObtained calls PlayerCmd.GainMaxPotionCount(1)
+    then PotionFactory.CreateRandomPotionsOutOfCombat(2) with the
+    CombatPotionGeneration RNG stream, procuring each via PotionCmd.TryToProcure
+    (silently skipped when no empty slot remains).
+    """
+    relic_id = RelicId.PHIAL_HOLSTER
+    rarity = RelicRarity.ANCIENT
+    pool = RelicPool.EVENT
+    has_upon_pickup_effect = True
+    POTION_SLOTS = 1
+    POTIONS = 2
+
+    def _can_procure_potion(self, owner: Creature, combat: CombatState | None) -> bool:
+        if combat is not None:
+            relics = combat.relics_for_creature(owner)
+        else:
+            get_relic_objects = getattr(owner, "get_relic_objects", None)
+            relics = get_relic_objects() if callable(get_relic_objects) else []
+        for relic in relics:
+            should_procure = getattr(relic, "should_procure_potion", None)
+            if callable(should_procure) and should_procure(owner) is False:
+                return False
+        return True
+
+    def _add_potion_to_first_empty_slot(
+        self, owner: Creature, potion: object, combat: CombatState | None
+    ) -> bool:
+        if combat is not None:
+            state = combat.combat_player_state_for(owner)
+            if state is None:
+                return False
+            for slot in range(state.max_potion_slots):
+                while len(state.potions) <= slot:
+                    state.potions.append(None)
+                if state.potions[slot] is not None:
+                    continue
+                potion.slot_index = slot
+                potion.owner = state.creature
+                state.potions[slot] = potion
+                from sts2_env.core.hooks import fire_after_potion_procured
+
+                fire_after_potion_procured(potion, combat)
+                return True
+            return False
+        potions = getattr(owner, "potions", None)
+        if potions is None:
+            return False
+        for slot in range(getattr(owner, "max_potion_slots", len(potions))):
+            while len(potions) <= slot:
+                potions.append(None)
+            if potions[slot] is not None:
+                continue
+            potion.slot_index = slot
+            potions[slot] = potion
+            return True
+        return False
+
+    def after_obtained(self, owner: Creature) -> None:
+        from sts2_env.potions.base import create_potion, roll_random_potion_model
+
+        combat = getattr(owner, "combat_state", None)
+        owner.gain_potion_slots(self.POTION_SLOTS)
+        if combat is not None:
+            state = combat.combat_player_state_for(owner)
+            character_id = state.character_id if state is not None else owner.character_id
+            rng = combat.combat_potion_generation_rng
+        else:
+            character_id = owner.character_id
+            rng = owner.run_state.rng.combat_potion_generation
+        for _ in range(self.POTIONS):
+            model = roll_random_potion_model(rng, character_id=character_id, in_combat=False)
+            if model is None:
+                continue
+            if not self._can_procure_potion(owner, combat):
+                continue
+            potion = create_potion(model.potion_id)
+            self._add_potion_to_first_empty_slot(owner, potion, combat)
+
+
+@register_relic
+class SilkenTress(RelicInstance):
+    """Upon pickup lose all gold; the first card reward is enchanted with Glam.
+
+    C# SilkenTress.cs: AfterObtained calls PlayerCmd.LoseGold(Owner.Gold).
+    TryModifyCardRewardOptionsLate enchants every reward card that Glam can
+    enchant whenever IsCardReward is set and the relic is unused, returning
+    true; AfterModifyingCardRewardOptions then sets IsUsed (SavedProperty),
+    making IsUsedUp true for the rest of the run.
+    """
+    relic_id = RelicId.SILKEN_TRESS
+    rarity = RelicRarity.ANCIENT
+    pool = RelicPool.EVENT
+    has_upon_pickup_effect = True
+
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._is_used: bool = False
+
+    @property
+    def is_used_up(self) -> bool:
+        return self._is_used
+
+    def after_obtained(self, owner: Creature) -> None:
+        lose_all_gold = getattr(owner, "lose_all_gold", None)
+        if callable(lose_all_gold):
+            lose_all_gold()
+            return
+        lose_gold = getattr(owner, "lose_gold", None)
+        if callable(lose_gold):
+            lose_gold(getattr(owner, "gold", 0))
+
+    def modify_card_reward_options_late(
+        self,
+        owner: Creature,
+        cards: list[CardInstance],
+        reward: CardReward,
+        room: Room | None,
+        run_state: RunState,
+    ) -> list[CardInstance]:
+        if self._is_used:
+            return cards
+        for card in cards:
+            if can_enchant_card(card, "Glam"):
+                card.add_enchantment("Glam", 1)
+        # C# returns true here, so Hook.AfterModifyingCardRewardOptions marks
+        # the relic used even when no card qualified for Glam.
+        self._is_used = True
+        return cards
+
+
+@register_relic
+class WingedBoots(RelicInstance):
+    """Ignore map paths when travelling, 3 times (single player only).
+
+    C# WingedBoots.cs: IsAllowed requires runState.Players.Count == 1.
+    ShouldAllowFreeTravel is true until TimesUsed reaches 3. AfterRoomEntered
+    consumes one charge when the previous VisitedMapCoords entry's map point
+    does not list the current map point among its children (i.e. the player
+    ignored paths); the CurrentRoomCount > 1 nested-room guard has no
+    simulator equivalent because the sim has no room stack.
+    """
+    relic_id = RelicId.WINGED_BOOTS
+    rarity = RelicRarity.ANCIENT
+    pool = RelicPool.EVENT
+    ROOMS = 3
+
+    def __init__(self, relic_id: RelicId):
+        super().__init__(relic_id)
+        self._times_used: int = 0
+
+    @property
+    def times_used(self) -> int:
+        return self._times_used
+
+    @property
+    def is_used_up(self) -> bool:
+        return self._times_used >= self.ROOMS
+
+    def is_allowed(self, run_state: RunState) -> bool:
+        return len(getattr(run_state, "players", []) or []) == 1
+
+    def should_allow_free_travel(self) -> bool:
+        return not self.is_used_up
+
+    def after_room_entered(self, owner: Creature, room_type: object) -> None:
+        if self.is_used_up:
+            return
+        run_state = _run_state_for_relic_owner(owner)
+        if run_state is None:
+            run_manager = getattr(room_type, "run_manager", None)
+            run_state = getattr(run_manager, "_run_state", None)
+        if run_state is None:
+            return
+        visited = list(getattr(run_state, "visited_map_coords", []) or [])
+        if len(visited) <= 1:
+            return
+        act_map = getattr(run_state, "map", None)
+        if act_map is None:
+            return
+        previous_point = act_map.get_point(visited[-2])
+        current_point = act_map.get_point(visited[-1])
+        if previous_point is None or current_point is None:
+            return
+        if current_point in previous_point.children:
+            return
+        self._times_used += 1

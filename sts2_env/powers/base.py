@@ -459,4 +459,9 @@ class PowerInstance:
     # ─── Display ────────────────────────────────────────────────────────
 
     def __repr__(self) -> str:
-        return f"{self.power_id.name}({self.amount})"
+        # power_id is a PowerId for registered powers, but v0.107.1 powers
+        # awaiting an enum member (BorrowedTimePower, TaintedPower,
+        # WitheringPresencePower) use a stable string key instead; both must
+        # render here.
+        name = getattr(self.power_id, "name", self.power_id)
+        return f"{name}({self.amount})"

@@ -2,7 +2,8 @@
 
 Covers StrengthPower, VulnerablePower, WeakPower, VigorPower, DoubleDamagePower,
 EnragePower, CrueltyPower, DebilitatePower, PainfulStabsPower, LethalityPower,
-AccuracyPower, FocusedStrikePower, ViciousPower, CalamityPower, AggressionPower.
+AccuracyPower, FocusedStrikePower, ViciousPower, CalamityPower, AggressionPower,
+TaintedPower.
 
 Strength, Vulnerable, Weak are already registered in common.py; they are NOT
 re-registered here.  This module only adds the powers that common.py does not
@@ -418,6 +419,62 @@ class AggressionPower(PowerInstance):
             retrieve(owner, self.amount, upgrade=True)
 
 
+# ── TaintedPower ─────────────────────────────────────────────────────────
+# PowerId.TAINTED is not yet present in sts2_env/core/enums.py (v0.107.1 gap,
+# reported). Until the enum member lands, fall back to a stable string key;
+# the key is registered either way so apply_power can create instances
+# (import TAINTED_POWER_ID, never hardcode the raw key).
+TAINTED_POWER_ID = (
+    PowerId.TAINTED if "TAINTED" in PowerId.__members__ else "TAINTED"
+)
+
+
+class TaintedPower(PowerInstance):
+    """Owner takes Amount extra damage from powered attacks until the end of
+    the enemy side's turn.
+
+    C# ref: TaintedPower.cs (v0.107.1)
+    - PowerType.Debuff, PowerStackType.Counter.
+    - ModifyDamageAdditive: target == Owner and props.IsPoweredAttack()
+      (ValuePropExtensions.cs: Move flag set, Unpowered flag clear) ->
+      return Amount; otherwise 0.
+    - AfterSideTurnEnd: `if (side == CombatSide.Enemy) { Flash(); Remove; }` —
+      removed at the end of the ENEMY side's turn with no participant check,
+      so a Tainted applied during the player's turn survives into the enemy
+      turn and is removed when that enemy side turn ends.
+    Applied by VitalSparkPower.AfterCardPlayed when a card afflicted with the
+    Tainted affliction (Models.Afflictions/Tainted.cs, afflicts Skill cards)
+    is played; the affliction is stamped on Skill cards by
+    VitalSparkPower.BeforeCombatStart / AfterCardEnteredCombat.
+    """
+
+    power_type = PowerType.DEBUFF
+    stack_type = PowerStackType.COUNTER
+
+    def __init__(self, amount: int):
+        super().__init__(TAINTED_POWER_ID, amount)
+
+    def modify_damage_additive(
+        self, owner: Creature, dealer: Creature | None, target: Creature, props: ValueProp
+    ) -> int:
+        # C# ModifyDamageAdditive: `if (target != base.Owner) return 0m;` and
+        # `if (!props.IsPoweredAttack()) return 0m;` then `return base.Amount`.
+        if target is not owner:
+            return 0
+        if not props.is_powered_attack():
+            return 0
+        return self.amount
+
+    def after_turn_end(
+        self, owner: Creature, side: CombatSide, combat: CombatState
+    ) -> None:
+        # C# AfterSideTurnEnd removes when side == CombatSide.Enemy. Setting
+        # amount to 0 lets fire_after_turn_end drop the power (EntangledPower
+        # removal pattern).
+        if side == CombatSide.ENEMY:
+            self.amount = 0
+
+
 # ─── Registration ────────────────────────────────────────────────────────
 from sts2_env.core.creature import register_power_class  # noqa: E402
 
@@ -435,6 +492,8 @@ _DAMAGE_MODIFIER_POWERS: dict[PowerId, type[PowerInstance]] = {
     PowerId.CALAMITY: CalamityPower,
     PowerId.AGGRESSION: AggressionPower,
 }
+
+_DAMAGE_MODIFIER_POWERS[TAINTED_POWER_ID] = TaintedPower
 
 for _pid, _cls in _DAMAGE_MODIFIER_POWERS.items():
     register_power_class(_pid, _cls)

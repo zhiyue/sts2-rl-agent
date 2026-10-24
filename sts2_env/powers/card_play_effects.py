@@ -4,7 +4,8 @@ Covers: CorruptionPower, EchoFormPower, DarkEmbracePower, FeelNoPainPower,
 RagePower, AfterimagePower, RupturePower, JuggernautPower, EnvenomPower,
 ThunderPower, ElectrodynamicsPower, PhantomBladesPower, SerpentFormPower,
 SetupStrikePower, OneTwoPunchPower, FreeAttackPower, FreeSkillPower,
-FreePowerPower, SneakyPower, HeistPower, NecroMasteryPower, HellraiserPower.
+FreePowerPower, SneakyPower, HeistPower, NecroMasteryPower, HellraiserPower,
+NoEnergyGainPower, BorrowedTimePower.
 
 All logic verified against decompiled C# source.
 """
@@ -906,6 +907,107 @@ class EnragePower(PowerInstance):
 
 
 # ---------------------------------------------------------------------------
+# NoEnergyGainPower
+# ---------------------------------------------------------------------------
+class NoEnergyGainPower(PowerInstance):
+    """The owner cannot gain energy for the rest of the side's turn.
+
+    C# ref: NoEnergyGainPower.cs
+    - PowerType.Debuff, PowerStackType.Single.
+    - ModifyEnergyGain: returns 0 for the owner's player, passes other players
+      through (multiplayer semantics).
+    - AfterSideTurnEnd: removed when the owner is among the participants, i.e.
+      at the end of the owner's side turn.
+    Applied by ExpectAFight.cs OnPlay (after gaining its own CalculatedEnergy).
+    """
+
+    power_type = PowerType.DEBUFF
+    stack_type = PowerStackType.SINGLE
+
+    def __init__(self, amount: int):
+        super().__init__(PowerId.NO_ENERGY_GAIN, amount)
+
+    def modify_energy_gain(self, owner: Creature, player: Creature, amount: int) -> int:
+        if player is not owner:
+            return amount
+        return 0
+
+    def after_turn_end(
+        self, owner: Creature, side: CombatSide, combat: CombatState
+    ) -> None:
+        # C# AfterSideTurnEnd removes the power when the owner participates in
+        # the side that just ended; in the sim, fire_after_turn_end is invoked
+        # once per side, so remove when the owner's side ended.
+        if side == owner.side:
+            owner.powers.pop(self.power_id, None)
+
+
+# ---------------------------------------------------------------------------
+# BorrowedTimePower
+# ---------------------------------------------------------------------------
+# PowerId.BORROWED_TIME does not exist yet in sts2_env/core/enums.py
+# (BORROWED_TIME is currently only a CardId — v0.107.1 gap, reported). Until
+# the enum member lands, fall back to a stable string key; the key is
+# registered either way so apply_power can create instances and the
+# BorrowedTime card can wire the real power (import BORROWED_TIME_POWER_ID,
+# never hardcode the raw key).
+BORROWED_TIME_POWER_ID = (
+    PowerId.BORROWED_TIME
+    if "BORROWED_TIME" in PowerId.__members__
+    else "BORROWED_TIME"
+)
+
+
+class BorrowedTimePower(PowerInstance):
+    """Cards played by the owner cost Amount extra energy until the end of the
+    owner's side turn.
+
+    C# ref: BorrowedTimePower.cs (v0.107.1)
+    - PowerType.Debuff, PowerStackType.Counter (one stack per ExtraCost).
+    - TryModifyEnergyCostInCombat: `if (card.Owner.Creature != base.Owner)
+      return false;` otherwise `modifiedCost = originalCost + Amount`.
+    - ExtraHoverTips: HoverTipFactory.ForEnergy (cost bump is shown as energy).
+    - AfterSideTurnEnd: removed when the owner is among the participants of
+      the side whose turn just ended, i.e. at the end of the owner's own side
+      turn (differs from TaintedPower, which keys on side == Enemy).
+    Applied by BorrowedTime.cs OnPlay: gain Energy (4, upgraded 6) then
+    Apply<BorrowedTimePower>(ExtraCost = 1).
+
+    Sim wiring: the engine surfaces C# TryModifyEnergyCostInCombat as
+    CombatState.modified_card_cost -> PowerInstance.modify_card_cost, which is
+    consulted for both the can-play check and the energy actually spent.
+    sts2_env/cards/necrobinder.py's borrowed_time effect applies this power
+    (BorrowedTime.cs OnPlay).
+    """
+
+    power_type = PowerType.DEBUFF
+    stack_type = PowerStackType.COUNTER
+
+    def __init__(self, amount: int):
+        super().__init__(BORROWED_TIME_POWER_ID, amount)
+
+    def modify_card_cost(self, owner: Creature, card: object) -> int | None:
+        # CombatState.modified_card_cost only consults the card owner's own
+        # powers, which mirrors the C# guard (card.Owner.Creature != Owner ->
+        # no modification). X-cost cards are skipped by the dispatcher, and
+        # C# BorrowedTimePower does not override TryModifyStarCost, so star
+        # costs are intentionally untouched.
+        card_cost = getattr(card, "cost", None)
+        if not isinstance(card_cost, int):
+            return None
+        return max(0, card_cost) + self.amount
+
+    def after_turn_end(
+        self, owner: Creature, side: CombatSide, combat: CombatState
+    ) -> None:
+        # C# AfterSideTurnEnd removes when the owner participates in the side
+        # that just ended; dropping to 0 lets fire_after_turn_end remove the
+        # whole (possibly multi-stack) power (EntangledPower pattern).
+        if side == owner.side:
+            self.amount = 0
+
+
+# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 from sts2_env.core.creature import register_power_class  # noqa: E402
@@ -934,7 +1036,10 @@ _ALL_POWERS: dict[PowerId, type[PowerInstance]] = {
     PowerId.NECRO_MASTERY: NecroMasteryPower,
     PowerId.HELLRAISER: HellraiserPower,
     PowerId.ENRAGE: EnragePower,
+    PowerId.NO_ENERGY_GAIN: NoEnergyGainPower,
 }
+
+_ALL_POWERS[BORROWED_TIME_POWER_ID] = BorrowedTimePower
 
 for _pid, _cls in _ALL_POWERS.items():
     register_power_class(_pid, _cls)
