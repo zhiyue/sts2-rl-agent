@@ -1,0 +1,11 @@
+{
+  "ANCIENT": "[gold][font_size=28][b]Ancient:[/b][/font_size][/gold] Relics offered by the Ancients.",
+  "ANCIENT_SUBCATEGORY": "[blue][font_size=28][b]{Ancient}:[/b][/font_size][/blue]",
+  "COMMON": "[gold][font_size=28][b]Common:[/b][/font_size][/gold] Weak relics that are commonly found.",
+  "EVENT": "[gold][font_size=28][b]Event:[/b][/font_size][/gold] Relics which are only obtained through events.",
+  "RARE": "[gold][font_size=28][b]Rare:[/b][/font_size][/gold] Unique and powerful relics which are seldom seen.",
+  "SHOP": "[gold][font_size=28][b]Shop:[/b][/font_size][/gold] Relics which can only be purchased from the Merchant.",
+  "STARTER": "[gold][font_size=28][b]Starter:[/b][/font_size][/gold] Characters begin their run with these relics.",
+  "UNCOMMON": "[gold][font_size=28][b]Uncommon:[/b][/font_size][/gold] Stronger relics which appear less often than common relics.",
+  "UNKNOWN_ANCIENT": "???"
+}

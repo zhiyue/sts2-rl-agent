@@ -94,13 +94,16 @@ public class RlCardSelector : ICardSelector
 
     /// <summary>
     /// Called specifically for card reward screens (post-combat card picks).
+    /// v0.107.1: ICardSelector.GetSelectedCardReward returns the
+    /// CardRewardSelection struct (TestSupport/CardRewardSelection.cs) instead
+    /// of a nullable CardModel.
     /// </summary>
-    public CardModel? GetSelectedCardReward(
+    public CardRewardSelection GetSelectedCardReward(
         IReadOnlyList<CardCreationResult> options,
         IReadOnlyList<CardRewardAlternative> alternatives)
     {
         if (options.Count == 0)
-            return null;
+            return default;
 
         // Build the state message
         var cards = new List<Dictionary<string, object>>();
@@ -146,7 +149,7 @@ public class RlCardSelector : ICardSelector
                     if (action == NonCombatBridgeProtocol.SkipAction)
                     {
                         Logger.Log("[RlCardSelector] Agent chose to skip card reward");
-                        return null;
+                        return default;
                     }
 
                     if (action == NonCombatBridgeProtocol.ChooseAction &&
@@ -156,13 +159,13 @@ public class RlCardSelector : ICardSelector
                         if (idx >= options.Count)
                         {
                             Logger.Log("[RlCardSelector] Agent chose to skip card reward via out-of-range choose");
-                            return null;
+                            return default;
                         }
                         if (idx >= 0 && idx < options.Count)
                         {
                             Logger.Log(
                                 $"[RlCardSelector] Agent chose card reward: {options[idx].Card.Id.Entry}");
-                            return options[idx].Card;
+                            return new CardRewardSelection { card = options[idx].Card };
                         }
                     }
                 }
@@ -175,7 +178,7 @@ public class RlCardSelector : ICardSelector
 
         // Fallback: pick the first card
         Logger.Log("[RlCardSelector] Falling back: picking first card reward");
-        return options[0].Card;
+        return new CardRewardSelection { card = options[0].Card };
     }
 
     // ----------------------------------------------------------------

@@ -1,0 +1,9 @@
+{
+  "TO_DISCARD": "Choose {Amount:plural:a card|[blue]{}[/blue] cards} to [gold]Discard[/gold].",
+  "TO_ENCHANT": "Choose {Amount:plural:a card|[blue]{}[/blue] cards} to [purple]Enchant[/purple].",
+  "TO_EXHAUST": "Choose {Amount:plural:a card|[blue]{}[/blue] cards} to [gold]Exhaust[/gold].",
+  "TO_REMOVE": "Choose {Amount:plural:a card|[blue]{}[/blue] cards} to [gold]Remove[/gold].",
+  "TO_TRANSFORM": "Choose {Amount:plural:a card|[blue]{}[/blue] cards} to [gold]Transform[/gold].",
+  "TO_UPGRADE": "Choose {Amount:plural:a card|[blue]{}[/blue] cards} to [gold]Upgrade[/gold].",
+  "VIEW_UPGRADES": "View Upgrades"
+}

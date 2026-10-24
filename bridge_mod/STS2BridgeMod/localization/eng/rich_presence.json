@@ -1,0 +1,8 @@
+{
+  "CUSTOM_MP_LOBBY": "Custom Lobby",
+  "DAILY_MP_LOBBY": "Daily Lobby",
+  "IN_RUN": "{#%Character%_title} - {#%Act%_title} A%Ascension%",
+  "LOADING_MP_LOBBY": "Saved Game Lobby",
+  "MAIN_MENU": "Main Menu",
+  "STANDARD_MP_LOBBY": "Multiplayer Lobby"
+}

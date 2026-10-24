@@ -1,0 +1,17 @@
+{
+  "ETERNAL.description": "Cannot be removed or transformed from your [gold]Deck[/gold].",
+  "ETERNAL.title": "Eternal",
+  "ETHEREAL.description": "If this card is in your [gold]Hand[/gold] at the end of this turn, it is [gold]Exhausted[/gold].",
+  "ETHEREAL.title": "Ethereal",
+  "EXHAUST.description": "Removed until the end of combat.",
+  "EXHAUST.title": "Exhaust",
+  "INNATE.description": "Start each combat with this card in your [gold]Hand[/gold].",
+  "INNATE.title": "Innate",
+  "PERIOD": ".",
+  "RETAIN.description": "Retained cards are not discarded at the end of turn.",
+  "RETAIN.title": "Retain",
+  "SLY.description": "If this card is discarded from your [gold]Hand[/gold] before the end of your turn, play it for free.",
+  "SLY.title": "Sly",
+  "UNPLAYABLE.description": "Unplayable cards cannot be played.",
+  "UNPLAYABLE.title": "Unplayable"
+}

@@ -1,0 +1,23 @@
+{
+  "ACKNOWLEDGE_BUTTON": "Proceed",
+  "EPOCH_INSPECT.chapterFormat": "Chapter {ChapterIndex} - {ChapterName}",
+  "EPOCH_INSPECT.closeButton": "Close",
+  "EPOCH_INSPECT.continueButton": "Continue",
+  "EPOCH_INSPECT.unlockButton": "Unlock",
+  "PLACEHOLDER_PORTRAIT": "Placeholder",
+  "REMINDER_TEXT": "{RevealableEpochCount} {RevealableEpochCount:plural:Epoch is|Epochs are} waiting to be revealed...",
+  "REVEAL_TIP_HEADER": "Requirement",
+  "TUTORIAL_TEXT": "In the [blue]Timeline[/blue], reveal [gold]Epochs[/gold] to unlock cards, relics, and much more...",
+  "UNLOCK_ANCIENT": "Unlocked Ancient: Darv, The Hoarder, will now show up in your future runs...",
+  "UNLOCK_CARDS": "The following cards will appear in future runs.",
+  "UNLOCK_CARDS_BANNER": "Cards Unlocked!",
+  "UNLOCK_CONFIRM": "Confirm",
+  "UNLOCK_EPOCHS": "The Timeline expands...",
+  "UNLOCK_POTIONS": "The following potions will appear in future runs.",
+  "UNLOCK_POTIONS_BANNER": "Potions Unlocked!",
+  "UNLOCK_RELICS": "The following relics will appear in future runs.",
+  "UNLOCK_RELICS_BANNER": "Relics Unlocked!",
+  "UNLOCK_TEXT.cards": "Unlocked cards: {Card1}, {Card2}, and {Card3}.",
+  "UNLOCK_TEXT.potions": "Unlocked potions: {Potion1}, {Potion2}, and {Potion3}.",
+  "UNLOCK_TEXT.relics": "Unlocked relics: {Relic1}, {Relic2}, and {Relic3}."
+}

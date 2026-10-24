@@ -1,0 +1,20 @@
+{
+  "MERCHANT.cardRemovalService.description": "Remove a card from your deck. The cost of this service increases by [blue]{Amount}[/blue] for the rest of this run.",
+  "MERCHANT.cardRemovalService.title": "Card Removal Service",
+  "MERCHANT.talk.foulPotion.line1": "Yesss, that's the stuff!",
+  "MERCHANT.talk.foulPotion.line2": "Keep it coming!",
+  "MERCHANT.talk.foulPotion.line3": "Ahhh, so refreshing...",
+  "MERCHANT.talk.playerDead.line1": "PLACEHOLDER: I don't do business with corpses.",
+  "MERCHANT.talk.playerDead.line2": "PLACEHOLDER: No HP, no service.",
+  "MERCHANT.talk.purchaseFailureForbidden.line1": "Seems like you can't do that.",
+  "MERCHANT.talk.purchaseFailureForbidden.line2": "Something the matter?",
+  "MERCHANT.talk.purchaseFailureGold.line1": "You'll need more coin.",
+  "MERCHANT.talk.purchaseFailureGold.line2": "[sine]This isn't a charity.[/sine]",
+  "MERCHANT.talk.purchaseFailureGold.line3": "Come back when you're a little [jitter]richer[/jitter].",
+  "MERCHANT.talk.purchaseFailureGold.line4": "I don't deal in [jitter]credit[/jitter].",
+  "MERCHANT.talk.purchaseFailureSpace.line1": "My potions are too powerful for your inventory!",
+  "MERCHANT.talk.purchaseFailureSpace.line2": "Sorry, you look like you've got your hands full...",
+  "MERCHANT.talk.purchaseSuccess.line1": "Support your local business.",
+  "MERCHANT.talk.purchaseSuccess.line2": "Thank you for your patronage.",
+  "MERCHANT.talk.purchaseSuccess.line3": "Enjoy your purchase."
+}

@@ -1,0 +1,21 @@
+{
+  "DARK_ORB.description": "Orb: When [gold]Evoked[/gold], deals damage to the enemy with the least HP. Increases damage every turn.",
+  "DARK_ORB.smartDescription": "[gold]Passive:[/gold] At the end of turn, increase this Orb's damage by [blue]{Passive}[/blue].\n[gold]Evoke:[/gold] Deal [blue]{Evoke}[/blue] damage to the enemy with the lowest HP.",
+  "DARK_ORB.title": "Dark",
+  "EMPTY_SLOT.description": "Orbs can be channeled into these slots.",
+  "EMPTY_SLOT.title": "Orb Slot",
+  "FROST_ORB.description": "Orb: Gains [gold]Block[/gold].",
+  "FROST_ORB.smartDescription": "[gold]Passive:[/gold] At the end of turn, gain [blue]{Passive}[/blue] [gold]Block[/gold].\n[gold]Evoke:[/gold] Gain [blue]{Evoke}[/blue] [gold]Block[/gold].",
+  "FROST_ORB.title": "Frost",
+  "GLASS_ORB.description": "Orb: Deals damage to ALL enemies. Decreases damage every turn.",
+  "GLASS_ORB.smartDescription": "[gold]Passive:[/gold] At the end of turn, deal [blue]{Passive}[/blue] damage to ALL enemies and reduce this orb's value by [blue]1[/blue].\n[gold]Evoke:[/gold] Deal [blue]{Evoke}[/blue] damage to ALL enemies.",
+  "GLASS_ORB.title": "Glass",
+  "LIGHTNING_ORB.description": "Orb: Deals damage to random enemies.",
+  "LIGHTNING_ORB.smartDescription": "[gold]Passive:[/gold] At the end of turn, deal [blue]{Passive}[/blue] damage to a random enemy.\n[gold]Evoke:[/gold] Deal [blue]{Evoke}[/blue] damage to a random enemy.",
+  "LIGHTNING_ORB.title": "Lightning",
+  "MOCK_COMBAT_CLEANUP_ORB.description": "",
+  "MOCK_COMBAT_CLEANUP_ORB.title": "Mock Combat Cleanup",
+  "PLASMA_ORB.description": "Orb: Gains Energy.",
+  "PLASMA_ORB.smartDescription": "[gold]Passive:[/gold] At the start of turn,\ngain {energyPrefix:energyIcons(1)}.\n[gold]Evoke:[/gold] Gain {energyPrefix:energyIcons(2)}.\nPlasma is unaffected by [gold]Focus[/gold].",
+  "PLASMA_ORB.title": "Plasma"
+}

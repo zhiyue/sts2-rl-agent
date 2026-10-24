@@ -1,0 +1,11 @@
+{
+  "BLOCKED_BY_HOOK": "I'm blocked\nby [red]{BlockingHook}[/red].",
+  "HAND_FULL": "I have too many cards...",
+  "NOT_ENOUGH_ENERGY": "I don't have\nenough [red]Energy[/red].",
+  "NOT_ENOUGH_STARS": "I don't have\nenough [red]Stars[/red].",
+  "NO_DRAW": "I don't have enough\ncards to draw.",
+  "NO_LIVING_ALLIES": "I've got no\nteammates.",
+  "OPEN_EMPTY_DISCARD": "My Discard Pile is [red]empty[/red].",
+  "OPEN_EMPTY_DRAW": "My Draw Pile is [red]empty[/red].",
+  "UNPLAYABLE": "I can't play\nthis card."
+}

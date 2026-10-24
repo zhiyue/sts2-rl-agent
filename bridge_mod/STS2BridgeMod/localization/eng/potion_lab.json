@@ -1,0 +1,6 @@
+{
+  "COMMON": "[gold][font_size=28][b]Common:[/b][/font_size][/gold] The most frequent potions found in the Spire.",
+  "RARE": "[gold][font_size=28][b]Rare:[/b][/font_size][/gold] Unique and powerful potions which are rarely seen.",
+  "SPECIAL": "[gold][font_size=28][b]Special:[/b][/font_size][/gold] Potions which are obtained from events or created by other means.",
+  "UNCOMMON": "[gold][font_size=28][b]Uncommon:[/b][/font_size][/gold] Stronger potions which appear less often than common potions."
+}

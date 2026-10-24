@@ -1,0 +1,23 @@
+{
+  "OPTION_CLONE.description": "Duplicate all cards enchanted with [gold]{EnchantmentName}[/gold].",
+  "OPTION_CLONE.name": "Clone",
+  "OPTION_COOK.description": "[gold]Remove[/gold] [blue]{Cards}[/blue] cards from your [gold]Deck[/gold] and gain [green]{MaxHp}[/green] Max HP.",
+  "OPTION_COOK.descriptionDisabled": "[red]You need at least 2 removable cards in your Deck.[/red]",
+  "OPTION_COOK.name": "Cook",
+  "OPTION_DIG.description": "Dig for a [gold]Relic[/gold].",
+  "OPTION_DIG.name": "Dig",
+  "OPTION_HATCH.description": "Hatch your [green]Byrdonis Egg[/green].",
+  "OPTION_HATCH.name": "Hatch",
+  "OPTION_HEAL.description": "Heal for 30% of your Max HP ({Heal}).{ExtraText}",
+  "OPTION_HEAL.name": "Rest",
+  "OPTION_KINDLE.description": "Add {RekindleAmount} charges to [gold]{RelicName}[/gold].",
+  "OPTION_KINDLE.name": "Kindle",
+  "OPTION_LIFT.description": "Start battles with +1 Strength. ({LiftsLeft} Left)",
+  "OPTION_LIFT.name": "Train",
+  "OPTION_MEND.description": "Heal {HasTarget:{Name}|someone else} for 30% of their Max HP{HasTarget: ({Heal})|}.",
+  "OPTION_MEND.name": "Mend",
+  "OPTION_SMITH.description": "[gold]Upgrade[/gold] {Count:plural:a card|{} cards} in your [gold]Deck[/gold].",
+  "OPTION_SMITH.descriptionDisabled": "[red]You have no available cards to Upgrade.[/red]",
+  "OPTION_SMITH.name": "Smith",
+  "PROMPT": "What shall I do?"
+}
