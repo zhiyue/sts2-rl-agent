@@ -132,15 +132,32 @@ episodes; enemy slots fixed at 5.
   (ironclad.py:959). Also landed: `AfterAutoPostPlayPhaseEntered` hook
   (HowlFromBeyond replay). Both from interrupted-agent work, reconciled and
   verified 2026-10-24.
-- WingedBoots free-travel not wired into
-  `run_state.get_available_next_coords` (hook implemented, map layer pending).
-- Neow event pools in `sts2_env/events/act3.py` don't offer the 8 new
-  relics yet (relic behaviors themselves complete and tested).
+- ~~WingedBoots free-travel not wired into `run_state.get_available_next_coords`~~
+  **CLOSED** — `RunState.should_allow_free_travel()` (OR of flight modifiers +
+  relic hooks, mirroring Hook.cs:2485-2492) consumed by
+  `get_available_next_coords`; free travel = whole next row per
+  MapTravel.cs:14-21; charge spent only on off-path moves
+  (WingedBoots.cs:57-93). Tests cite C# lines.
+- ~~Neow event pools don't offer the 8 new relics~~ **CLOSED** —
+  `events/act3.py` pools now match Neow.cs PositiveOptions/CurseOptions
+  (66-106): positive +FishingRod/Kaleidoscope/PhialHolster/WingedBoots, curse
+  +HeftyTablet/NeowsBones/SilkenTress, NeowsTalisman via the
+  talisman/pomander mutual-exclusion pair (Neow.cs:242-268). Also fixed en
+  route: ScrollBoxes was in the wrong pool (belongs in positive,
+  Neow.cs:80), HeftyTablet→remove-ArcaneScroll exclusion (Neow.cs:230-233),
+  and the C# rng draw order for the three pairs.
 - Multiplayer: WitheringPresence uses one shared counter instead of one
   instance per opponent (single-player behavior identical).
-- Tainted applier chain: C# reworked VitalSpark into the affliction system
-  (CardCmd.Afflict); sim still uses the March semantics for VitalSpark.
-  TaintedPower itself implemented and tested.
+- ~~Tainted applier chain: sim still uses the March semantics for VitalSpark~~
+  **CLOSED** — full C# chain implemented (VitalSparkPower.cs):
+  BeforeCombatStart afflicts all Skills with stackable Tainted
+  (CardCmd.Afflict semantics, cards/base.py carries affliction_amount);
+  AfterCardEnteredCombat afflicts late entries; playing a Tainted-afflicted
+  skill applies TaintedPower to the player's own creature; power removal
+  clears the afflictions; amount changes resync. TaintedPower itself was
+  already correct (self-removes at enemy side turn end). InfestedPrism
+  constants corrected to 2/3 and Pulsate now applies VitalSpark (no
+  Strength in C# PulsateMove). 15 parity tests cite C# lines.
 - Working tree also carries the pre-pull local change to
   `bridge/agent_runner.py` (optional model_path → random agent), restored
   from stash during agent work; not superseded by remote, kept uncommitted.
