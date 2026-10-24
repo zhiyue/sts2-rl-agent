@@ -127,7 +127,7 @@ def run_agent(
         deterministic: Whether to use deterministic action selection.
         verbose: Whether to log every action taken.
     """
-    model = load_model(model_path)
+    model = load_model(model_path) if model_path else None
     adapter = StateAdapter()
 
     logger.info("Connecting to STS2 at %s:%d...", host, port)
@@ -190,7 +190,7 @@ def run_agent(
                     continue
 
                 if phase in Phase.COMBAT_PHASES:
-                    # ---- Combat: use trained model ----
+                    # ---- Combat: use trained model or random ----
                     obs = adapter.encode_observation(state)
                     mask = adapter.compute_action_mask(state)
 
@@ -200,12 +200,17 @@ def run_agent(
                         client.end_turn()
                         continue
 
-                    action, _states = model.predict(
-                        obs,
-                        action_masks=mask,
-                        deterministic=deterministic,
-                    )
-                    action_int = int(action)
+                    if model is not None:
+                        action, _states = model.predict(
+                            obs,
+                            action_masks=mask,
+                            deterministic=deterministic,
+                        )
+                        action_int = int(action)
+                    else:
+                        # Random valid action
+                        valid_actions = np.where(mask)[0]
+                        action_int = int(np.random.choice(valid_actions))
 
                     decoded = adapter.decode_action(action_int, state)
 
@@ -649,8 +654,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--model-path",
-        required=True,
-        help="Path to the trained MaskablePPO model (.zip file).",
+        default=None,
+        help="Path to the trained MaskablePPO model (.zip file). If omitted, uses random valid actions.",
     )
     parser.add_argument(
         "--host",
