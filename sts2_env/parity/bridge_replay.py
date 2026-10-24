@@ -226,7 +226,13 @@ def save_replay_trace(trace: BridgeReplayTrace, path: str | Path) -> Path:
 
 
 def load_replay_trace(path: str | Path) -> BridgeReplayTrace:
-    return BridgeReplayTrace.from_dict(json.loads(Path(path).read_text()))
+    trace = BridgeReplayTrace.from_dict(json.loads(Path(path).read_text()))
+    # Normalize intent casing etc. so traces recorded by older recorder
+    # versions compare cleanly against simulator serialization.
+    trace.initial_state = normalize_bridge_state(trace.initial_state)
+    for step in trace.steps:
+        step.resulting_state = normalize_bridge_state(step.resulting_state)
+    return trace
 
 
 def _normalize_powers(powers: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
@@ -325,7 +331,16 @@ def _normalize_card_bundles(bundles: list[dict[str, Any]] | None) -> list[dict[s
     return normalized
 
 
+def _canonical_intent_name(name: str) -> str:
+    """Match the C# bridge's IntentType.ToString() (e.g. "StatusCard")
+    case-insensitively against enum names ("STATUS_CARD") for comparison."""
+    return str(name).replace("_", "").casefold()
+
+
 def normalize_bridge_state(state: dict[str, Any]) -> dict[str, Any]:
+    for enemy in (state.get("enemies") or []):
+        if isinstance(enemy, dict) and enemy.get("intent"):
+            enemy["intent"] = _canonical_intent_name(enemy["intent"])
     """Normalize a raw bridge message into a stable comparison shape."""
     state_type = state.get("type")
     if state_type == STATE_TYPE_COMBAT:
@@ -473,7 +488,7 @@ def combat_state_to_bridge_state(combat: CombatState) -> dict[str, Any]:
             intents = ai.current_move.intents
             if intents:
                 first_intent = intents[0]
-                enemy_data["intent"] = first_intent.intent_type.name
+                enemy_data["intent"] = _canonical_intent_name(first_intent.intent_type.name)
                 enemy_data["intent_damage"] = first_intent.damage
                 enemy_data["intent_hits"] = first_intent.hits
         enemies.append(enemy_data)
@@ -862,3 +877,152 @@ def compare_run_replay(
         current_state_type = actual_type
 
     return ReplayComparison(success=True)
+
+
+def combat_state_from_bridge_state(
+    state: dict[str, Any],
+    *,
+    rng_seed: int = 42,
+    default_character: str = "Ironclad",
+) -> "CombatState":
+    """Rebuild a simulator CombatState from a bridge-shaped combat state.
+
+    This is the inverse of :func:`combat_state_to_bridge_state` restricted to
+    the fields a live bridge trace actually carries. It enables replaying a
+    live-game trace through the simulator: the recorded ``initial_state``
+    becomes the scenario factory argument, and the comparator then checks the
+    *transitions* (game's actual next state vs simulator's next state after
+    the same action).
+
+    Known v1 limitations (refine against real traces):
+    - pile contents are not in the bridge state; the draw pile is filled with
+      the recorded deck order when available, otherwise Strike placeholders,
+      so only ``*_pile_count`` fields compare exactly;
+    - enemy AIs are rebuilt through the create_<monster> factory index so
+      intents match; the AI's internal RNG starts at ``rng_seed + slot``
+      rather than the game's live stream, so intent *choices* can diverge
+      after the first random event by design;
+    - relics/potions are not carried over (the live combat state does not
+      list them per combat snapshot).
+    """
+    from sts2_env.cards.factory import create_card
+    from sts2_env.core.combat import CombatState
+    from sts2_env.core.creature import Creature
+    from sts2_env.core.enums import CardId, CombatSide, PowerId
+    from sts2_env.core.rng import Rng
+
+    import sts2_env.powers  # noqa: F401  (register power classes)
+
+    player = state.get("player", {})
+    max_hp = int(player.get("max_hp") or player.get("hp") or 80)
+    hp = int(player.get("hp", max_hp))
+
+    deck_entries = state.get("deck") or []
+    deck = []
+    for entry in deck_entries:
+        try:
+            deck.append(create_card(CardId[str(entry["id"]).upper()]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    if not deck:
+        # Placeholder fill so pile counts compare; replace from trace metadata
+        # once the live state exposes the full deck.
+        deck = [create_card(CardId.STRIKE_IRONCLAD) for _ in range(10)]
+
+    combat = CombatState(
+        player_hp=hp,
+        player_max_hp=max_hp,
+        deck=deck,
+        rng_seed=rng_seed,
+        relics=[],
+        gold=0,
+        character_id=default_character,
+    )
+    combat.player.current_hp = hp
+    combat.player.block = int(player.get("block") or 0)
+    combat.energy = int(player.get("energy") or 0)
+    if player.get("max_energy") is not None:
+        combat.base_max_energy = int(player["max_energy"])
+    for power in player.get("powers") or []:
+        try:
+            combat.player.apply_power(PowerId[str(power["id"]).upper()], int(power.get("amount", 1)))
+        except (KeyError, ValueError):
+            continue
+
+    for entry in state.get("hand") or []:
+        try:
+            card = create_card(CardId[str(entry["id"]).upper()], upgraded=bool(entry.get("upgraded")))
+        except (KeyError, TypeError, ValueError):
+            continue
+        combat.hand.append(card)
+
+    for index, enemy_data in enumerate(state.get("enemies") or []):
+        e_max = int(enemy_data.get("max_hp") or enemy_data.get("hp") or 50)
+        e_hp = int(enemy_data.get("hp", e_max))
+        monster_id = str(enemy_data.get("id", "UNKNOWN"))
+        enemy = None
+        ai = None
+        factory = _monster_factory_by_id(monster_id)
+        if factory is not None:
+            try:
+                enemy, ai = factory(Rng(rng_seed + index))
+            except Exception:
+                enemy, ai = None, None
+        if enemy is None:
+            enemy = Creature(
+                max_hp=e_max,
+                current_hp=e_hp,
+                side=CombatSide.ENEMY,
+                monster_id=monster_id,
+            )
+        else:
+            enemy.max_hp = e_max
+            enemy.current_hp = e_hp
+        enemy.block = int(enemy_data.get("block") or 0)
+        for power in enemy_data.get("powers") or []:
+            try:
+                enemy.apply_power(PowerId[str(power["id"]).upper()], int(power.get("amount", 1)))
+            except (KeyError, ValueError):
+                continue
+        combat.add_enemy(enemy, ai)
+
+    draw_count = int(state.get("draw_pile_count") or 0)
+    combat.draw_pile = [create_card(CardId.STRIKE_IRONCLAD) for _ in range(draw_count)]
+    combat.discard_pile = [create_card(CardId.STRIKE_IRONCLAD) for _ in range(int(state.get("discard_pile_count") or 0))]
+    combat.exhaust_pile = []
+    combat.round_number = int(state.get("round") or 1)
+    return combat
+
+_MONSTER_FACTORY_INDEX: dict[str, Callable[..., Any]] | None = None
+
+
+def _monster_factory_by_id(monster_id: str) -> Callable[..., Any] | None:
+    """Index create_<monster>(rng) factories by the monster_id they produce."""
+    global _MONSTER_FACTORY_INDEX
+    if _MONSTER_FACTORY_INDEX is not None:
+        return _MONSTER_FACTORY_INDEX.get(monster_id)
+    import importlib
+
+    from sts2_env.core.rng import Rng
+
+    index: dict[str, Callable[..., Any]] = {}
+    monsters_pkg = importlib.import_module("sts2_env.monsters")
+    seen: set[str] = set()
+    for module_name in list(monsters_pkg.__path__):
+        from pathlib import Path as _Path
+
+        for file in _Path(module_name).glob("*.py"):
+            module = importlib.import_module(f"sts2_env.monsters.{file.stem}")
+            for name, obj in vars(module).items():
+                if not callable(obj) or not name.startswith("create_"):
+                    continue
+                try:
+                    creature, _ai = obj(Rng(1))
+                except Exception:
+                    continue
+                mid = getattr(creature, "monster_id", None)
+                if mid and mid not in seen:
+                    seen.add(mid)
+                    index[mid] = obj
+    _MONSTER_FACTORY_INDEX = index
+    return index.get(monster_id)

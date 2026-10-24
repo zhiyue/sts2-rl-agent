@@ -306,6 +306,15 @@ def run_agent(
                 # Log progress periodically
                 if step_count % 100 == 0:
                     logger.info("Step %d, combats seen: %d", step_count, combat_count)
+
+                # Periodic trace checkpoint so a hard kill still leaves a
+                # usable recording.
+                if (
+                    record_replay_path is not None
+                    and isinstance(client, BridgeReplayRecorder)
+                    and step_count % 50 == 0
+                ):
+                    client.save(record_replay_path)
         finally:
             if isinstance(client, BridgeReplayRecorder):
                 saved_path = client.save(record_replay_path)
