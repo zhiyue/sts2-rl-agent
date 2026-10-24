@@ -66,7 +66,7 @@ public sealed class BouncingFlask : CardModel
 					NCombatRoom.Instance.CombatVfxContainer.AddChildSafely(child4);
 				}
 			}
-			await PowerCmd.Apply<PoisonPower>(enemy, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<PoisonPower>(choiceContext, enemy, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, this);
 		}
 	}
 

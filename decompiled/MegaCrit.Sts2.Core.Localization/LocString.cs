@@ -6,6 +6,10 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Localization;
 
+/// <summary>
+/// A Localized String, uses:
+/// https://github.com/axuno/SmartFormat
+/// </summary>
 public class LocString(string locTable, string locEntryKey) : IComparable<LocString>
 {
 	[JsonIgnore]
@@ -59,11 +63,23 @@ public class LocString(string locTable, string locEntryKey) : IComparable<LocStr
 		return new LocString(table, key);
 	}
 
+	/// <summary>
+	/// Returns a formatted string, ie:
+	/// "Deal 6 damage."
+	/// rather than:
+	/// "Deal {Damage:diff()} damage."
+	/// </summary>
 	public string GetFormattedText()
 	{
 		return LocManager.Instance.SmartFormat(this, _variables);
 	}
 
+	/// <summary>
+	/// Returns the raw text in the JSON file, ie:
+	/// "Deal {Damage:diff()} damage."
+	/// rather than:
+	/// "Deal 6 damage."
+	/// </summary>
 	public string GetRawText()
 	{
 		return LocManager.Instance.GetTable(LocTable).GetRawText(LocEntryKey);
@@ -148,6 +164,25 @@ public class LocString(string locTable, string locEntryKey) : IComparable<LocStr
 		}
 	}
 
+	/// <summary>
+	/// Helper function to grab a random LocString with a given key prefix.
+	///
+	/// Example:
+	/// If there are multiple entries of MAP_POINT_HISTORY.abandon in run_history.json and you want to get a random
+	/// LocString:
+	///
+	/// The JSON would be constructed like:
+	/// "MAP_POINT_HISTORY.abandon.0": "{character} had simply given up.",
+	/// "MAP_POINT_HISTORY.abandon.1": "{character} was tired...",
+	/// "MAP_POINT_HISTORY.abandon.2": "{character} abandoned {pronounPossessive} destiny.",
+	///
+	/// You can grab a random entry via:
+	/// LocString abandonMessage = LocString.GetRandomKey("run_history", "MAP_POINT_HISTORY.abandon");
+	/// </summary>
+	/// <param name="table">Name of the table to pull the keys from.</param>
+	/// <param name="keyPrefix">Prefix for the keys we want.</param>
+	/// <param name="rng">Optional rng. Chaotic will be used if not specified.</param>
+	/// <returns>Random LocString with the specified key prefix.</returns>
 	public static LocString GetRandomWithPrefix(string table, string keyPrefix, Rng? rng = null)
 	{
 		IReadOnlyList<LocString> locStringsWithPrefix = LocManager.Instance.GetTable(table).GetLocStringsWithPrefix(keyPrefix);
@@ -165,5 +200,10 @@ public class LocString(string locTable, string locEntryKey) : IComparable<LocStr
 			return string.Compare(LocTable, other?.LocTable, StringComparison.Ordinal);
 		}
 		return string.Compare(LocEntryKey, other.LocEntryKey, StringComparison.Ordinal);
+	}
+
+	public override string ToString()
+	{
+		return "LocString table " + LocTable + " entry " + locEntryKey;
 	}
 }

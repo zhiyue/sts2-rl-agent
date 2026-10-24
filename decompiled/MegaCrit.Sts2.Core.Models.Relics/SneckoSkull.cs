@@ -16,17 +16,17 @@ public sealed class SneckoSkull : RelicModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new PowerVar<PoisonPower>(1m));
 
-	public override decimal ModifyPowerAmountGiven(PowerModel power, Creature giver, decimal amount, Creature? target, CardModel? cardSource)
+	public override decimal ModifyPowerAmountGivenAdditive(PowerModel power, Creature giver, decimal amount, Creature? target, CardModel? cardSource)
 	{
 		if (!(power is PoisonPower))
 		{
-			return amount;
+			return 0m;
 		}
 		if (giver != base.Owner.Creature)
 		{
-			return amount;
+			return 0m;
 		}
-		return amount + (decimal)base.DynamicVars.Poison.IntValue;
+		return base.DynamicVars.Poison.BaseValue;
 	}
 
 	public override Task AfterModifyingPowerAmountGiven(PowerModel power)

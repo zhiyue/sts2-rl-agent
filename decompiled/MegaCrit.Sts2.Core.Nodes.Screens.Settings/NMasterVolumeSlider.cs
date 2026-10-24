@@ -12,17 +12,32 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NMasterVolumeSlider.cs")]
 public class NMasterVolumeSlider : NSettingsSlider
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSettingsSlider.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnValueChanged' method.
+		/// </summary>
 		public new static readonly StringName OnValueChanged = "OnValueChanged";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSettingsSlider.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSettingsSlider.SignalName
 	{
 	}
@@ -42,6 +57,11 @@ public class NMasterVolumeSlider : NSettingsSlider
 		NDebugAudioManager.Instance?.SetMasterAudioVolume(num);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -54,6 +74,7 @@ public class NMasterVolumeSlider : NSettingsSlider
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -72,6 +93,7 @@ public class NMasterVolumeSlider : NSettingsSlider
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -86,12 +108,14 @@ public class NMasterVolumeSlider : NSettingsSlider
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

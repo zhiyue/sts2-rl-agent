@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MegaCrit.Sts2.Core.Animation;
+using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -15,6 +18,10 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Fabricator : MonsterModel
 {
+	private const string _fabricateTrigger = "fabricate";
+
+	private const string _fabricatingStrikeMove = "FABRICATING_STRIKE_MOVE";
+
 	public static readonly HashSet<MonsterModel> aggroSpawns = new HashSet<MonsterModel>
 	{
 		ModelDb.Monster<Zapbot>(),
@@ -68,6 +75,7 @@ public sealed class Fabricator : MonsterModel
 
 	private async Task FabricateMove(IReadOnlyList<Creature> targets)
 	{
+		await CreatureCmd.TriggerAnim(base.Creature, "fabricate", 0f);
 		await SpawnDefensiveBot();
 		await SpawnAggroBot();
 	}
@@ -101,7 +109,39 @@ public sealed class Fabricator : MonsterModel
 
 	private async Task SpawnBot(IEnumerable<MonsterModel> options)
 	{
-		List<MonsterModel> items = options.Where((MonsterModel m) => m != _lastSpawned).ToList();
-		await PowerCmd.Apply<MinionPower>(await CreatureCmd.Add((_lastSpawned = base.RunRng.MonsterAi.NextItem(items)).ToMutable(), base.CombatState, CombatSide.Enemy, base.CombatState.Encounter.GetNextSlot(base.CombatState)), 1m, base.Creature, null);
+		if (base.CombatState.IsLiveCombat())
+		{
+			List<MonsterModel> items = options.Where((MonsterModel m) => m != _lastSpawned).ToList();
+			Creature target = await CreatureCmd.Add((_lastSpawned = base.RunRng.MonsterAi.NextItem(items)).ToMutable(), base.CombatState, CombatSide.Enemy, base.CombatState.Encounter.GetNextSlot(base.CombatState));
+			await PowerCmd.Apply<MinionPower>(new ThrowingPlayerChoiceContext(), target, 1m, base.Creature, null);
+		}
+	}
+
+	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
+	{
+		AnimState animState = new AnimState("idle_loop", isLooping: true);
+		AnimState animState2 = new AnimState("cast");
+		AnimState animState3 = new AnimState("attack");
+		AnimState animState4 = new AnimState("hurt");
+		AnimState state = new AnimState("die");
+		AnimState animState5 = new AnimState("fabricate");
+		animState2.NextState = animState;
+		animState3.NextState = animState;
+		animState4.NextState = animState;
+		animState5.NextState = animState;
+		CreatureAnimator creatureAnimator = new CreatureAnimator(animState, controller);
+		creatureAnimator.AddAnyState("Cast", animState2);
+		creatureAnimator.AddAnyState("Attack", animState3);
+		creatureAnimator.AddAnyState("Dead", state);
+		animState.AddBranch("Hit", animState4);
+		animState2.AddBranch("Hit", animState4);
+		animState4.AddBranch("Hit", animState4);
+		creatureAnimator.AddAnyState("fabricate", animState5);
+		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "FABRICATING_STRIKE_MOVE";
 	}
 }

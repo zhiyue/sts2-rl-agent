@@ -26,6 +26,6 @@ public sealed class LuckyTonic : PotionModel
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
-		await PowerCmd.Apply<BufferPower>(target, base.DynamicVars["BufferPower"].BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<BufferPower>(choiceContext, target, base.DynamicVars["BufferPower"].BaseValue, base.Owner.Creature, null);
 	}
 }

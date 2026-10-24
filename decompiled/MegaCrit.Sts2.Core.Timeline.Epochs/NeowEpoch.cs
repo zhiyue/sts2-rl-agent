@@ -4,6 +4,9 @@ using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Neow
+/// </summary>
 public class NeowEpoch : EpochModel
 {
 	public override string Id => "NEOW_EPOCH";
@@ -13,8 +16,6 @@ public class NeowEpoch : EpochModel
 	public override int EraPosition => 1;
 
 	public override string StoryId => "Reopening";
-
-	public override bool IsArtPlaceholder => false;
 
 	public override EpochModel[] GetTimelineExpansion()
 	{

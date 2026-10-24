@@ -4,6 +4,10 @@ using MegaCrit.Sts2.Core.Multiplayer.Transport;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 
+/// <summary>
+/// Sent from host to clients when a client has reconnected, either in <see cref="T:MegaCrit.Sts2.Core.Multiplayer.Game.Lobby.LoadRunLobby" /> or during a run.
+/// The newly joined client receives ClientRejoinResponseMessage and not this message.
+/// </summary>
 public struct PlayerReconnectedMessage : INetMessage, IPacketSerializable
 {
 	public ulong playerId;
@@ -13,6 +17,8 @@ public struct PlayerReconnectedMessage : INetMessage, IPacketSerializable
 	public NetTransferMode Mode => NetTransferMode.Reliable;
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
+
+	public bool ShouldBuffer => true;
 
 	public void Serialize(PacketWriter writer)
 	{

@@ -7,7 +7,6 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Random;
-using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Rewards;
@@ -67,18 +66,16 @@ public class GoldReward : Reward
 		_wasGoldStolenBack = wasGoldStolenBack;
 	}
 
-	public override Task Populate()
+	public override void Populate()
 	{
 		Rng rng = _rngOverride ?? base.Player.PlayerRng.Rewards;
 		Amount = rng.NextInt(_min, _max + 1);
-		return Task.CompletedTask;
 	}
 
 	protected override async Task<bool> OnSelect()
 	{
 		await PlayerCmd.GainGold(Amount, base.Player, _wasGoldStolenBack);
-		RunManager.Instance.RewardSynchronizer.SyncLocalObtainedGold(Amount);
-		Log.Info($"Obtained {Amount} gold from reward");
+		Log.Info($"Player {base.Player.NetId} obtained {Amount} gold from reward");
 		return true;
 	}
 

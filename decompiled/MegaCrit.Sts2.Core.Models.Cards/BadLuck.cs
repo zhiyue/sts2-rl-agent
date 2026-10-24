@@ -29,7 +29,7 @@ public sealed class BadLuck : CardModel
 	{
 	}
 
-	public override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
+	protected override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
 	{
 		await Cmd.Wait(0.25f);
 		await CreatureCmd.Damage(choiceContext, base.Owner.Creature, base.DynamicVars.HpLoss.BaseValue, ValueProp.Unblockable | ValueProp.Unpowered | ValueProp.Move, this);

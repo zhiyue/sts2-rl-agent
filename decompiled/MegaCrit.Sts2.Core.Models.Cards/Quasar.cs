@@ -29,7 +29,7 @@ public sealed class Quasar : CardModel
 		CardModel cardModel = await CardSelectCmd.FromChooseACardScreen(choiceContext, cards, base.Owner, canSkip: true);
 		if (cardModel != null)
 		{
-			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, base.Owner);
 		}
 	}
 }

@@ -6,6 +6,11 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Entities.Cards;
 
+/// <summary>
+/// Represents a transformation of one card in a pile to another card which replaces the original card in the same pile.
+/// If Replacement is set, then it will be used as a direct replacement.
+/// If ReplacementOptions is set, then a random card will be chosen from one of those options.
+/// </summary>
 public readonly struct CardTransformation
 {
 	public CardModel Original { get; }
@@ -14,6 +19,10 @@ public readonly struct CardTransformation
 
 	public IEnumerable<CardModel>? ReplacementOptions { get; }
 
+	/// <summary>
+	/// Whether the original card is in combat at construction time. Captured here because the card
+	/// may be removed from its pile before GetReplacement is called, which would make CombatState null.
+	/// </summary>
 	public bool IsInCombat { get; }
 
 	public CardTransformation(CardModel original)

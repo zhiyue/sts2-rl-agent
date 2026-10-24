@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -26,72 +27,181 @@ namespace MegaCrit.Sts2.Core.Nodes.Combat;
 [ScriptPath("res://src/Core/Nodes/Combat/NCombatUi.cs")]
 public class NCombatUi : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'Deactivate' method.
+		/// </summary>
 		public static readonly StringName Deactivate = "Deactivate";
 
+		/// <summary>
+		/// Cached name for the 'DisconnectSignals' method.
+		/// </summary>
 		public static readonly StringName DisconnectSignals = "DisconnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'AddToPlayContainer' method.
+		/// </summary>
 		public static readonly StringName AddToPlayContainer = "AddToPlayContainer";
 
+		/// <summary>
+		/// Cached name for the 'AnimIn' method.
+		/// </summary>
 		public static readonly StringName AnimIn = "AnimIn";
 
+		/// <summary>
+		/// Cached name for the 'AnimOut' method.
+		/// </summary>
+		public static readonly StringName AnimOut = "AnimOut";
+
+		/// <summary>
+		/// Cached name for the 'PostCombatCleanUp' method.
+		/// </summary>
+		public static readonly StringName PostCombatCleanUp = "PostCombatCleanUp";
+
+		/// <summary>
+		/// Cached name for the 'OnHandSelectModeEntered' method.
+		/// </summary>
 		public static readonly StringName OnHandSelectModeEntered = "OnHandSelectModeEntered";
 
+		/// <summary>
+		/// Cached name for the 'OnHandSelectModeExited' method.
+		/// </summary>
 		public static readonly StringName OnHandSelectModeExited = "OnHandSelectModeExited";
 
+		/// <summary>
+		/// Cached name for the 'OnPeekButtonReady' method.
+		/// </summary>
 		public static readonly StringName OnPeekButtonReady = "OnPeekButtonReady";
 
+		/// <summary>
+		/// Cached name for the 'OnPeekButtonToggled' method.
+		/// </summary>
 		public static readonly StringName OnPeekButtonToggled = "OnPeekButtonToggled";
 
+		/// <summary>
+		/// Cached name for the 'Enable' method.
+		/// </summary>
 		public static readonly StringName Enable = "Enable";
 
+		/// <summary>
+		/// Cached name for the 'Disable' method.
+		/// </summary>
 		public static readonly StringName Disable = "Disable";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'DebugHideCombatUi' method.
+		/// </summary>
 		public static readonly StringName DebugHideCombatUi = "DebugHideCombatUi";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'EnergyCounterContainer' property.
+		/// </summary>
 		public static readonly StringName EnergyCounterContainer = "EnergyCounterContainer";
 
+		/// <summary>
+		/// Cached name for the 'EndTurnButton' property.
+		/// </summary>
 		public static readonly StringName EndTurnButton = "EndTurnButton";
 
+		/// <summary>
+		/// Cached name for the 'PingButton' property.
+		/// </summary>
 		public static readonly StringName PingButton = "PingButton";
 
+		/// <summary>
+		/// Cached name for the 'DrawPile' property.
+		/// </summary>
 		public static readonly StringName DrawPile = "DrawPile";
 
+		/// <summary>
+		/// Cached name for the 'DiscardPile' property.
+		/// </summary>
 		public static readonly StringName DiscardPile = "DiscardPile";
 
+		/// <summary>
+		/// Cached name for the 'ExhaustPile' property.
+		/// </summary>
 		public static readonly StringName ExhaustPile = "ExhaustPile";
 
+		/// <summary>
+		/// Cached name for the 'Hand' property.
+		/// </summary>
 		public static readonly StringName Hand = "Hand";
 
+		/// <summary>
+		/// Cached name for the 'PlayContainer' property.
+		/// </summary>
 		public static readonly StringName PlayContainer = "PlayContainer";
 
+		/// <summary>
+		/// Cached name for the 'PlayQueue' property.
+		/// </summary>
 		public static readonly StringName PlayQueue = "PlayQueue";
 
+		/// <summary>
+		/// Cached name for the 'CardPreviewContainer' property.
+		/// </summary>
 		public static readonly StringName CardPreviewContainer = "CardPreviewContainer";
 
+		/// <summary>
+		/// Cached name for the 'MessyCardPreviewContainer' property.
+		/// </summary>
 		public static readonly StringName MessyCardPreviewContainer = "MessyCardPreviewContainer";
 
+		/// <summary>
+		/// Cached name for the '_starCounter' field.
+		/// </summary>
 		public static readonly StringName _starCounter = "_starCounter";
 
+		/// <summary>
+		/// Cached name for the '_energyCounter' field.
+		/// </summary>
 		public static readonly StringName _energyCounter = "_energyCounter";
 
+		/// <summary>
+		/// Cached name for the '_combatPilesContainer' field.
+		/// </summary>
 		public static readonly StringName _combatPilesContainer = "_combatPilesContainer";
 
+		/// <summary>
+		/// Cached name for the '_playContainerPeekModeTween' field.
+		/// </summary>
 		public static readonly StringName _playContainerPeekModeTween = "_playContainerPeekModeTween";
 
+		/// <summary>
+		/// Cached name for the '_originalHandChildIndex' field.
+		/// </summary>
 		public static readonly StringName _originalHandChildIndex = "_originalHandChildIndex";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -102,11 +212,21 @@ public class NCombatUi : Control
 
 	private NCombatPilesContainer _combatPilesContainer;
 
+	/// <summary>
+	/// When switching into peek mode, we move the play container cards off to the side for better visibility.
+	/// When switching back out, we use the positions in this dictionary to move them back to their original positions.
+	/// </summary>
 	private readonly Dictionary<NCard, Vector2> _originalPlayContainerCardPositions = new Dictionary<NCard, Vector2>();
 
+	/// <summary>
+	/// When switching into peek mode, we shrink the play container cards for better visibility.
+	/// When switching back out, we use the scales in this dictionary to move them back to their original sizes.
+	/// </summary>
 	private readonly Dictionary<NCard, Vector2> _originalPlayContainerCardScales = new Dictionary<NCard, Vector2>();
 
 	private Tween? _playContainerPeekModeTween;
+
+	private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
 	private int _originalHandChildIndex;
 
@@ -187,13 +307,13 @@ public class NCombatUi : Control
 
 	public override void _ExitTree()
 	{
+		_cts.Cancel();
 		DisconnectSignals();
 	}
 
 	public void Activate(CombatState state)
 	{
-		CombatManager.Instance.CombatEnded += AnimOut;
-		CombatManager.Instance.CombatEnded += PostCombatCleanUp;
+		CombatManager.Instance.CombatEnded += OnCombatEnded;
 		CombatManager.Instance.CombatWon += OnCombatWon;
 		_state = state;
 		Player me = LocalContext.GetMe(_state);
@@ -219,8 +339,7 @@ public class NCombatUi : Control
 
 	private void DisconnectSignals()
 	{
-		CombatManager.Instance.CombatEnded -= AnimOut;
-		CombatManager.Instance.CombatEnded -= PostCombatCleanUp;
+		CombatManager.Instance.CombatEnded -= OnCombatEnded;
 		CombatManager.Instance.CombatWon -= OnCombatWon;
 	}
 
@@ -235,6 +354,12 @@ public class NCombatUi : Control
 		return PlayContainerCards.FirstOrDefault((NCard n) => n.Model == model);
 	}
 
+	private void OnCombatEnded(CombatRoom combatRoom)
+	{
+		AnimOut();
+		PostCombatCleanUp();
+	}
+
 	private void OnCombatWon(CombatRoom room)
 	{
 		if (room.Encounter.ShouldGiveRewards)
@@ -247,9 +372,9 @@ public class NCombatUi : Control
 		}
 	}
 
-	private async Task ProceedWithoutRewards()
+	public async Task ProceedWithoutRewards()
 	{
-		await Cmd.Wait(1f);
+		await Cmd.Wait(1f, _cts.Token);
 		await RunManager.Instance.ProceedFromTerminalRewardsScreen();
 	}
 
@@ -271,20 +396,22 @@ public class NCombatUi : Control
 		}
 		if (_isDebugSlowRewards)
 		{
-			await Cmd.Wait(num + 3f);
+			await Cmd.Wait(num + 3f, _cts.Token);
 		}
 		else if (room.RoomType == RoomType.Boss)
 		{
-			await Cmd.CustomScaledWait(num * 0.5f, num + 1f);
+			await Cmd.CustomScaledWait(num * 0.5f, num + 1f, ignoreCombatEnd: false, _cts.Token);
 		}
 		else
 		{
-			await Cmd.CustomScaledWait(0.5f, num + 1f);
+			await Cmd.CustomScaledWait(0.5f, num + 1f, ignoreCombatEnd: false, _cts.Token);
 		}
-		Player me = LocalContext.GetMe(_state);
-		await RewardsCmd.OfferForRoomEnd(me, room);
+		await room.OfferRoomEndRewards();
 	}
 
+	/// <summary>
+	/// Animates combat UI elements into the scene visually.
+	/// </summary>
 	private void AnimIn()
 	{
 		Hand.AnimIn();
@@ -292,7 +419,10 @@ public class NCombatUi : Control
 		_combatPilesContainer.AnimIn();
 	}
 
-	public void AnimOut(CombatRoom _)
+	/// <summary>
+	/// Animates the combat UI elements out of the scene visually.
+	/// </summary>
+	public void AnimOut()
 	{
 		Hand.AnimOut();
 		PlayQueue.AnimOut();
@@ -302,7 +432,7 @@ public class NCombatUi : Control
 		_combatPilesContainer.AnimOut();
 	}
 
-	private void PostCombatCleanUp(CombatRoom _)
+	private void PostCombatCleanUp()
 	{
 		Tween tween = CreateTween();
 		tween.TweenProperty(PlayContainer, "modulate", Colors.Transparent, 0.25);
@@ -311,13 +441,13 @@ public class NCombatUi : Control
 	public void OnHandSelectModeEntered()
 	{
 		_originalHandChildIndex = Hand.GetIndex();
-		Hand.MoveToFront();
+		Hand.MoveToFrontSafely();
 		ActiveScreenContext.Instance.Update();
 	}
 
 	public void OnHandSelectModeExited()
 	{
-		MoveChild(Hand, _originalHandChildIndex);
+		this.MoveChildSafely(Hand, _originalHandChildIndex);
 		ActiveScreenContext.Instance.Update();
 	}
 
@@ -416,6 +546,9 @@ public class NCombatUi : Control
 		Hand.CancelAllCardPlay();
 	}
 
+	/// <summary>
+	/// Toggles the visibility of the combat UI
+	/// </summary>
 	public override void _Input(InputEvent inputEvent)
 	{
 		if (inputEvent.IsActionReleased(DebugHotkey.hideIntents))
@@ -494,10 +627,15 @@ public class NCombatUi : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(14);
+		List<MethodInfo> list = new List<MethodInfo>(16);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.Deactivate, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -507,6 +645,8 @@ public class NCombatUi : Control
 			new PropertyInfo(Variant.Type.Object, "card", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.AnimIn, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.AnimOut, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.PostCombatCleanUp, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnHandSelectModeEntered, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnHandSelectModeExited, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnPeekButtonReady, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
@@ -527,6 +667,7 @@ public class NCombatUi : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -563,6 +704,18 @@ public class NCombatUi : Control
 		if (method == MethodName.AnimIn && args.Count == 0)
 		{
 			AnimIn();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.AnimOut && args.Count == 0)
+		{
+			AnimOut();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.PostCombatCleanUp && args.Count == 0)
+		{
+			PostCombatCleanUp();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -617,6 +770,7 @@ public class NCombatUi : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -641,6 +795,14 @@ public class NCombatUi : Control
 			return true;
 		}
 		if (method == MethodName.AnimIn)
+		{
+			return true;
+		}
+		if (method == MethodName.AnimOut)
+		{
+			return true;
+		}
+		if (method == MethodName.PostCombatCleanUp)
 		{
 			return true;
 		}
@@ -679,6 +841,7 @@ public class NCombatUi : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -750,6 +913,7 @@ public class NCombatUi : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -840,6 +1004,11 @@ public class NCombatUi : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -863,6 +1032,7 @@ public class NCombatUi : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -882,6 +1052,7 @@ public class NCombatUi : Control
 		info.AddProperty(PropertyName._originalHandChildIndex, Variant.From(in _originalHandChildIndex));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

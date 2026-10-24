@@ -13,6 +13,13 @@ public class CalculatedBlockVar : CalculatedVar
 
 	public ValueProp Props { get; }
 
+	/// <summary>
+	/// Create a new <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.CalculatedBlockVar" />.
+	/// This will only work if the owner is a <see cref="T:MegaCrit.Sts2.Core.Models.CardModel" /> whose <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.DynamicVarSet" /> also has a
+	/// <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.CalculationBaseVar" /> and a <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.CalculationExtraVar" />.
+	/// Note: For cards whose values are entirely dynamic and have no base value (like <see cref="T:MegaCrit.Sts2.Core.Models.Cards.Mirage" />), you
+	/// should use a <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.CalculationBaseVar" /> of 0 and a <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.CalculationExtraVar" /> of 1.
+	/// </summary>
 	public CalculatedBlockVar(ValueProp props)
 		: base("CalculatedBlock")
 	{
@@ -25,8 +32,8 @@ public class CalculatedBlockVar : CalculatedVar
 		if (enchantment != null)
 		{
 			decimal baseValue = GetBaseVar().BaseValue;
-			baseValue += enchantment.EnchantBlockAdditive(baseValue, Props);
-			baseValue *= enchantment.EnchantBlockMultiplicative(baseValue, Props);
+			baseValue += enchantment.EnchantBlockAdditive(baseValue);
+			baseValue *= enchantment.EnchantBlockMultiplicative(baseValue);
 			if (card.IsEnchantmentPreview)
 			{
 				base.PreviewValue = baseValue;
@@ -45,8 +52,8 @@ public class CalculatedBlockVar : CalculatedVar
 		{
 			if (enchantment != null)
 			{
-				num += enchantment.EnchantBlockAdditive(num, Props);
-				num *= enchantment.EnchantBlockMultiplicative(num, Props);
+				num += enchantment.EnchantBlockAdditive(num);
+				num *= enchantment.EnchantBlockMultiplicative(num);
 			}
 			base.PreviewValue = num;
 		}

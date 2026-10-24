@@ -27,11 +27,11 @@ public sealed class Spinner : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
 		if (base.IsUpgraded)
 		{
 			await OrbCmd.Channel<GlassOrb>(new ThrowingPlayerChoiceContext(), base.Owner);
 		}
-		await PowerCmd.Apply<SpinnerPower>(base.Owner.Creature, base.DynamicVars["SpinnerPower"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<SpinnerPower>(choiceContext, base.Owner.Creature, base.DynamicVars["SpinnerPower"].BaseValue, base.Owner.Creature, this);
 	}
 }

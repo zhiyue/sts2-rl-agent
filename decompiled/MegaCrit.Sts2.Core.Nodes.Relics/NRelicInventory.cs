@@ -13,59 +13,130 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Multiplayer;
-using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Nodes.Relics;
 
+/// <summary>
+/// UI for holding relics. Is located under the top bar.
+/// Positioning is handled by the HFlowContainer.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Relics/NRelicInventory.cs")]
 public class NRelicInventory : FlowContainer
 {
 	[Signal]
 	public delegate void RelicsChangedEventHandler();
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : FlowContainer.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'ConnectPlayerEvents' method.
+		/// </summary>
 		public static readonly StringName ConnectPlayerEvents = "ConnectPlayerEvents";
 
+		/// <summary>
+		/// Cached name for the 'DisconnectPlayerEvents' method.
+		/// </summary>
 		public static readonly StringName DisconnectPlayerEvents = "DisconnectPlayerEvents";
 
+		/// <summary>
+		/// Cached name for the 'OnRelicUnfocused' method.
+		/// </summary>
 		public static readonly StringName OnRelicUnfocused = "OnRelicUnfocused";
 
+		/// <summary>
+		/// Cached name for the 'AnimShow' method.
+		/// </summary>
 		public static readonly StringName AnimShow = "AnimShow";
 
+		/// <summary>
+		/// Cached name for the 'AnimHide' method.
+		/// </summary>
 		public static readonly StringName AnimHide = "AnimHide";
 
+		/// <summary>
+		/// Cached name for the 'ShowImmediately' method.
+		/// </summary>
 		public static readonly StringName ShowImmediately = "ShowImmediately";
 
+		/// <summary>
+		/// Cached name for the 'HideImmediately' method.
+		/// </summary>
 		public static readonly StringName HideImmediately = "HideImmediately";
 
+		/// <summary>
+		/// Cached name for the 'GetDefaultPosition' method.
+		/// </summary>
+		public static readonly StringName GetDefaultPosition = "GetDefaultPosition";
+
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'DebugHideTopBar' method.
+		/// </summary>
 		public static readonly StringName DebugHideTopBar = "DebugHideTopBar";
 
+		/// <summary>
+		/// Cached name for the 'UpdateNavigation' method.
+		/// </summary>
 		public static readonly StringName UpdateNavigation = "UpdateNavigation";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : FlowContainer.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_originalPos' field.
+		/// </summary>
 		public static readonly StringName _originalPos = "_originalPos";
 
+		/// <summary>
+		/// Cached name for the '_curTween' field.
+		/// </summary>
 		public static readonly StringName _curTween = "_curTween";
 
+		/// <summary>
+		/// Cached name for the '_debugHideTween' field.
+		/// </summary>
 		public static readonly StringName _debugHideTween = "_debugHideTween";
 
+		/// <summary>
+		/// Cached name for the '_isDebugHidden' field.
+		/// </summary>
 		public static readonly StringName _isDebugHidden = "_isDebugHidden";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : FlowContainer.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'RelicsChanged' signal.
+		/// </summary>
 		public static readonly StringName RelicsChanged = "RelicsChanged";
 	}
 
@@ -85,6 +156,7 @@ public class NRelicInventory : FlowContainer
 
 	public IReadOnlyList<NRelicInventoryHolder> RelicNodes => _relicNodes;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Relics.NRelicInventory.RelicsChangedEventHandler" />
 	public event RelicsChangedEventHandler RelicsChanged
 	{
 		add
@@ -109,14 +181,12 @@ public class NRelicInventory : FlowContainer
 	public override void _EnterTree()
 	{
 		base._EnterTree();
-		ActiveScreenContext.Instance.Updated += UpdateNavigation;
 		ConnectPlayerEvents();
 	}
 
 	public override void _ExitTree()
 	{
 		base._ExitTree();
-		ActiveScreenContext.Instance.Updated -= UpdateNavigation;
 		DisconnectPlayerEvents();
 	}
 
@@ -129,6 +199,7 @@ public class NRelicInventory : FlowContainer
 		{
 			Add(relic, startsShown: true);
 		}
+		UpdateNavigation();
 	}
 
 	private void ConnectPlayerEvents()
@@ -162,7 +233,7 @@ public class NRelicInventory : FlowContainer
 			_relicNodes.Insert(index, nRelicInventoryHolder);
 		}
 		this.AddChildSafely(nRelicInventoryHolder);
-		MoveChild(nRelicInventoryHolder, index);
+		this.MoveChildSafely(nRelicInventoryHolder, index);
 		if (!startsShown)
 		{
 			TextureRect icon = nRelicInventoryHolder.Relic.Icon;
@@ -198,6 +269,9 @@ public class NRelicInventory : FlowContainer
 		}
 	}
 
+	/// <summary>
+	/// Opens the Inspect Relic screen and allows the player to paginate through the rest of the top bar relics.
+	/// </summary>
 	private void OnRelicClicked(RelicModel model)
 	{
 		List<RelicModel> list = new List<RelicModel>();
@@ -269,6 +343,20 @@ public class NRelicInventory : FlowContainer
 		base.Position = position;
 	}
 
+	/// <summary>
+	/// Returns the position the relic inventory is at normally.
+	/// this.Position can change if the relic inventory is hidden, so this is used when we want to position elements
+	/// relative to the relic inventory.
+	/// </summary>
+	public Vector2 GetDefaultPosition()
+	{
+		return _originalPos;
+	}
+
+	/// <summary>
+	/// Used for trailers
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	public override void _Input(InputEvent inputEvent)
 	{
 		if (inputEvent.IsActionReleased(DebugHotkey.hideTopBar))
@@ -277,6 +365,9 @@ public class NRelicInventory : FlowContainer
 		}
 	}
 
+	/// <summary>
+	/// Used for trailers
+	/// </summary>
 	private void DebugHideTopBar()
 	{
 		if (_isDebugHidden)
@@ -295,28 +386,42 @@ public class NRelicInventory : FlowContainer
 		for (int i = 0; i < RelicNodes.Count; i++)
 		{
 			NRelicInventoryHolder nRelicInventoryHolder = RelicNodes[i];
-			nRelicInventoryHolder.FocusNeighborLeft = ((i > 0) ? RelicNodes[i - 1].GetPath() : RelicNodes[i].GetPath());
-			nRelicInventoryHolder.FocusNeighborRight = ((i < RelicNodes.Count - 1) ? RelicNodes[i + 1].GetPath() : RelicNodes[i].GetPath());
+			NodePath path;
+			if (i <= 0)
+			{
+				IReadOnlyList<NRelicInventoryHolder> relicNodes = RelicNodes;
+				path = relicNodes[relicNodes.Count - 1].GetPath();
+			}
+			else
+			{
+				path = RelicNodes[i - 1].GetPath();
+			}
+			nRelicInventoryHolder.FocusNeighborLeft = path;
+			nRelicInventoryHolder.FocusNeighborRight = ((i < RelicNodes.Count - 1) ? RelicNodes[i + 1].GetPath() : RelicNodes[0].GetPath());
 			Control firstPotionControl = NRun.Instance.GlobalUi.TopBar.PotionContainer.FirstPotionControl;
-			nRelicInventoryHolder.FocusNeighborTop = ((firstPotionControl != null && GodotObject.IsInstanceValid(firstPotionControl)) ? firstPotionControl.GetPath() : null);
+			nRelicInventoryHolder.FocusNeighborTop = ((firstPotionControl != null && GodotObject.IsInstanceValid(firstPotionControl)) ? firstPotionControl.GetPath() : nRelicInventoryHolder.GetPath());
 			NMultiplayerPlayerStateContainer multiplayerPlayerContainer = NRun.Instance.GlobalUi.MultiplayerPlayerContainer;
 			if (multiplayerPlayerContainer.GetChildCount() > 0)
 			{
 				Control control = multiplayerPlayerContainer.FirstPlayerState?.Hitbox;
-				nRelicInventoryHolder.FocusNeighborBottom = ((control != null && GodotObject.IsInstanceValid(control)) ? control.GetPath() : null);
+				nRelicInventoryHolder.FocusNeighborBottom = ((control != null && GodotObject.IsInstanceValid(control)) ? control.GetPath() : nRelicInventoryHolder.GetPath());
 			}
 			else
 			{
-				Control control2 = ActiveScreenContext.Instance.GetCurrentScreen()?.FocusedControlFromTopBar;
-				nRelicInventoryHolder.FocusNeighborBottom = ((control2 != null && GodotObject.IsInstanceValid(control2)) ? control2.GetPath() : null);
+				nRelicInventoryHolder.FocusNeighborBottom = NRun.Instance.GlobalUi.TopBar.ActiveScreenProxy.GetPath();
 			}
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(13);
+		List<MethodInfo> list = new List<MethodInfo>(14);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -327,6 +432,7 @@ public class NRelicInventory : FlowContainer
 		list.Add(new MethodInfo(MethodName.AnimHide, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ShowImmediately, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.HideImmediately, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.GetDefaultPosition, new PropertyInfo(Variant.Type.Vector2, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Input, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "inputEvent", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("InputEvent"), exported: false)
@@ -336,6 +442,7 @@ public class NRelicInventory : FlowContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -399,6 +506,11 @@ public class NRelicInventory : FlowContainer
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.GetDefaultPosition && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<Vector2>(GetDefaultPosition());
+			return true;
+		}
 		if (method == MethodName._Input && args.Count == 1)
 		{
 			_Input(VariantUtils.ConvertTo<InputEvent>(in args[0]));
@@ -433,6 +545,7 @@ public class NRelicInventory : FlowContainer
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -476,6 +589,10 @@ public class NRelicInventory : FlowContainer
 		{
 			return true;
 		}
+		if (method == MethodName.GetDefaultPosition)
+		{
+			return true;
+		}
 		if (method == MethodName._Input)
 		{
 			return true;
@@ -491,6 +608,7 @@ public class NRelicInventory : FlowContainer
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -517,6 +635,7 @@ public class NRelicInventory : FlowContainer
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -543,6 +662,11 @@ public class NRelicInventory : FlowContainer
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -554,6 +678,7 @@ public class NRelicInventory : FlowContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -565,6 +690,7 @@ public class NRelicInventory : FlowContainer
 		info.AddSignalEventDelegate(SignalName.RelicsChanged, backing_RelicsChanged);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -591,6 +717,11 @@ public class NRelicInventory : FlowContainer
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -604,6 +735,7 @@ public class NRelicInventory : FlowContainer
 		EmitSignal(SignalName.RelicsChanged);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -617,6 +749,7 @@ public class NRelicInventory : FlowContainer
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

@@ -9,6 +9,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.GameActions.Multiplayer;
 
+/// <summary>
+/// Responsible for synchronizing actions across all peers in a deterministically-ordered manner.
+/// </summary>
 public class ActionQueueSynchronizer
 {
 	private readonly ActionQueueSet _actionQueueSet;
@@ -25,10 +28,20 @@ public class ActionQueueSynchronizer
 
 	private uint _nextHookId;
 
+	/// <summary>
+	/// This list contains actions that were queued during the enemy turn or draw phase, but can only be executed during
+	/// the player's play phase.
+	/// </summary>
 	private readonly List<GameAction> _requestedActionsWaitingForPlayerTurn = new List<GameAction>();
 
+	/// <summary>
+	/// Next ID assigned to hook actions. Exposed only so the combat replay writer has access to it.
+	/// </summary>
 	public uint NextHookId => _nextHookId;
 
+	/// <summary>
+	/// Current combat state. Dictates the paused state of queues.
+	/// </summary>
 	public ActionSynchronizerCombatState CombatState { get; private set; }
 
 	public ActionQueueSynchronizer(IPlayerCollection players, ActionQueueSet actionQueueSet, RunLocationTargetedMessageBuffer messageBuffer, INetGameService netService)
@@ -56,6 +69,13 @@ public class ActionQueueSynchronizer
 		_messageBuffer.UnregisterMessageHandler<ResumeActionAfterPlayerChoiceMessage>(HandleResumeActionAfterPlayerChoiceMessage);
 	}
 
+	/// <summary>
+	/// Call this when combat begins, ends, or the turn changes within combat.
+	/// Certain actions, like card plays or potion usages, should always occur after the hooks that execute at the start
+	/// of the player turn. However, the player is able to queue these actions before their turn actually starts. The
+	/// synchronizer holds onto those actions until the start of the player turn, and then it sends all of them out.
+	/// </summary>
+	/// <param name="combatState">The new combat state.</param>
 	public void SetCombatState(ActionSynchronizerCombatState combatState)
 	{
 		if (CombatState == combatState)
@@ -101,6 +121,12 @@ public class ActionQueueSynchronizer
 		}
 	}
 
+	/// <summary>
+	/// Main entry point for enqueueing a GameAction.
+	/// If you are the host, the GameAction is directly enqueued, and a message is sent to notify clients about the action.
+	/// If you are the client, the GameAction is not enqueued. Instead, a message is sent to the host to request that
+	/// the action be enqueued. The host sends back a confirmation, preserving ordering of the action queues.
+	/// </summary>
 	public void RequestEnqueue(GameAction action)
 	{
 		if (action.ActionType == GameActionType.CombatPlayPhaseOnly && CombatState == ActionSynchronizerCombatState.NotPlayPhase)
@@ -136,6 +162,15 @@ public class ActionQueueSynchronizer
 		return hookActionForId;
 	}
 
+	/// <summary>
+	/// Requests that a GenericHookGameAction be enqueued.
+	/// Hook game actions are a little different than normal game actions. They contain arbitrary logic that is executed
+	/// as part of a hook. Since hooks are executed on all peers, we can identify the actions by an incrementing ID.
+	/// If on host, the action is immediately enqueued and a message is sent to clients.
+	/// If on client, a message is sent to the host, and the host sends a message back to confirm that the message is
+	/// enqueued.
+	/// </summary>
+	/// <returns></returns>
 	public void RequestEnqueueHookAction(GenericHookGameAction action)
 	{
 		switch (_netService.Type)
@@ -159,6 +194,13 @@ public class ActionQueueSynchronizer
 		}
 	}
 
+	/// <summary>
+	/// Requests that an action, paused for player choice, be resumed.
+	/// If on the host, the action is immediately resumed and a message is sent to clients indicating this.
+	/// If on a client, a message is sent to the host to ensure correct ordering, and the host sends a message back
+	/// to confirm resumption of the action.
+	/// </summary>
+	/// <param name="action">The GameAction to resume.</param>
 	public void RequestResumeActionAfterPlayerChoice(GameAction action)
 	{
 		switch (_netService.Type)
@@ -185,7 +227,7 @@ public class ActionQueueSynchronizer
 	{
 		if (_netService.Type == NetGameType.Host)
 		{
-			_logger.Debug($"Sending message to client to enqueue action {action} at {Log.Timestamp}");
+			_logger.Debug($"Sending message to clients to enqueue action {action} at {Log.Timestamp}");
 			ActionEnqueuedMessage message = new ActionEnqueuedMessage
 			{
 				playerId = actionOwnerId,
@@ -202,7 +244,7 @@ public class ActionQueueSynchronizer
 	{
 		if (_netService.Type == NetGameType.Host)
 		{
-			_logger.Debug($"Sending message to client to enqueue hook action {gameAction} at {Log.Timestamp}");
+			_logger.Debug($"Sending message to clients to enqueue hook action {gameAction} at {Log.Timestamp}");
 			HookActionEnqueuedMessage message = new HookActionEnqueuedMessage
 			{
 				hookActionId = gameAction.HookId,
@@ -216,11 +258,15 @@ public class ActionQueueSynchronizer
 		_actionQueueSet.EnqueueWithoutSynchronizing(gameAction);
 	}
 
+	/// <summary>
+	/// Resumes a GameAction after a player choice. This call is synchronized, so it should only be called from the host
+	/// or in response to messages.
+	/// </summary>
 	private void ResumeActionAfterPlayerChoice(uint id)
 	{
 		if (_netService.Type == NetGameType.Host)
 		{
-			_logger.Debug($"Sending message to client to resume action id {id} at {Log.Timestamp}");
+			_logger.Debug($"Sending message to clients to resume action id {id} at {Log.Timestamp}");
 			ResumeActionAfterPlayerChoiceMessage message = new ResumeActionAfterPlayerChoiceMessage
 			{
 				actionId = id,
@@ -276,6 +322,9 @@ public class ActionQueueSynchronizer
 		EnqueueHookAction(hookActionForId);
 	}
 
+	/// <summary>
+	/// Called on the host when a client wishes to resume an action after a player choice is made.
+	/// </summary>
 	private void HandleRequestResumeActionAfterPlayerChoiceMessage(RequestResumeActionAfterPlayerChoiceMessage afterPlayerChoiceMessage, ulong senderId)
 	{
 		if (_netService.Type != NetGameType.Host)
@@ -286,6 +335,9 @@ public class ActionQueueSynchronizer
 		ResumeActionAfterPlayerChoice(afterPlayerChoiceMessage.actionId);
 	}
 
+	/// <summary>
+	/// Called on the client when a host resumes an action.
+	/// </summary>
 	private void HandleResumeActionAfterPlayerChoiceMessage(ResumeActionAfterPlayerChoiceMessage afterPlayerChoiceMessage, ulong _)
 	{
 		if (_netService.Type != NetGameType.Client)
@@ -306,6 +358,9 @@ public class ActionQueueSynchronizer
 		return action.ToGameAction(player);
 	}
 
+	/// <summary>
+	/// This should only ever be called outside this class in replay playback!
+	/// </summary>
 	public GenericHookGameAction GetHookActionForId(uint id, ulong ownerId, GameActionType gameActionType)
 	{
 		GenericHookGameAction action = _hookActions.Find((GenericHookGameAction a) => a.HookId == id);

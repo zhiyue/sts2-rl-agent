@@ -12,12 +12,12 @@ public sealed class EnragePower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Type == CardType.Skill)
 		{
 			await Cmd.Wait(0.5f);
-			await PowerCmd.Apply<StrengthPower>(base.Owner, base.Amount, base.Owner, null);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner, base.Amount, base.Owner, null);
 		}
 	}
 }

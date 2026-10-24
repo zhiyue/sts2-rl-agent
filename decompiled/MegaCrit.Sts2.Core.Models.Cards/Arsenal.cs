@@ -22,12 +22,12 @@ public sealed class Arsenal : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<ArsenalPower>(base.Owner.Creature, base.DynamicVars["ArsenalPower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<ArsenalPower>(choiceContext, base.Owner.Creature, base.DynamicVars["ArsenalPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars["ArsenalPower"].UpgradeValueBy(1m);
+		AddKeyword(CardKeyword.Innate);
 	}
 }

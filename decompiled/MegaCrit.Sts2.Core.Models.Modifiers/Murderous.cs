@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Rooms;
 
@@ -15,7 +16,7 @@ public class Murderous : ModifierModel
 	{
 		if (room is CombatRoom combatRoom)
 		{
-			await PowerCmd.Apply<StrengthPower>(combatRoom.CombatState.Creatures, 3m, null, null);
+			await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), combatRoom.CombatState.Creatures, 3m, null, null);
 		}
 	}
 
@@ -25,6 +26,6 @@ public class Murderous : ModifierModel
 		{
 			return Task.CompletedTask;
 		}
-		return PowerCmd.Apply<StrengthPower>(creature, 3m, null, null);
+		return PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), creature, 3m, null, null);
 	}
 }

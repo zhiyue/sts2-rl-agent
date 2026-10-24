@@ -10,14 +10,14 @@ public class Hoarder : ModifierModel
 {
 	private readonly HashSet<CardModel> _cardsToSkip = new HashSet<CardModel>();
 
-	public override async Task AfterCardChangedPiles(CardModel card, PileType oldPileType, AbstractModel? source)
+	public override async Task AfterCardChangedPiles(CardModel card, PileType oldPileType, AbstractModel? clonedBy)
 	{
 		if (oldPileType != PileType.None)
 		{
 			return;
 		}
 		CardPile? pile = card.Pile;
-		if (pile != null && pile.Type == PileType.Deck && source == null && !_cardsToSkip.Remove(card))
+		if (pile != null && pile.Type == PileType.Deck && clonedBy == null && !_cardsToSkip.Remove(card))
 		{
 			for (int i = 0; i < 2; i++)
 			{

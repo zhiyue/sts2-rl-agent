@@ -11,19 +11,37 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NFpsPaginator.cs")]
 public class NFpsPaginator : NPaginator, IResettableSettingNode
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NPaginator.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetFromSettings' method.
+		/// </summary>
 		public static readonly StringName SetFromSettings = "SetFromSettings";
 
+		/// <summary>
+		/// Cached name for the 'OnIndexChanged' method.
+		/// </summary>
 		public new static readonly StringName OnIndexChanged = "OnIndexChanged";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NPaginator.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NPaginator.SignalName
 	{
 	}
@@ -62,6 +80,11 @@ public class NFpsPaginator : NPaginator, IResettableSettingNode
 		Engine.MaxFps = SaveManager.Instance.SettingsSave.FpsLimit;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -75,6 +98,7 @@ public class NFpsPaginator : NPaginator, IResettableSettingNode
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -99,6 +123,7 @@ public class NFpsPaginator : NPaginator, IResettableSettingNode
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -117,12 +142,14 @@ public class NFpsPaginator : NPaginator, IResettableSettingNode
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

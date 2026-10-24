@@ -28,7 +28,7 @@ public sealed class PotionCourier : EventModel
 		});
 	}
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		return runState.CurrentActIndex > 0;
 	}

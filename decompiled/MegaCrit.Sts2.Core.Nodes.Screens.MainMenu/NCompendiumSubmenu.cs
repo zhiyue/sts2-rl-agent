@@ -22,50 +22,116 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NCompendiumSubmenu.cs")]
 public class NCompendiumSubmenu : NSubmenu
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OpenCardLibrary' method.
+		/// </summary>
 		public static readonly StringName OpenCardLibrary = "OpenCardLibrary";
 
+		/// <summary>
+		/// Cached name for the 'OpenRelicCollection' method.
+		/// </summary>
 		public static readonly StringName OpenRelicCollection = "OpenRelicCollection";
 
+		/// <summary>
+		/// Cached name for the 'OpenPotionLab' method.
+		/// </summary>
 		public static readonly StringName OpenPotionLab = "OpenPotionLab";
 
+		/// <summary>
+		/// Cached name for the 'OpenBestiary' method.
+		/// </summary>
 		public static readonly StringName OpenBestiary = "OpenBestiary";
 
+		/// <summary>
+		/// Cached name for the 'OpenLeaderboards' method.
+		/// </summary>
 		public static readonly StringName OpenLeaderboards = "OpenLeaderboards";
 
+		/// <summary>
+		/// Cached name for the 'OpenStatistics' method.
+		/// </summary>
 		public static readonly StringName OpenStatistics = "OpenStatistics";
 
+		/// <summary>
+		/// Cached name for the 'OpenRunHistory' method.
+		/// </summary>
 		public static readonly StringName OpenRunHistory = "OpenRunHistory";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_confirmButton' field.
+		/// </summary>
 		public static readonly StringName _confirmButton = "_confirmButton";
 
+		/// <summary>
+		/// Cached name for the '_cardLibraryButton' field.
+		/// </summary>
 		public static readonly StringName _cardLibraryButton = "_cardLibraryButton";
 
+		/// <summary>
+		/// Cached name for the '_relicCollectionButton' field.
+		/// </summary>
 		public static readonly StringName _relicCollectionButton = "_relicCollectionButton";
 
+		/// <summary>
+		/// Cached name for the '_potionLabButton' field.
+		/// </summary>
 		public static readonly StringName _potionLabButton = "_potionLabButton";
 
+		/// <summary>
+		/// Cached name for the '_bestiaryButton' field.
+		/// </summary>
 		public static readonly StringName _bestiaryButton = "_bestiaryButton";
 
+		/// <summary>
+		/// Cached name for the '_leaderboardsButton' field.
+		/// </summary>
 		public static readonly StringName _leaderboardsButton = "_leaderboardsButton";
 
+		/// <summary>
+		/// Cached name for the '_statisticsButton' field.
+		/// </summary>
 		public static readonly StringName _statisticsButton = "_statisticsButton";
 
+		/// <summary>
+		/// Cached name for the '_runHistoryButton' field.
+		/// </summary>
 		public static readonly StringName _runHistoryButton = "_runHistoryButton";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
 	}
@@ -114,7 +180,7 @@ public class NCompendiumSubmenu : NSubmenu
 		_potionLabButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OpenPotionLab));
 		_potionLabButton.SetIconAndLocalization("COMPENDIUM_POTION_LAB");
 		_bestiaryButton = GetNode<NShortSubmenuButton>("%BestiaryButton");
-		_bestiaryButton.Disable();
+		_bestiaryButton.Connect(NClickableControl.SignalName.Released, Callable.From((Action<NButton>)OpenBestiary));
 		_bestiaryButton.SetIconAndLocalization("COMPENDIUM_BESTIARY");
 		_leaderboardsButton = GetNode<NCompendiumBottomButton>("%LeaderboardsButton");
 		_leaderboardsButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OpenLeaderboards));
@@ -175,6 +241,7 @@ public class NCompendiumSubmenu : NSubmenu
 		base.OnSubmenuOpened();
 		_leaderboardsButton.Visible = false;
 		_runHistoryButton.Visible = NRunHistory.CanBeShown();
+		_bestiaryButton.Visible = NBestiary.CanBeShown();
 	}
 
 	public void Initialize(IRunState runState)
@@ -201,7 +268,12 @@ public class NCompendiumSubmenu : NSubmenu
 
 	private void OpenBestiary(NButton _)
 	{
-		_stack.PushSubmenuType<NBestiary>();
+		OpenBestiary();
+	}
+
+	public NBestiary OpenBestiary()
+	{
+		return _stack.PushSubmenuType<NBestiary>();
 	}
 
 	private void OpenLeaderboards(NButton _)
@@ -218,10 +290,15 @@ public class NCompendiumSubmenu : NSubmenu
 		_stack.PushSubmenuType<NRunHistory>();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(10);
+		List<MethodInfo> list = new List<MethodInfo>(11);
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal | MethodFlags.Static, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnSubmenuOpened, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -241,6 +318,7 @@ public class NCompendiumSubmenu : NSubmenu
 		{
 			new PropertyInfo(Variant.Type.Object, "_", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.OpenBestiary, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OpenLeaderboards, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "_", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
@@ -256,6 +334,7 @@ public class NCompendiumSubmenu : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -300,6 +379,11 @@ public class NCompendiumSubmenu : NSubmenu
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.OpenBestiary && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<NBestiary>(OpenBestiary());
+			return true;
+		}
 		if (method == MethodName.OpenLeaderboards && args.Count == 1)
 		{
 			OpenLeaderboards(VariantUtils.ConvertTo<NButton>(in args[0]));
@@ -333,6 +417,7 @@ public class NCompendiumSubmenu : NSubmenu
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -379,6 +464,7 @@ public class NCompendiumSubmenu : NSubmenu
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -425,6 +511,7 @@ public class NCompendiumSubmenu : NSubmenu
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -476,6 +563,11 @@ public class NCompendiumSubmenu : NSubmenu
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -492,6 +584,7 @@ public class NCompendiumSubmenu : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -506,6 +599,7 @@ public class NCompendiumSubmenu : NSubmenu
 		info.AddProperty(PropertyName._runHistoryButton, Variant.From(in _runHistoryButton));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -19,7 +19,7 @@ public sealed class Hyperbeam : CardModel
 {
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new DamageVar(26m, ValueProp.Move),
+		new DamageVar(28m, ValueProp.Move),
 		new PowerVar<FocusPower>(3m)
 	});
 
@@ -53,7 +53,7 @@ public sealed class Hyperbeam : CardModel
 				}
 			})
 			.Execute(choiceContext);
-		await PowerCmd.Apply<FocusPower>(base.Owner.Creature, -base.DynamicVars["FocusPower"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<FocusPower>(choiceContext, base.Owner.Creature, -base.DynamicVars["FocusPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

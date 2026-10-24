@@ -15,30 +15,66 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/NTimelineTutorial.cs")]
 public class NTimelineTutorial : Control, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Init' method.
+		/// </summary>
 		public static readonly StringName Init = "Init";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'CloseTutorial' method.
+		/// </summary>
 		public static readonly StringName CloseTutorial = "CloseTutorial";
 
+		/// <summary>
+		/// Cached name for the 'AnimateTutorial' method.
+		/// </summary>
 		public static readonly StringName AnimateTutorial = "AnimateTutorial";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_text' field.
+		/// </summary>
 		public static readonly StringName _text = "_text";
 
+		/// <summary>
+		/// Cached name for the '_acknowledgeButton' field.
+		/// </summary>
 		public static readonly StringName _acknowledgeButton = "_acknowledgeButton";
 
+		/// <summary>
+		/// Cached name for the '_timeline' field.
+		/// </summary>
 		public static readonly StringName _timeline = "_timeline";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -106,6 +142,11 @@ public class NTimelineTutorial : Control, IScreenContext
 			.SetDelay(1.0);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -123,6 +164,7 @@ public class NTimelineTutorial : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -153,6 +195,7 @@ public class NTimelineTutorial : Control, IScreenContext
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -175,6 +218,7 @@ public class NTimelineTutorial : Control, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -201,6 +245,7 @@ public class NTimelineTutorial : Control, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -232,6 +277,11 @@ public class NTimelineTutorial : Control, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -244,6 +294,7 @@ public class NTimelineTutorial : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -254,6 +305,7 @@ public class NTimelineTutorial : Control, IScreenContext
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

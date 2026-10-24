@@ -8,20 +8,40 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx.Cards;
 
+/// <summary>
+/// Many of this VFX are spawned via NHellraiserVfx.
+/// This represents a single sword particle and maybe useful for re-use if we want these to spawn when the
+/// Hellraiser power procs.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Vfx/Cards/NHellraiserAttackVfx.cs")]
 public class NHellraiserAttackVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnTweenFinished' method.
+		/// </summary>
 		public static readonly StringName OnTweenFinished = "OnTweenFinished";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -45,6 +65,11 @@ public class NHellraiserAttackVfx : Node2D
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -54,6 +79,7 @@ public class NHellraiserAttackVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -72,6 +98,7 @@ public class NHellraiserAttackVfx : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -86,12 +113,14 @@ public class NHellraiserAttackVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

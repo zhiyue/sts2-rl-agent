@@ -12,29 +12,64 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Relics;
 
+/// <summary>
+/// A basic relic display. In comparison with the top-bar relic holder, this cannot flash and never displays amounts.
+/// It automatically supports hovering tweens and showing hovertips, but clicks must be handled externally.
+/// Used in run history, multiplayer expanded state, the relic collection, and the relic unlock screen.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Relics/NRelicBasicHolder.cs")]
 public class NRelicBasicHolder : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Relic' property.
+		/// </summary>
 		public static readonly StringName Relic = "Relic";
 
+		/// <summary>
+		/// Cached name for the '_relic' field.
+		/// </summary>
 		public static readonly StringName _relic = "_relic";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -70,6 +105,7 @@ public class NRelicBasicHolder : NButton
 
 	public override void _ExitTree()
 	{
+		base._ExitTree();
 		_hoverTween?.Kill();
 	}
 
@@ -78,8 +114,7 @@ public class NRelicBasicHolder : NButton
 		_hoverTween?.Kill();
 		_hoverTween = CreateTween();
 		_hoverTween.TweenProperty(_relic.Icon, "scale", Vector2.One * 1.25f, 0.05);
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _relic.Model.HoverTips);
-		nHoverTipSet.SetAlignmentForRelic(_relic);
+		NHoverTipSet.CreateAndShow(this, _relic.Model.HoverTips)?.SetAlignmentForRelic(_relic);
 	}
 
 	protected override void OnUnfocus()
@@ -90,6 +125,11 @@ public class NRelicBasicHolder : NButton
 		NHoverTipSet.Remove(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -101,6 +141,7 @@ public class NRelicBasicHolder : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -131,6 +172,7 @@ public class NRelicBasicHolder : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -153,6 +195,7 @@ public class NRelicBasicHolder : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -169,6 +212,7 @@ public class NRelicBasicHolder : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -190,6 +234,11 @@ public class NRelicBasicHolder : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -200,6 +249,7 @@ public class NRelicBasicHolder : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -208,6 +258,7 @@ public class NRelicBasicHolder : NButton
 		info.AddProperty(PropertyName._hoverTween, Variant.From(in _hoverTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

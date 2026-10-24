@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Audio.Debug;
-using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -41,6 +40,9 @@ public abstract class OrbModel : AbstractModel
 
 	public abstract decimal EvokeVal { get; }
 
+	/// <summary>
+	/// Set to true when this is removed from a player's orb queue.
+	/// </summary>
 	public bool HasBeenRemovedFromState { get; private set; }
 
 	public LocString Title => new LocString("orbs", base.Id.Entry + ".title");
@@ -51,6 +53,10 @@ public abstract class OrbModel : AbstractModel
 
 	private string SmartDescriptionLocKey => base.Id.Entry + ".smartDescription";
 
+	/// <summary>
+	/// NOTE: Unlike other models' DynamicDescription, this doesn't include any variables. Someone should probably do that
+	/// but it's a bit larger of a refactor than I want to do right now
+	/// </summary>
 	public LocString SmartDescription
 	{
 		get
@@ -145,7 +151,11 @@ public abstract class OrbModel : AbstractModel
 		}
 	}
 
-	public CombatState CombatState => Owner.Creature.CombatState;
+	/// <summary>
+	/// Get the CombatState of the orb's owner.
+	/// Will never be null, since orbs are combat-only.
+	/// </summary>
+	public ICombatState CombatState => Owner.Creature.CombatState;
 
 	public override bool ShouldReceiveCombatHooks => true;
 
@@ -196,9 +206,7 @@ public abstract class OrbModel : AbstractModel
 
 	public Node2D CreateSprite()
 	{
-		Node2D node2D = PreloadManager.Cache.GetScene(SpritePath).Instantiate<Node2D>(PackedScene.GenEditState.Disabled);
-		new MegaSprite(node2D.GetNode("SpineSkeleton")).GetAnimationState().SetAnimation("idle_loop");
-		return node2D;
+		return PreloadManager.Cache.GetScene(SpritePath).Instantiate<Node2D>(PackedScene.GenEditState.Disabled);
 	}
 
 	public OrbModel ToMutable(int initialAmount = 0)
@@ -236,7 +244,7 @@ public abstract class OrbModel : AbstractModel
 
 	protected decimal ModifyOrbValue(decimal result)
 	{
-		return Hook.ModifyOrbValue(Owner.Creature.CombatState, Owner, result);
+		return Hook.ModifyOrbValue(Owner.Creature.CombatState, this, result);
 	}
 
 	protected override void AfterCloned()

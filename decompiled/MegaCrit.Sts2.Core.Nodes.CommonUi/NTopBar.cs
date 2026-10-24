@@ -9,8 +9,10 @@ using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
+using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.Core.Nodes.TopBar;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Runs;
@@ -19,73 +21,188 @@ using MegaCrit.sts2.Core.Nodes.TopBar;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// A Node script which contains references to all systems which reside in the Top Bar, the bar at the top
+/// of the screen which displays gold, health, potions, and various buttons in the top right corner during a run.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NTopBar.cs")]
 public class NTopBar : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
+		public new static readonly StringName _EnterTree = "_EnterTree";
+
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'ToggleAnimState' method.
+		/// </summary>
 		public static readonly StringName ToggleAnimState = "ToggleAnimState";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'DebugHideTopBar' method.
+		/// </summary>
 		public static readonly StringName DebugHideTopBar = "DebugHideTopBar";
 
+		/// <summary>
+		/// Cached name for the 'AnimHide' method.
+		/// </summary>
 		public static readonly StringName AnimHide = "AnimHide";
 
+		/// <summary>
+		/// Cached name for the 'AnimShow' method.
+		/// </summary>
 		public static readonly StringName AnimShow = "AnimShow";
 
+		/// <summary>
+		/// Cached name for the 'MaxPotionsChanged' method.
+		/// </summary>
 		public static readonly StringName MaxPotionsChanged = "MaxPotionsChanged";
 
+		/// <summary>
+		/// Cached name for the 'UpdateNavigation' method.
+		/// </summary>
 		public static readonly StringName UpdateNavigation = "UpdateNavigation";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Map' property.
+		/// </summary>
 		public static readonly StringName Map = "Map";
 
+		/// <summary>
+		/// Cached name for the 'Deck' property.
+		/// </summary>
 		public static readonly StringName Deck = "Deck";
 
+		/// <summary>
+		/// Cached name for the 'Pause' property.
+		/// </summary>
 		public static readonly StringName Pause = "Pause";
 
+		/// <summary>
+		/// Cached name for the 'PotionContainer' property.
+		/// </summary>
 		public static readonly StringName PotionContainer = "PotionContainer";
 
+		/// <summary>
+		/// Cached name for the 'RoomIcon' property.
+		/// </summary>
 		public static readonly StringName RoomIcon = "RoomIcon";
 
+		/// <summary>
+		/// Cached name for the 'FloorIcon' property.
+		/// </summary>
 		public static readonly StringName FloorIcon = "FloorIcon";
 
+		/// <summary>
+		/// Cached name for the 'BossIcon' property.
+		/// </summary>
 		public static readonly StringName BossIcon = "BossIcon";
 
+		/// <summary>
+		/// Cached name for the 'Gold' property.
+		/// </summary>
 		public static readonly StringName Gold = "Gold";
 
+		/// <summary>
+		/// Cached name for the 'Hp' property.
+		/// </summary>
 		public static readonly StringName Hp = "Hp";
 
+		/// <summary>
+		/// Cached name for the 'Portrait' property.
+		/// </summary>
 		public static readonly StringName Portrait = "Portrait";
 
+		/// <summary>
+		/// Cached name for the 'PortraitTip' property.
+		/// </summary>
 		public static readonly StringName PortraitTip = "PortraitTip";
 
+		/// <summary>
+		/// Cached name for the 'Timer' property.
+		/// </summary>
 		public static readonly StringName Timer = "Timer";
 
+		/// <summary>
+		/// Cached name for the 'TrailContainer' property.
+		/// </summary>
 		public static readonly StringName TrailContainer = "TrailContainer";
 
+		/// <summary>
+		/// Cached name for the 'ActiveScreenProxy' property.
+		/// </summary>
+		public static readonly StringName ActiveScreenProxy = "ActiveScreenProxy";
+
+		/// <summary>
+		/// Cached name for the '_capstoneContainer' field.
+		/// </summary>
 		public static readonly StringName _capstoneContainer = "_capstoneContainer";
 
+		/// <summary>
+		/// Cached name for the '_modifiersContainer' field.
+		/// </summary>
 		public static readonly StringName _modifiersContainer = "_modifiersContainer";
 
+		/// <summary>
+		/// Cached name for the '_achievementLock' field.
+		/// </summary>
+		public static readonly StringName _achievementLock = "_achievementLock";
+
+		/// <summary>
+		/// Cached name for the '_ascensionIcon' field.
+		/// </summary>
 		public static readonly StringName _ascensionIcon = "_ascensionIcon";
 
+		/// <summary>
+		/// Cached name for the '_ascensionLabel' field.
+		/// </summary>
 		public static readonly StringName _ascensionLabel = "_ascensionLabel";
 
+		/// <summary>
+		/// Cached name for the '_ascensionHsv' field.
+		/// </summary>
 		public static readonly StringName _ascensionHsv = "_ascensionHsv";
 
+		/// <summary>
+		/// Cached name for the '_hideTween' field.
+		/// </summary>
 		public static readonly StringName _hideTween = "_hideTween";
 
+		/// <summary>
+		/// Cached name for the '_isDebugHidden' field.
+		/// </summary>
 		public static readonly StringName _isDebugHidden = "_isDebugHidden";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -103,6 +220,8 @@ public class NTopBar : Control
 	private static readonly Color _blueLabelOutline = new Color("004759");
 
 	private Control _modifiersContainer;
+
+	private Control _achievementLock;
 
 	private Control _ascensionIcon;
 
@@ -142,6 +261,14 @@ public class NTopBar : Control
 
 	public Node TrailContainer { get; private set; }
 
+	/// <summary>
+	/// A control node that will automatically try to refocus on the current ScreenContext's FocusedControlFromTopBar.
+	/// Used by things like the nodes in see <see cref="T:MegaCrit.Sts2.Core.Nodes.Relics.NRelicInventory" /> to dynamically controller navigate from the relic
+	/// nodes back to the current active screen. Doing it this way circumvents us needing to call ActiveScreenContext.Update
+	/// whenever we need update the top bar elements navigation back to the active screen.
+	/// </summary>
+	public Control ActiveScreenProxy { get; private set; }
+
 	public override void _Ready()
 	{
 		TrailContainer = GetNode<Node>("%TrailContainer");
@@ -157,10 +284,16 @@ public class NTopBar : Control
 		Portrait = GetNode<NTopBarPortrait>("%TopBarPortrait");
 		PortraitTip = GetNode<NTopBarPortraitTip>("%TopBarPortraitTip");
 		Timer = GetNode<NRunTimer>("%TimerContainer");
+		ActiveScreenProxy = GetNode<Control>("%ActiveScreenProxy");
+		_achievementLock = GetNode<Control>("%AchievementLock");
 		_ascensionIcon = GetNode<Control>("%AscensionIcon");
 		_ascensionLabel = GetNode<MegaLabel>("%AscensionLabel");
 		_ascensionHsv = (ShaderMaterial)_ascensionIcon.Material;
 		_modifiersContainer = GetNode<Control>("%Modifiers");
+		ActiveScreenProxy.Connect(Control.SignalName.FocusEntered, Callable.From(delegate
+		{
+			ActiveScreenContext.Instance.GetCurrentScreen()?.FocusedControlFromTopBar?.TryGrabFocus();
+		}));
 		_capstoneContainer = GetParent().GetNode<NCapstoneContainer>("%CapstoneScreenContainer");
 		_capstoneContainer.Connect(Node.SignalName.ChildEnteredTree, Callable.From<Node>(ToggleAnimState));
 		_capstoneContainer.Connect(Node.SignalName.ChildExitingTree, Callable.From<Node>(ToggleAnimState));
@@ -185,6 +318,7 @@ public class NTopBar : Control
 			_ascensionIcon.Visible = true;
 			_ascensionLabel.SetTextAutoSize(runState.AscensionLevel.ToString());
 		}
+		_achievementLock.Visible = runState.GameMode.AreAchievementsAndEpochsLocked();
 		_modifiersContainer.Visible = runState.Modifiers.Count > 0;
 		foreach (ModifierModel modifier in runState.Modifiers)
 		{
@@ -208,8 +342,15 @@ public class NTopBar : Control
 		Callable.From(UpdateNavigation).CallDeferred();
 	}
 
+	public override void _EnterTree()
+	{
+		base._EnterTree();
+		ActiveScreenContext.Instance.Updated += UpdateNavigation;
+	}
+
 	public override void _ExitTree()
 	{
+		ActiveScreenContext.Instance.Updated -= UpdateNavigation;
 		if (_player != null)
 		{
 			_player.RelicObtained -= OnRelicsUpdated;
@@ -276,36 +417,81 @@ public class NTopBar : Control
 	private void UpdateNavigation()
 	{
 		Control control = NRun.Instance.GlobalUi.RelicInventory.RelicNodes.FirstOrDefault();
-		if (control != null)
+		if (control == null)
 		{
-			Gold.FocusNeighborBottom = control.GetPath();
-			Hp.FocusNeighborBottom = control.GetPath();
-			FloorIcon.FocusNeighborBottom = control.GetPath();
-			RoomIcon.FocusNeighborBottom = control.GetPath();
-			BossIcon.FocusNeighborBottom = control.GetPath();
-			Gold.FocusNeighborTop = Gold.GetPath();
-			Hp.FocusNeighborTop = Hp.GetPath();
-			FloorIcon.FocusNeighborTop = FloorIcon.GetPath();
-			RoomIcon.FocusNeighborTop = RoomIcon.GetPath();
-			BossIcon.FocusNeighborTop = BossIcon.GetPath();
-			Hp.FocusNeighborLeft = Hp.GetPath();
-			Hp.FocusNeighborRight = Gold.GetPath();
-			Gold.FocusNeighborLeft = Hp.GetPath();
-			Gold.FocusNeighborRight = PotionContainer.FirstPotionControl?.GetPath();
-			RoomIcon.FocusNeighborLeft = PotionContainer.LastPotionControl?.GetPath();
-			RoomIcon.FocusNeighborRight = FloorIcon.GetPath();
-			FloorIcon.FocusNeighborLeft = RoomIcon.GetPath();
-			FloorIcon.FocusNeighborRight = BossIcon.GetPath();
-			BossIcon.FocusNeighborLeft = FloorIcon.GetPath();
-			BossIcon.FocusNeighborRight = BossIcon.GetPath();
+			return;
+		}
+		Gold.FocusNeighborBottom = control.GetPath();
+		Hp.FocusNeighborBottom = control.GetPath();
+		FloorIcon.FocusNeighborBottom = control.GetPath();
+		RoomIcon.FocusNeighborBottom = control.GetPath();
+		BossIcon.FocusNeighborBottom = control.GetPath();
+		Gold.FocusNeighborTop = Gold.GetPath();
+		Hp.FocusNeighborTop = Hp.GetPath();
+		FloorIcon.FocusNeighborTop = FloorIcon.GetPath();
+		RoomIcon.FocusNeighborTop = RoomIcon.GetPath();
+		BossIcon.FocusNeighborTop = BossIcon.GetPath();
+		Hp.FocusNeighborLeft = Hp.GetPath();
+		Hp.FocusNeighborRight = Gold.GetPath();
+		Gold.FocusNeighborLeft = Hp.GetPath();
+		Gold.FocusNeighborRight = PotionContainer.FirstPotionControl?.GetPath();
+		RoomIcon.FocusNeighborLeft = PotionContainer.LastPotionControl?.GetPath();
+		RoomIcon.FocusNeighborRight = FloorIcon.GetPath();
+		FloorIcon.FocusNeighborLeft = RoomIcon.GetPath();
+		FloorIcon.FocusNeighborRight = BossIcon.GetPath();
+		BossIcon.FocusNeighborLeft = FloorIcon.GetPath();
+		BossIcon.FocusNeighborRight = BossIcon.GetPath();
+		if (PortraitTip.ShowTip)
+		{
+			PortraitTip.FocusNeighborRight = Hp.GetPath();
+			PortraitTip.FocusNeighborLeft = PortraitTip.GetPath();
+			PortraitTip.FocusNeighborTop = PortraitTip.GetPath();
+			PortraitTip.FocusNeighborBottom = PortraitTip.GetPath();
+			Hp.FocusNeighborLeft = PortraitTip.GetPath();
+		}
+		Viewport viewport = GetViewport();
+		if (viewport != null && viewport.GuiGetFocusOwner() == ActiveScreenProxy)
+		{
+			ActiveScreenContext.Instance.FocusOnDefaultControl();
+		}
+		if (!_modifiersContainer.Visible)
+		{
+			return;
+		}
+		Control[] array = _modifiersContainer.GetChildren().OfType<Control>().ToArray();
+		BossIcon.FocusNeighborRight = array.First().GetPath();
+		if (!BossIcon.IsVisible())
+		{
+			FloorIcon.FocusNeighborRight = array.First().GetPath();
+		}
+		for (int i = 0; i < array.Length; i++)
+		{
+			Control control2 = array[i];
+			control2.FocusNeighborTop = control2.GetPath();
+			control2.FocusNeighborBottom = control.GetPath();
+			control2.FocusNeighborRight = ((i < array.Length - 1) ? array[i + 1].GetPath() : control2.GetPath());
+			if (i > 0)
+			{
+				control2.FocusNeighborLeft = array[i - 1].GetPath();
+			}
+			else
+			{
+				control2.FocusNeighborLeft = (BossIcon.IsVisible() ? BossIcon.GetPath() : FloorIcon.GetPath());
+			}
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(9);
+		List<MethodInfo> list = new List<MethodInfo>(10);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ToggleAnimState, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -326,12 +512,19 @@ public class NTopBar : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._EnterTree && args.Count == 0)
+		{
+			_EnterTree();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -386,10 +579,15 @@ public class NTopBar : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
 		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName._EnterTree)
 		{
 			return true;
 		}
@@ -428,6 +626,7 @@ public class NTopBar : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -496,6 +695,11 @@ public class NTopBar : Control
 			TrailContainer = VariantUtils.ConvertTo<Node>(in value);
 			return true;
 		}
+		if (name == PropertyName.ActiveScreenProxy)
+		{
+			ActiveScreenProxy = VariantUtils.ConvertTo<Control>(in value);
+			return true;
+		}
 		if (name == PropertyName._capstoneContainer)
 		{
 			_capstoneContainer = VariantUtils.ConvertTo<NCapstoneContainer>(in value);
@@ -504,6 +708,11 @@ public class NTopBar : Control
 		if (name == PropertyName._modifiersContainer)
 		{
 			_modifiersContainer = VariantUtils.ConvertTo<Control>(in value);
+			return true;
+		}
+		if (name == PropertyName._achievementLock)
+		{
+			_achievementLock = VariantUtils.ConvertTo<Control>(in value);
 			return true;
 		}
 		if (name == PropertyName._ascensionIcon)
@@ -534,6 +743,7 @@ public class NTopBar : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -602,6 +812,11 @@ public class NTopBar : Control
 			value = VariantUtils.CreateFrom<Node>(TrailContainer);
 			return true;
 		}
+		if (name == PropertyName.ActiveScreenProxy)
+		{
+			value = VariantUtils.CreateFrom<Control>(ActiveScreenProxy);
+			return true;
+		}
 		if (name == PropertyName._capstoneContainer)
 		{
 			value = VariantUtils.CreateFrom(in _capstoneContainer);
@@ -610,6 +825,11 @@ public class NTopBar : Control
 		if (name == PropertyName._modifiersContainer)
 		{
 			value = VariantUtils.CreateFrom(in _modifiersContainer);
+			return true;
+		}
+		if (name == PropertyName._achievementLock)
+		{
+			value = VariantUtils.CreateFrom(in _achievementLock);
 			return true;
 		}
 		if (name == PropertyName._ascensionIcon)
@@ -640,6 +860,11 @@ public class NTopBar : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -658,7 +883,9 @@ public class NTopBar : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.PortraitTip, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.Timer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.TrailContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.ActiveScreenProxy, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._modifiersContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._achievementLock, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ascensionIcon, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ascensionLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ascensionHsv, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -667,6 +894,7 @@ public class NTopBar : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -684,8 +912,10 @@ public class NTopBar : Control
 		info.AddProperty(PropertyName.PortraitTip, Variant.From<NTopBarPortraitTip>(PortraitTip));
 		info.AddProperty(PropertyName.Timer, Variant.From<NRunTimer>(Timer));
 		info.AddProperty(PropertyName.TrailContainer, Variant.From<Node>(TrailContainer));
+		info.AddProperty(PropertyName.ActiveScreenProxy, Variant.From<Control>(ActiveScreenProxy));
 		info.AddProperty(PropertyName._capstoneContainer, Variant.From(in _capstoneContainer));
 		info.AddProperty(PropertyName._modifiersContainer, Variant.From(in _modifiersContainer));
+		info.AddProperty(PropertyName._achievementLock, Variant.From(in _achievementLock));
 		info.AddProperty(PropertyName._ascensionIcon, Variant.From(in _ascensionIcon));
 		info.AddProperty(PropertyName._ascensionLabel, Variant.From(in _ascensionLabel));
 		info.AddProperty(PropertyName._ascensionHsv, Variant.From(in _ascensionHsv));
@@ -693,6 +923,7 @@ public class NTopBar : Control
 		info.AddProperty(PropertyName._isDebugHidden, Variant.From(in _isDebugHidden));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -749,33 +980,41 @@ public class NTopBar : Control
 		{
 			TrailContainer = value13.As<Node>();
 		}
-		if (info.TryGetProperty(PropertyName._capstoneContainer, out var value14))
+		if (info.TryGetProperty(PropertyName.ActiveScreenProxy, out var value14))
 		{
-			_capstoneContainer = value14.As<NCapstoneContainer>();
+			ActiveScreenProxy = value14.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._modifiersContainer, out var value15))
+		if (info.TryGetProperty(PropertyName._capstoneContainer, out var value15))
 		{
-			_modifiersContainer = value15.As<Control>();
+			_capstoneContainer = value15.As<NCapstoneContainer>();
 		}
-		if (info.TryGetProperty(PropertyName._ascensionIcon, out var value16))
+		if (info.TryGetProperty(PropertyName._modifiersContainer, out var value16))
 		{
-			_ascensionIcon = value16.As<Control>();
+			_modifiersContainer = value16.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._ascensionLabel, out var value17))
+		if (info.TryGetProperty(PropertyName._achievementLock, out var value17))
 		{
-			_ascensionLabel = value17.As<MegaLabel>();
+			_achievementLock = value17.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._ascensionHsv, out var value18))
+		if (info.TryGetProperty(PropertyName._ascensionIcon, out var value18))
 		{
-			_ascensionHsv = value18.As<ShaderMaterial>();
+			_ascensionIcon = value18.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._hideTween, out var value19))
+		if (info.TryGetProperty(PropertyName._ascensionLabel, out var value19))
 		{
-			_hideTween = value19.As<Tween>();
+			_ascensionLabel = value19.As<MegaLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._isDebugHidden, out var value20))
+		if (info.TryGetProperty(PropertyName._ascensionHsv, out var value20))
 		{
-			_isDebugHidden = value20.As<bool>();
+			_ascensionHsv = value20.As<ShaderMaterial>();
+		}
+		if (info.TryGetProperty(PropertyName._hideTween, out var value21))
+		{
+			_hideTween = value21.As<Tween>();
+		}
+		if (info.TryGetProperty(PropertyName._isDebugHidden, out var value22))
+		{
+			_isDebugHidden = value22.As<bool>();
 		}
 	}
 }

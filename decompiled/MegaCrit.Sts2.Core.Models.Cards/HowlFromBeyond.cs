@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -30,7 +29,7 @@ public sealed class HowlFromBeyond : CardModel
 			.Execute(choiceContext);
 	}
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task AfterAutoPostPlayPhaseEntered(PlayerChoiceContext choiceContext, Player player)
 	{
 		CardPile? pile = base.Pile;
 		if (pile != null && pile.Type == PileType.Exhaust && player == base.Owner)

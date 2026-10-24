@@ -9,30 +9,66 @@ namespace MegaCrit.Sts2.Core.Nodes.Cards;
 [ScriptPath("res://src/Core/Nodes/Cards/NCardHighlight.cs")]
 public class NCardHighlight : TextureRect
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : TextureRect.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'AnimShow' method.
+		/// </summary>
 		public static readonly StringName AnimShow = "AnimShow";
 
+		/// <summary>
+		/// Cached name for the 'AnimHide' method.
+		/// </summary>
 		public static readonly StringName AnimHide = "AnimHide";
 
+		/// <summary>
+		/// Cached name for the 'AnimHideInstantly' method.
+		/// </summary>
 		public static readonly StringName AnimHideInstantly = "AnimHideInstantly";
 
+		/// <summary>
+		/// Cached name for the 'AnimFlash' method.
+		/// </summary>
 		public static readonly StringName AnimFlash = "AnimFlash";
 
+		/// <summary>
+		/// Cached name for the 'GetShaderParameter' method.
+		/// </summary>
 		public static readonly StringName GetShaderParameter = "GetShaderParameter";
 
+		/// <summary>
+		/// Cached name for the 'SetShaderParameter' method.
+		/// </summary>
 		public static readonly StringName SetShaderParameter = "SetShaderParameter";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : TextureRect.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_curTween' field.
+		/// </summary>
 		public static readonly StringName _curTween = "_curTween";
 
+		/// <summary>
+		/// Cached name for the '_shaderMaterial' field.
+		/// </summary>
 		public static readonly StringName _shaderMaterial = "_shaderMaterial";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : TextureRect.SignalName
 	{
 	}
@@ -92,6 +128,11 @@ public class NCardHighlight : TextureRect
 		_shaderMaterial.SetShaderParameter(_shaderParameterWidth, val);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -109,6 +150,7 @@ public class NCardHighlight : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -156,6 +198,7 @@ public class NCardHighlight : TextureRect
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -190,6 +233,7 @@ public class NCardHighlight : TextureRect
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -206,6 +250,7 @@ public class NCardHighlight : TextureRect
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -222,6 +267,11 @@ public class NCardHighlight : TextureRect
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -231,6 +281,7 @@ public class NCardHighlight : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -239,6 +290,7 @@ public class NCardHighlight : TextureRect
 		info.AddProperty(PropertyName._shaderMaterial, Variant.From(in _shaderMaterial));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

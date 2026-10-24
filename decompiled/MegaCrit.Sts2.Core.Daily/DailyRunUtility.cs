@@ -1,19 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Leaderboard;
 using MegaCrit.Sts2.Core.Logging;
+using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Platform;
-using MegaCrit.Sts2.Core.Runs;
-using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Daily;
 
+/// <summary>
+/// A little helper for uploading the score at the end of a daily run.
+/// </summary>
 public static class DailyRunUtility
 {
+	/// <summary>
+	/// Uploads a score to the daily leaderboard for the given time.
+	/// </summary>
 	public static async Task UploadScore(DateTimeOffset time, int score, List<SerializablePlayer> players)
 	{
 		List<ulong> playerIdsInRun = players.Select((SerializablePlayer p) => p.NetId).ToList();
@@ -31,28 +36,30 @@ public static class DailyRunUtility
 		Log.Info($"Uploaded score of {score} for daily {time} to leaderboard {leaderboardName}");
 	}
 
-	public static async Task<bool> ShouldUploadScore(ILeaderboardHandle? handle, IReadOnlyList<ulong> playerIdsInRun)
+	/// <summary>
+	/// Figures out whether we should upload a score to the passed leaderboard.
+	/// If any player in the run has already submitted a score, then this returns false.
+	/// </summary>
+	public static async Task<bool> ShouldUploadScore(ILeaderboardHandle? handle, IReadOnlyList<ulong> playerIdsInRun, CancellationToken cancelToken = default(CancellationToken))
 	{
 		if (handle == null)
 		{
 			return true;
 		}
-		return (await LeaderboardManager.QueryLeaderboardForUsers(handle, playerIdsInRun)).Count <= 0;
+		return (await LeaderboardManager.QueryLeaderboardForUsers(handle, playerIdsInRun, cancelToken)).Count <= 0;
 	}
 
+	/// <param name="dateTime">Date to retrieve the leaderboard for. All fields other than year/month/day are ignored.</param>
+	/// <param name="playerCount">Count of players to retrieve the leaderboard for.</param>
+	/// <returns>The name of the leaderboard used for the passed date and player count.</returns>
 	public static string GetLeaderboardName(DateTimeOffset dateTime, int playerCount)
 	{
-		return $"{dateTime.Year}_{dateTime.Month}_{dateTime.Day}_{playerCount}p";
-	}
-
-	public static void UploadScoreIfNecessary(SerializableRun serializableRun, ulong playerId, bool isVictory)
-	{
-		if (!serializableRun.DailyTime.HasValue)
+		PlatformBranch platformBranch = PlatformUtil.GetPlatformBranch();
+		bool flag = (uint)(platformBranch - 2) <= 2u;
+		if (!flag && NGame.IsReleaseGame())
 		{
-			throw new InvalidOperationException("Tried to upload daily score of a non-daily run!");
+			return $"{dateTime.Year}_{dateTime.Month:D2}_{dateTime.Day:D2}_{playerCount}p";
 		}
-		DateTimeOffset value = serializableRun.DailyTime.Value;
-		int score = ScoreUtility.CalculateScore(serializableRun, isVictory);
-		TaskHelper.RunSafely(UploadScore(value, score, serializableRun.Players));
+		return $"{dateTime.Year}_{dateTime.Month:D2}_{dateTime.Day:D2}_{playerCount}p_BETA";
 	}
 }

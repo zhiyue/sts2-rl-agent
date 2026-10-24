@@ -4,6 +4,7 @@ using System.Linq;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.TestSupport;
@@ -113,6 +114,12 @@ public class NetCombatCardDb
 	{
 		if (!_cardToId.ContainsKey(card))
 		{
+			if (card.Owner == null)
+			{
+				Log.Error($"Tried to ID combat card {card} without an owner! This is not allowed");
+				return;
+			}
+			Log.LogMessage(LogLevel.Debug, LogType.Network, $"ID card {card} owned by {card.Owner.NetId} in pile {card.Pile?.Type} with id: {_nextId}");
 			_cardToId[card] = _nextId;
 			_idToCard[_nextId] = card;
 			_nextId++;

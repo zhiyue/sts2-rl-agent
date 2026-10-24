@@ -11,21 +11,42 @@ namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 [ScriptPath("res://src/Core/Nodes/CommonUi/NGridCardPreviewContainer.cs")]
 public class NGridCardPreviewContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ForceMaxColumnsUntilEmpty' method.
+		/// </summary>
 		public static readonly StringName ForceMaxColumnsUntilEmpty = "ForceMaxColumnsUntilEmpty";
 
+		/// <summary>
+		/// Cached name for the 'ReformatElements' method.
+		/// </summary>
 		public static readonly StringName ReformatElements = "ReformatElements";
 
+		/// <summary>
+		/// Cached name for the 'CheckAnyChildrenPresent' method.
+		/// </summary>
 		public static readonly StringName CheckAnyChildrenPresent = "CheckAnyChildrenPresent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -38,6 +59,10 @@ public class NGridCardPreviewContainer : Control
 		Connect(Node.SignalName.ChildExitingTree, Callable.From<Node>(CheckAnyChildrenPresent));
 	}
 
+	/// <summary>
+	/// Enforces a max column count on the grid container.
+	/// Call this before adding elements to the container. Once all cards added have disappeared, the count will reset.
+	/// </summary>
 	public void ForceMaxColumnsUntilEmpty(int maxColumns)
 	{
 		_forcedMaxColumns = maxColumns;
@@ -82,6 +107,11 @@ public class NGridCardPreviewContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -102,6 +132,7 @@ public class NGridCardPreviewContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -132,6 +163,7 @@ public class NGridCardPreviewContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -154,12 +186,14 @@ public class NGridCardPreviewContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

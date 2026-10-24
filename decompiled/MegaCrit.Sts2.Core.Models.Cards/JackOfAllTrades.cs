@@ -33,7 +33,7 @@ public sealed class JackOfAllTrades : CardModel
 			select c, base.DynamicVars.Cards.IntValue, base.Owner.RunState.Rng.CombatCardGeneration);
 		foreach (CardModel item in distinctForCombat.ToList())
 		{
-			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, base.Owner);
 		}
 	}
 }

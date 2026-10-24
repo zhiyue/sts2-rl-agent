@@ -10,71 +10,143 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
+/// <summary>
+/// Speech bubble vfx used when creatures talk during combat or an NPC talks in a "room" style environment (i.e. Merchant)
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Vfx/NSpeechBubbleVfx.cs")]
 public class NSpeechBubbleVfx : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetSpeechBubbleColor' method.
+		/// </summary>
 		public static readonly StringName SetSpeechBubbleColor = "SetSpeechBubbleColor";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'CreateInternal' method.
+		/// </summary>
 		public static readonly StringName CreateInternal = "CreateInternal";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'SecondsToDisplay' property.
+		/// </summary>
 		public static readonly StringName SecondsToDisplay = "SecondsToDisplay";
 
+		/// <summary>
+		/// Cached name for the '_container' field.
+		/// </summary>
 		public static readonly StringName _container = "_container";
 
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_contents' field.
+		/// </summary>
 		public static readonly StringName _contents = "_contents";
 
+		/// <summary>
+		/// Cached name for the '_bubble' field.
+		/// </summary>
 		public static readonly StringName _bubble = "_bubble";
 
+		/// <summary>
+		/// Cached name for the '_shadow' field.
+		/// </summary>
 		public static readonly StringName _shadow = "_shadow";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_startPos' field.
+		/// </summary>
 		public static readonly StringName _startPos = "_startPos";
 
+		/// <summary>
+		/// Cached name for the '_vfxColor' field.
+		/// </summary>
 		public static readonly StringName _vfxColor = "_vfxColor";
 
+		/// <summary>
+		/// Cached name for the '_style' field.
+		/// </summary>
 		public static readonly StringName _style = "_style";
 
+		/// <summary>
+		/// Cached name for the '_side' field.
+		/// </summary>
 		public static readonly StringName _side = "_side";
 
+		/// <summary>
+		/// Cached name for the '_text' field.
+		/// </summary>
 		public static readonly StringName _text = "_text";
 
+		/// <summary>
+		/// Cached name for the '_elapsedTime' field.
+		/// </summary>
 		public static readonly StringName _elapsedTime = "_elapsedTime";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
 
-	private static readonly StringName _v = new StringName("v");
+	private static readonly StringName _h = new StringName("h");
 
 	private static readonly StringName _s = new StringName("s");
 
-	private static readonly StringName _h = new StringName("h");
+	private static readonly StringName _v = new StringName("v");
 
 	private Control _container;
 
@@ -116,6 +188,9 @@ public class NSpeechBubbleVfx : Control
 
 	public double SecondsToDisplay { get; private set; }
 
+	/// <summary>
+	/// Creates a speech bubble given a creature. Use this when you want creatures to talk during combat!
+	/// </summary>
 	public static NSpeechBubbleVfx? Create(string text, Creature speaker, double secondsToDisplay, VfxColor vfxColor = VfxColor.White)
 	{
 		if (TestMode.IsOn)
@@ -133,6 +208,9 @@ public class NSpeechBubbleVfx : Control
 		return nSpeechBubbleVfx;
 	}
 
+	/// <summary>
+	/// When we want to specify the absolute position of the speech bubble vfx.
+	/// </summary>
 	public static NSpeechBubbleVfx? Create(string text, DialogueSide side, Vector2 globalPosition, double secondsToDisplay, VfxColor vfxColor = VfxColor.White)
 	{
 		if (TestMode.IsOn)
@@ -178,15 +256,30 @@ public class NSpeechBubbleVfx : Control
 			_hsv.SetShaderParameter(_s, 1.5f);
 			_hsv.SetShaderParameter(_v, 0.6f);
 			break;
+		case VfxColor.Swamp:
+			_hsv.SetShaderParameter(_h, 0.72f);
+			_hsv.SetShaderParameter(_s, 1.7f);
+			_hsv.SetShaderParameter(_v, 0.5f);
+			break;
 		case VfxColor.Purple:
 			_hsv.SetShaderParameter(_h, 0.3f);
 			_hsv.SetShaderParameter(_s, 0.6f);
 			_hsv.SetShaderParameter(_v, 0.5f);
 			break;
-		case VfxColor.Red:
-			_hsv.SetShaderParameter(_h, 0.48f);
-			_hsv.SetShaderParameter(_s, 2f);
+		case VfxColor.Orange:
+			_hsv.SetShaderParameter(_h, 0.6f);
+			_hsv.SetShaderParameter(_s, 4f);
 			_hsv.SetShaderParameter(_v, 0.5f);
+			break;
+		case VfxColor.Red:
+			_hsv.SetShaderParameter(_h, 0.49f);
+			_hsv.SetShaderParameter(_s, 2.5f);
+			_hsv.SetShaderParameter(_v, 0.38f);
+			break;
+		case VfxColor.DarkGray:
+			_hsv.SetShaderParameter(_h, 0.093f);
+			_hsv.SetShaderParameter(_s, 0.2f);
+			_hsv.SetShaderParameter(_v, 0.4f);
 			break;
 		case VfxColor.Black:
 			_hsv.SetShaderParameter(_h, 1f);
@@ -234,7 +327,7 @@ public class NSpeechBubbleVfx : Control
 	private async Task AnimOutInternal()
 	{
 		_tween.TweenProperty(this, "modulate", StsColors.transparentBlack, 0.4).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
-		await ToSignal(_tween, Tween.SignalName.Finished);
+		await _tween.AwaitFinished(this);
 		this.QueueFreeSafely();
 	}
 
@@ -253,9 +346,17 @@ public class NSpeechBubbleVfx : Control
 		_contents.Position = new Vector2(0f, Mathf.Sin(_elapsedTime) * 2f);
 	}
 
+	/// <summary>
+	/// Given a creature, dynamically calculates and returns the position of where the "mouth" should be.
+	/// Used during combat, where we don't know which side a creature could be on.
+	/// </summary>
 	private static Vector2 GetCreatureSpeechPosition(Creature speaker)
 	{
-		NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(speaker);
+		NCreature creatureNode = speaker.GetCreatureNode();
+		if (creatureNode == null)
+		{
+			return Vector2.Zero;
+		}
 		if (creatureNode.Visuals.TalkPosition != null)
 		{
 			return creatureNode.Visuals.TalkPosition.GlobalPosition;
@@ -272,6 +373,11 @@ public class NSpeechBubbleVfx : Control
 		return result;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -300,6 +406,7 @@ public class NSpeechBubbleVfx : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -357,6 +464,7 @@ public class NSpeechBubbleVfx : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -387,6 +495,7 @@ public class NSpeechBubbleVfx : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -463,6 +572,7 @@ public class NSpeechBubbleVfx : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -539,6 +649,11 @@ public class NSpeechBubbleVfx : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -560,6 +675,7 @@ public class NSpeechBubbleVfx : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -580,6 +696,7 @@ public class NSpeechBubbleVfx : Control
 		info.AddProperty(PropertyName._elapsedTime, Variant.From(in _elapsedTime));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

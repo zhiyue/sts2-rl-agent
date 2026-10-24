@@ -20,7 +20,7 @@ public sealed class TheLegendsWereTrue : EventModel
 {
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(8m, ValueProp.Unblockable | ValueProp.Unpowered));
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		if (runState.CurrentActIndex == 0 && runState.Players.All((Player p) => p.Deck.Cards.Count > 0))
 		{

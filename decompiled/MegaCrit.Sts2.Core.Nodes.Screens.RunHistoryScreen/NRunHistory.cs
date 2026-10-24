@@ -21,6 +21,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Debug;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Potions;
+using MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.Core.Platform;
@@ -28,92 +29,214 @@ using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Runs.History;
 using MegaCrit.Sts2.Core.Saves;
+using MegaCrit.Sts2.Core.Saves.Runs;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.Core.Unlocks;
 using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen;
 
+/// <summary>
+/// Rename to NRunHistoryScreen someday.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/RunHistoryScreen/NRunHistory.cs")]
 public class NRunHistory : NSubmenu
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnLeftButtonButtonReleased' method.
+		/// </summary>
 		public static readonly StringName OnLeftButtonButtonReleased = "OnLeftButtonButtonReleased";
 
+		/// <summary>
+		/// Cached name for the 'OnRightButtonButtonReleased' method.
+		/// </summary>
 		public static readonly StringName OnRightButtonButtonReleased = "OnRightButtonButtonReleased";
 
+		/// <summary>
+		/// Cached name for the 'CanBeShown' method.
+		/// </summary>
 		public static readonly StringName CanBeShown = "CanBeShown";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuShown' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuShown = "OnSubmenuShown";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuHidden' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuHidden = "OnSubmenuHidden";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'SelectPlayer' method.
+		/// </summary>
 		public static readonly StringName SelectPlayer = "SelectPlayer";
 
+		/// <summary>
+		/// Cached name for the 'LoadGoldHpAndPotionInfo' method.
+		/// </summary>
 		public static readonly StringName LoadGoldHpAndPotionInfo = "LoadGoldHpAndPotionInfo";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_screenContents' field.
+		/// </summary>
 		public static readonly StringName _screenContents = "_screenContents";
 
+		/// <summary>
+		/// Cached name for the '_playerIconContainer' field.
+		/// </summary>
 		public static readonly StringName _playerIconContainer = "_playerIconContainer";
 
+		/// <summary>
+		/// Cached name for the '_hpLabel' field.
+		/// </summary>
 		public static readonly StringName _hpLabel = "_hpLabel";
 
+		/// <summary>
+		/// Cached name for the '_goldLabel' field.
+		/// </summary>
 		public static readonly StringName _goldLabel = "_goldLabel";
 
+		/// <summary>
+		/// Cached name for the '_potionHolder' field.
+		/// </summary>
 		public static readonly StringName _potionHolder = "_potionHolder";
 
+		/// <summary>
+		/// Cached name for the '_floorLabel' field.
+		/// </summary>
 		public static readonly StringName _floorLabel = "_floorLabel";
 
+		/// <summary>
+		/// Cached name for the '_timeLabel' field.
+		/// </summary>
 		public static readonly StringName _timeLabel = "_timeLabel";
 
+		/// <summary>
+		/// Cached name for the '_dateLabel' field.
+		/// </summary>
 		public static readonly StringName _dateLabel = "_dateLabel";
 
+		/// <summary>
+		/// Cached name for the '_seedLabel' field.
+		/// </summary>
 		public static readonly StringName _seedLabel = "_seedLabel";
 
+		/// <summary>
+		/// Cached name for the '_gameModeLabel' field.
+		/// </summary>
 		public static readonly StringName _gameModeLabel = "_gameModeLabel";
 
+		/// <summary>
+		/// Cached name for the '_buildLabel' field.
+		/// </summary>
 		public static readonly StringName _buildLabel = "_buildLabel";
 
+		/// <summary>
+		/// Cached name for the '_badgeContainer' field.
+		/// </summary>
+		public static readonly StringName _badgeContainer = "_badgeContainer";
+
+		/// <summary>
+		/// Cached name for the '_deathQuoteLabel' field.
+		/// </summary>
 		public static readonly StringName _deathQuoteLabel = "_deathQuoteLabel";
 
+		/// <summary>
+		/// Cached name for the '_mapPointHistory' field.
+		/// </summary>
 		public static readonly StringName _mapPointHistory = "_mapPointHistory";
 
+		/// <summary>
+		/// Cached name for the '_relicHistory' field.
+		/// </summary>
 		public static readonly StringName _relicHistory = "_relicHistory";
 
+		/// <summary>
+		/// Cached name for the '_deckHistory' field.
+		/// </summary>
 		public static readonly StringName _deckHistory = "_deckHistory";
 
+		/// <summary>
+		/// Cached name for the '_outOfDateVisual' field.
+		/// </summary>
 		public static readonly StringName _outOfDateVisual = "_outOfDateVisual";
 
+		/// <summary>
+		/// Cached name for the '_index' field.
+		/// </summary>
 		public static readonly StringName _index = "_index";
 
+		/// <summary>
+		/// Cached name for the '_prevButton' field.
+		/// </summary>
 		public static readonly StringName _prevButton = "_prevButton";
 
+		/// <summary>
+		/// Cached name for the '_nextButton' field.
+		/// </summary>
 		public static readonly StringName _nextButton = "_nextButton";
 
+		/// <summary>
+		/// Cached name for the '_selectedPlayerIcon' field.
+		/// </summary>
 		public static readonly StringName _selectedPlayerIcon = "_selectedPlayerIcon";
 
+		/// <summary>
+		/// Cached name for the '_screenTween' field.
+		/// </summary>
 		public static readonly StringName _screenTween = "_screenTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
 	}
 
 	private static readonly string _scenePath = SceneHelper.GetScenePath("screens/run_history_screen/run_history");
+
+	/// <summary>
+	/// Padding at the bottom of the screen so that the scrollbar shows up if the contents don't quite touch the bottom
+	/// </summary>
+	private const float _bottomScrollbarPadding = 25f;
 
 	public const string locTable = "run_history";
 
@@ -121,7 +244,15 @@ public class NRunHistory : NSubmenu
 
 	private static readonly LocString _rightQuote = new LocString("game_over_screen", "ENCOUNTER_QUOTE_RIGHT");
 
-	private Control _screenContents;
+	private readonly LocString _dateFormat = new LocString("run_history", "INFO.DATE_FORMAT");
+
+	private readonly LocString _timeFormat = new LocString("run_history", "INFO.TIME_FORMAT");
+
+	private readonly LocString _dateTimeLocString = new LocString("run_history", "INFO.DATE_TIME");
+
+	private readonly LocString _seedLocString = new LocString("run_history", "INFO.SEED");
+
+	private NScrollableContainer _screenContents;
 
 	private Control _playerIconContainer;
 
@@ -142,6 +273,8 @@ public class NRunHistory : NSubmenu
 	private MegaRichTextLabel _gameModeLabel;
 
 	private MegaRichTextLabel _buildLabel;
+
+	private Control _badgeContainer;
 
 	private MegaRichTextLabel _deathQuoteLabel;
 
@@ -183,7 +316,7 @@ public class NRunHistory : NSubmenu
 	public override void _Ready()
 	{
 		ConnectSignals();
-		_screenContents = GetNode<Control>("ScreenContents");
+		_screenContents = GetNode<NScrollableContainer>("ScreenContents");
 		_playerIconContainer = GetNode<Control>("%PlayerIconContainer");
 		_hpLabel = GetNode<MegaLabel>("%HpLabel");
 		_goldLabel = GetNode<MegaLabel>("%GoldLabel");
@@ -195,6 +328,7 @@ public class NRunHistory : NSubmenu
 		_gameModeLabel = GetNode<MegaRichTextLabel>("%GameModeLabel");
 		_buildLabel = GetNode<MegaRichTextLabel>("%BuildLabel");
 		_deathQuoteLabel = GetNode<MegaRichTextLabel>("%DeathQuoteLabel");
+		_badgeContainer = GetNode<Control>("%BadgeContainer");
 		_mapPointHistory = GetNode<NMapPointHistory>("%MapPointHistory");
 		_relicHistory = GetNode<NRelicHistory>("%RelicHistory");
 		_deckHistory = GetNode<NDeckHistory>("%DeckHistory");
@@ -206,6 +340,8 @@ public class NRunHistory : NSubmenu
 		_prevButton.IsLeft = true;
 		_mapPointHistory.SetDeckHistory(_deckHistory);
 		_mapPointHistory.SetRelicHistory(_relicHistory);
+		_screenContents.DisableScrollingIfContentFits();
+		_screenContents.UpdatePadding(0f, 25f);
 	}
 
 	private void OnLeftButtonButtonReleased(NButton _)
@@ -257,6 +393,9 @@ public class NRunHistory : NSubmenu
 		_screenTween?.Kill();
 	}
 
+	/// <summary>
+	/// Called whenever we want to load a run history file!
+	/// </summary>
 	private Task RefreshAndSelectRun(int index)
 	{
 		if (index < 0 || index >= _runNames.Count)
@@ -347,7 +486,7 @@ public class NRunHistory : NSubmenu
 			}
 			_playerIconContainer.AddChildSafely(playerIcon);
 			playerIcon.LoadRun(player, history);
-			playerIcon.Connect(NClickableControl.SignalName.MouseReleased, Callable.From<InputEvent>(delegate
+			playerIcon.Connect(NClickableControl.SignalName.Released, Callable.From<NClickableControl>(delegate
 			{
 				SelectPlayer(playerIcon);
 			}));
@@ -356,6 +495,11 @@ public class NRunHistory : NSubmenu
 				flag = true;
 				SelectPlayer(playerIcon);
 			}
+		}
+		for (int num = 0; num < _playerIconContainer.GetChildCount(); num++)
+		{
+			_playerIconContainer.GetChild<Control>(num).FocusNeighborLeft = ((num > 0) ? _playerIconContainer.GetChild<Control>(num - 1).GetPath() : _playerIconContainer.GetChild<Control>(_playerIconContainer.GetChildCount() - 1).GetPath());
+			_playerIconContainer.GetChild<Control>(num).FocusNeighborRight = ((num < _playerIconContainer.GetChildCount() - 1) ? _playerIconContainer.GetChild<Control>(num + 1).GetPath() : _playerIconContainer.GetChild<Control>(0).GetPath());
 		}
 		if (!flag)
 		{
@@ -372,32 +516,36 @@ public class NRunHistory : NSubmenu
 		_selectedPlayerIcon?.Deselect();
 		_selectedPlayerIcon = playerIcon;
 		playerIcon.Select();
-		if (_history.Players.Count == 1)
-		{
-			CharacterModel byId = ModelDb.GetById<CharacterModel>(playerIcon.Player.Character);
-			Color nameColor = byId.NameColor;
-		}
-		else
+		if (_history.Players.Count != 1)
 		{
 			LocString locString = new LocString("run_history", "PLAYER_NAME");
 			locString.Add("PlayerName", PlatformUtil.GetPlayerName(_history.PlatformType, playerIcon.Player.Id));
 		}
 		UnlockState unlockState = SaveManager.Instance.GenerateUnlockStateFromProgress();
-		Player player = Player.CreateForNewRun(ModelDb.GetById<CharacterModel>(playerIcon.Player.Character), unlockState, playerIcon.Player.Id);
+		Player player = Player.CreateForNewRun(SaveUtil.CharacterOrDeprecated(playerIcon.Player.Character), unlockState, playerIcon.Player.Id);
 		LoadGoldHpAndPotionInfo(playerIcon);
 		LoadDeathQuote(_history, playerIcon.Player.Character);
+		LoadBadges(_history.Players.FirstOrDefault((RunHistoryPlayer p) => p.Id == player.NetId).Badges.ToList());
 		_mapPointHistory.SetPlayer(playerIcon.Player);
 		_relicHistory.LoadRelics(player, playerIcon.Player.Relics);
 		_deckHistory.LoadDeck(player, playerIcon.Player.Deck);
+		TaskHelper.RunSafely(ResizeScreen());
+	}
+
+	private async Task ResizeScreen()
+	{
+		await this.AwaitProcessFrame();
+		_screenContents.GetNode<Control>("Content").ResetSize();
+		_screenContents.InstantlyScrollToTop();
 	}
 
 	private void LoadGoldHpAndPotionInfo(NRunHistoryPlayerIcon icon)
 	{
 		if (!_history.MapPointHistory.Any())
 		{
-			CharacterModel byId = ModelDb.GetById<CharacterModel>(icon.Player.Character);
-			_hpLabel.SetTextAutoSize($"{byId.StartingHp}/{byId.StartingHp}");
-			_goldLabel.SetTextAutoSize($"{byId.StartingGold}");
+			CharacterModel characterModel = SaveUtil.CharacterOrDeprecated(icon.Player.Character);
+			_hpLabel.SetTextAutoSize($"{characterModel.StartingHp}/{characterModel.StartingHp}");
+			_goldLabel.SetTextAutoSize($"{characterModel.StartingGold}");
 		}
 		else
 		{
@@ -417,7 +565,7 @@ public class NRunHistory : NSubmenu
 			list2.Add(nPotionHolder);
 		}
 		UnlockState unlockState = SaveManager.Instance.GenerateUnlockStateFromProgress();
-		Player owner = Player.CreateForNewRun(ModelDb.GetById<CharacterModel>(icon.Player.Character), unlockState, icon.Player.Id);
+		Player owner = Player.CreateForNewRun(SaveUtil.CharacterOrDeprecated(icon.Player.Character), unlockState, icon.Player.Id);
 		for (int num2 = 0; num2 < list.Count && num2 < runHistoryPlayer.MaxPotionSlotCount; num2++)
 		{
 			NPotion nPotion = NPotion.Create(list[num2]);
@@ -427,12 +575,21 @@ public class NRunHistory : NSubmenu
 		}
 	}
 
+	/// <summary>
+	/// Counts the total number of MapPointHistoryEntry objects.
+	/// This is how many floors the player has traversed I think.
+	/// </summary>
 	private void LoadPlayerFloor(RunHistory history)
 	{
 		int value = history.MapPointHistory.Sum((List<MapPointHistoryEntry> rooms) => rooms.Count);
 		_floorLabel.SetTextAutoSize($"{value}");
 	}
 
+	/// <summary>
+	/// Sets the text in the top right that is like Singleplayer: Standard or Multiplayer: Custom, etc.
+	/// </summary>
+	/// <param name="history"></param>
+	/// <exception cref="T:System.ArgumentOutOfRangeException"></exception>
 	private void LoadGameModeDetails(RunHistory history)
 	{
 		LocString locString = new LocString("run_history", "GAME_MODE.title");
@@ -459,9 +616,12 @@ public class NRunHistory : NSubmenu
 			locString.Add("GameMode", new LocString("run_history", "GAME_MODE.unknown"));
 			break;
 		}
-		_gameModeLabel.Text = "[right]" + locString.GetFormattedText() + "[/right]";
+		_gameModeLabel.Text = locString.GetFormattedText() ?? "";
 	}
 
+	/// <summary>
+	/// Given a <see cref="T:MegaCrit.Sts2.Core.Runs.RunHistory" /> entry, returns how the run ended (aka the <see cref="T:MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen.GameOverType" />).
+	/// </summary>
 	public static GameOverType GetGameOverType(RunHistory history)
 	{
 		if (history.Win)
@@ -484,9 +644,12 @@ public class NRunHistory : NSubmenu
 		return GameOverType.None;
 	}
 
+	/// <summary>
+	/// Helper method to generate a death quote given a run history entry, characterId, and how they died.
+	/// </summary>
 	public static string GetDeathQuote(RunHistory history, ModelId characterId, GameOverType gameOverType)
 	{
-		CharacterModel byId = ModelDb.GetById<CharacterModel>(characterId);
+		CharacterModel characterModel = SaveUtil.CharacterOrDeprecated(characterId);
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.Append(_leftQuote.GetRawText());
 		Rng rng = new Rng((uint)StringHelper.GetDeterministicHashCode(history.Seed));
@@ -495,7 +658,7 @@ public class NRunHistory : NSubmenu
 		case GameOverType.AbandonedRun:
 		{
 			LocString randomWithPrefix2 = LocString.GetRandomWithPrefix("run_history", "MAP_POINT_HISTORY.abandon", rng);
-			byId.AddDetailsTo(randomWithPrefix2);
+			characterModel.AddDetailsTo(randomWithPrefix2);
 			stringBuilder.Append(randomWithPrefix2.GetFormattedText());
 			break;
 		}
@@ -510,32 +673,36 @@ public class NRunHistory : NSubmenu
 			{
 				eventModel = ModelDb.Event<DeprecatedEvent>();
 			}
-			LocString locString2 = new LocString("events", eventModel.Id.Entry + ".loss");
-			byId.AddDetailsTo(locString2);
-			locString2.Add("event", eventModel.Title);
-			stringBuilder.Append(locString2.GetFormattedText());
+			LocString locString = LocString.GetIfExists(eventModel.LocTable, eventModel.Id.Entry + ".loss");
+			if (locString == null)
+			{
+				locString = GetDeathDebugMessage();
+			}
+			characterModel.AddDetailsTo(locString);
+			locString.Add("event", eventModel.Title);
+			stringBuilder.Append(locString.GetFormattedText());
 			break;
 		}
 		case GameOverType.CombatDeath:
 		{
 			EncounterModel encounterModel = SaveUtil.EncounterOrDeprecated(history.KilledByEncounter);
-			LocString lossMessageFor = encounterModel.GetLossMessageFor(byId);
+			LocString lossMessageFor = encounterModel.GetLossMessageFor(characterModel);
 			stringBuilder.Append(lossMessageFor.GetFormattedText());
 			break;
 		}
 		case GameOverType.FalseVictory:
 		{
 			LocString randomWithPrefix = LocString.GetRandomWithPrefix("run_history", "MAP_POINT_HISTORY.falseVictory", rng);
-			byId.AddDetailsTo(randomWithPrefix);
+			characterModel.AddDetailsTo(randomWithPrefix);
 			stringBuilder.Append(randomWithPrefix.GetFormattedText());
 			break;
 		}
 		case GameOverType.None:
 		case GameOverType.TrueVictory:
 		{
-			LocString locString = new LocString("run_history", "MAP_POINT_HISTORY.debug");
-			byId.AddDetailsTo(locString);
-			stringBuilder.Append(locString.GetFormattedText());
+			LocString deathDebugMessage = GetDeathDebugMessage();
+			characterModel.AddDetailsTo(deathDebugMessage);
+			stringBuilder.Append(deathDebugMessage.GetFormattedText());
 			break;
 		}
 		default:
@@ -548,15 +715,15 @@ public class NRunHistory : NSubmenu
 
 	private void LoadDeathQuote(RunHistory history, ModelId characterId)
 	{
-		CharacterModel byId = ModelDb.GetById<CharacterModel>(characterId);
+		CharacterModel characterModel = SaveUtil.CharacterOrDeprecated(characterId);
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.Append(_leftQuote.GetRawText());
 		Rng rng = new Rng((uint)StringHelper.GetDeterministicHashCode(history.Seed));
 		if (history.Win)
 		{
-			_deathQuoteLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.defaultColor, StsColors.green);
+			_deathQuoteLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.DefaultColor, StsColors.green);
 			LocString randomWithPrefix = LocString.GetRandomWithPrefix("run_history", "MAP_POINT_HISTORY.falseVictory", rng);
-			byId.AddDetailsTo(randomWithPrefix);
+			characterModel.AddDetailsTo(randomWithPrefix);
 			StringBuilder stringBuilder2 = stringBuilder;
 			StringBuilder stringBuilder3 = stringBuilder2;
 			StringBuilder.AppendInterpolatedStringHandler handler = new StringBuilder.AppendInterpolatedStringHandler(0, 1, stringBuilder2);
@@ -565,16 +732,16 @@ public class NRunHistory : NSubmenu
 		}
 		else if (history.WasAbandoned)
 		{
-			_deathQuoteLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.defaultColor, StsColors.red);
+			_deathQuoteLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.DefaultColor, StsColors.red);
 			LocString randomWithPrefix2 = LocString.GetRandomWithPrefix("run_history", "MAP_POINT_HISTORY.abandon", rng);
-			byId.AddDetailsTo(randomWithPrefix2);
+			characterModel.AddDetailsTo(randomWithPrefix2);
 			stringBuilder.Append(randomWithPrefix2.GetFormattedText());
 		}
 		else if (history.KilledByEncounter != ModelId.none)
 		{
-			_deathQuoteLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.defaultColor, StsColors.red);
+			_deathQuoteLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.DefaultColor, StsColors.red);
 			EncounterModel encounterModel = SaveUtil.EncounterOrDeprecated(history.KilledByEncounter);
-			LocString lossMessageFor = encounterModel.GetLossMessageFor(byId);
+			LocString lossMessageFor = encounterModel.GetLossMessageFor(characterModel);
 			StringBuilder stringBuilder2 = stringBuilder;
 			StringBuilder stringBuilder4 = stringBuilder2;
 			StringBuilder.AppendInterpolatedStringHandler handler = new StringBuilder.AppendInterpolatedStringHandler(0, 1, stringBuilder2);
@@ -583,7 +750,7 @@ public class NRunHistory : NSubmenu
 		}
 		else if (history.KilledByEvent != ModelId.none)
 		{
-			_deathQuoteLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.defaultColor, StsColors.red);
+			_deathQuoteLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.DefaultColor, StsColors.red);
 			EventModel eventModel;
 			try
 			{
@@ -595,7 +762,7 @@ public class NRunHistory : NSubmenu
 			}
 			string text = eventModel.Id.Entry + ".loss";
 			LocString locString = ((!LocString.Exists("events", text)) ? new LocString("run_history", "DEFAULT_EVENT_LOSS_MESSAGE") : new LocString("events", text));
-			byId.AddDetailsTo(locString);
+			characterModel.AddDetailsTo(locString);
 			locString.Add("event", eventModel.Title);
 			StringBuilder stringBuilder2 = stringBuilder;
 			StringBuilder stringBuilder5 = stringBuilder2;
@@ -607,18 +774,51 @@ public class NRunHistory : NSubmenu
 		_deathQuoteLabel.Text = stringBuilder.ToString();
 	}
 
+	private static LocString GetDeathDebugMessage()
+	{
+		return new LocString("run_history", "MAP_POINT_HISTORY.debug");
+	}
+
+	private void LoadBadges(List<SerializableBadge> badges)
+	{
+		if (badges.Count == 0)
+		{
+			_badgeContainer.Visible = false;
+			return;
+		}
+		_badgeContainer.FreeChildren();
+		_badgeContainer.Visible = true;
+		foreach (SerializableBadge badge in badges)
+		{
+			NBadge nBadge = NBadge.Create(badge.Id, badge.Rarity);
+			if (nBadge != null)
+			{
+				_badgeContainer.AddChildSafely(nBadge);
+				nBadge.Modulate = Colors.White;
+			}
+		}
+	}
+
 	private void LoadTimeDetails(RunHistory history)
 	{
 		DateTimeFormatInfo dateTimeFormat = LocManager.Instance.CultureInfo.DateTimeFormat;
 		DateTime dateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTimeOffset.FromUnixTimeSeconds(history.StartTime).UtcDateTime, TimeZoneInfo.Local);
-		string value = dateTime.ToString("MMMM d, yyyy", dateTimeFormat);
-		string value2 = dateTime.ToString("h:mm tt", dateTimeFormat);
-		_dateLabel.Text = $"[right][gold]{value}[/gold], [blue]{value2}[/blue][/right]";
-		_seedLabel.Text = "[right][gold]Seed[/gold]: " + history.Seed + "[/right]";
-		_buildLabel.Text = "[right]" + history.BuildId + "[/right]";
+		string variable = dateTime.ToString(_dateFormat.GetRawText(), dateTimeFormat);
+		string variable2 = dateTime.ToString(_timeFormat.GetRawText(), dateTimeFormat);
+		_dateTimeLocString.Add("Date", variable);
+		_dateTimeLocString.Add("Time", variable2);
+		_seedLocString.Add("Seed", history.Seed);
+		_dateLabel.Text = _dateTimeLocString.GetFormattedText();
+		_seedLabel.Text = _seedLocString.GetFormattedText();
+		_buildLabel.Text = history.BuildId;
 		_timeLabel.SetTextAutoSize(TimeFormatting.Format(history.RunTime));
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -652,6 +852,7 @@ public class NRunHistory : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -739,6 +940,7 @@ public class NRunHistory : NSubmenu
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -789,12 +991,13 @@ public class NRunHistory : NSubmenu
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
 		if (name == PropertyName._screenContents)
 		{
-			_screenContents = VariantUtils.ConvertTo<Control>(in value);
+			_screenContents = VariantUtils.ConvertTo<NScrollableContainer>(in value);
 			return true;
 		}
 		if (name == PropertyName._playerIconContainer)
@@ -845,6 +1048,11 @@ public class NRunHistory : NSubmenu
 		if (name == PropertyName._buildLabel)
 		{
 			_buildLabel = VariantUtils.ConvertTo<MegaRichTextLabel>(in value);
+			return true;
+		}
+		if (name == PropertyName._badgeContainer)
+		{
+			_badgeContainer = VariantUtils.ConvertTo<Control>(in value);
 			return true;
 		}
 		if (name == PropertyName._deathQuoteLabel)
@@ -900,6 +1108,7 @@ public class NRunHistory : NSubmenu
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -963,6 +1172,11 @@ public class NRunHistory : NSubmenu
 			value = VariantUtils.CreateFrom(in _buildLabel);
 			return true;
 		}
+		if (name == PropertyName._badgeContainer)
+		{
+			value = VariantUtils.CreateFrom(in _badgeContainer);
+			return true;
+		}
 		if (name == PropertyName._deathQuoteLabel)
 		{
 			value = VariantUtils.CreateFrom(in _deathQuoteLabel);
@@ -1016,6 +1230,11 @@ public class NRunHistory : NSubmenu
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1032,6 +1251,7 @@ public class NRunHistory : NSubmenu
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._seedLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._gameModeLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._buildLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._badgeContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._deathQuoteLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._mapPointHistory, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._relicHistory, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -1045,6 +1265,7 @@ public class NRunHistory : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1060,6 +1281,7 @@ public class NRunHistory : NSubmenu
 		info.AddProperty(PropertyName._seedLabel, Variant.From(in _seedLabel));
 		info.AddProperty(PropertyName._gameModeLabel, Variant.From(in _gameModeLabel));
 		info.AddProperty(PropertyName._buildLabel, Variant.From(in _buildLabel));
+		info.AddProperty(PropertyName._badgeContainer, Variant.From(in _badgeContainer));
 		info.AddProperty(PropertyName._deathQuoteLabel, Variant.From(in _deathQuoteLabel));
 		info.AddProperty(PropertyName._mapPointHistory, Variant.From(in _mapPointHistory));
 		info.AddProperty(PropertyName._relicHistory, Variant.From(in _relicHistory));
@@ -1072,13 +1294,14 @@ public class NRunHistory : NSubmenu
 		info.AddProperty(PropertyName._screenTween, Variant.From(in _screenTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
 		base.RestoreGodotObjectData(info);
 		if (info.TryGetProperty(PropertyName._screenContents, out var value))
 		{
-			_screenContents = value.As<Control>();
+			_screenContents = value.As<NScrollableContainer>();
 		}
 		if (info.TryGetProperty(PropertyName._playerIconContainer, out var value2))
 		{
@@ -1120,45 +1343,49 @@ public class NRunHistory : NSubmenu
 		{
 			_buildLabel = value11.As<MegaRichTextLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._deathQuoteLabel, out var value12))
+		if (info.TryGetProperty(PropertyName._badgeContainer, out var value12))
 		{
-			_deathQuoteLabel = value12.As<MegaRichTextLabel>();
+			_badgeContainer = value12.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._mapPointHistory, out var value13))
+		if (info.TryGetProperty(PropertyName._deathQuoteLabel, out var value13))
 		{
-			_mapPointHistory = value13.As<NMapPointHistory>();
+			_deathQuoteLabel = value13.As<MegaRichTextLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._relicHistory, out var value14))
+		if (info.TryGetProperty(PropertyName._mapPointHistory, out var value14))
 		{
-			_relicHistory = value14.As<NRelicHistory>();
+			_mapPointHistory = value14.As<NMapPointHistory>();
 		}
-		if (info.TryGetProperty(PropertyName._deckHistory, out var value15))
+		if (info.TryGetProperty(PropertyName._relicHistory, out var value15))
 		{
-			_deckHistory = value15.As<NDeckHistory>();
+			_relicHistory = value15.As<NRelicHistory>();
 		}
-		if (info.TryGetProperty(PropertyName._outOfDateVisual, out var value16))
+		if (info.TryGetProperty(PropertyName._deckHistory, out var value16))
 		{
-			_outOfDateVisual = value16.As<Control>();
+			_deckHistory = value16.As<NDeckHistory>();
 		}
-		if (info.TryGetProperty(PropertyName._index, out var value17))
+		if (info.TryGetProperty(PropertyName._outOfDateVisual, out var value17))
 		{
-			_index = value17.As<int>();
+			_outOfDateVisual = value17.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._prevButton, out var value18))
+		if (info.TryGetProperty(PropertyName._index, out var value18))
 		{
-			_prevButton = value18.As<NRunHistoryArrowButton>();
+			_index = value18.As<int>();
 		}
-		if (info.TryGetProperty(PropertyName._nextButton, out var value19))
+		if (info.TryGetProperty(PropertyName._prevButton, out var value19))
 		{
-			_nextButton = value19.As<NRunHistoryArrowButton>();
+			_prevButton = value19.As<NRunHistoryArrowButton>();
 		}
-		if (info.TryGetProperty(PropertyName._selectedPlayerIcon, out var value20))
+		if (info.TryGetProperty(PropertyName._nextButton, out var value20))
 		{
-			_selectedPlayerIcon = value20.As<NRunHistoryPlayerIcon>();
+			_nextButton = value20.As<NRunHistoryArrowButton>();
 		}
-		if (info.TryGetProperty(PropertyName._screenTween, out var value21))
+		if (info.TryGetProperty(PropertyName._selectedPlayerIcon, out var value21))
 		{
-			_screenTween = value21.As<Tween>();
+			_selectedPlayerIcon = value21.As<NRunHistoryPlayerIcon>();
+		}
+		if (info.TryGetProperty(PropertyName._screenTween, out var value22))
+		{
+			_screenTween = value22.As<Tween>();
 		}
 	}
 }

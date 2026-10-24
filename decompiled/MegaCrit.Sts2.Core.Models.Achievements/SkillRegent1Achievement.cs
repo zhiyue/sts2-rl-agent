@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Platform;
 
 namespace MegaCrit.Sts2.Core.Models.Achievements;
 
+/// <summary>
+/// Grants an achievement when the player forges a Sovereign Blade which deals a large amount of damage.
+/// </summary>
 public class SkillRegent1Achievement : AchievementModel
 {
 	private const int _damageThreshold = 999;

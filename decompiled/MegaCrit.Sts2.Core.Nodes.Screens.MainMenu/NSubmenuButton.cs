@@ -12,51 +12,117 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
+/// <summary>
+/// The huge submenu buttons you see in the MainMenu.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NSubmenuButton.cs")]
 public class NSubmenuButton : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public new static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'SetIconAndLocalization' method.
+		/// </summary>
 		public static readonly StringName SetIconAndLocalization = "SetIconAndLocalization";
 
+		/// <summary>
+		/// Cached name for the '_Notification' method.
+		/// </summary>
 		public new static readonly StringName _Notification = "_Notification";
 
+		/// <summary>
+		/// Cached name for the 'RefreshLabels' method.
+		/// </summary>
 		public static readonly StringName RefreshLabels = "RefreshLabels";
 
+		/// <summary>
+		/// Cached name for the 'OnEnable' method.
+		/// </summary>
 		public new static readonly StringName OnEnable = "OnEnable";
 
+		/// <summary>
+		/// Cached name for the 'OnDisable' method.
+		/// </summary>
 		public new static readonly StringName OnDisable = "OnDisable";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderParam' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderParam = "UpdateShaderParam";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_bgPanel' field.
+		/// </summary>
 		public static readonly StringName _bgPanel = "_bgPanel";
 
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 
+		/// <summary>
+		/// Cached name for the '_title' field.
+		/// </summary>
 		public static readonly StringName _title = "_title";
 
+		/// <summary>
+		/// Cached name for the '_description' field.
+		/// </summary>
 		public static readonly StringName _description = "_description";
 
+		/// <summary>
+		/// Cached name for the '_locKeyPrefix' field.
+		/// </summary>
 		public static readonly StringName _locKeyPrefix = "_locKeyPrefix";
 
+		/// <summary>
+		/// Cached name for the '_defaultV' field.
+		/// </summary>
 		public static readonly StringName _defaultV = "_defaultV";
 
+		/// <summary>
+		/// Cached name for the '_scaleTween' field.
+		/// </summary>
 		public static readonly StringName _scaleTween = "_scaleTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -123,7 +189,7 @@ public class NSubmenuButton : NButton
 	{
 		LocString locString = new LocString("main_menu_ui", _locKeyPrefix + ".title");
 		_title.SetTextAutoSize(locString.GetFormattedText());
-		_title.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.Label.font);
+		_title.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.Label.Font);
 		LocString locString2;
 		if (base.IsEnabled)
 		{
@@ -139,9 +205,9 @@ public class NSubmenuButton : NButton
 			}
 		}
 		_description.Text = locString2.GetFormattedText();
-		_description.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.RichTextLabel.normalFont);
-		_description.ApplyLocaleFontSubstitution(FontType.Bold, ThemeConstants.RichTextLabel.boldFont);
-		_description.ApplyLocaleFontSubstitution(FontType.Italic, ThemeConstants.RichTextLabel.italicsFont);
+		_description.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.RichTextLabel.NormalFont);
+		_description.ApplyLocaleFontSubstitution(FontType.Bold, ThemeConstants.RichTextLabel.BoldFont);
+		_description.ApplyLocaleFontSubstitution(FontType.Italic, ThemeConstants.RichTextLabel.ItalicsFont);
 	}
 
 	protected override void OnEnable()
@@ -181,6 +247,11 @@ public class NSubmenuButton : NButton
 		_hsv.SetShaderParameter(_v, newV);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -207,6 +278,7 @@ public class NSubmenuButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -273,6 +345,7 @@ public class NSubmenuButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -319,6 +392,7 @@ public class NSubmenuButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -365,6 +439,7 @@ public class NSubmenuButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -411,6 +486,11 @@ public class NSubmenuButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -426,6 +506,7 @@ public class NSubmenuButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -440,6 +521,7 @@ public class NSubmenuButton : NButton
 		info.AddProperty(PropertyName._scaleTween, Variant.From(in _scaleTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

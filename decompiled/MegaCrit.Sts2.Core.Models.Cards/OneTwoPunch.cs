@@ -21,7 +21,7 @@ public sealed class OneTwoPunch : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<OneTwoPunchPower>(base.Owner.Creature, base.DynamicVars["Attacks"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<OneTwoPunchPower>(choiceContext, base.Owner.Creature, base.DynamicVars["Attacks"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

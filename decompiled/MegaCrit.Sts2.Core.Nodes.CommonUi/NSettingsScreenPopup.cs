@@ -14,25 +14,52 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// A popup ui/modal which is used for the Reset Tutorials confirmation
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NSettingsScreenPopup.cs")]
 public class NSettingsScreenPopup : Control, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnYesButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnYesButtonPressed = "OnYesButtonPressed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'VerticalPopup' property.
+		/// </summary>
 		public static readonly StringName VerticalPopup = "VerticalPopup";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_backstop' field.
+		/// </summary>
 		public static readonly StringName _backstop = "_backstop";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -77,6 +104,11 @@ public class NSettingsScreenPopup : Control, IScreenContext
 		SaveManager.Instance.ResetFtues();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -89,6 +121,7 @@ public class NSettingsScreenPopup : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -107,6 +140,7 @@ public class NSettingsScreenPopup : Control, IScreenContext
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -121,6 +155,7 @@ public class NSettingsScreenPopup : Control, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -137,6 +172,7 @@ public class NSettingsScreenPopup : Control, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -158,6 +194,11 @@ public class NSettingsScreenPopup : Control, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -168,6 +209,7 @@ public class NSettingsScreenPopup : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -176,6 +218,7 @@ public class NSettingsScreenPopup : Control, IScreenContext
 		info.AddProperty(PropertyName._backstop, Variant.From(in _backstop));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

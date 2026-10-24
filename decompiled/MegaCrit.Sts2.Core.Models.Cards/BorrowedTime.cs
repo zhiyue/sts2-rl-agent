@@ -11,34 +11,30 @@ namespace MegaCrit.Sts2.Core.Models.Cards;
 
 public sealed class BorrowedTime : CardModel
 {
-	public const int doomAmount = 3;
+	private const string _extraCostKey = "ExtraCost";
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new PowerVar<DoomPower>(3m),
-		new EnergyVar(1)
+		new EnergyVar(4),
+		new EnergyVar("ExtraCost", 1)
 	});
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlyArray<IHoverTip>(new IHoverTip[2]
-	{
-		HoverTipFactory.FromPower<DoomPower>(),
-		base.EnergyHoverTip
-	});
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(base.EnergyHoverTip);
 
 	public BorrowedTime()
-		: base(0, CardType.Skill, CardRarity.Uncommon, TargetType.Self)
+		: base(1, CardType.Skill, CardRarity.Uncommon, TargetType.Self)
 	{
 	}
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<DoomPower>(base.Owner.Creature, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, this);
 		await PlayerCmd.GainEnergy(base.DynamicVars.Energy.BaseValue, base.Owner);
+		await PowerCmd.Apply<BorrowedTimePower>(choiceContext, base.Owner.Creature, base.DynamicVars["ExtraCost"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars.Energy.UpgradeValueBy(1m);
+		base.DynamicVars.Energy.UpgradeValueBy(2m);
 	}
 }

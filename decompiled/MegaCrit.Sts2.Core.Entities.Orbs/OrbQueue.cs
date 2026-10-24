@@ -82,9 +82,17 @@ public class OrbQueue
 	{
 		foreach (OrbModel orb in Orbs.ToList())
 		{
+			if (_owner.Creature.CombatState == null)
+			{
+				return;
+			}
 			List<AbstractModel> modifyingModels;
 			int triggerCount = Hook.ModifyOrbPassiveTriggerCount(_owner.Creature.CombatState, orb, 1, out modifyingModels);
 			await Hook.AfterModifyingOrbPassiveTriggerCount(_owner.Creature.CombatState, orb, modifyingModels);
+			if (_owner.Creature.CombatState == null)
+			{
+				return;
+			}
 			for (int i = 0; i < triggerCount; i++)
 			{
 				await orb.BeforeTurnEndOrbTrigger(choiceContext);
@@ -97,9 +105,17 @@ public class OrbQueue
 	{
 		foreach (OrbModel orb in Orbs.ToList())
 		{
+			if (_owner.Creature.CombatState == null)
+			{
+				return;
+			}
 			List<AbstractModel> modifyingModels;
 			int triggerCount = Hook.ModifyOrbPassiveTriggerCount(_owner.Creature.CombatState, orb, 1, out modifyingModels);
 			await Hook.AfterModifyingOrbPassiveTriggerCount(_owner.Creature.CombatState, orb, modifyingModels);
+			if (_owner.Creature.CombatState == null)
+			{
+				return;
+			}
 			for (int i = 0; i < triggerCount; i++)
 			{
 				await orb.AfterTurnStartOrbTrigger(choiceContext);

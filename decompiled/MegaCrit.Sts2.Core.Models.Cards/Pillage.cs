@@ -30,7 +30,7 @@ public sealed class Pillage : CardModel
 		{
 			cardModel = await CardPileCmd.Draw(choiceContext, base.Owner);
 		}
-		while (cardModel != null && cardModel.Type == CardType.Attack && CardPile.GetCards(base.Owner, PileType.Hand).Count() < 10);
+		while (cardModel != null && cardModel.Type == CardType.Attack && CardPile.GetCards(base.Owner, PileType.Hand).Count() < CardPile.MaxCardsInHand);
 	}
 
 	protected override void OnUpgrade()

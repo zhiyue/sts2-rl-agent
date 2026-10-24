@@ -17,8 +17,8 @@ public sealed class MrStruggles : RelicModel
 		if (player == base.Owner)
 		{
 			Flash();
-			CombatState combatState = player.Creature.CombatState;
-			await CreatureCmd.Damage(choiceContext, combatState.HittableEnemies, combatState.RoundNumber, ValueProp.Unpowered, base.Owner.Creature);
+			ICombatState combatState = player.Creature.CombatState;
+			await CreatureCmd.Damage(choiceContext, combatState.HittableEnemies, base.Owner.PlayerCombatState.TurnNumber, ValueProp.Unpowered, base.Owner.Creature);
 		}
 	}
 }

@@ -126,6 +126,11 @@ public sealed class TouchOfOrobas : RelicModel
 		return ModelDb.Relic<Circlet>().ToMutable();
 	}
 
+	/// <summary>
+	/// Sets up the upgraded starter relic based off of the player.
+	/// </summary>
+	/// <param name="player">The player who we are upgrading the starter relic for</param>
+	/// <returns>Returns false if player doesn't have the original starter relic.</returns>
 	public bool SetupForPlayer(Player player)
 	{
 		AssertMutable();

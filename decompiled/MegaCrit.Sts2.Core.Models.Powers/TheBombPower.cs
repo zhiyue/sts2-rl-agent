@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -19,19 +20,24 @@ public sealed class TheBombPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override bool IsInstanced => true;
+	public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(40m, ValueProp.Unpowered));
 
+	/// <summary>
+	/// Set the amount of damage that this instance of The Bomb will deal.
+	/// This is necessary because Amount is used to track the number of turns left until exploding.
+	/// </summary>
+	/// <param name="damage">Amount of damage to deal</param>
 	public void SetDamage(decimal damage)
 	{
 		AssertMutable();
 		base.DynamicVars.Damage.BaseValue = damage;
 	}
 
-	public override async Task BeforeTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task BeforeSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side != base.Owner.Side)
+		if (!participants.Contains(base.Owner))
 		{
 			return;
 		}

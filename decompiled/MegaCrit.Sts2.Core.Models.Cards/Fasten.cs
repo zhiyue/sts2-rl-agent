@@ -35,7 +35,7 @@ public sealed class Fasten : CardModel
 		}
 	}
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DynamicVar("ExtraBlock", 5m));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DynamicVar("ExtraBlock", 4m));
 
 	public Fasten()
 		: base(1, CardType.Power, CardRarity.Uncommon, TargetType.Self)
@@ -44,7 +44,7 @@ public sealed class Fasten : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<FastenPower>(base.Owner.Creature, base.DynamicVars["ExtraBlock"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<FastenPower>(choiceContext, base.Owner.Creature, base.DynamicVars["ExtraBlock"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

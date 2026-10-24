@@ -16,6 +16,7 @@ using MegaCrit.Sts2.Core.Extensions;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
+using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
@@ -30,42 +31,111 @@ namespace MegaCrit.Sts2.Core.Nodes.Potions;
 [ScriptPath("res://src/Core/Nodes/Potions/NPotionPopup.cs")]
 public class NPotionPopup : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnUseButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnUseButtonPressed = "OnUseButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnDiscardButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnDiscardButtonPressed = "OnDiscardButtonPressed";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'Remove' method.
+		/// </summary>
 		public static readonly StringName Remove = "Remove";
 
-		public static readonly StringName RefreshUseButton = "RefreshUseButton";
+		/// <summary>
+		/// Cached name for the 'DisconnectSignals' method.
+		/// </summary>
+		public static readonly StringName DisconnectSignals = "DisconnectSignals";
+
+		/// <summary>
+		/// Cached name for the 'RefreshButtons' method.
+		/// </summary>
+		public static readonly StringName RefreshButtons = "RefreshButtons";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsUsable' property.
+		/// </summary>
 		public static readonly StringName IsUsable = "IsUsable";
 
+		/// <summary>
+		/// Cached name for the 'InACardSelectScreen' property.
+		/// </summary>
 		public static readonly StringName InACardSelectScreen = "InACardSelectScreen";
 
+		/// <summary>
+		/// Cached name for the '_holder' field.
+		/// </summary>
 		public static readonly StringName _holder = "_holder";
 
+		/// <summary>
+		/// Cached name for the '_popupContainer' field.
+		/// </summary>
 		public static readonly StringName _popupContainer = "_popupContainer";
 
+		/// <summary>
+		/// Cached name for the '_useButton' field.
+		/// </summary>
 		public static readonly StringName _useButton = "_useButton";
 
+		/// <summary>
+		/// Cached name for the '_discardButton' field.
+		/// </summary>
 		public static readonly StringName _discardButton = "_discardButton";
 
+		/// <summary>
+		/// Cached name for the '_hoverTipBounds' field.
+		/// </summary>
 		public static readonly StringName _hoverTipBounds = "_hoverTipBounds";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
+
+		/// <summary>
+		/// Cached name for the 'IsMarkedForRemoval' field.
+		/// </summary>
+		public static readonly StringName IsMarkedForRemoval = "IsMarkedForRemoval";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -82,6 +152,10 @@ public class NPotionPopup : Control
 
 	private Tween? _tween;
 
+	public bool IsMarkedForRemoval;
+
+	private Player? _subscribedPlayer;
+
 	private PotionModel? Potion => _holder.Potion?.Model;
 
 	public bool IsUsable => _useButton.IsEnabled;
@@ -94,9 +168,10 @@ public class NPotionPopup : Control
 	{
 		get
 		{
-			if (!NPlayerHand.Instance.IsInCardSelection)
+			NPlayerHand? instance = NPlayerHand.Instance;
+			if (instance == null || !instance.IsInCardSelection)
 			{
-				return NOverlayStack.Instance.Peek() is ICardSelector;
+				return NOverlayStack.Instance?.Peek() is ICardSelector;
 			}
 			return true;
 		}
@@ -145,9 +220,23 @@ public class NPotionPopup : Control
 				CombatManager.Instance.TurnStarted += OnTurnStarted;
 				CombatManager.Instance.PlayerEndedTurn += OnPlayerEndTurnStatusChanged;
 				CombatManager.Instance.PlayerUnendedTurn += OnPlayerEndTurnStatusChanged;
-				NOverlayStack.Instance.Changed += Remove;
-				NCapstoneContainer.Instance.Changed += Remove;
-				RefreshUseButton();
+				if (NOverlayStack.Instance != null)
+				{
+					NOverlayStack.Instance.Changed += Remove;
+				}
+				else
+				{
+					Log.Warn("NOverlayStack.Instance was null when creating potion popup");
+				}
+				if (NCapstoneContainer.Instance != null)
+				{
+					NCapstoneContainer.Instance.Changed += Remove;
+				}
+				else
+				{
+					Log.Warn("NCapstoneContainer.Instance was null when creating potion popup");
+				}
+				RefreshButtons();
 				break;
 			case PotionUsage.AnyTime:
 				_useButton.Enable();
@@ -158,6 +247,8 @@ public class NPotionPopup : Control
 			default:
 				throw new ArgumentOutOfRangeException("Usage");
 			}
+			_subscribedPlayer = Potion.Owner;
+			_subscribedPlayer.CanRemovePotionsChanged += RefreshButtons;
 			if (!Potion.Owner.CanRemovePotions)
 			{
 				_useButton.Disable();
@@ -180,23 +271,18 @@ public class NPotionPopup : Control
 				this.TryGrabFocus();
 			}
 		}
+		string locKey;
 		if (Potion == null)
 		{
-			_useButton.SetLocKey("POTION_POPUP.drink");
+			locKey = "POTION_POPUP.drink";
 		}
 		else
 		{
 			TargetType targetType = Potion.TargetType;
-			bool flag = ((targetType == TargetType.AnyEnemy || targetType == TargetType.TargetedNoCreature) ? true : false);
-			if (flag || Potion.CanThrowAtAlly())
-			{
-				_useButton.SetLocKey("POTION_POPUP.throw");
-			}
-			else
-			{
-				_useButton.SetLocKey("POTION_POPUP.drink");
-			}
+			bool flag = (((uint)(targetType - 2) <= 1u || targetType == TargetType.TargetedNoCreature) ? true : false);
+			locKey = ((!flag && !Potion.CanThrowAtAlly()) ? "POTION_POPUP.drink" : "POTION_POPUP.throw");
 		}
+		_useButton.SetLocKey(locKey);
 		_tween?.Kill();
 		base.Modulate = Colors.Transparent;
 		_popupContainer.Position += Vector2.Up * 25f;
@@ -244,7 +330,7 @@ public class NPotionPopup : Control
 				throw new InvalidOperationException($"Tried to discard potion {_holder.Potion.Model} but it's not in the player's belt!");
 			}
 			_holder.DisableUntilPotionRemoved();
-			DiscardPotionGameAction action = new DiscardPotionGameAction(owner, (uint)num);
+			DiscardPotionGameAction action = new DiscardPotionGameAction(owner, (uint)num, CombatManager.Instance.IsInProgress);
 			RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(action);
 		}
 	}
@@ -254,7 +340,7 @@ public class NPotionPopup : Control
 		if (inputEvent is InputEventMouseButton { ButtonIndex: var buttonIndex } inputEventMouseButton)
 		{
 			bool flag = (((ulong)(buttonIndex - 1) <= 1uL) ? true : false);
-			if (flag && inputEventMouseButton.IsReleased())
+			if (flag && inputEventMouseButton.IsReleased() && !GetGlobalRect().HasPoint(GetGlobalMousePosition()))
 			{
 				Remove();
 			}
@@ -262,56 +348,95 @@ public class NPotionPopup : Control
 		else if (inputEvent.IsActionPressed(MegaInput.cancel))
 		{
 			Remove();
+			GetViewport()?.SetInputAsHandled();
 			_holder.TryGrabFocus();
 		}
 	}
 
+	public override void _ExitTree()
+	{
+		if (!IsMarkedForRemoval)
+		{
+			IsMarkedForRemoval = true;
+			NHoverTipSet.shouldBlockHoverTips = false;
+			NHoverTipSet.Remove(_hoverTipBounds);
+			DisconnectSignals();
+		}
+		_tween?.Kill();
+	}
+
 	public void Remove()
 	{
-		NHoverTipSet.shouldBlockHoverTips = false;
-		NHoverTipSet.Remove(_hoverTipBounds);
+		if (!IsMarkedForRemoval)
+		{
+			IsMarkedForRemoval = true;
+			NHoverTipSet.shouldBlockHoverTips = false;
+			NHoverTipSet.Remove(_hoverTipBounds);
+			DisconnectSignals();
+			_useButton.Disable();
+			_discardButton.Disable();
+			_tween?.Kill();
+			_tween = CreateTween().SetParallel();
+			_tween.TweenProperty(this, "modulate", Colors.Transparent, 0.10000000149011612).SetTrans(Tween.TransitionType.Sine);
+			_tween.TweenProperty(_popupContainer, "position:y", -25f, 0.20000000298023224).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
+			_tween.Chain().TweenCallback(Callable.From(this.QueueFreeSafely));
+		}
+	}
+
+	private void DisconnectSignals()
+	{
 		CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
 		CombatManager.Instance.TurnStarted -= OnTurnStarted;
 		CombatManager.Instance.PlayerEndedTurn -= OnPlayerEndTurnStatusChanged;
 		CombatManager.Instance.PlayerUnendedTurn -= OnPlayerEndTurnStatusChanged;
-		NOverlayStack.Instance.Changed -= Remove;
-		NCapstoneContainer.Instance.Changed -= Remove;
-		Callable.From(delegate
+		if (_subscribedPlayer != null)
 		{
-			_useButton.Disable();
-			_discardButton.Disable();
-		}).CallDeferred();
-		_tween?.Kill();
-		_tween = CreateTween().SetParallel();
-		_tween.TweenProperty(this, "modulate", Colors.Transparent, 0.10000000149011612).SetTrans(Tween.TransitionType.Sine);
-		_tween.TweenProperty(_popupContainer, "position:y", -25f, 0.20000000298023224).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
-		_tween.Chain().TweenCallback(Callable.From(this.QueueFreeSafely));
+			_subscribedPlayer.CanRemovePotionsChanged -= RefreshButtons;
+		}
+		if (NOverlayStack.Instance != null)
+		{
+			NOverlayStack.Instance.Changed -= Remove;
+		}
+		if (NCapstoneContainer.Instance != null)
+		{
+			NCapstoneContainer.Instance.Changed -= Remove;
+		}
 	}
 
 	private void OnTurnStarted(CombatState _)
 	{
-		RefreshUseButton();
+		RefreshButtons();
 	}
 
 	private void OnPlayerEndTurnStatusChanged(Player _, bool __)
 	{
-		RefreshUseButton();
+		RefreshButtons();
 	}
 
 	private void OnPlayerEndTurnStatusChanged(Player _)
 	{
-		RefreshUseButton();
+		RefreshButtons();
 	}
 
 	private void OnCombatStateChanged(CombatState _)
 	{
-		RefreshUseButton();
+		RefreshButtons();
 	}
 
-	private void RefreshUseButton()
+	private void RefreshButtons()
 	{
+		if (IsMarkedForRemoval)
+		{
+			return;
+		}
 		Creature creature = Potion?.Owner.Creature;
-		if (creature != null && CombatManager.Instance.IsInProgress && creature.CombatState.CurrentSide == creature.Side && !InACardSelectScreen && !CombatManager.Instance.PlayerActionsDisabled)
+		_discardButton.Enable();
+		PotionModel? potion = Potion;
+		if (potion != null && potion.Usage == PotionUsage.AnyTime)
+		{
+			_useButton.Enable();
+		}
+		else if (creature != null && CombatManager.Instance.IsInProgress && creature.CombatState?.CurrentSide == creature.Side && creature.IsAlive && !InACardSelectScreen && !CombatManager.Instance.PlayerActionsDisabled)
 		{
 			_useButton.Enable();
 		}
@@ -319,12 +444,27 @@ public class NPotionPopup : Control
 		{
 			_useButton.Disable();
 		}
+		PotionModel potion2 = Potion;
+		if (potion2 != null)
+		{
+			Player owner = potion2.Owner;
+			if (owner != null && !owner.CanRemovePotions)
+			{
+				_useButton.Disable();
+				_discardButton.Disable();
+			}
+		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(7);
+		List<MethodInfo> list = new List<MethodInfo>(9);
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "holder", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
@@ -342,11 +482,14 @@ public class NPotionPopup : Control
 		{
 			new PropertyInfo(Variant.Type.Object, "inputEvent", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("InputEvent"), exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.Remove, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
-		list.Add(new MethodInfo(MethodName.RefreshUseButton, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.DisconnectSignals, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.RefreshButtons, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -379,15 +522,27 @@ public class NPotionPopup : Control
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName.Remove && args.Count == 0)
 		{
 			Remove();
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.RefreshUseButton && args.Count == 0)
+		if (method == MethodName.DisconnectSignals && args.Count == 0)
 		{
-			RefreshUseButton();
+			DisconnectSignals();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.RefreshButtons && args.Count == 0)
+		{
+			RefreshButtons();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -406,6 +561,7 @@ public class NPotionPopup : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -429,17 +585,26 @@ public class NPotionPopup : Control
 		{
 			return true;
 		}
+		if (method == MethodName._ExitTree)
+		{
+			return true;
+		}
 		if (method == MethodName.Remove)
 		{
 			return true;
 		}
-		if (method == MethodName.RefreshUseButton)
+		if (method == MethodName.DisconnectSignals)
+		{
+			return true;
+		}
+		if (method == MethodName.RefreshButtons)
 		{
 			return true;
 		}
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -473,9 +638,15 @@ public class NPotionPopup : Control
 			_tween = VariantUtils.ConvertTo<Tween>(in value);
 			return true;
 		}
+		if (name == PropertyName.IsMarkedForRemoval)
+		{
+			IsMarkedForRemoval = VariantUtils.ConvertTo<bool>(in value);
+			return true;
+		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -522,9 +693,19 @@ public class NPotionPopup : Control
 			value = VariantUtils.CreateFrom(in _tween);
 			return true;
 		}
+		if (name == PropertyName.IsMarkedForRemoval)
+		{
+			value = VariantUtils.CreateFrom(in IsMarkedForRemoval);
+			return true;
+		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -535,11 +716,13 @@ public class NPotionPopup : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._discardButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._hoverTipBounds, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._tween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.IsMarkedForRemoval, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.IsUsable, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.InACardSelectScreen, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -550,8 +733,10 @@ public class NPotionPopup : Control
 		info.AddProperty(PropertyName._discardButton, Variant.From(in _discardButton));
 		info.AddProperty(PropertyName._hoverTipBounds, Variant.From(in _hoverTipBounds));
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
+		info.AddProperty(PropertyName.IsMarkedForRemoval, Variant.From(in IsMarkedForRemoval));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -579,6 +764,10 @@ public class NPotionPopup : Control
 		if (info.TryGetProperty(PropertyName._tween, out var value6))
 		{
 			_tween = value6.As<Tween>();
+		}
+		if (info.TryGetProperty(PropertyName.IsMarkedForRemoval, out var value7))
+		{
+			IsMarkedForRemoval = value7.As<bool>();
 		}
 	}
 }

@@ -15,6 +15,7 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Multiplayer;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
@@ -25,48 +26,116 @@ namespace MegaCrit.Sts2.Core.Nodes.Combat;
 [ScriptPath("res://src/Core/Nodes/Combat/NMouseCardPlay.cs")]
 public class NMouseCardPlay : NCardPlay
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NCardPlay.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'Start' method.
+		/// </summary>
 		public new static readonly StringName Start = "Start";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'DisconnectTargetingSignals' method.
+		/// </summary>
 		public static readonly StringName DisconnectTargetingSignals = "DisconnectTargetingSignals";
 
+		/// <summary>
+		/// Cached name for the 'OnCancelPlayCard' method.
+		/// </summary>
 		public new static readonly StringName OnCancelPlayCard = "OnCancelPlayCard";
 
+		/// <summary>
+		/// Cached name for the 'IsCardInPlayZone' method.
+		/// </summary>
 		public static readonly StringName IsCardInPlayZone = "IsCardInPlayZone";
 
+		/// <summary>
+		/// Cached name for the 'IsCardInCancelZone' method.
+		/// </summary>
 		public static readonly StringName IsCardInCancelZone = "IsCardInCancelZone";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NCardPlay.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'PlayZoneThreshold' property.
+		/// </summary>
 		public static readonly StringName PlayZoneThreshold = "PlayZoneThreshold";
 
+		/// <summary>
+		/// Cached name for the 'CancelZoneThreshold' property.
+		/// </summary>
 		public static readonly StringName CancelZoneThreshold = "CancelZoneThreshold";
 
+		/// <summary>
+		/// Cached name for the '_hasLeftCardCancelZoneOnce' field.
+		/// </summary>
+		public static readonly StringName _hasLeftCardCancelZoneOnce = "_hasLeftCardCancelZoneOnce";
+
+		/// <summary>
+		/// Cached name for the '_dragStartYPosition' field.
+		/// </summary>
 		public static readonly StringName _dragStartYPosition = "_dragStartYPosition";
 
+		/// <summary>
+		/// Cached name for the '_isLeftMouseDown' field.
+		/// </summary>
 		public static readonly StringName _isLeftMouseDown = "_isLeftMouseDown";
 
+		/// <summary>
+		/// Cached name for the '_onCreatureHoverCallable' field.
+		/// </summary>
 		public static readonly StringName _onCreatureHoverCallable = "_onCreatureHoverCallable";
 
+		/// <summary>
+		/// Cached name for the '_onCreatureUnhoverCallable' field.
+		/// </summary>
 		public static readonly StringName _onCreatureUnhoverCallable = "_onCreatureUnhoverCallable";
 
+		/// <summary>
+		/// Cached name for the '_signalsConnected' field.
+		/// </summary>
 		public static readonly StringName _signalsConnected = "_signalsConnected";
 
+		/// <summary>
+		/// Cached name for the '_cancelShortcut' field.
+		/// </summary>
 		public static readonly StringName _cancelShortcut = "_cancelShortcut";
 
+		/// <summary>
+		/// Cached name for the '_skipStartCardDrag' field.
+		/// </summary>
 		public static readonly StringName _skipStartCardDrag = "_skipStartCardDrag";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NCardPlay.SignalName
 	{
 	}
@@ -78,6 +147,8 @@ public class NMouseCardPlay : NCardPlay
 	private const float _playZoneScreenProportion = 0.75f;
 
 	private const float _cancelZoneScreenProportion = 0.95f;
+
+	private bool _hasLeftCardCancelZoneOnce;
 
 	private float _dragStartYPosition;
 
@@ -93,6 +164,9 @@ public class NMouseCardPlay : NCardPlay
 
 	private bool _signalsConnected;
 
+	/// <summary>
+	/// shortcut to cancel the card play. Usually we set this to be the index of the card holder in the hand,
+	/// </summary>
 	private StringName _cancelShortcut;
 
 	private bool _skipStartCardDrag;
@@ -184,7 +258,6 @@ public class NMouseCardPlay : NCardPlay
 			NControllerManager.Instance.Disconnect(NControllerManager.SignalName.ControllerDetected, Callable.From(base.CancelPlayCard));
 		}
 		_cancellationTokenSource.Cancel();
-		_cancellationTokenSource.Dispose();
 		DisconnectTargetingSignals();
 	}
 
@@ -270,10 +343,14 @@ public class NMouseCardPlay : NCardPlay
 		instance.Connect(NTargetManager.SignalName.CreatureHovered, _onCreatureHoverCallable);
 		instance.Connect(NTargetManager.SignalName.CreatureUnhovered, _onCreatureUnhoverCallable);
 		_signalsConnected = true;
-		instance.StartTargeting(targetType, base.CardNode, targetMode, () => IsCardInCancelZone() || _cancellationTokenSource.IsCancellationRequested, null);
-		Node node = await instance.SelectionFinished();
-		if (node != null)
+		try
 		{
+			instance.StartTargeting(targetType, base.CardNode, targetMode, () => IsCardInCancelZone() || _cancellationTokenSource.IsCancellationRequested, null);
+			Node node = await instance.SelectionFinished();
+			if (_cancellationTokenSource.IsCancellationRequested || node == null)
+			{
+				return;
+			}
 			Creature target;
 			if (!(node is NCreature nCreature))
 			{
@@ -289,7 +366,10 @@ public class NMouseCardPlay : NCardPlay
 			}
 			_target = target;
 		}
-		DisconnectTargetingSignals();
+		finally
+		{
+			DisconnectTargetingSignals();
+		}
 	}
 
 	private void DisconnectTargetingSignals()
@@ -297,9 +377,12 @@ public class NMouseCardPlay : NCardPlay
 		if (_signalsConnected)
 		{
 			_signalsConnected = false;
-			NTargetManager instance = NTargetManager.Instance;
-			instance.Disconnect(NTargetManager.SignalName.CreatureHovered, _onCreatureHoverCallable);
-			instance.Disconnect(NTargetManager.SignalName.CreatureUnhovered, _onCreatureUnhoverCallable);
+			if (NRun.Instance != null)
+			{
+				NTargetManager instance = NTargetManager.Instance;
+				instance.Disconnect(NTargetManager.SignalName.CreatureHovered, _onCreatureHoverCallable);
+				instance.Disconnect(NTargetManager.SignalName.CreatureUnhovered, _onCreatureUnhoverCallable);
+			}
 		}
 	}
 
@@ -343,19 +426,44 @@ public class NMouseCardPlay : NCardPlay
 	private async Task LerpToMouse(NHandCardHolder cardHolder)
 	{
 		cardHolder.SetTargetPosition(_viewport.GetMousePosition());
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame();
 	}
 
+	/// <summary>
+	/// Has the card moved up into the Play Zone?
+	/// This happens when the card was near the bottom of the screen (meaning you just started dragging it) and then you
+	/// drag it up higher to start targeting it.
+	/// </summary>
 	private bool IsCardInPlayZone()
 	{
 		return _viewport.GetMousePosition().Y < PlayZoneThreshold;
 	}
 
+	/// <summary>
+	/// Has the card moved down into the Cancel Zone?
+	/// This happens when the card was in the Play Zone (meaning you were targeting it) and then you drag it back down
+	/// to cancel the play.
+	///
+	/// We use a greater value (further down the screen) for the Cancel Zone than the Play Zone because:
+	/// 1. We want you to have to move the card down a meaningful amount before we stop targeting.
+	/// 2. For multi-target cards, we want an "intermediate" zone where the card doesn't show targeting visuals but we
+	///    haven't canceled yet.
+	/// </summary>
 	private bool IsCardInCancelZone()
 	{
-		return _viewport.GetMousePosition().Y > CancelZoneThreshold;
+		_hasLeftCardCancelZoneOnce |= _viewport.GetMousePosition().Y <= CancelZoneThreshold;
+		if (_viewport.GetMousePosition().Y > CancelZoneThreshold)
+		{
+			return _hasLeftCardCancelZoneOnce;
+		}
+		return false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -380,6 +488,7 @@ public class NMouseCardPlay : NCardPlay
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -449,6 +558,7 @@ public class NMouseCardPlay : NCardPlay
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -491,9 +601,15 @@ public class NMouseCardPlay : NCardPlay
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
+		if (name == PropertyName._hasLeftCardCancelZoneOnce)
+		{
+			_hasLeftCardCancelZoneOnce = VariantUtils.ConvertTo<bool>(in value);
+			return true;
+		}
 		if (name == PropertyName._dragStartYPosition)
 		{
 			_dragStartYPosition = VariantUtils.ConvertTo<float>(in value);
@@ -532,6 +648,7 @@ public class NMouseCardPlay : NCardPlay
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -546,6 +663,11 @@ public class NMouseCardPlay : NCardPlay
 		{
 			from = CancelZoneThreshold;
 			value = VariantUtils.CreateFrom(in from);
+			return true;
+		}
+		if (name == PropertyName._hasLeftCardCancelZoneOnce)
+		{
+			value = VariantUtils.CreateFrom(in _hasLeftCardCancelZoneOnce);
 			return true;
 		}
 		if (name == PropertyName._dragStartYPosition)
@@ -586,10 +708,16 @@ public class NMouseCardPlay : NCardPlay
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._hasLeftCardCancelZoneOnce, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName.PlayZoneThreshold, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName.CancelZoneThreshold, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName._dragStartYPosition, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -602,10 +730,12 @@ public class NMouseCardPlay : NCardPlay
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
+		info.AddProperty(PropertyName._hasLeftCardCancelZoneOnce, Variant.From(in _hasLeftCardCancelZoneOnce));
 		info.AddProperty(PropertyName._dragStartYPosition, Variant.From(in _dragStartYPosition));
 		info.AddProperty(PropertyName._isLeftMouseDown, Variant.From(in _isLeftMouseDown));
 		info.AddProperty(PropertyName._onCreatureHoverCallable, Variant.From(in _onCreatureHoverCallable));
@@ -615,37 +745,42 @@ public class NMouseCardPlay : NCardPlay
 		info.AddProperty(PropertyName._skipStartCardDrag, Variant.From(in _skipStartCardDrag));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
 		base.RestoreGodotObjectData(info);
-		if (info.TryGetProperty(PropertyName._dragStartYPosition, out var value))
+		if (info.TryGetProperty(PropertyName._hasLeftCardCancelZoneOnce, out var value))
 		{
-			_dragStartYPosition = value.As<float>();
+			_hasLeftCardCancelZoneOnce = value.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._isLeftMouseDown, out var value2))
+		if (info.TryGetProperty(PropertyName._dragStartYPosition, out var value2))
 		{
-			_isLeftMouseDown = value2.As<bool>();
+			_dragStartYPosition = value2.As<float>();
 		}
-		if (info.TryGetProperty(PropertyName._onCreatureHoverCallable, out var value3))
+		if (info.TryGetProperty(PropertyName._isLeftMouseDown, out var value3))
 		{
-			_onCreatureHoverCallable = value3.As<Callable>();
+			_isLeftMouseDown = value3.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._onCreatureUnhoverCallable, out var value4))
+		if (info.TryGetProperty(PropertyName._onCreatureHoverCallable, out var value4))
 		{
-			_onCreatureUnhoverCallable = value4.As<Callable>();
+			_onCreatureHoverCallable = value4.As<Callable>();
 		}
-		if (info.TryGetProperty(PropertyName._signalsConnected, out var value5))
+		if (info.TryGetProperty(PropertyName._onCreatureUnhoverCallable, out var value5))
 		{
-			_signalsConnected = value5.As<bool>();
+			_onCreatureUnhoverCallable = value5.As<Callable>();
 		}
-		if (info.TryGetProperty(PropertyName._cancelShortcut, out var value6))
+		if (info.TryGetProperty(PropertyName._signalsConnected, out var value6))
 		{
-			_cancelShortcut = value6.As<StringName>();
+			_signalsConnected = value6.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._skipStartCardDrag, out var value7))
+		if (info.TryGetProperty(PropertyName._cancelShortcut, out var value7))
 		{
-			_skipStartCardDrag = value7.As<bool>();
+			_cancelShortcut = value7.As<StringName>();
+		}
+		if (info.TryGetProperty(PropertyName._skipStartCardDrag, out var value8))
+		{
+			_skipStartCardDrag = value8.As<bool>();
 		}
 	}
 }

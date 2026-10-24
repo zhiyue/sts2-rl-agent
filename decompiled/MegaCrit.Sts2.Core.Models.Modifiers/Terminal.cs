@@ -16,7 +16,11 @@ public class Terminal : ModifierModel
 		{
 			foreach (Player player in base.RunState.Players)
 			{
-				await CreatureCmd.LoseMaxHp(new ThrowingPlayerChoiceContext(), player.Creature, 1m, isFromCard: false);
+				Creature creature = player.Creature;
+				if (creature == null || creature.CurrentHp > 1 || creature.MaxHp > 1)
+				{
+					await CreatureCmd.LoseMaxHp(new ThrowingPlayerChoiceContext(), player.Creature, 1m, isFromCard: false);
+				}
 			}
 		}
 		if (!(room is CombatRoom combatRoom))
@@ -25,7 +29,7 @@ public class Terminal : ModifierModel
 		}
 		foreach (Creature playerCreature in combatRoom.CombatState.PlayerCreatures)
 		{
-			await PowerCmd.Apply<PlatingPower>(playerCreature, 5m, null, null);
+			await PowerCmd.Apply<PlatingPower>(new ThrowingPlayerChoiceContext(), playerCreature, 5m, null, null);
 		}
 	}
 }

@@ -17,26 +17,56 @@ public class NLinkedRewardSet : Control
 	[Signal]
 	public delegate void RewardClaimedEventHandler(NLinkedRewardSet linkedRewardSet);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Reload' method.
+		/// </summary>
 		public static readonly StringName Reload = "Reload";
 
+		/// <summary>
+		/// Cached name for the 'GetReward' method.
+		/// </summary>
 		public static readonly StringName GetReward = "GetReward";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_rewardsScreen' field.
+		/// </summary>
 		public static readonly StringName _rewardsScreen = "_rewardsScreen";
 
+		/// <summary>
+		/// Cached name for the '_rewardContainer' field.
+		/// </summary>
 		public static readonly StringName _rewardContainer = "_rewardContainer";
 
+		/// <summary>
+		/// Cached name for the '_chainsContainer' field.
+		/// </summary>
 		public static readonly StringName _chainsContainer = "_chainsContainer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'RewardClaimed' signal.
+		/// </summary>
 		public static readonly StringName RewardClaimed = "RewardClaimed";
 	}
 
@@ -56,6 +86,7 @@ public class NLinkedRewardSet : Control
 
 	public static IEnumerable<string> AssetPaths => new string[2] { ScenePath, ChainImagePath };
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Rewards.NLinkedRewardSet.RewardClaimedEventHandler" />
 	public event RewardClaimedEventHandler RewardClaimed
 	{
 		add
@@ -125,6 +156,11 @@ public class NLinkedRewardSet : Control
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -135,6 +171,7 @@ public class NLinkedRewardSet : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -159,6 +196,7 @@ public class NLinkedRewardSet : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -177,6 +215,7 @@ public class NLinkedRewardSet : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -198,6 +237,7 @@ public class NLinkedRewardSet : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -219,6 +259,11 @@ public class NLinkedRewardSet : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -229,6 +274,7 @@ public class NLinkedRewardSet : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -239,6 +285,7 @@ public class NLinkedRewardSet : Control
 		info.AddSignalEventDelegate(SignalName.RewardClaimed, backing_RewardClaimed);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -261,6 +308,11 @@ public class NLinkedRewardSet : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -277,6 +329,7 @@ public class NLinkedRewardSet : Control
 		EmitSignal(SignalName.RewardClaimed, linkedRewardSet);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -290,6 +343,7 @@ public class NLinkedRewardSet : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

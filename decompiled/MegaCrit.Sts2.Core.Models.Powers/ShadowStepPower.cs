@@ -1,7 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 
 namespace MegaCrit.Sts2.Core.Models.Powers;
 
@@ -11,11 +15,11 @@ public sealed class ShadowStepPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == CombatSide.Player)
+		if (participants.Contains(base.Owner))
 		{
-			await PowerCmd.Apply<DoubleDamagePower>(base.Owner, base.Amount, base.Owner, null);
+			await PowerCmd.Apply<DoubleDamagePower>(new ThrowingPlayerChoiceContext(), base.Owner, base.Amount, base.Owner, null);
 			await PowerCmd.Remove(this);
 		}
 	}

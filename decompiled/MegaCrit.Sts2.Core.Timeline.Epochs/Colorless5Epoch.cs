@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Buy Something!
+/// </summary>
 public class Colorless5Epoch : EpochModel
 {
 	public override string Id => "COLORLESS5_EPOCH";

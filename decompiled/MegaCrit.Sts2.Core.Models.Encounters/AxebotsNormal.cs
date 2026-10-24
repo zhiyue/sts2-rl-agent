@@ -6,11 +6,9 @@ namespace MegaCrit.Sts2.Core.Models.Encounters;
 
 public sealed class AxebotsNormal : EncounterModel
 {
-	private const string _backSlot = "back";
-
 	private const string _frontSlot = "front";
 
-	public override IReadOnlyList<string> Slots => new global::_003C_003Ez__ReadOnlyArray<string>(new string[2] { "front", "back" });
+	public override IReadOnlyList<string> Slots => new global::_003C_003Ez__ReadOnlySingleElementList<string>("front");
 
 	public override bool HasScene => true;
 
@@ -18,17 +16,8 @@ public sealed class AxebotsNormal : EncounterModel
 
 	public override IEnumerable<MonsterModel> AllPossibleMonsters => new global::_003C_003Ez__ReadOnlySingleElementList<MonsterModel>(ModelDb.Monster<Axebot>());
 
-	public override float GetCameraScaling()
-	{
-		return 0.9f;
-	}
-
 	protected override IReadOnlyList<(MonsterModel, string?)> GenerateMonsters()
 	{
-		return new global::_003C_003Ez__ReadOnlyArray<(MonsterModel, string)>(new(MonsterModel, string)[2]
-		{
-			(ModelDb.Monster<Axebot>().ToMutable(), "front"),
-			(ModelDb.Monster<Axebot>().ToMutable(), "back")
-		});
+		return new global::_003C_003Ez__ReadOnlySingleElementList<(MonsterModel, string)>((ModelDb.Monster<Axebot>().ToMutable(), "front"));
 	}
 }

@@ -3,6 +3,9 @@ using Godot;
 
 namespace MegaCrit.Sts2.Core.Bindings.MegaSpine;
 
+/// <summary>
+/// C# bindings for SpineTrackEntry.
+/// </summary>
 public class MegaTrackEntry : MegaSpineBinding
 {
 	protected override string SpineClassName => "SpineTrackEntry";
@@ -14,9 +17,27 @@ public class MegaTrackEntry : MegaSpineBinding
 	{
 	}
 
-	public MegaAnimation GetAnimation()
+	private MegaAnimation GetAnimation()
 	{
 		return new MegaAnimation(Call("get_animation"));
+	}
+
+	/// <summary>
+	/// Name of this entry's animation. Returns the value rather than the wrapper so no transient
+	/// <see cref="T:MegaCrit.Sts2.Core.Bindings.MegaSpine.MegaAnimation" /> escapes; the native read is kept GC-safe by the GC.KeepAlive in
+	/// MegaSpineBinding.Call (PRG-6985).
+	/// </summary>
+	public string GetAnimationName()
+	{
+		return GetAnimation().GetName();
+	}
+
+	/// <summary>
+	/// Duration of this entry's animation. See <see cref="M:MegaCrit.Sts2.Core.Bindings.MegaSpine.MegaTrackEntry.GetAnimationName" />.
+	/// </summary>
+	public float GetAnimationDuration()
+	{
+		return GetAnimation().GetDuration();
 	}
 
 	public float GetAnimationEnd()

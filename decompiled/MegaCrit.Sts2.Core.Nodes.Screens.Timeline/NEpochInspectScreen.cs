@@ -13,100 +13,226 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using MegaCrit.Sts2.Core.Nodes.Vfx.Ui;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Timeline;
 using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
+/// <summary>
+/// The screen which opens when you click on an Epoch to view the bigger image + flavor text.
+/// Note that there are two UX for this screen. One for first time open (plays the animation of
+/// the text crawling in) and the second time open, which skips this animation.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/NEpochInspectScreen.cs")]
 public class NEpochInspectScreen : NClickableControl, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NClickableControl.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'HidePaginators' method.
+		/// </summary>
 		public static readonly StringName HidePaginators = "HidePaginators";
 
+		/// <summary>
+		/// Cached name for the 'Close' method.
+		/// </summary>
 		public static readonly StringName Close = "Close";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderS' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderS = "UpdateShaderS";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderV' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderV = "UpdateShaderV";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'OnMouseReleased' method.
+		/// </summary>
 		public static readonly StringName OnMouseReleased = "OnMouseReleased";
 
+		/// <summary>
+		/// Cached name for the 'SpeedUpTextAnimation' method.
+		/// </summary>
 		public static readonly StringName SpeedUpTextAnimation = "SpeedUpTextAnimation";
 
+		/// <summary>
+		/// Cached name for the 'NextChapter' method.
+		/// </summary>
 		public static readonly StringName NextChapter = "NextChapter";
 
+		/// <summary>
+		/// Cached name for the 'PrevChapter' method.
+		/// </summary>
 		public static readonly StringName PrevChapter = "PrevChapter";
 
+		/// <summary>
+		/// Cached name for the 'RefreshChapterPaginators' method.
+		/// </summary>
 		public static readonly StringName RefreshChapterPaginators = "RefreshChapterPaginators";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NClickableControl.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_closeButton' field.
+		/// </summary>
 		public static readonly StringName _closeButton = "_closeButton";
 
+		/// <summary>
+		/// Cached name for the '_portrait' field.
+		/// </summary>
 		public static readonly StringName _portrait = "_portrait";
 
+		/// <summary>
+		/// Cached name for the '_portraitFlash' field.
+		/// </summary>
 		public static readonly StringName _portraitFlash = "_portraitFlash";
 
+		/// <summary>
+		/// Cached name for the '_mask' field.
+		/// </summary>
 		public static readonly StringName _mask = "_mask";
 
+		/// <summary>
+		/// Cached name for the '_chains' field.
+		/// </summary>
 		public static readonly StringName _chains = "_chains";
 
+		/// <summary>
+		/// Cached name for the '_portraitHsv' field.
+		/// </summary>
 		public static readonly StringName _portraitHsv = "_portraitHsv";
 
+		/// <summary>
+		/// Cached name for the '_fancyText' field.
+		/// </summary>
 		public static readonly StringName _fancyText = "_fancyText";
 
+		/// <summary>
+		/// Cached name for the '_storyLabel' field.
+		/// </summary>
 		public static readonly StringName _storyLabel = "_storyLabel";
 
+		/// <summary>
+		/// Cached name for the '_chapterLabel' field.
+		/// </summary>
 		public static readonly StringName _chapterLabel = "_chapterLabel";
 
+		/// <summary>
+		/// Cached name for the '_closeLabel' field.
+		/// </summary>
 		public static readonly StringName _closeLabel = "_closeLabel";
 
+		/// <summary>
+		/// Cached name for the '_placeholderLabel' field.
+		/// </summary>
 		public static readonly StringName _placeholderLabel = "_placeholderLabel";
 
+		/// <summary>
+		/// Cached name for the '_nextChapterButton' field.
+		/// </summary>
 		public static readonly StringName _nextChapterButton = "_nextChapterButton";
 
+		/// <summary>
+		/// Cached name for the '_prevChapterButton' field.
+		/// </summary>
 		public static readonly StringName _prevChapterButton = "_prevChapterButton";
 
+		/// <summary>
+		/// Cached name for the '_unlockInfo' field.
+		/// </summary>
 		public static readonly StringName _unlockInfo = "_unlockInfo";
 
+		/// <summary>
+		/// Cached name for the '_hasStory' field.
+		/// </summary>
 		public static readonly StringName _hasStory = "_hasStory";
 
+		/// <summary>
+		/// Cached name for the '_wasRevealed' field.
+		/// </summary>
 		public static readonly StringName _wasRevealed = "_wasRevealed";
 
+		/// <summary>
+		/// Cached name for the '_prevChapterButtonOffsetX' field.
+		/// </summary>
 		public static readonly StringName _prevChapterButtonOffsetX = "_prevChapterButtonOffsetX";
 
+		/// <summary>
+		/// Cached name for the '_nextChapterButtonOffsetX' field.
+		/// </summary>
 		public static readonly StringName _nextChapterButtonOffsetX = "_nextChapterButtonOffsetX";
 
+		/// <summary>
+		/// Cached name for the '_maskOffsetX' field.
+		/// </summary>
 		public static readonly StringName _maskOffsetX = "_maskOffsetX";
 
+		/// <summary>
+		/// Cached name for the '_maskOffsetY' field.
+		/// </summary>
 		public static readonly StringName _maskOffsetY = "_maskOffsetY";
 
+		/// <summary>
+		/// Cached name for the '_closeButtonY' field.
+		/// </summary>
 		public static readonly StringName _closeButtonY = "_closeButtonY";
 
+		/// <summary>
+		/// Cached name for the '_unlockTween' field.
+		/// </summary>
 		public static readonly StringName _unlockTween = "_unlockTween";
 
+		/// <summary>
+		/// Cached name for the '_buttonTween' field.
+		/// </summary>
 		public static readonly StringName _buttonTween = "_buttonTween";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_textTween' field.
+		/// </summary>
 		public static readonly StringName _textTween = "_textTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NClickableControl.SignalName
 	{
 	}
 
-	private static readonly LocString placeholderLoc = new LocString("timeline", "PLACEHOLDER_PORTRAIT");
+	private static readonly LocString _placeholderLoc = new LocString("timeline", "PLACEHOLDER_PORTRAIT");
 
 	public static readonly string lockedImagePath = ImageHelper.GetImagePath("packed/timeline/epoch_slot_locked.png");
 
@@ -209,6 +335,9 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		_closeButton.Disable();
 	}
 
+	/// <summary>
+	/// If the Epoch was revealed, we go through a slightly different UX flow (more dramatic opening of screen, queue up unlocks, etc)
+	/// </summary>
 	public async Task Open(NEpochSlot slot, EpochModel epoch, bool wasRevealed)
 	{
 		_buttonTween?.FastForwardToCompletion();
@@ -217,14 +346,14 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		if (_epoch.IsArtPlaceholder)
 		{
 			_placeholderLabel.Visible = true;
-			_placeholderLabel.Text = placeholderLoc.GetRawText();
+			_placeholderLabel.Text = _placeholderLoc.GetRawText();
 		}
 		else
 		{
 			_placeholderLabel.Visible = false;
 		}
 		base.Modulate = Colors.White;
-		_portrait.Texture = epoch.BigPortrait;
+		_portrait.Texture = epoch.RealPortrait;
 		_fancyText.Modulate = StsColors.transparentWhite;
 		_fancyText.Text = epoch.Description;
 		_hasStory = epoch.StoryTitle != null;
@@ -304,12 +433,15 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		_prevChapterButton.Visible = false;
 	}
 
+	/// <summary>
+	/// The Epoch Inspect Screen was navigated to via the Chapter Navigator button.
+	/// </summary>
 	private void OpenViaPaginator(EpochModel epoch)
 	{
 		_epoch = epoch;
 		base.Modulate = Colors.White;
 		_fancyText.Text = epoch.Description;
-		_portrait.Texture = epoch.BigPortrait;
+		_portrait.Texture = epoch.RealPortrait;
 		_hasStory = epoch.StoryTitle != null;
 		_storyLabel.Modulate = Colors.White;
 		_chapterLabel.Modulate = Colors.White;
@@ -377,6 +509,10 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		NHotkeyManager.Instance.RemoveHotkeyPressedBinding(MegaInput.left, PrevChapter);
 	}
 
+	/// <summary>
+	/// Is called when the player opens the Epoch inspect screen by clicking on a locked node in the Timeline.
+	/// </summary>
+	/// <param name="epoch"></param>
 	public async Task UnlockAnimation(EpochModel epoch)
 	{
 		HidePaginators();
@@ -397,26 +533,28 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		_unlockTween = CreateTween().SetParallel();
 		_unlockTween.TweenProperty(_chains, "scale", Vector2.One * 0.98f, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo)
 			.SetDelay(0.5);
-		await ToSignal(_unlockTween, Tween.SignalName.Finished);
-		_chains.Unlock();
-		await ToSignal(_chains, NEpochChains.SignalName.OnAnimationFinished);
-		_portraitFlash.Modulate = Colors.White;
-		_unlockTween = CreateTween().SetParallel();
-		_unlockTween.TweenProperty(_portraitFlash, "modulate:a", 0f, 0.5);
-		_unlockTween.TweenMethod(Callable.From<float>(UpdateShaderS), _portraitHsv.GetShaderParameter(_s), 1f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
-		_unlockTween.TweenMethod(Callable.From<float>(UpdateShaderV), _portraitHsv.GetShaderParameter(_v), 1f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
-		_textTween?.Kill();
-		_textTween = CreateTween().SetParallel();
-		_textTween.TweenProperty(_fancyText, "modulate:a", 1f, 2.0).SetDelay(0.25);
-		_textTween.TweenProperty(_fancyText, "visible_ratio", 1f, (double)_fancyText.GetTotalCharacterCount() * 0.015).SetDelay(0.5);
-		_buttonTween?.Kill();
-		_buttonTween = CreateTween().SetParallel();
-		_buttonTween.TweenProperty(_closeButton, "modulate:a", 1f, 0.3).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic)
-			.SetDelay(1.0);
-		_buttonTween.TweenProperty(_closeButton, "position:y", _closeButtonY - 180f, 0.3).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back)
-			.SetDelay(1.0);
-		_buttonTween.TweenCallback(Callable.From(_closeButton.Enable));
-		await ToSignal(_unlockTween, Tween.SignalName.Finished);
+		if (await _unlockTween.AwaitFinished(this))
+		{
+			_chains.Unlock();
+			await _chains.AwaitSignal(NEpochChains.SignalName.OnAnimationFinished, this);
+			_portraitFlash.Modulate = Colors.White;
+			_unlockTween = CreateTween().SetParallel();
+			_unlockTween.TweenProperty(_portraitFlash, "modulate:a", 0f, 0.5);
+			_unlockTween.TweenMethod(Callable.From<float>(UpdateShaderS), _portraitHsv.GetShaderParameter(_s), 1f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
+			_unlockTween.TweenMethod(Callable.From<float>(UpdateShaderV), _portraitHsv.GetShaderParameter(_v), 1f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
+			_textTween?.Kill();
+			_textTween = CreateTween().SetParallel();
+			_textTween.TweenProperty(_fancyText, "modulate:a", 1f, 2.0).SetDelay(0.25);
+			_textTween.TweenProperty(_fancyText, "visible_ratio", 1f, (double)_fancyText.GetTotalCharacterCount() * 0.015).SetDelay(0.5);
+			_buttonTween?.Kill();
+			_buttonTween = CreateTween().SetParallel();
+			_buttonTween.TweenProperty(_closeButton, "modulate:a", 1f, 0.3).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic)
+				.SetDelay(1.0);
+			_buttonTween.TweenProperty(_closeButton, "position:y", _closeButtonY - 180f, 0.3).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back)
+				.SetDelay(1.0);
+			_buttonTween.TweenCallback(Callable.From(_closeButton.Enable));
+			await _unlockTween.AwaitFinished(this);
+		}
 	}
 
 	private void UpdateShaderS(float value)
@@ -491,6 +629,11 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -521,6 +664,7 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -593,6 +737,7 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -643,6 +788,7 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -774,6 +920,7 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -910,6 +1057,11 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -943,6 +1095,7 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -974,6 +1127,7 @@ public class NEpochInspectScreen : NClickableControl, IScreenContext
 		info.AddProperty(PropertyName._textTween, Variant.From(in _textTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

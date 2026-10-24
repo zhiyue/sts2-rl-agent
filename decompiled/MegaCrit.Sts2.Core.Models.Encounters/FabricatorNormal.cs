@@ -64,7 +64,7 @@ public sealed class FabricatorNormal : EncounterModel
 		if (specialNode != null)
 		{
 			float num = 125f;
-			specialNode.Position = Vector2.Down * ((num - creatureNode.Position.Y) / creatureNode.Visuals.Body.Scale.Y);
+			specialNode.Position = Vector2.Down * ((num - creatureNode.Position.Y) / creatureNode.Visuals.GetCurrentBody().Scale.Y);
 		}
 	}
 }

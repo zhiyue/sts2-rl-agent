@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -17,9 +18,9 @@ public sealed class CoolantPower : PowerModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.Static(StaticHoverTip.Block));
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Side)
+		if (participants.Contains(base.Owner))
 		{
 			Flash();
 			int num = (from orb in base.Owner.Player.PlayerCombatState.OrbQueue.Orbs

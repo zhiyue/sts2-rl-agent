@@ -10,6 +10,8 @@ public class FileAccessStream : Stream
 
 	private readonly Godot.FileAccess.ModeFlags _flags;
 
+	private readonly string _filePath;
+
 	public override bool CanRead
 	{
 		get
@@ -53,6 +55,7 @@ public class FileAccessStream : Stream
 	public FileAccessStream(string filePath, Godot.FileAccess.ModeFlags flags)
 	{
 		_flags = flags;
+		_filePath = filePath;
 		Godot.FileAccess fileAccess = Godot.FileAccess.Open(filePath, flags);
 		_file = fileAccess ?? throw new IOException($"Opening file {filePath} with flags {flags} failed: {Godot.FileAccess.GetOpenError()}");
 	}
@@ -73,14 +76,21 @@ public class FileAccessStream : Stream
 	public override void Write(byte[] buffer, int offset, int count)
 	{
 		int num = Math.Min(buffer.Length - offset, count);
+		bool flag;
 		if (offset == 0 && buffer.Length <= count)
 		{
-			_file.StoreBuffer(buffer);
-			return;
+			flag = _file.StoreBuffer(buffer);
 		}
-		byte[] array = new byte[num];
-		Array.Copy(buffer, offset, array, 0, num);
-		_file.StoreBuffer(array);
+		else
+		{
+			byte[] array = new byte[num];
+			Array.Copy(buffer, offset, array, 0, num);
+			flag = _file.StoreBuffer(array);
+		}
+		if (!flag)
+		{
+			throw new IOException($"Failed to write {num} bytes to file {_filePath}: {_file.GetError()}");
+		}
 	}
 
 	public override long Seek(long offset, SeekOrigin origin)

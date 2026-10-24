@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Ancients: The Ancient Trees are not all the same. Each individual tree is shaped by its surroundings.
+/// </summary>
 public class Relic2Epoch : EpochModel
 {
 	public override string Id => "RELIC2_EPOCH";

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Platform.Steam;
 using Steamworks;
@@ -50,7 +51,7 @@ public class SteamHost : NetHost
 	{
 		_logger.Info($"Initializing Steam host. Our player id: {NetId}");
 		SteamAPICall_t call = SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, maxPlayers);
-		using SteamCallResult<LobbyCreated_t> callResult = new SteamCallResult<LobbyCreated_t>(call);
+		using SteamCallResult<LobbyCreated_t> callResult = new SteamCallResult<LobbyCreated_t>(call, SteamInitializer.DisconnectToken);
 		LobbyCreated_t lobbyCreated_t = await callResult.Task;
 		if (lobbyCreated_t.m_eResult != EResult.k_EResultOK)
 		{
@@ -107,7 +108,7 @@ public class SteamHost : NetHost
 			if (!IsInLobby(data.m_info.m_identityRemote))
 			{
 				_logger.Warn($"Player with steam id {data.m_info.m_identityRemote.GetSteamID64()} attempted to join the game, but they are not in the lobby (id {_lobbyId.Value})");
-				SteamNetworkingSockets.CloseConnection(data.m_hConn, 0, "Player is not in the lobby!", bEnableLinger: false);
+				CloseConnectionAndRemove(data.m_hConn, NetError.TryAgainLater.ToSteam(), "Player is not in the lobby!", now: true, selfInitiated: false);
 				return;
 			}
 			_logger.Info($"Accepting new connection with user {data.m_info.m_identityRemote.GetSteamID64()}");
@@ -225,13 +226,27 @@ public class SteamHost : NetHost
 			SteamNetworkingSockets.CloseConnection(connection.conn, (int)reason.ToSteam(), null, !now);
 		}
 		_connections.Clear();
-		SteamNetworkingSockets.CloseListenSocket(_socket);
 		SteamMatchmaking.LeaveLobby(_lobbyId.Value);
+		if (now)
+		{
+			SteamNetworkingSockets.CloseListenSocket(_socket);
+		}
+		else
+		{
+			TaskHelper.RunSafely(CloseSocketAfterDelay(_socket));
+		}
 		_lobbyId = null;
 		_isConnected = false;
 		_netStatusChangedCallback?.Dispose();
 		_netStatusChangedCallback = null;
 		_handler.OnDisconnected(new NetErrorInfo(reason, selfInitiated: true));
+	}
+
+	private async Task CloseSocketAfterDelay(HSteamListenSocket socket)
+	{
+		await Task.Delay(1000);
+		_logger.Debug("Closing socket after delay.");
+		SteamNetworkingSockets.CloseListenSocket(socket);
 	}
 
 	private bool IsInLobby(SteamNetworkingIdentity id)

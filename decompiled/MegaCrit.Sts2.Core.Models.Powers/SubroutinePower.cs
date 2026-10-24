@@ -11,6 +11,11 @@ public sealed class SubroutinePower : PowerModel
 {
 	private class Data
 	{
+		/// <summary>
+		/// Keep track of the Power cards we've seen played and the power amount at the time they were played.
+		/// This lets SubroutinePower avoid triggering on cards that started play before it was applied, and avoid
+		/// granting extra energy on multiple plays of Subroutine.
+		/// </summary>
 		public readonly Dictionary<CardModel, int> amountsForPlayedCards = new Dictionary<CardModel, int>();
 	}
 
@@ -37,7 +42,7 @@ public sealed class SubroutinePower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner.Player && GetInternalData<Data>().amountsForPlayedCards.Remove(cardPlay.Card, out var energy) && energy > 0)
 		{

@@ -9,6 +9,7 @@ using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.TestSupport;
 
@@ -17,50 +18,116 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NLargeMagicMissileVfx.cs")]
 public class NLargeMagicMissileVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'GetProjectileDirection' method.
+		/// </summary>
 		public static readonly StringName GetProjectileDirection = "GetProjectileDirection";
 
+		/// <summary>
+		/// Cached name for the 'GetTopPosition' method.
+		/// </summary>
 		public static readonly StringName GetTopPosition = "GetTopPosition";
 
+		/// <summary>
+		/// Cached name for the 'Initialize' method.
+		/// </summary>
 		public static readonly StringName Initialize = "Initialize";
 
+		/// <summary>
+		/// Cached name for the 'ModulateParticles' method.
+		/// </summary>
 		public static readonly StringName ModulateParticles = "ModulateParticles";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'WaitTime' property.
+		/// </summary>
 		public static readonly StringName WaitTime = "WaitTime";
 
+		/// <summary>
+		/// Cached name for the '_anticipationParticles' field.
+		/// </summary>
 		public static readonly StringName _anticipationParticles = "_anticipationParticles";
 
+		/// <summary>
+		/// Cached name for the '_projectileStartParticles' field.
+		/// </summary>
 		public static readonly StringName _projectileStartParticles = "_projectileStartParticles";
 
+		/// <summary>
+		/// Cached name for the '_projectileParticles' field.
+		/// </summary>
 		public static readonly StringName _projectileParticles = "_projectileParticles";
 
+		/// <summary>
+		/// Cached name for the '_impactParticles' field.
+		/// </summary>
 		public static readonly StringName _impactParticles = "_impactParticles";
 
+		/// <summary>
+		/// Cached name for the '_modulateParticles' field.
+		/// </summary>
 		public static readonly StringName _modulateParticles = "_modulateParticles";
 
+		/// <summary>
+		/// Cached name for the '_anticipationContainer' field.
+		/// </summary>
 		public static readonly StringName _anticipationContainer = "_anticipationContainer";
 
+		/// <summary>
+		/// Cached name for the '_anticipationDuration' field.
+		/// </summary>
 		public static readonly StringName _anticipationDuration = "_anticipationDuration";
 
+		/// <summary>
+		/// Cached name for the '_projectileContainer' field.
+		/// </summary>
 		public static readonly StringName _projectileContainer = "_projectileContainer";
 
+		/// <summary>
+		/// Cached name for the '_projectileStartPoint' field.
+		/// </summary>
 		public static readonly StringName _projectileStartPoint = "_projectileStartPoint";
 
+		/// <summary>
+		/// Cached name for the '_projectileEndPoint' field.
+		/// </summary>
 		public static readonly StringName _projectileEndPoint = "_projectileEndPoint";
 
+		/// <summary>
+		/// Cached name for the '_projectileOffset' field.
+		/// </summary>
 		public static readonly StringName _projectileOffset = "_projectileOffset";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -155,7 +222,6 @@ public class NLargeMagicMissileVfx : Node2D
 	public override void _ExitTree()
 	{
 		_cts?.Cancel();
-		_cts?.Dispose();
 	}
 
 	private async Task PlaySequence()
@@ -182,7 +248,7 @@ public class NLargeMagicMissileVfx : Node2D
 			float weight = (float)timer / WaitTime;
 			_projectileContainer.GlobalPosition = _projectileStartPoint.GlobalPosition.Lerp(_projectileEndPoint.GlobalPosition, weight);
 			timer += GetProcessDeltaTime();
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrame();
 		}
 		if (!_cts.IsCancellationRequested)
 		{
@@ -197,6 +263,11 @@ public class NLargeMagicMissileVfx : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -221,6 +292,7 @@ public class NLargeMagicMissileVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -278,6 +350,7 @@ public class NLargeMagicMissileVfx : Node2D
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -312,6 +385,7 @@ public class NLargeMagicMissileVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -378,6 +452,7 @@ public class NLargeMagicMissileVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -444,6 +519,11 @@ public class NLargeMagicMissileVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -463,6 +543,7 @@ public class NLargeMagicMissileVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -481,6 +562,7 @@ public class NLargeMagicMissileVfx : Node2D
 		info.AddProperty(PropertyName._projectileOffset, Variant.From(in _projectileOffset));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

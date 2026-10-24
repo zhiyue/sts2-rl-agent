@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -14,6 +16,11 @@ public sealed class MonologuePower : PowerModel
 {
 	private class Data
 	{
+		/// <summary>
+		/// Keep track of the cards we've seen played and the power amount at the time they were played.
+		/// This lets Monologue avoid triggering on cards that started play before it was applied, and avoid gaining
+		/// extra block on multiple plays of Monologue.
+		/// </summary>
 		public readonly Dictionary<CardModel, int> amountsForPlayedCards = new Dictionary<CardModel, int>();
 	}
 
@@ -35,7 +42,7 @@ public sealed class MonologuePower : PowerModel
 
 	public override int DisplayAmount => base.DynamicVars["StrengthApplied"].IntValue;
 
-	public override bool IsInstanced => true;
+	public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
@@ -60,23 +67,23 @@ public sealed class MonologuePower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner.Player && GetInternalData<Data>().amountsForPlayedCards.Remove(cardPlay.Card, out var value))
 		{
 			Flash();
-			await PowerCmd.Apply<StrengthPower>(base.Owner, value, base.Owner, null, silent: true);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner, value, base.Owner, null, silent: true);
 			base.DynamicVars["StrengthApplied"].BaseValue += (decimal)base.DynamicVars.Strength.IntValue;
 			InvokeDisplayAmountChanged();
 		}
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side == base.Owner.Side)
+		if (participants.Contains(base.Owner))
 		{
 			await PowerCmd.Remove(this);
-			await PowerCmd.Apply<StrengthPower>(base.Owner, -base.DynamicVars["StrengthApplied"].BaseValue, base.Owner, null, silent: true);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner, -base.DynamicVars["StrengthApplied"].BaseValue, base.Owner, null, silent: true);
 		}
 	}
 }

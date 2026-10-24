@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Exceptions;
@@ -8,8 +9,19 @@ using MegaCrit.Sts2.Core.Logging;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// Implements the ISaveStore interface for managing game save files within Godot.
+/// Handles file operations including reading, writing, and managing save directories.
+/// All file I/O operations related to game saves should use this class to ensure
+/// proper path handling, atomic writes, and consistent error handling across the application.
+/// </summary>
 public class GodotFileIo : ISaveStore
 {
+	/// <summary>
+	/// WARNING: ONLY CHANGE THIS IN TESTS.
+	/// The directory that your save files live at.
+	/// On Windows, these will be at: C:\Users\{USER}\AppData\Roaming\SlayTheSpire2\{platform}\{userId}\profile{profileId}\saves
+	/// </summary>
 	public string SaveDir { get; set; }
 
 	public GodotFileIo(string saveDir)
@@ -33,7 +45,13 @@ public class GodotFileIo : ISaveStore
 		using Godot.FileAccess fileAccess = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read);
 		if (fileAccess == null)
 		{
-			return null;
+			Error openError = Godot.FileAccess.GetOpenError();
+			if (openError == Error.FileNotFound)
+			{
+				Log.Warn("Tried to read file at " + path + ", but there was no such file");
+				return null;
+			}
+			throw new SaveException($"Failed to open file for reading. path='{path}' error={openError}");
 		}
 		string asText = fileAccess.GetAsText();
 		fileAccess.Close();
@@ -63,12 +81,7 @@ public class GodotFileIo : ISaveStore
 	public int GetFileSize(string path)
 	{
 		path = GetFullPath(path);
-		using Godot.FileAccess fileAccess = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read);
-		if (fileAccess == null)
-		{
-			return 0;
-		}
-		return (int)fileAccess.GetLength();
+		return (int)Godot.FileAccess.GetSize(path);
 	}
 
 	public void SetLastModifiedTime(string path, DateTimeOffset time)
@@ -93,17 +106,22 @@ public class GodotFileIo : ISaveStore
 	{
 		path = GetFullPath(path);
 		ValidateGodotFilePath(path);
-		RotateBackup(path);
+		CopyBackup(path);
 		string text = path + ".tmp";
 		using Godot.FileAccess fileAccess = Godot.FileAccess.Open(text, Godot.FileAccess.ModeFlags.Write);
 		if (fileAccess == null)
 		{
 			throw new SaveException($"Failed to open file for writing. path='{text}' error={Godot.FileAccess.GetOpenError()}");
 		}
-		fileAccess.StoreBuffer(bytes);
-		fileAccess.Close();
-		RenameFile(text, path);
-		Log.Info($"Wrote {bytes.Length} bytes to path={path} save_dir={SaveDir}");
+		if (fileAccess.StoreBuffer(bytes))
+		{
+			fileAccess.Close();
+			FsyncFile(text);
+			RenameFile(text, path);
+			Log.Info($"Wrote {bytes.Length} bytes to path={path} save_dir={SaveDir}");
+			return;
+		}
+		throw new SaveException($"Failed to write {bytes.Length} bytes to path={path} save_dir={SaveDir}. Error: {fileAccess.GetError()}");
 	}
 
 	public Task WriteFileAsync(string path, string content)
@@ -115,14 +133,15 @@ public class GodotFileIo : ISaveStore
 	{
 		path = GetFullPath(path);
 		ValidateGodotFilePath(path);
-		RotateBackup(path);
+		CopyBackup(path);
 		string tempPath = path + ".tmp";
 		await using FileAccessStream stream = new FileAccessStream(tempPath, Godot.FileAccess.ModeFlags.Write);
 		await stream.WriteAsync(bytes);
 		long position = stream.Position;
 		stream.Close();
+		FsyncFile(tempPath);
 		RenameFile(tempPath, path);
-		Log.Info($"Wrote {position} bytes to path={path} save_dir={path}");
+		Log.Info($"Wrote {position} bytes to path={path} save_dir={SaveDir}");
 	}
 
 	public bool FileExists(string path)
@@ -137,7 +156,11 @@ public class GodotFileIo : ISaveStore
 
 	public void DeleteFile(string path)
 	{
-		DirAccess.RemoveAbsolute(GetFullPath(path));
+		Error error = DirAccess.RemoveAbsolute(GetFullPath(path));
+		if (error != Error.Ok && error != Error.FileNotFound)
+		{
+			Log.Error($"Error deleting path {path}: {error}");
+		}
 	}
 
 	public void RenameFile(string sourcePath, string destinationPath)
@@ -148,11 +171,32 @@ public class GodotFileIo : ISaveStore
 		}
 		sourcePath = GetFullPath(sourcePath);
 		destinationPath = GetFullPath(destinationPath);
-		Error error = DirAccess.RenameAbsolute(sourcePath, destinationPath);
-		if (error != Error.Ok)
+		Error error = Error.Failed;
+		for (int i = 1; i <= 4; i++)
 		{
-			throw new SaveException($"Failed to rename file. error={error} source={sourcePath} destination={destinationPath}");
+			error = DirAccess.RenameAbsolute(sourcePath, destinationPath);
+			if (error == Error.Ok)
+			{
+				return;
+			}
+			if (Godot.FileAccess.FileExists(destinationPath) && !Godot.FileAccess.FileExists(sourcePath))
+			{
+				Log.Warn($"Rename reported error={error} but destination exists, treating as success. source={sourcePath}");
+				return;
+			}
+			if (i < 4)
+			{
+				Log.Warn($"Rename failed (attempt {i}/{4}), retrying. error={error} source={sourcePath}");
+				Thread.Sleep(50);
+			}
 		}
+		Thread.Sleep(100);
+		if (Godot.FileAccess.FileExists(destinationPath) && !Godot.FileAccess.FileExists(sourcePath))
+		{
+			Log.Warn("Rename appeared to fail but destination exists after delay, treating as success. source=" + sourcePath);
+			return;
+		}
+		throw new SaveException($"Failed to rename file. error={error} source={sourcePath} destination={destinationPath} source_exists={Godot.FileAccess.FileExists(sourcePath)} destination_exists={Godot.FileAccess.FileExists(destinationPath)}");
 	}
 
 	public string[] GetFilesInDirectory(string directoryPath)
@@ -186,19 +230,23 @@ public class GodotFileIo : ISaveStore
 		using DirAccess dirAccess = DirAccess.Open(directoryPath);
 		dirAccess.IncludeHidden = true;
 		string[] files = dirAccess.GetFiles();
-		foreach (string path in files)
+		foreach (string text in files)
 		{
-			dirAccess.Remove(path);
+			Error error = dirAccess.Remove(text);
+			if (error != Error.Ok)
+			{
+				throw new InvalidOperationException($"Got error {error} trying to delete file {text} in directory {directoryPath}");
+			}
 		}
 		string[] directories = dirAccess.GetDirectories();
-		foreach (string text in directories)
+		foreach (string text2 in directories)
 		{
-			DeleteDirectory(directoryPath + "/" + text);
+			DeleteDirectory(directoryPath + "/" + text2);
 		}
-		Error error = dirAccess.Remove("");
-		if (error != Error.Ok)
+		Error error2 = dirAccess.Remove("");
+		if (error2 != Error.Ok)
 		{
-			throw new InvalidOperationException($"Got error {error} trying to delete directory {directoryPath}");
+			throw new InvalidOperationException($"Got error {error2} trying to delete directory {directoryPath}");
 		}
 	}
 
@@ -215,26 +263,88 @@ public class GodotFileIo : ISaveStore
 		{
 			if (text.EndsWith(".tmp"))
 			{
-				Log.Info("Cleaned up orphaned " + text + " in " + directoryPath);
-				dirAccess.Remove(text);
+				Log.Info("Cleaning up orphaned " + text + " in " + directoryPath);
+				Error error = dirAccess.Remove(text);
+				if (error != Error.Ok)
+				{
+					Log.Warn($"Couldn't delete temporary file {text} in {directoryPath}, error={error}");
+				}
 			}
 		}
 	}
 
-	private static void RotateBackup(string fullPath)
+	/// <summary>
+	/// Copies the current save to a .backup file using temp+rename for crash safety.
+	/// The .backup serves as a fallback for the non-atomic rename on Windows and for
+	/// recovery when the primary save is corrupted. Writing to a .tmp file first ensures
+	/// the old .backup is preserved if a crash occurs mid-write.
+	/// </summary>
+	private void CopyBackup(string fullPath)
 	{
-		string text = fullPath + ".backup";
-		if (Godot.FileAccess.FileExists(text))
+		if (!Godot.FileAccess.FileExists(fullPath))
 		{
-			DirAccess.RemoveAbsolute(text);
+			return;
 		}
-		if (Godot.FileAccess.FileExists(fullPath))
+		string destinationPath = fullPath + ".backup";
+		string text = fullPath + ".backup.tmp";
+		using Godot.FileAccess fileAccess = Godot.FileAccess.Open(fullPath, Godot.FileAccess.ModeFlags.Read);
+		if (fileAccess == null)
 		{
-			Error error = DirAccess.RenameAbsolute(fullPath, text);
-			if (error != Error.Ok)
-			{
-				Log.Warn($"Failed to rotate backup. error={error} source={fullPath} backup={text}");
-			}
+			Log.Warn($"Failed to open source for backup copy. path={fullPath} error={Godot.FileAccess.GetOpenError()}");
+			return;
+		}
+		byte[] buffer = fileAccess.GetBuffer((long)fileAccess.GetLength());
+		fileAccess.Close();
+		using Godot.FileAccess fileAccess2 = Godot.FileAccess.Open(text, Godot.FileAccess.ModeFlags.Write);
+		if (fileAccess2 == null)
+		{
+			Log.Warn($"Failed to open backup for writing. path={text} error={Godot.FileAccess.GetOpenError()}");
+			return;
+		}
+		if (!fileAccess2.StoreBuffer(buffer))
+		{
+			Log.Warn($"Copying backup from {fullPath} to {text} failed: {fileAccess2.GetError()}");
+			return;
+		}
+		fileAccess2.Close();
+		try
+		{
+			FsyncFile(text);
+			RenameFile(text, destinationPath);
+		}
+		catch (Exception ex)
+		{
+			Log.Warn("Failed to finalize backup for " + fullPath + ": " + ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// Forces the OS to flush all buffered data for the specified file to the storage device.
+	/// Without this, data may sit in the OS page cache and be lost on power loss or OS crash.
+	///
+	/// Why .NET FileStream instead of Godot's FileAccess.Flush()?
+	/// Godot's Flush() calls fflush() (see file_access_unix.cpp:322 and file_access_windows.cpp:374)
+	/// which only pushes data from the C stdio buffer to the OS kernel page cache. Godot does not
+	/// expose fsync/fdatasync/FlushFileBuffers anywhere in its FileAccess API. .NET's Flush(flushToDisk: true)
+	/// calls fsync (Linux) / FlushFileBuffers (Windows) which forces the kernel to write to the physical device.
+	///
+	/// This is a platform-dependent call and may not work on all OSes (e.g. consoles with sandboxed
+	/// filesystems). On unsupported platforms, the catch block logs a warning and the save proceeds
+	/// without durability guarantees (same as before this change). Console ports will need a
+	/// platform-specific ISaveStore implementation in C# anyway, which can use that platform's
+	/// native flush/commit API directly.
+	/// </summary>
+	private static void FsyncFile(string godotPath)
+	{
+		try
+		{
+			string path = ProjectSettings.GlobalizePath(godotPath);
+			using FileStream fileStream = new FileStream(path, FileMode.Open, System.IO.FileAccess.Write, FileShare.ReadWrite);
+			fileStream.Flush(flushToDisk: true);
+		}
+		catch (Exception ex)
+		{
+			Log.Warn("Failed to fsync " + godotPath + ": " + ex.Message);
 		}
 	}
 

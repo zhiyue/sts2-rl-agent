@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Audio;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -13,6 +14,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class BruteRubyRaider : MonsterModel
 {
+	private const string _roarMove = "ROAR_MOVE";
+
 	private const int _roarStrength = 3;
 
 	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 31, 30);
@@ -46,6 +49,11 @@ public sealed class BruteRubyRaider : MonsterModel
 	{
 		SfxCmd.Play(CastSfx);
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.6f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "ROAR_MOVE";
 	}
 }

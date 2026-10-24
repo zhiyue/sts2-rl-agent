@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -23,30 +24,76 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 [ScriptPath("res://src/Core/Nodes/Screens/CardSelection/NSimpleCardSelectScreen.cs")]
 public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NCardGridSelectionScreen.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
+		public new static readonly StringName _EnterTree = "_EnterTree";
+
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'ConnectSignalsAndInitGrid' method.
+		/// </summary>
 		public new static readonly StringName ConnectSignalsAndInitGrid = "ConnectSignalsAndInitGrid";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayOpened' method.
+		/// </summary>
 		public new static readonly StringName AfterOverlayOpened = "AfterOverlayOpened";
 
+		/// <summary>
+		/// Cached name for the 'CheckIfSelectionComplete' method.
+		/// </summary>
 		public static readonly StringName CheckIfSelectionComplete = "CheckIfSelectionComplete";
 
+		/// <summary>
+		/// Cached name for the 'CompleteSelection' method.
+		/// </summary>
 		public static readonly StringName CompleteSelection = "CompleteSelection";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NCardGridSelectionScreen.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_bottomTextContainer' field.
+		/// </summary>
 		public static readonly StringName _bottomTextContainer = "_bottomTextContainer";
 
+		/// <summary>
+		/// Cached name for the '_infoLabel' field.
+		/// </summary>
 		public static readonly StringName _infoLabel = "_infoLabel";
 
+		/// <summary>
+		/// Cached name for the '_confirmButton' field.
+		/// </summary>
 		public static readonly StringName _confirmButton = "_confirmButton";
 
+		/// <summary>
+		/// Cached name for the '_combatPiles' field.
+		/// </summary>
 		public static readonly StringName _combatPiles = "_combatPiles";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NCardGridSelectionScreen.SignalName
 	{
 	}
@@ -58,6 +105,8 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 	private NConfirmButton _confirmButton;
 
 	private NCombatPilesContainer _combatPiles;
+
+	private CancellationTokenSource _cts = new CancellationTokenSource();
 
 	private readonly HashSet<CardModel> _selectedCards = new HashSet<CardModel>();
 
@@ -74,8 +123,13 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 	public static NSimpleCardSelectScreen Create(IReadOnlyList<CardModel> cards, CardSelectorPrefs prefs)
 	{
 		NSimpleCardSelectScreen nSimpleCardSelectScreen = PreloadManager.Cache.GetScene(ScenePath).Instantiate<NSimpleCardSelectScreen>(PackedScene.GenEditState.Disabled);
+		List<CardModel> list = cards.ToList();
+		if (prefs.Comparison != null)
+		{
+			list.Sort(prefs.Comparison);
+		}
 		nSimpleCardSelectScreen.Name = "NSimpleCardSelectScreen";
-		nSimpleCardSelectScreen._cards = cards.ToList();
+		nSimpleCardSelectScreen._cards = list;
 		nSimpleCardSelectScreen._cardResults = null;
 		nSimpleCardSelectScreen._prefs = prefs;
 		return nSimpleCardSelectScreen;
@@ -84,9 +138,14 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 	public static NSimpleCardSelectScreen Create(IReadOnlyList<CardCreationResult> cards, CardSelectorPrefs prefs)
 	{
 		NSimpleCardSelectScreen nSimpleCardSelectScreen = PreloadManager.Cache.GetScene(ScenePath).Instantiate<NSimpleCardSelectScreen>(PackedScene.GenEditState.Disabled);
+		List<CardCreationResult> list = cards.ToList();
+		if (prefs.Comparison != null)
+		{
+			list.Sort((CardCreationResult c1, CardCreationResult c2) => prefs.Comparison(c1.Card, c2.Card));
+		}
 		nSimpleCardSelectScreen.Name = "NSimpleCardSelectScreen";
-		nSimpleCardSelectScreen._cards = cards.Select((CardCreationResult r) => r.Card).ToList();
-		nSimpleCardSelectScreen._cardResults = cards.ToList();
+		nSimpleCardSelectScreen._cardResults = list;
+		nSimpleCardSelectScreen._cards = nSimpleCardSelectScreen._cardResults.Select((CardCreationResult r) => r.Card).ToList();
 		nSimpleCardSelectScreen._prefs = prefs;
 		return nSimpleCardSelectScreen;
 	}
@@ -110,6 +169,17 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		{
 			CompleteSelection();
 		}));
+	}
+
+	public override void _EnterTree()
+	{
+		_cts = new CancellationTokenSource();
+	}
+
+	public override void _ExitTree()
+	{
+		base._ExitTree();
+		_cts.Cancel();
 	}
 
 	protected override void ConnectSignalsAndInitGrid()
@@ -149,7 +219,7 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		{
 			return;
 		}
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame(_cts.Token);
 		foreach (CardCreationResult result in _cardResults)
 		{
 			NGridCardHolder nGridCardHolder = _grid.CurrentlyDisplayedCardHolders.FirstOrDefault((NGridCardHolder h) => h.CardModel == result.Card);
@@ -208,11 +278,18 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		NOverlayStack.Instance.Remove(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(5);
+		List<MethodInfo> list = new List<MethodInfo>(7);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ConnectSignalsAndInitGrid, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.AfterOverlayOpened, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.CheckIfSelectionComplete, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -220,12 +297,25 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._EnterTree && args.Count == 0)
+		{
+			_EnterTree();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -256,10 +346,19 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
 		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName._EnterTree)
+		{
+			return true;
+		}
+		if (method == MethodName._ExitTree)
 		{
 			return true;
 		}
@@ -282,6 +381,7 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -308,6 +408,7 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -334,6 +435,11 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -345,6 +451,7 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -355,6 +462,7 @@ public sealed class NSimpleCardSelectScreen : NCardGridSelectionScreen
 		info.AddProperty(PropertyName._combatPiles, Variant.From(in _combatPiles));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

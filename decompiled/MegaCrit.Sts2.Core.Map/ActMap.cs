@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 namespace MegaCrit.Sts2.Core.Map;
 
+/// <summary>
+/// Handles the creation of map points for a map.
+/// </summary>
 public abstract class ActMap
 {
 	public readonly HashSet<MapPoint> startMapPoints = new HashSet<MapPoint>();
@@ -10,6 +13,10 @@ public abstract class ActMap
 
 	public abstract MapPoint StartingMapPoint { get; }
 
+	/// <summary>
+	/// The second boss map point for Double Boss mode (Ascension 10+).
+	/// Null if not in double boss mode.
+	/// </summary>
 	public virtual MapPoint? SecondBossMapPoint => null;
 
 	protected abstract MapPoint?[,] Grid { get; }
@@ -60,7 +67,7 @@ public abstract class ActMap
 		return GetPoint(coord.col, coord.row);
 	}
 
-	protected MapPoint? GetPoint(int col, int row)
+	public MapPoint? GetPoint(int col, int row)
 	{
 		if (col == BossMapPoint.coord.col && row == BossMapPoint.coord.row)
 		{

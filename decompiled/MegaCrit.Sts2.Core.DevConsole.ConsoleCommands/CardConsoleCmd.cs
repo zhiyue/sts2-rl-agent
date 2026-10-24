@@ -40,9 +40,9 @@ public class CardConsoleCmd : AbstractConsoleCmd
 		{
 			CardPile pile = PileType.Hand.GetPile(issuingPlayer);
 			int count = pile.Cards.Count;
-			if (count >= 10)
+			if (count >= CardPile.MaxCardsInHand)
 			{
-				return new CmdResult(success: false, $"The hand is full ({count}/{10}).");
+				return new CmdResult(success: false, $"The hand is full ({count}/{CardPile.MaxCardsInHand}).");
 			}
 		}
 		string cardName = args[0].ToUpperInvariant();

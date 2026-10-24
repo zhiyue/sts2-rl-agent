@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 
+/// <summary>
+/// Console commands which manipulate the player's current health.
+/// </summary>
 public class HealConsoleCmd : AbstractConsoleCmd
 {
 	public override string CmdName => "heal";

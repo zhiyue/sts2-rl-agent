@@ -5,54 +5,122 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
+/// <summary>
+/// The slots container intercepts inputs and transforms its child node "WhatsMoved" we do this because if this Node is moved too much we can't intercept GUI inputs and such.
+/// We could probably bypass this by using _Input oops. Whatever.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/NSlotsContainer.cs")]
 public class NSlotsContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'ProcessPanEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessPanEvent = "ProcessPanEvent";
 
+		/// <summary>
+		/// Cached name for the 'ProcessGuiFocus' method.
+		/// </summary>
 		public static readonly StringName ProcessGuiFocus = "ProcessGuiFocus";
 
+		/// <summary>
+		/// Cached name for the 'ProcessScrollEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessScrollEvent = "ProcessScrollEvent";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'OnToggleVisibility' method.
+		/// </summary>
 		public static readonly StringName OnToggleVisibility = "OnToggleVisibility";
 
+		/// <summary>
+		/// Cached name for the 'Reset' method.
+		/// </summary>
 		public static readonly StringName Reset = "Reset";
 
+		/// <summary>
+		/// Cached name for the 'SetEnabled' method.
+		/// </summary>
 		public static readonly StringName SetEnabled = "SetEnabled";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'GetInitX' property.
+		/// </summary>
 		public static readonly StringName GetInitX = "GetInitX";
 
+		/// <summary>
+		/// Cached name for the '_whatsMoved' field.
+		/// </summary>
 		public static readonly StringName _whatsMoved = "_whatsMoved";
 
+		/// <summary>
+		/// Cached name for the '_dragStartPosition' field.
+		/// </summary>
 		public static readonly StringName _dragStartPosition = "_dragStartPosition";
 
+		/// <summary>
+		/// Cached name for the '_targetPosition' field.
+		/// </summary>
 		public static readonly StringName _targetPosition = "_targetPosition";
 
+		/// <summary>
+		/// Cached name for the '_isDragging' field.
+		/// </summary>
 		public static readonly StringName _isDragging = "_isDragging";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_epochSlots' field.
+		/// </summary>
 		public static readonly StringName _epochSlots = "_epochSlots";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -103,6 +171,10 @@ public class NSlotsContainer : Control
 		ProcessScrollEvent(inputEvent);
 	}
 
+	/// <summary>
+	/// Processes clicking and dragging the screen horizontally.
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void ProcessPanEvent(InputEvent inputEvent)
 	{
 		if (inputEvent is InputEventMouseButton inputEventMouseButton && inputEventMouseButton.ButtonIndex == MouseButton.Left)
@@ -133,6 +205,10 @@ public class NSlotsContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Processes mouse wheel to zoom in and out of the Timeline screen.
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void ProcessScrollEvent(InputEvent inputEvent)
 	{
 		if (inputEvent is InputEventMouseButton inputEventMouseButton)
@@ -194,14 +270,19 @@ public class NSlotsContainer : Control
 		_whatsMoved.Position = new Vector2(-960f, _whatsMoved.Position.Y);
 	}
 
+	/// <summary>
+	/// When the Timeline is opened, if there are Epochs the game will automatically center to the closest one.
+	/// </summary>
 	public async Task LerpToSlot(float slotPositionX)
 	{
 		float num = _whatsMoved.GlobalPosition.X - slotPositionX + 960f - 96f + (base.Size.X - 1920f) * 0.5f;
 		_tween?.Kill();
 		_tween = CreateTween();
 		_tween.TweenProperty(_whatsMoved, "global_position:x", num, 2.5).SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Cubic);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		_targetPosition = _whatsMoved.Position;
+		if (await _tween.AwaitFinished(this))
+		{
+			_targetPosition = _whatsMoved.Position;
+		}
 	}
 
 	public void SetEnabled(bool enabled)
@@ -210,6 +291,11 @@ public class NSlotsContainer : Control
 		_isDragging = false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -246,6 +332,7 @@ public class NSlotsContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -318,6 +405,7 @@ public class NSlotsContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -368,6 +456,7 @@ public class NSlotsContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -404,6 +493,7 @@ public class NSlotsContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -445,6 +535,11 @@ public class NSlotsContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -459,6 +554,7 @@ public class NSlotsContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -471,6 +567,7 @@ public class NSlotsContainer : Control
 		info.AddProperty(PropertyName._epochSlots, Variant.From(in _epochSlots));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

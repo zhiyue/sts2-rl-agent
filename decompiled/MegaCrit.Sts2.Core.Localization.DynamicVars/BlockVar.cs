@@ -31,8 +31,8 @@ public class BlockVar : DynamicVar
 		EnchantmentModel enchantment = card.Enchantment;
 		if (enchantment != null)
 		{
-			num += enchantment.EnchantBlockAdditive(num, Props);
-			num *= enchantment.EnchantBlockMultiplicative(num, Props);
+			num += enchantment.EnchantBlockAdditive(num);
+			num *= enchantment.EnchantBlockMultiplicative(num);
 			if (!card.IsEnchantmentPreview)
 			{
 				base.EnchantedValue = num;

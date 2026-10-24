@@ -8,7 +8,7 @@ namespace MegaCrit.Sts2.Core.GameActions;
 
 public struct NetVoteForMapCoordAction : INetAction, IPacketSerializable
 {
-	public RunLocation source;
+	public MapLocation source;
 
 	public MapVote? destination;
 
@@ -29,7 +29,7 @@ public struct NetVoteForMapCoordAction : INetAction, IPacketSerializable
 
 	public void Deserialize(PacketReader reader)
 	{
-		source = reader.Read<RunLocation>();
+		source = reader.Read<MapLocation>();
 		if (reader.ReadBool())
 		{
 			destination = reader.Read<MapVote>();

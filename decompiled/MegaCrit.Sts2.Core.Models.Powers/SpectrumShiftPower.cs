@@ -18,12 +18,12 @@ public sealed class SpectrumShiftPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
 		if (player == base.Owner.Player)
 		{
 			List<CardModel> cards = CardFactory.GetDistinctForCombat(player, ModelDb.CardPool<ColorlessCardPool>().GetUnlockedCards(player.UnlockState, player.RunState.CardMultiplayerConstraint), base.Amount, player.RunState.Rng.CombatCardGeneration).ToList();
-			await CardPileCmd.AddGeneratedCardsToCombat(cards, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardsToCombat(cards, PileType.Hand, base.Owner.Player);
 			Flash();
 		}
 	}

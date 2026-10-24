@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -78,7 +79,7 @@ public sealed class SpinyToad : MonsterModel
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/spiny_toad/spiny_toad_protrude");
 		await CreatureCmd.TriggerAnim(base.Creature, "Spiked", 0.5f);
 		IsSpiny = true;
-		await PowerCmd.Apply<ThornsPower>(base.Creature, 5m, base.Creature, null);
+		await PowerCmd.Apply<ThornsPower>(new ThrowingPlayerChoiceContext(), base.Creature, 5m, base.Creature, null);
 	}
 
 	private async Task ExplosionMove(IReadOnlyList<Creature> targets)
@@ -88,7 +89,7 @@ public sealed class SpinyToad : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/spiny_toad/spiny_toad_explode")
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
-		await PowerCmd.Apply<ThornsPower>(base.Creature, -5m, base.Creature, null);
+		await PowerCmd.Apply<ThornsPower>(new ThrowingPlayerChoiceContext(), base.Creature, -5m, base.Creature, null);
 		await Cmd.Wait(1f);
 	}
 

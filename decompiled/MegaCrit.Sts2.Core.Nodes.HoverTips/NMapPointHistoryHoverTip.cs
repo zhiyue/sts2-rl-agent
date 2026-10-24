@@ -22,30 +22,66 @@ namespace MegaCrit.Sts2.Core.Nodes.HoverTips;
 [ScriptPath("res://src/Core/Nodes/HoverTips/NMapPointHistoryHoverTip.cs")]
 public class NMapPointHistoryHoverTip : MarginContainer
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : MarginContainer.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : MarginContainer.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_floorNum' field.
+		/// </summary>
 		public static readonly StringName _floorNum = "_floorNum";
 
+		/// <summary>
+		/// Cached name for the '_playerId' field.
+		/// </summary>
 		public static readonly StringName _playerId = "_playerId";
 
+		/// <summary>
+		/// Cached name for the '_titleLabel' field.
+		/// </summary>
 		public static readonly StringName _titleLabel = "_titleLabel";
 
+		/// <summary>
+		/// Cached name for the '_playerStats' field.
+		/// </summary>
 		public static readonly StringName _playerStats = "_playerStats";
 
+		/// <summary>
+		/// Cached name for the '_roomStats' field.
+		/// </summary>
 		public static readonly StringName _roomStats = "_roomStats";
 
+		/// <summary>
+		/// Cached name for the '_rewardStatsContainer' field.
+		/// </summary>
 		public static readonly StringName _rewardStatsContainer = "_rewardStatsContainer";
 
+		/// <summary>
+		/// Cached name for the '_skippedStatsContainer' field.
+		/// </summary>
 		public static readonly StringName _skippedStatsContainer = "_skippedStatsContainer";
 
+		/// <summary>
+		/// Cached name for the '_actionStats' field.
+		/// </summary>
 		public static readonly StringName _actionStats = "_actionStats";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : MarginContainer.SignalName
 	{
 	}
@@ -515,6 +551,11 @@ public class NMapPointHistoryHoverTip : MarginContainer
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -523,6 +564,7 @@ public class NMapPointHistoryHoverTip : MarginContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -535,6 +577,7 @@ public class NMapPointHistoryHoverTip : MarginContainer
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -545,6 +588,7 @@ public class NMapPointHistoryHoverTip : MarginContainer
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -591,6 +635,7 @@ public class NMapPointHistoryHoverTip : MarginContainer
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -637,6 +682,11 @@ public class NMapPointHistoryHoverTip : MarginContainer
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -652,6 +702,7 @@ public class NMapPointHistoryHoverTip : MarginContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -666,6 +717,7 @@ public class NMapPointHistoryHoverTip : MarginContainer
 		info.AddProperty(PropertyName._actionStats, Variant.From(in _actionStats));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

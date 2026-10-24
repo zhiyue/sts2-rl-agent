@@ -19,40 +19,91 @@ namespace MegaCrit.sts2.Core.Nodes.TopBar;
 [ScriptPath("res://src/Core/Nodes/TopBar/NTopBarBossIcon.cs")]
 public class NTopBarBossIcon : NClickableControl
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NClickableControl.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnRoomEntered' method.
+		/// </summary>
 		public static readonly StringName OnRoomEntered = "OnRoomEntered";
 
+		/// <summary>
+		/// Cached name for the 'OnActEntered' method.
+		/// </summary>
 		public static readonly StringName OnActEntered = "OnActEntered";
 
+		/// <summary>
+		/// Cached name for the 'RefreshBossIcon' method.
+		/// </summary>
 		public static readonly StringName RefreshBossIcon = "RefreshBossIcon";
 
+		/// <summary>
+		/// Cached name for the 'RefreshSecondBossIconColor' method.
+		/// </summary>
 		public static readonly StringName RefreshSecondBossIconColor = "RefreshSecondBossIconColor";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NClickableControl.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ShouldOnlyShowSecondBossIcon' property.
+		/// </summary>
 		public static readonly StringName ShouldOnlyShowSecondBossIcon = "ShouldOnlyShowSecondBossIcon";
 
+		/// <summary>
+		/// Cached name for the '_bossIcon' field.
+		/// </summary>
 		public static readonly StringName _bossIcon = "_bossIcon";
 
+		/// <summary>
+		/// Cached name for the '_bossIconOutline' field.
+		/// </summary>
 		public static readonly StringName _bossIconOutline = "_bossIconOutline";
 
+		/// <summary>
+		/// Cached name for the '_secondBossIcon' field.
+		/// </summary>
 		public static readonly StringName _secondBossIcon = "_secondBossIcon";
 
+		/// <summary>
+		/// Cached name for the '_secondBossIconOutline' field.
+		/// </summary>
 		public static readonly StringName _secondBossIconOutline = "_secondBossIconOutline";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NClickableControl.SignalName
 	{
 	}
@@ -212,8 +263,7 @@ public class NTopBarBossIcon : NClickableControl
 			_bossHoverTipDescription.Add("BossName", ShouldOnlyShowSecondBossIcon ? secondBossEncounter.Title : bossEncounter.Title);
 			hoverTip = new HoverTip(_bossHoverTipTitle, _bossHoverTipDescription);
 		}
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, hoverTip);
-		nHoverTipSet.GlobalPosition = _bossIcon.GlobalPosition + new Vector2(0f, base.Size.Y + 20f);
+		NHoverTipSet.CreateAndShow(this, hoverTip)?.SetGlobalPosition(_bossIcon.GlobalPosition + new Vector2(0f, base.Size.Y + 20f));
 	}
 
 	protected override void OnUnfocus()
@@ -221,6 +271,11 @@ public class NTopBarBossIcon : NClickableControl
 		NHoverTipSet.Remove(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -237,6 +292,7 @@ public class NTopBarBossIcon : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -297,6 +353,7 @@ public class NTopBarBossIcon : NClickableControl
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -339,6 +396,7 @@ public class NTopBarBossIcon : NClickableControl
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -365,6 +423,7 @@ public class NTopBarBossIcon : NClickableControl
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -396,6 +455,11 @@ public class NTopBarBossIcon : NClickableControl
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -408,6 +472,7 @@ public class NTopBarBossIcon : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -418,6 +483,7 @@ public class NTopBarBossIcon : NClickableControl
 		info.AddProperty(PropertyName._secondBossIconOutline, Variant.From(in _secondBossIconOutline));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -33,7 +33,7 @@ public sealed class BlightStrike : CardModel
 		AttackCommand attackCommand = await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(choiceContext);
-		await PowerCmd.Apply<DoomPower>(cardPlay.Target, attackCommand.Results.Sum((DamageResult r) => r.TotalDamage), base.Owner.Creature, this);
+		await PowerCmd.Apply<DoomPower>(choiceContext, cardPlay.Target, attackCommand.Results.SelectMany((List<DamageResult> r) => r).Sum((DamageResult r) => r.TotalDamage), base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

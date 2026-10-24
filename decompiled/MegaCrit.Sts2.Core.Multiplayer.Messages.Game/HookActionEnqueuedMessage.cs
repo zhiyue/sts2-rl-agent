@@ -6,6 +6,13 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Game;
 
+/// <summary>
+/// Sent from the host to clients to indicate that a GenericHookGameAction has been enqueued.
+/// This is slightly different than ActionEnqueuedMessage. The Action itself is not serialized, because it is difficult
+/// to serialize every different action that could be executed by a hook. Since hooks are executed by every player,
+/// we instead map the hook to an incrementing integer that is the same across all peers, and use that to identify
+/// which hook will be assigned to the GameAction that is created.
+/// </summary>
 public struct HookActionEnqueuedMessage : INetMessage, IPacketSerializable, IRunLocationTargetedMessage
 {
 	public RunLocation location;
@@ -21,6 +28,8 @@ public struct HookActionEnqueuedMessage : INetMessage, IPacketSerializable, IRun
 	public NetTransferMode Mode => NetTransferMode.Reliable;
 
 	public LogLevel LogLevel => LogLevel.Debug;
+
+	public bool ShouldBuffer => true;
 
 	public RunLocation Location => location;
 

@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Game;
 
+/// <summary>
+/// Sent at a treasure room when a remote player opens the treasure chest.
+/// </summary>
 public class TreasureChestOpenedMessage : INetMessage, IPacketSerializable, IRunLocationTargetedMessage
 {
 	public bool ShouldBroadcast => true;
@@ -12,6 +15,8 @@ public class TreasureChestOpenedMessage : INetMessage, IPacketSerializable, IRun
 	public NetTransferMode Mode => NetTransferMode.Reliable;
 
 	public LogLevel LogLevel => LogLevel.Debug;
+
+	public bool ShouldBuffer => true;
 
 	public RunLocation Location { get; set; }
 

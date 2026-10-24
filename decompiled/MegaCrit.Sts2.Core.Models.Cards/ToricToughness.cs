@@ -32,7 +32,7 @@ public sealed class ToricToughness : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		decimal blockAmount = await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		(await PowerCmd.Apply<ToricToughnessPower>(base.Owner.Creature, base.DynamicVars["Turns"].BaseValue, base.Owner.Creature, this))?.SetBlock(blockAmount);
+		(await PowerCmd.Apply<ToricToughnessPower>(choiceContext, base.Owner.Creature, base.DynamicVars["Turns"].BaseValue, base.Owner.Creature, this))?.SetBlock(blockAmount);
 	}
 
 	protected override void OnUpgrade()

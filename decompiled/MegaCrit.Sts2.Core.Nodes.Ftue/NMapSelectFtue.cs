@@ -13,33 +13,73 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Ftue;
 
+/// <summary>
+/// Ftue which appears when a player opens the map for the first time.
+/// Automatically appears after the start of act animation.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Ftue/NMapSelectFtue.cs")]
 public class NMapSelectFtue : NFtue
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NFtue.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'CloseFtue' method.
+		/// </summary>
 		public new static readonly StringName CloseFtue = "CloseFtue";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NFtue.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_confirmButton' field.
+		/// </summary>
 		public static readonly StringName _confirmButton = "_confirmButton";
 
+		/// <summary>
+		/// Cached name for the '_header' field.
+		/// </summary>
 		public static readonly StringName _header = "_header";
 
+		/// <summary>
+		/// Cached name for the '_description' field.
+		/// </summary>
 		public static readonly StringName _description = "_description";
 
+		/// <summary>
+		/// Cached name for the '_ftuePosition' field.
+		/// </summary>
 		public static readonly StringName _ftuePosition = "_ftuePosition";
 
+		/// <summary>
+		/// Cached name for the '_firstNode' field.
+		/// </summary>
 		public static readonly StringName _firstNode = "_firstNode";
 
+		/// <summary>
+		/// Cached name for the '_defaultZIndex' field.
+		/// </summary>
 		public static readonly StringName _defaultZIndex = "_defaultZIndex";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NFtue.SignalName
 	{
 	}
@@ -89,9 +129,14 @@ public class NMapSelectFtue : NFtue
 
 	public async Task WaitForPlayerToConfirm()
 	{
-		await ToSignal(_confirmButton, NClickableControl.SignalName.Released);
+		await _confirmButton.AwaitSignal<NClickableControl>(NClickableControl.SignalName.Released, this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -108,6 +153,7 @@ public class NMapSelectFtue : NFtue
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -143,6 +189,7 @@ public class NMapSelectFtue : NFtue
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -161,6 +208,7 @@ public class NMapSelectFtue : NFtue
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -197,6 +245,7 @@ public class NMapSelectFtue : NFtue
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -233,6 +282,11 @@ public class NMapSelectFtue : NFtue
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -246,6 +300,7 @@ public class NMapSelectFtue : NFtue
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -258,6 +313,7 @@ public class NMapSelectFtue : NFtue
 		info.AddProperty(PropertyName._defaultZIndex, Variant.From(in _defaultZIndex));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

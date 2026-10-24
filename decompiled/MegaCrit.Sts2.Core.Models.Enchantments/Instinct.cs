@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Models.Enchantments;
 
@@ -9,17 +10,12 @@ public sealed class Instinct : EnchantmentModel
 		return cardType == CardType.Attack;
 	}
 
-	public override bool CanEnchant(CardModel card)
+	public override decimal EnchantDamageMultiplicative(decimal originalDamage, ValueProp props)
 	{
-		if (base.CanEnchant(card) && !card.Keywords.Contains(CardKeyword.Unplayable) && !card.EnergyCost.CostsX)
+		if (!props.IsPoweredAttack())
 		{
-			return card.EnergyCost.GetWithModifiers(CostModifiers.None) > 0;
+			return 1m;
 		}
-		return false;
-	}
-
-	protected override void OnEnchant()
-	{
-		base.Card.EnergyCost.UpgradeBy(-1);
+		return 2m;
 	}
 }

@@ -3,6 +3,16 @@ using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Map;
 
+/// <summary>
+/// An ActMap that is reconstructed from saved data rather than generated from RNG.
+/// This ensures map topology is preserved even if map generation code changes.
+///
+/// This single class handles all map types (Standard, Spoils, GoldenPath) because
+/// the concrete type only matters during generation. After generation, all maps
+/// are simply grids of MapPoints with connections. The serialization captures
+/// the complete topology, making the original generation algorithm irrelevant
+/// for restoration.
+/// </summary>
 public sealed class SavedActMap : ActMap
 {
 	public override MapPoint BossMapPoint { get; }

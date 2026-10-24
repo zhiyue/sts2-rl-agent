@@ -12,35 +12,78 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
+/// <summary>
+/// A base TextEdit class that is used to access the virtual keyboard
+/// for various devices/apis (ie Steam Deck)
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/GodotExtensions/NMegaTextEdit.cs")]
 public class NMegaTextEdit : TextEdit
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : TextEdit.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'IsEditing' method.
+		/// </summary>
 		public static readonly StringName IsEditing = "IsEditing";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RefreshFont' method.
+		/// </summary>
 		public static readonly StringName RefreshFont = "RefreshFont";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'OpenKeyboard' method.
+		/// </summary>
 		public static readonly StringName OpenKeyboard = "OpenKeyboard";
 
+		/// <summary>
+		/// Cached name for the 'StopEditing' method.
+		/// </summary>
 		public static readonly StringName StopEditing = "StopEditing";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : TextEdit.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_selectionReticle' field.
+		/// </summary>
 		public static readonly StringName _selectionReticle = "_selectionReticle";
 
+		/// <summary>
+		/// Cached name for the '_isEditing' field.
+		/// </summary>
 		public static readonly StringName _isEditing = "_isEditing";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : TextEdit.SignalName
 	{
 	}
@@ -49,6 +92,9 @@ public class NMegaTextEdit : TextEdit
 
 	private bool _isEditing;
 
+	/// <summary>
+	/// This mirrors LineEdit.IsEditing()
+	/// </summary>
 	public bool IsEditing()
 	{
 		return _isEditing;
@@ -70,7 +116,7 @@ public class NMegaTextEdit : TextEdit
 
 	public void RefreshFont()
 	{
-		this.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.TextEdit.font);
+		this.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.TextEdit.Font);
 	}
 
 	private void OnFocus()
@@ -117,6 +163,11 @@ public class NMegaTextEdit : TextEdit
 		PlatformUtil.CloseVirtualKeyboard();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -135,6 +186,7 @@ public class NMegaTextEdit : TextEdit
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -188,6 +240,7 @@ public class NMegaTextEdit : TextEdit
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -226,6 +279,7 @@ public class NMegaTextEdit : TextEdit
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -242,6 +296,7 @@ public class NMegaTextEdit : TextEdit
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -258,6 +313,11 @@ public class NMegaTextEdit : TextEdit
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -267,6 +327,7 @@ public class NMegaTextEdit : TextEdit
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -275,6 +336,7 @@ public class NMegaTextEdit : TextEdit
 		info.AddProperty(PropertyName._isEditing, Variant.From(in _isEditing));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

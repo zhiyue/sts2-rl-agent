@@ -1,8 +1,13 @@
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// Holds progress data on a per character basis.
+/// Used by SerializableProgress
+/// </summary>
 public class CharacterStats
 {
 	[JsonPropertyName("id")]
@@ -31,4 +36,7 @@ public class CharacterStats
 
 	[JsonPropertyName("playtime")]
 	public long Playtime { get; set; }
+
+	[JsonPropertyName("badges")]
+	public List<BadgeStats> Badges { get; set; } = new List<BadgeStats>();
 }

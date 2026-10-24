@@ -6,7 +6,6 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Saves;
@@ -15,32 +14,69 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes;
 
+/// <summary>
+/// Manages the fancy screen to screen transitions that use the SDF shader.
+/// FadeOut = Fades out the current screen. This means the screen becomes black.
+/// FadeIn = Fades the screen in. This means the screen becomes revealed.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/NTransition.cs")]
 public class NTransition : ColorRect
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : ColorRect.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : ColorRect.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InTransition' property.
+		/// </summary>
 		public static readonly StringName InTransition = "InTransition";
 
+		/// <summary>
+		/// Cached name for the '_initialGradientYPosition' field.
+		/// </summary>
 		public static readonly StringName _initialGradientYPosition = "_initialGradientYPosition";
 
+		/// <summary>
+		/// Cached name for the '_targetGradientYPosition' field.
+		/// </summary>
 		public static readonly StringName _targetGradientYPosition = "_targetGradientYPosition";
 
+		/// <summary>
+		/// Cached name for the '_gradientTransition' field.
+		/// </summary>
 		public static readonly StringName _gradientTransition = "_gradientTransition";
 
+		/// <summary>
+		/// Cached name for the '_simpleTransition' field.
+		/// </summary>
 		public static readonly StringName _simpleTransition = "_simpleTransition";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : ColorRect.SignalName
 	{
 	}
+
+	private static readonly NodePath _thresholdTweenPath = new NodePath("shader_parameter/threshold");
 
 	private static readonly StringName _threshold = new StringName("threshold");
 
@@ -83,6 +119,10 @@ public class NTransition : ColorRect
 		Color modulate = _simpleTransition.Modulate;
 		modulate.A = 0f;
 		simpleTransition.Modulate = modulate;
+		Control gradientTransition = _gradientTransition;
+		modulate = _gradientTransition.Modulate;
+		modulate.A = 0f;
+		gradientTransition.Modulate = modulate;
 		_tween?.Kill();
 		_tween = CreateTween().SetParallel();
 		_tween.TweenProperty(_simpleTransition, "modulate:a", 1f, time).SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Quad);
@@ -92,7 +132,7 @@ public class NTransition : ColorRect
 		}
 		else
 		{
-			if (shaderMaterial.GetShaderParameter(_threshold).AsInt32() == 1)
+			if (shaderMaterial.GetShaderParameter(_threshold).AsSingle() > 0.999999f)
 			{
 				return;
 			}
@@ -103,7 +143,8 @@ public class NTransition : ColorRect
 				Log.Warn("NTransition.Material failed to load from cache (path: " + transitionPath + "). Skipping transition.");
 				return;
 			}
-			transitionMaterial.SetShaderParameter(_threshold, 0);
+			transitionMaterial.SetShaderParameter(_threshold, 0f);
+			_tween.TweenProperty(transitionMaterial, _thresholdTweenPath, 1f, time);
 			double t = 0.0;
 			while (t < (double)time)
 			{
@@ -112,12 +153,11 @@ public class NTransition : ColorRect
 					_tween?.FastForwardToCompletion();
 					break;
 				}
-				transitionMaterial.SetShaderParameter(_threshold, 1.0 - ((double)time - t));
 				t += GetProcessDeltaTime();
-				await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+				await this.AwaitProcessFrame();
 			}
 			base.MouseFilter = MouseFilterEnum.Stop;
-			transitionMaterial.SetShaderParameter(_threshold, 1);
+			transitionMaterial.SetShaderParameter(_threshold, 1f);
 		}
 	}
 
@@ -135,13 +175,17 @@ public class NTransition : ColorRect
 		Color modulate = _simpleTransition.Modulate;
 		modulate.A = 0f;
 		simpleTransition.Modulate = modulate;
+		Control gradientTransition = _gradientTransition;
+		modulate = _gradientTransition.Modulate;
+		modulate.A = 0f;
+		gradientTransition.Modulate = modulate;
 		if (!(base.Material is ShaderMaterial shaderMaterial))
 		{
 			Log.Warn("NTransition.Material is null or not a ShaderMaterial (actual: " + (base.Material?.GetType().Name ?? "null") + "). Skipping transition.");
 			InTransition = false;
 			return;
 		}
-		if (shaderMaterial.GetShaderParameter(_threshold).AsInt32() == 0)
+		if (shaderMaterial.GetShaderParameter(_threshold).AsSingle() < 1E-06f)
 		{
 			InTransition = false;
 			return;
@@ -154,7 +198,9 @@ public class NTransition : ColorRect
 			InTransition = false;
 			return;
 		}
-		transitionMaterial.SetShaderParameter(_threshold, 1);
+		transitionMaterial.SetShaderParameter(_threshold, 1f);
+		_tween = CreateTween();
+		_tween.TweenProperty(transitionMaterial, _thresholdTweenPath, 0f, time).SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Cubic);
 		base.MouseFilter = MouseFilterEnum.Ignore;
 		double t = 0.0;
 		while (t < (double)time)
@@ -164,19 +210,23 @@ public class NTransition : ColorRect
 				_tween?.FastForwardToCompletion();
 				break;
 			}
-			transitionMaterial.SetShaderParameter(_threshold, Ease.CubicIn((float)((double)time - t)));
 			t += GetProcessDeltaTime();
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrame();
 			if (t / (double)time > 0.75)
 			{
 				InTransition = false;
 			}
 		}
 		InTransition = false;
-		transitionMaterial.SetShaderParameter(_threshold, 0);
+		transitionMaterial.SetShaderParameter(_threshold, 0f);
 		base.MouseFilter = MouseFilterEnum.Ignore;
 	}
 
+	/// <summary>
+	/// The gradient sweep transition when players move from room to room.
+	/// This replaced the spiral room transition animation.
+	/// Note that this utilizes TWO images to accomplish this transition, a simple backdrop fade + gradient sweep.
+	/// </summary>
 	public async Task RoomFadeOut()
 	{
 		InTransition = true;
@@ -206,10 +256,16 @@ public class NTransition : ColorRect
 				_tween.TweenProperty(_simpleTransition, "modulate:a", 1f, 0.3).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Quad)
 					.SetDelay(0.3);
 			}
-			await ToSignal(_tween, Tween.SignalName.Finished);
+			if (await _tween.AwaitFinished(this))
+			{
+				base.MouseFilter = MouseFilterEnum.Stop;
+			}
 		}
 	}
 
+	/// <summary>
+	/// Uses the SimpleTransition ColorRect to fade from black -&gt; seeing the next room.
+	/// </summary>
 	public async Task RoomFadeIn(bool showTransition = true)
 	{
 		if (TestMode.IsOn)
@@ -230,7 +286,7 @@ public class NTransition : ColorRect
 			InTransition = false;
 			return;
 		}
-		shaderMaterial.SetShaderParameter(_threshold, 0);
+		shaderMaterial.SetShaderParameter(_threshold, 0f);
 		Control gradientTransition = _gradientTransition;
 		modulate = _gradientTransition.Modulate;
 		modulate.A = 0f;
@@ -255,10 +311,17 @@ public class NTransition : ColorRect
 				InTransition = false;
 			})).SetDelay(0.2);
 		}
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		InTransition = false;
+		if (await _tween.AwaitFinished(this))
+		{
+			InTransition = false;
+		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -267,6 +330,7 @@ public class NTransition : ColorRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -279,6 +343,7 @@ public class NTransition : ColorRect
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -289,6 +354,7 @@ public class NTransition : ColorRect
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -325,6 +391,7 @@ public class NTransition : ColorRect
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -361,6 +428,11 @@ public class NTransition : ColorRect
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -374,6 +446,7 @@ public class NTransition : ColorRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -386,6 +459,7 @@ public class NTransition : ColorRect
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

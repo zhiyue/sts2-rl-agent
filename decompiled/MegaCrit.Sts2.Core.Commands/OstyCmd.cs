@@ -18,9 +18,24 @@ namespace MegaCrit.Sts2.Core.Commands;
 
 public static class OstyCmd
 {
+	/// <summary>
+	/// Summon Osty with the specified number of HP. If the specified creature already owns an instance of Osty, raise
+	/// Osty's max HP by the specified number instead.
+	/// </summary>
+	/// <param name="choiceContext">The context with which to handle player choices.</param>
+	/// <param name="summoner">The player who is summoning.</param>
+	/// <param name="amount">
+	/// The number of HP that Osty should be summoned with (or that should be added to the existing Osty instance).
+	/// </param>
+	/// <param name="source">
+	/// The model that this Summon came from. For example, <see cref="T:MegaCrit.Sts2.Core.Models.Cards.Bodyguard" /> and <see cref="T:MegaCrit.Sts2.Core.Models.Relics.BoundPhylactery" />
+	/// pass themselves here.
+	/// Null if the Summon did not come from any model (generally only relevant in tests).
+	/// </param>
+	/// <returns>The result of the summon.</returns>
 	public static async Task<SummonResult> Summon(PlayerChoiceContext choiceContext, Player summoner, decimal amount, AbstractModel? source)
 	{
-		CombatState combatState = summoner.Creature.CombatState;
+		ICombatState combatState = summoner.Creature.CombatState;
 		amount = Hook.ModifySummonAmount(combatState, summoner, amount, source);
 		if (amount == 0m)
 		{
@@ -50,14 +65,14 @@ public static class OstyCmd
 			{
 				osty = await PlayerCmd.AddPet<Osty>(summoner);
 				NCreature ostyNode = NCombatRoom.Instance?.GetCreatureNode(osty);
-				if (ostyNode != null)
+				if (ostyNode != null && source is CardModel)
 				{
 					ostyNode.Modulate = Colors.Transparent;
 					Tween tween = ostyNode.CreateTween();
-					tween.TweenProperty(ostyNode, "modulate:a", 1, 0.3499999940395355).From(0);
+					tween.TweenProperty(ostyNode, "modulate", Colors.White, 0.3499999940395355).SetDelay(0.10000000149011612);
 					ostyNode.StartReviveAnim();
 				}
-				await PowerCmd.Apply<DieForYouPower>(osty, 1m, null, null);
+				await PowerCmd.Apply<DieForYouPower>(choiceContext, osty, 1m, null, null);
 				ostyNode?.TrackBlockStatus(summoner.Creature);
 			}
 			await CreatureCmd.SetMaxHp(osty, amount);
@@ -70,7 +85,7 @@ public static class OstyCmd
 		if (TestMode.IsOff)
 		{
 			NCreature nCreature = NCombatRoom.Instance?.GetCreatureNode(osty);
-			nCreature.OstyScaleToSize(osty.MaxHp, 0.75f);
+			nCreature.OstyScaleToSize(osty.MaxHp, 0.75);
 		}
 		CombatManager.Instance.History.Summoned(combatState, (int)amount, summoner);
 		await Hook.AfterSummon(combatState, choiceContext, summoner, amount);

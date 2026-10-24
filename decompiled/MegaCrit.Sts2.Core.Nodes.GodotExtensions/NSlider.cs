@@ -8,6 +8,11 @@ using MegaCrit.Sts2.Core.Helpers;
 
 namespace MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
+/// <summary>
+/// A Slider class which doesn't rely on Godot's Slider class.
+/// Advantages are that the handle interpolates between positions and you can define the slider area/handle without
+/// restrictions imposed by the theming system.
+/// </summary>
 [GlobalClass]
 [ScriptPath("res://src/Core/Nodes/GodotExtensions/NSlider.cs")]
 public class NSlider : Godot.Range
@@ -18,36 +23,81 @@ public class NSlider : Godot.Range
 	[Signal]
 	public delegate void MousePressedEventHandler(InputEvent inputEvent);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Godot.Range.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'SetValueBasedOnMousePosition' method.
+		/// </summary>
 		public static readonly StringName SetValueBasedOnMousePosition = "SetValueBasedOnMousePosition";
 
+		/// <summary>
+		/// Cached name for the 'SetValueWithoutAnimation' method.
+		/// </summary>
 		public static readonly StringName SetValueWithoutAnimation = "SetValueWithoutAnimation";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'UpdateHandlePosition' method.
+		/// </summary>
 		public static readonly StringName UpdateHandlePosition = "UpdateHandlePosition";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Godot.Range.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_handle' field.
+		/// </summary>
 		public static readonly StringName _handle = "_handle";
 
+		/// <summary>
+		/// Cached name for the '_currentHandlePosition' field.
+		/// </summary>
 		public static readonly StringName _currentHandlePosition = "_currentHandlePosition";
 
+		/// <summary>
+		/// Cached name for the '_currentVelocity' field.
+		/// </summary>
 		public static readonly StringName _currentVelocity = "_currentVelocity";
 
+		/// <summary>
+		/// Cached name for the '_isDragging' field.
+		/// </summary>
 		public static readonly StringName _isDragging = "_isDragging";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Godot.Range.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'MouseReleased' signal.
+		/// </summary>
 		public static readonly StringName MouseReleased = "MouseReleased";
 
+		/// <summary>
+		/// Cached name for the 'MousePressed' signal.
+		/// </summary>
 		public static readonly StringName MousePressed = "MousePressed";
 	}
 
@@ -63,6 +113,7 @@ public class NSlider : Godot.Range
 
 	private MousePressedEventHandler backing_MousePressed;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.GodotExtensions.NSlider.MouseReleasedEventHandler" />
 	public event MouseReleasedEventHandler MouseReleased
 	{
 		add
@@ -75,6 +126,7 @@ public class NSlider : Godot.Range
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.GodotExtensions.NSlider.MousePressedEventHandler" />
 	public event MousePressedEventHandler MousePressed
 	{
 		add
@@ -92,6 +144,11 @@ public class NSlider : Godot.Range
 		_handle = GetNode<Control>("%Handle");
 	}
 
+	/// <summary>
+	/// WARNING: If overriding, be sure to call the base function to retain
+	/// OnPressDown and OnRelease functionality.
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	public override void _GuiInput(InputEvent inputEvent)
 	{
 		base._GuiInput(inputEvent);
@@ -133,6 +190,11 @@ public class NSlider : Godot.Range
 		_handle.Position = new Vector2(base.Size.X * (float)((double)_currentHandlePosition / base.MaxValue) - _handle.Size.X * 0.5f, (base.Size.Y - _handle.Size.Y) * 0.5f);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -158,6 +220,7 @@ public class NSlider : Godot.Range
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -200,6 +263,7 @@ public class NSlider : Godot.Range
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -230,6 +294,7 @@ public class NSlider : Godot.Range
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -256,6 +321,7 @@ public class NSlider : Godot.Range
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -282,6 +348,11 @@ public class NSlider : Godot.Range
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -293,6 +364,7 @@ public class NSlider : Godot.Range
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -305,6 +377,7 @@ public class NSlider : Godot.Range
 		info.AddSignalEventDelegate(SignalName.MousePressed, backing_MousePressed);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -335,6 +408,11 @@ public class NSlider : Godot.Range
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -360,6 +438,7 @@ public class NSlider : Godot.Range
 		EmitSignal(SignalName.MousePressed, inputEvent);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -377,6 +456,7 @@ public class NSlider : Godot.Range
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

@@ -41,7 +41,7 @@ public sealed class Expose : CardModel
 		{
 			await PowerCmd.Remove<ArtifactPower>(cardPlay.Target);
 		}
-		await PowerCmd.Apply<VulnerablePower>(cardPlay.Target, amount, base.Owner.Creature, this);
+		await PowerCmd.Apply<VulnerablePower>(choiceContext, cardPlay.Target, amount, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

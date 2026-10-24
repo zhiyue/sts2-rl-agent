@@ -19,7 +19,8 @@ public sealed class DarkEmbrace : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<DarkEmbracePower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<DarkEmbracePower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

@@ -18,9 +18,9 @@ public sealed class RampartPower : PowerModel
 
 	public override bool ShouldScaleInMultiplayer => true;
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side != CombatSide.Player)
+		if (side != CombatSide.Player || CombatManager.Instance.PlayersTakingExtraTurn.Count > 0)
 		{
 			return;
 		}

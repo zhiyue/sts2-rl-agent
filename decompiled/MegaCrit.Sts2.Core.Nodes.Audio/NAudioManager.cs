@@ -12,40 +12,91 @@ namespace MegaCrit.Sts2.Core.Nodes.Audio;
 [ScriptPath("res://src/Core/Nodes/Audio/NAudioManager.cs")]
 public class NAudioManager : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the 'PlayLoop' method.
+		/// </summary>
 		public static readonly StringName PlayLoop = "PlayLoop";
 
+		/// <summary>
+		/// Cached name for the 'StopLoop' method.
+		/// </summary>
 		public static readonly StringName StopLoop = "StopLoop";
 
+		/// <summary>
+		/// Cached name for the 'SetParam' method.
+		/// </summary>
 		public static readonly StringName SetParam = "SetParam";
 
+		/// <summary>
+		/// Cached name for the 'StopAllLoops' method.
+		/// </summary>
 		public static readonly StringName StopAllLoops = "StopAllLoops";
 
+		/// <summary>
+		/// Cached name for the 'PlayOneShot' method.
+		/// </summary>
 		public static readonly StringName PlayOneShot = "PlayOneShot";
 
+		/// <summary>
+		/// Cached name for the 'PlayMusic' method.
+		/// </summary>
 		public static readonly StringName PlayMusic = "PlayMusic";
 
+		/// <summary>
+		/// Cached name for the 'UpdateMusicParameter' method.
+		/// </summary>
 		public static readonly StringName UpdateMusicParameter = "UpdateMusicParameter";
 
+		/// <summary>
+		/// Cached name for the 'StopMusic' method.
+		/// </summary>
 		public static readonly StringName StopMusic = "StopMusic";
 
+		/// <summary>
+		/// Cached name for the 'SetMasterVol' method.
+		/// </summary>
 		public static readonly StringName SetMasterVol = "SetMasterVol";
 
+		/// <summary>
+		/// Cached name for the 'SetSfxVol' method.
+		/// </summary>
 		public static readonly StringName SetSfxVol = "SetSfxVol";
 
+		/// <summary>
+		/// Cached name for the 'SetAmbienceVol' method.
+		/// </summary>
 		public static readonly StringName SetAmbienceVol = "SetAmbienceVol";
 
+		/// <summary>
+		/// Cached name for the 'SetBgmVol' method.
+		/// </summary>
 		public static readonly StringName SetBgmVol = "SetBgmVol";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_audioNode' field.
+		/// </summary>
 		public static readonly StringName _audioNode = "_audioNode";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -83,6 +134,12 @@ public class NAudioManager : Node
 		_audioNode = GetNode<Node>("Proxy");
 	}
 
+	/// <summary>
+	/// Starts an sfx that has a continuous FMOD event that is meant to loop
+	/// ex: Waterfall Giant's ambient sfx. Thieving hopper's hovering sfx.
+	/// </summary>
+	/// <param name="path">path of the fmod sfx</param>
+	/// <param name="usesLoopParam">Whether on not the event uses our standard "loop" parameter to end the loop.</param>
 	public void PlayLoop(string path, bool usesLoopParam)
 	{
 		if (!TestMode.IsOn)
@@ -91,6 +148,10 @@ public class NAudioManager : Node
 		}
 	}
 
+	/// <summary>
+	/// Stops the specified FMOD event that is looping.
+	/// </summary>
+	/// <param name="path"></param>
 	public void StopLoop(string path)
 	{
 		if (!TestMode.IsOn)
@@ -193,6 +254,11 @@ public class NAudioManager : Node
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -248,6 +314,7 @@ public class NAudioManager : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -332,6 +399,7 @@ public class NAudioManager : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -390,6 +458,7 @@ public class NAudioManager : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -401,6 +470,7 @@ public class NAudioManager : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -412,6 +482,11 @@ public class NAudioManager : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -420,6 +495,7 @@ public class NAudioManager : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -427,6 +503,7 @@ public class NAudioManager : Node
 		info.AddProperty(PropertyName._audioNode, Variant.From(in _audioNode));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Saves;
@@ -25,17 +26,20 @@ public class CombatReplayWriter : IDisposable
 
 	private readonly PlayerChoiceSynchronizer _playerChoiceSynchronizer;
 
+	private readonly RewardsSetSynchronizer _rewardsSetSynchronizer;
+
 	private readonly ChecksumTracker _checksumTracker;
 
 	public bool IsEnabled { get; set; } = true;
 
 	public bool IsRecordingReplay => _replay != null;
 
-	public CombatReplayWriter(PlayerChoiceSynchronizer playerChoiceSynchronizer, ActionQueueSet actionQueueSet, ActionQueueSynchronizer actionQueueSynchronizer, ChecksumTracker checksumTracker)
+	public CombatReplayWriter(PlayerChoiceSynchronizer playerChoiceSynchronizer, RewardsSetSynchronizer rewardsSetSynchronizer, ActionQueueSet actionQueueSet, ActionQueueSynchronizer actionQueueSynchronizer, ChecksumTracker checksumTracker)
 	{
 		_actionQueueSet = actionQueueSet;
 		_actionQueueSynchronizer = actionQueueSynchronizer;
 		_playerChoiceSynchronizer = playerChoiceSynchronizer;
+		_rewardsSetSynchronizer = rewardsSetSynchronizer;
 		_checksumTracker = checksumTracker;
 		actionQueueSet.ActionEnqueued += RecordGameAction;
 		actionQueueSet.ActionResumed += RecordActionResume;
@@ -61,6 +65,7 @@ public class CombatReplayWriter : IDisposable
 				gitCommit = (ReleaseInfoManager.Instance.ReleaseInfo?.Commit ?? GitHelper.ShortCommitId ?? "UNKNOWN"),
 				modelIdHash = ModelIdSerializationCache.Hash,
 				choiceIds = _playerChoiceSynchronizer.ChoiceIds.ToList(),
+				rewardIds = _rewardsSetSynchronizer.GetNextRewardIds().ToList(),
 				nextActionId = _actionQueueSet.NextActionId,
 				nextChecksumId = _checksumTracker.NextId,
 				nextHookId = _actionQueueSynchronizer.NextHookId,
@@ -166,9 +171,16 @@ public class CombatReplayWriter : IDisposable
 		}
 		_writer.Reset();
 		_writer.Write(_replay.Anonymized());
-		DirAccess.MakeDirRecursiveAbsolute(filePath.Substring(0, filePath.LastIndexOf('/')));
-		using FileAccessStream fileAccessStream = new FileAccessStream(filePath, FileAccess.ModeFlags.Write);
-		fileAccessStream.Write(_writer.Buffer.AsSpan().Slice(0, _writer.BytePosition));
+		try
+		{
+			DirAccess.MakeDirRecursiveAbsolute(filePath.Substring(0, filePath.LastIndexOf('/')));
+			using FileAccessStream fileAccessStream = new FileAccessStream(filePath, FileAccess.ModeFlags.Write);
+			fileAccessStream.Write(_writer.Buffer.AsSpan().Slice(0, _writer.BytePosition));
+		}
+		catch (Exception value)
+		{
+			Log.Warn($"Exception while writing replay: {value}");
+		}
 		if (stopRecording)
 		{
 			StopRecording();

@@ -29,7 +29,7 @@ public sealed class Scrape : CardModel
 		await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(choiceContext);
-		IEnumerable<CardModel> cards = (await CardPileCmd.Draw(choiceContext, base.DynamicVars.Cards.IntValue, base.Owner)).Where((CardModel c) => c.EnergyCost.GetWithModifiers(CostModifiers.Local) != 0 || c.EnergyCost.CostsX || c.CurrentStarCost > 0 || c.HasStarCostX);
+		IEnumerable<CardModel> cards = (await CardPileCmd.Draw(choiceContext, base.DynamicVars.Cards.IntValue, base.Owner)).Where((CardModel c) => c.EnergyCost.GetWithModifiers(CostModifiers.Local) != 0 || c.EnergyCost.CostsX);
 		await CardCmd.Discard(choiceContext, cards);
 	}
 

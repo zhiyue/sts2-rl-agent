@@ -4,6 +4,7 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
+using MegaCrit.Sts2.Core.Helpers;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
@@ -11,30 +12,66 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NSoulFyshVfx.cs")]
 public class NSoulFyshVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'StartSoundwave' method.
+		/// </summary>
 		public static readonly StringName StartSoundwave = "StartSoundwave";
 
+		/// <summary>
+		/// Cached name for the 'EndSoundwave' method.
+		/// </summary>
 		public static readonly StringName EndSoundwave = "EndSoundwave";
 
+		/// <summary>
+		/// Cached name for the 'StartBeckon' method.
+		/// </summary>
 		public static readonly StringName StartBeckon = "StartBeckon";
 
+		/// <summary>
+		/// Cached name for the 'EndBeckon' method.
+		/// </summary>
 		public static readonly StringName EndBeckon = "EndBeckon";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_soundShaderMat' field.
+		/// </summary>
 		public static readonly StringName _soundShaderMat = "_soundShaderMat";
 
+		/// <summary>
+		/// Cached name for the '_beckonShaderMat' field.
+		/// </summary>
 		public static readonly StringName _beckonShaderMat = "_beckonShaderMat";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -64,7 +101,10 @@ public class NSoulFyshVfx : Node
 		_beckonSlotNode = new MegaSlotNode(_parent.GetNode("Beckonwave"));
 		_beckonShaderMat = _beckonSlotNode.GetNormalMaterial() as ShaderMaterial;
 		_beckonShaderMat?.SetShaderParameter(_amount, 0.3f);
-		_animController.GetAnimationState().SetAnimation("attack_debuff");
+		this.RunWhenSpineReady(_animController, delegate(MegaAnimationState animState)
+		{
+			animState.SetAnimation("attack_debuff");
+		});
 	}
 
 	private void OnAnimationEvent(GodotObject _, GodotObject __, GodotObject ___, GodotObject spineEvent)
@@ -118,6 +158,11 @@ public class NSoulFyshVfx : Node
 		tween.TweenProperty(_beckonShaderMat, "shader_parameter/amount", 0.3f, 0.5);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -137,6 +182,7 @@ public class NSoulFyshVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -179,6 +225,7 @@ public class NSoulFyshVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -209,6 +256,7 @@ public class NSoulFyshVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -230,6 +278,7 @@ public class NSoulFyshVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -251,6 +300,11 @@ public class NSoulFyshVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -261,6 +315,7 @@ public class NSoulFyshVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -270,6 +325,7 @@ public class NSoulFyshVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

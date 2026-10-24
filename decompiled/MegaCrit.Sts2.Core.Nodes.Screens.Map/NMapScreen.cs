@@ -20,7 +20,6 @@ using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Map;
-using MegaCrit.Sts2.Core.Models.Modifiers;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Game.PeerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -47,182 +46,446 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 	[Signal]
 	public delegate void ClosedEventHandler();
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'GetLineEndpoint' method.
+		/// </summary>
 		public static readonly StringName GetLineEndpoint = "GetLineEndpoint";
 
+		/// <summary>
+		/// Cached name for the 'RecalculateTravelability' method.
+		/// </summary>
 		public static readonly StringName RecalculateTravelability = "RecalculateTravelability";
 
+		/// <summary>
+		/// Cached name for the 'InitMapVotes' method.
+		/// </summary>
 		public static readonly StringName InitMapVotes = "InitMapVotes";
 
+		/// <summary>
+		/// Cached name for the 'OnMapPointSelectedLocally' method.
+		/// </summary>
 		public static readonly StringName OnMapPointSelectedLocally = "OnMapPointSelectedLocally";
 
+		/// <summary>
+		/// Cached name for the 'RefreshAllMapPointVotes' method.
+		/// </summary>
 		public static readonly StringName RefreshAllMapPointVotes = "RefreshAllMapPointVotes";
 
+		/// <summary>
+		/// Cached name for the 'RemoveAllMapPointsAndPaths' method.
+		/// </summary>
 		public static readonly StringName RemoveAllMapPointsAndPaths = "RemoveAllMapPointsAndPaths";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'UpdateScrollPosition' method.
+		/// </summary>
 		public static readonly StringName UpdateScrollPosition = "UpdateScrollPosition";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'ProcessMouseEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessMouseEvent = "ProcessMouseEvent";
 
+		/// <summary>
+		/// Cached name for the 'ProcessMouseDrawingEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessMouseDrawingEvent = "ProcessMouseDrawingEvent";
 
+		/// <summary>
+		/// Cached name for the 'ProcessScrollEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessScrollEvent = "ProcessScrollEvent";
 
+		/// <summary>
+		/// Cached name for the 'ProcessControllerEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessControllerEvent = "ProcessControllerEvent";
 
+		/// <summary>
+		/// Cached name for the 'SetTravelEnabled' method.
+		/// </summary>
 		public static readonly StringName SetTravelEnabled = "SetTravelEnabled";
 
+		/// <summary>
+		/// Cached name for the 'SetDebugTravelEnabled' method.
+		/// </summary>
 		public static readonly StringName SetDebugTravelEnabled = "SetDebugTravelEnabled";
 
+		/// <summary>
+		/// Cached name for the 'RefreshAllPointVisuals' method.
+		/// </summary>
 		public static readonly StringName RefreshAllPointVisuals = "RefreshAllPointVisuals";
 
+		/// <summary>
+		/// Cached name for the 'PlayStartOfActAnimation' method.
+		/// </summary>
 		public static readonly StringName PlayStartOfActAnimation = "PlayStartOfActAnimation";
 
+		/// <summary>
+		/// Cached name for the 'InitMapPrompt' method.
+		/// </summary>
 		public static readonly StringName InitMapPrompt = "InitMapPrompt";
 
+		/// <summary>
+		/// Cached name for the 'SetInterruptable' method.
+		/// </summary>
 		public static readonly StringName SetInterruptable = "SetInterruptable";
 
+		/// <summary>
+		/// Cached name for the 'CanScroll' method.
+		/// </summary>
 		public static readonly StringName CanScroll = "CanScroll";
 
+		/// <summary>
+		/// Cached name for the 'TryCancelStartOfActAnim' method.
+		/// </summary>
 		public static readonly StringName TryCancelStartOfActAnim = "TryCancelStartOfActAnim";
 
+		/// <summary>
+		/// Cached name for the 'OnVisibilityChanged' method.
+		/// </summary>
 		public static readonly StringName OnVisibilityChanged = "OnVisibilityChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnCapstoneChanged' method.
+		/// </summary>
 		public static readonly StringName OnCapstoneChanged = "OnCapstoneChanged";
 
+		/// <summary>
+		/// Cached name for the 'Close' method.
+		/// </summary>
 		public static readonly StringName Close = "Close";
 
+		/// <summary>
+		/// Cached name for the 'Open' method.
+		/// </summary>
 		public static readonly StringName Open = "Open";
 
+		/// <summary>
+		/// Cached name for the 'OnBackButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnBackButtonPressed = "OnBackButtonPressed";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'OnMapDrawingButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnMapDrawingButtonPressed = "OnMapDrawingButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnMapErasingButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnMapErasingButtonPressed = "OnMapErasingButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'UpdateDrawingButtonStates' method.
+		/// </summary>
 		public static readonly StringName UpdateDrawingButtonStates = "UpdateDrawingButtonStates";
 
+		/// <summary>
+		/// Cached name for the 'OnClearMapDrawingButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnClearMapDrawingButtonPressed = "OnClearMapDrawingButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'HighlightPointType' method.
+		/// </summary>
 		public static readonly StringName HighlightPointType = "HighlightPointType";
 
+		/// <summary>
+		/// Cached name for the 'OnLegendHotkeyPressed' method.
+		/// </summary>
 		public static readonly StringName OnLegendHotkeyPressed = "OnLegendHotkeyPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnDrawingToolsHotkeyPressed' method.
+		/// </summary>
 		public static readonly StringName OnDrawingToolsHotkeyPressed = "OnDrawingToolsHotkeyPressed";
 
+		/// <summary>
+		/// Cached name for the 'GetNetPositionFromScreenPosition' method.
+		/// </summary>
 		public static readonly StringName GetNetPositionFromScreenPosition = "GetNetPositionFromScreenPosition";
 
+		/// <summary>
+		/// Cached name for the 'GetMapPositionFromNetPosition' method.
+		/// </summary>
 		public static readonly StringName GetMapPositionFromNetPosition = "GetMapPositionFromNetPosition";
 
+		/// <summary>
+		/// Cached name for the 'GetScreenPositionFromNetPosition' method.
+		/// </summary>
 		public static readonly StringName GetScreenPositionFromNetPosition = "GetScreenPositionFromNetPosition";
 
+		/// <summary>
+		/// Cached name for the 'IsNodeOnScreen' method.
+		/// </summary>
 		public static readonly StringName IsNodeOnScreen = "IsNodeOnScreen";
 
+		/// <summary>
+		/// Cached name for the 'CleanUp' method.
+		/// </summary>
 		public static readonly StringName CleanUp = "CleanUp";
 
+		/// <summary>
+		/// Cached name for the 'UpdateHotkeyDisplay' method.
+		/// </summary>
 		public static readonly StringName UpdateHotkeyDisplay = "UpdateHotkeyDisplay";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsOpen' property.
+		/// </summary>
 		public static readonly StringName IsOpen = "IsOpen";
 
+		/// <summary>
+		/// Cached name for the 'IsTravelEnabled' property.
+		/// </summary>
 		public static readonly StringName IsTravelEnabled = "IsTravelEnabled";
 
+		/// <summary>
+		/// Cached name for the 'IsDebugTravelEnabled' property.
+		/// </summary>
 		public static readonly StringName IsDebugTravelEnabled = "IsDebugTravelEnabled";
 
+		/// <summary>
+		/// Cached name for the 'MapLegendX' property.
+		/// </summary>
 		public static readonly StringName MapLegendX = "MapLegendX";
 
+		/// <summary>
+		/// Cached name for the 'IsTraveling' property.
+		/// </summary>
 		public static readonly StringName IsTraveling = "IsTraveling";
 
+		/// <summary>
+		/// Cached name for the 'Drawings' property.
+		/// </summary>
 		public static readonly StringName Drawings = "Drawings";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_mapContainer' field.
+		/// </summary>
 		public static readonly StringName _mapContainer = "_mapContainer";
 
+		/// <summary>
+		/// Cached name for the '_pathsContainer' field.
+		/// </summary>
 		public static readonly StringName _pathsContainer = "_pathsContainer";
 
+		/// <summary>
+		/// Cached name for the '_points' field.
+		/// </summary>
 		public static readonly StringName _points = "_points";
 
+		/// <summary>
+		/// Cached name for the '_bossPointNode' field.
+		/// </summary>
 		public static readonly StringName _bossPointNode = "_bossPointNode";
 
+		/// <summary>
+		/// Cached name for the '_secondBossPointNode' field.
+		/// </summary>
 		public static readonly StringName _secondBossPointNode = "_secondBossPointNode";
 
+		/// <summary>
+		/// Cached name for the '_startingPointNode' field.
+		/// </summary>
 		public static readonly StringName _startingPointNode = "_startingPointNode";
 
+		/// <summary>
+		/// Cached name for the '_mapBgContainer' field.
+		/// </summary>
 		public static readonly StringName _mapBgContainer = "_mapBgContainer";
 
+		/// <summary>
+		/// Cached name for the '_marker' field.
+		/// </summary>
 		public static readonly StringName _marker = "_marker";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_drawingToolsHotkeyIcon' field.
+		/// </summary>
 		public static readonly StringName _drawingToolsHotkeyIcon = "_drawingToolsHotkeyIcon";
 
+		/// <summary>
+		/// Cached name for the '_drawingTools' field.
+		/// </summary>
 		public static readonly StringName _drawingTools = "_drawingTools";
 
+		/// <summary>
+		/// Cached name for the '_mapDrawingButton' field.
+		/// </summary>
 		public static readonly StringName _mapDrawingButton = "_mapDrawingButton";
 
+		/// <summary>
+		/// Cached name for the '_mapErasingButton' field.
+		/// </summary>
 		public static readonly StringName _mapErasingButton = "_mapErasingButton";
 
+		/// <summary>
+		/// Cached name for the '_mapClearButton' field.
+		/// </summary>
 		public static readonly StringName _mapClearButton = "_mapClearButton";
 
+		/// <summary>
+		/// Cached name for the '_mapLegend' field.
+		/// </summary>
 		public static readonly StringName _mapLegend = "_mapLegend";
 
+		/// <summary>
+		/// Cached name for the '_legendItems' field.
+		/// </summary>
 		public static readonly StringName _legendItems = "_legendItems";
 
+		/// <summary>
+		/// Cached name for the '_legendHotkeyIcon' field.
+		/// </summary>
 		public static readonly StringName _legendHotkeyIcon = "_legendHotkeyIcon";
 
+		/// <summary>
+		/// Cached name for the '_backstop' field.
+		/// </summary>
 		public static readonly StringName _backstop = "_backstop";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_startDragPos' field.
+		/// </summary>
 		public static readonly StringName _startDragPos = "_startDragPos";
 
+		/// <summary>
+		/// Cached name for the '_targetDragPos' field.
+		/// </summary>
 		public static readonly StringName _targetDragPos = "_targetDragPos";
 
+		/// <summary>
+		/// Cached name for the '_isDragging' field.
+		/// </summary>
 		public static readonly StringName _isDragging = "_isDragging";
 
+		/// <summary>
+		/// Cached name for the '_hasPlayedAnimation' field.
+		/// </summary>
 		public static readonly StringName _hasPlayedAnimation = "_hasPlayedAnimation";
 
+		/// <summary>
+		/// Cached name for the '_controllerScrollAmount' field.
+		/// </summary>
 		public static readonly StringName _controllerScrollAmount = "_controllerScrollAmount";
 
+		/// <summary>
+		/// Cached name for the '_distX' field.
+		/// </summary>
 		public static readonly StringName _distX = "_distX";
 
+		/// <summary>
+		/// Cached name for the '_distY' field.
+		/// </summary>
 		public static readonly StringName _distY = "_distY";
 
+		/// <summary>
+		/// Cached name for the '_actAnimTween' field.
+		/// </summary>
 		public static readonly StringName _actAnimTween = "_actAnimTween";
 
+		/// <summary>
+		/// Cached name for the '_mapScrollAnimTimer' field.
+		/// </summary>
 		public static readonly StringName _mapScrollAnimTimer = "_mapScrollAnimTimer";
 
+		/// <summary>
+		/// Cached name for the '_mapAnimStartDelay' field.
+		/// </summary>
 		public static readonly StringName _mapAnimStartDelay = "_mapAnimStartDelay";
 
+		/// <summary>
+		/// Cached name for the '_mapAnimDuration' field.
+		/// </summary>
 		public static readonly StringName _mapAnimDuration = "_mapAnimDuration";
 
+		/// <summary>
+		/// Cached name for the '_canInterruptAnim' field.
+		/// </summary>
 		public static readonly StringName _canInterruptAnim = "_canInterruptAnim";
 
+		/// <summary>
+		/// Cached name for the '_isInputDisabled' field.
+		/// </summary>
 		public static readonly StringName _isInputDisabled = "_isInputDisabled";
 
+		/// <summary>
+		/// Cached name for the '_promptTween' field.
+		/// </summary>
 		public static readonly StringName _promptTween = "_promptTween";
 
+		/// <summary>
+		/// Cached name for the '_drawingInput' field.
+		/// </summary>
 		public static readonly StringName _drawingInput = "_drawingInput";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Opened' signal.
+		/// </summary>
 		public static readonly StringName Opened = "Opened";
 
+		/// <summary>
+		/// Cached name for the 'Closed' signal.
+		/// </summary>
 		public static readonly StringName Closed = "Closed";
 	}
 
@@ -361,6 +624,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 
 	public event Action<MapPointType>? PointTypeHighlighted;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.OpenedEventHandler" />
 	public event OpenedEventHandler Opened
 	{
 		add
@@ -373,6 +637,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.ClosedEventHandler" />
 	public event ClosedEventHandler Closed
 	{
 		add
@@ -441,6 +706,12 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		_mapBgContainer.Initialize(_runState);
 	}
 
+	/// <summary>
+	/// This is to be called by the backend so we can setup our map screen.
+	/// </summary>
+	/// <param name="map">The new map to set.</param>
+	/// <param name="seed">The seed to use for the visual jitter on the map node positions.</param>
+	/// <param name="clearDrawings">True if map drawings should be cleared.</param>
 	public void SetMap(ActMap map, uint seed, bool clearDrawings)
 	{
 		_map = map;
@@ -584,13 +855,18 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 	{
 		if (_runState.VisitedMapCoords.Any())
 		{
-			foreach (NMapPoint value in _mapPointDictionary.Values)
+			foreach (NMapPoint value3 in _mapPointDictionary.Values)
 			{
-				value.State = MapPointState.Untravelable;
+				value3.State = MapPointState.Untravelable;
 			}
 			foreach (MapCoord visitedMapCoord in _runState.VisitedMapCoords)
 			{
-				_mapPointDictionary[visitedMapCoord].State = MapPointState.Traveled;
+				if (_mapPointDictionary.TryGetValue(visitedMapCoord, out NMapPoint value))
+				{
+					value.State = MapPointState.Traveled;
+					continue;
+				}
+				Log.Error($"VisitedMapCoord {visitedMapCoord} not found in map point dictionary, map may have been regenerated");
 			}
 			IReadOnlyList<MapCoord> visitedMapCoords = _runState.VisitedMapCoords;
 			MapCoord mapCoord = visitedMapCoords[visitedMapCoords.Count - 1];
@@ -599,18 +875,24 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 				_secondBossPointNode.State = MapPointState.Travelable;
 				return;
 			}
-			if (mapCoord.row != _map.GetRowCount() - 1)
+			if (mapCoord.row == _map.GetRowCount() - 1)
 			{
-				IEnumerable<MapPoint> enumerable = (_runState.Modifiers.OfType<Flight>().Any() ? _map.GetPointsInRow(mapCoord.row + 1) : _mapPointDictionary[mapCoord].Point.Children);
+				_bossPointNode.State = MapPointState.Travelable;
+				return;
+			}
+			if (_mapPointDictionary.TryGetValue(mapCoord, out NMapPoint value2))
+			{
+				IEnumerable<MapPoint> travelablePointsFrom = MapTravel.GetTravelablePointsFrom(_runState, value2.Point);
 				{
-					foreach (MapPoint item in enumerable)
+					foreach (MapPoint item in travelablePointsFrom)
 					{
 						_mapPointDictionary[item.coord].State = MapPointState.Travelable;
 					}
 					return;
 				}
 			}
-			_bossPointNode.State = MapPointState.Travelable;
+			Log.Error($"Last visited coord {mapCoord} not found in map, falling back to starting point");
+			_startingPointNode.State = MapPointState.Travelable;
 		}
 		else
 		{
@@ -636,7 +918,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		if (!PlayerVoteDictionary.TryGetValue(me, out var value) || value != point.Point.coord)
 		{
 			OnPlayerVoteChangedInternal(me, RunManager.Instance.MapSelectionSynchronizer.GetVote(me)?.coord, point.Point.coord);
-			RunLocation source = new RunLocation(_runState.CurrentMapCoord, _runState.CurrentActIndex);
+			MapLocation source = new MapLocation(_runState.CurrentMapCoord, _runState.CurrentActIndex);
 			MapVote value2 = new MapVote
 			{
 				coord = point.Point.coord,
@@ -676,9 +958,9 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 				NMapPoint nMapPoint = _mapPointDictionary[oldCoord.Value];
 				nMapPoint.VoteContainer.RefreshPlayerVotes();
 			}
-			else if (_runState.CurrentLocation.coord.HasValue)
+			else if (_runState.MapLocation.coord.HasValue)
 			{
-				NMapPoint nMapPoint2 = _mapPointDictionary[_runState.CurrentLocation.coord.Value];
+				NMapPoint nMapPoint2 = _mapPointDictionary[_runState.MapLocation.coord.Value];
 				nMapPoint2.VoteContainer.RefreshPlayerVotes();
 			}
 			if (newCoord.HasValue)
@@ -686,20 +968,31 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 				NMapPoint nMapPoint3 = _mapPointDictionary[newCoord.Value];
 				nMapPoint3.VoteContainer.RefreshPlayerVotes();
 			}
-			else if (_runState.CurrentLocation.coord.HasValue)
+			else if (_runState.MapLocation.coord.HasValue)
 			{
-				NMapPoint nMapPoint4 = _mapPointDictionary[_runState.CurrentLocation.coord.Value];
+				NMapPoint nMapPoint4 = _mapPointDictionary[_runState.MapLocation.coord.Value];
 				nMapPoint4.VoteContainer.RefreshPlayerVotes();
 			}
 		}
 	}
 
+	/// <summary>
+	/// Sets the marker to be at the specified coordinate.
+	/// Since the player starts in the Neow room in a new run, TravelToMapCoord isn't called so we need to init the marker
+	/// externally.
+	/// </summary>
+	/// <param name="coord"></param>
 	public void InitMarker(MapCoord coord)
 	{
 		NMapPoint mapPoint = _mapPointDictionary[coord];
 		_marker.SetMapPoint(mapPoint);
 	}
 
+	/// <summary>
+	/// Animation and logic which occurs when a coord is finalized for travel.
+	/// In multiplayer, this only occurs when all votes have been received and a map point has been selected.
+	/// </summary>
+	/// <param name="coord">The coordinate to travel to</param>
 	public async Task TravelToMapCoord(MapCoord coord)
 	{
 		IsTraveling = true;
@@ -766,6 +1059,9 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		}
 	}
 
+	/// <summary>
+	/// Just a helper class to make Init() easier to parse, don't mind me.
+	/// </summary>
 	private void RemoveAllMapPointsAndPaths()
 	{
 		_points.FreeChildren();
@@ -775,6 +1071,11 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		_startingPointNode?.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Creates a bunch of dots to form a path from start to end
+	/// </summary>
+	/// <param name="start"></param>
+	/// <param name="end"></param>
 	private IReadOnlyList<TextureRect> CreatePath(Vector2 start, Vector2 end)
 	{
 		List<TextureRect> list = new List<TextureRect>();
@@ -839,6 +1140,10 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		}
 	}
 
+	/// <summary>
+	/// Detects mouse click up/down and updates our scroll target accordingly
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void ProcessMouseEvent(InputEvent inputEvent)
 	{
 		ProcessMouseDrawingEvent(inputEvent);
@@ -877,6 +1182,9 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		}
 	}
 
+	/// <summary>
+	/// Detects mouse click up/down and does drawing
+	/// </summary>
 	private void ProcessMouseDrawingEvent(InputEvent inputEvent)
 	{
 		if (!_isInputDisabled && (_actAnimTween == null || !_actAnimTween.IsRunning()) && _drawingInput == null && inputEvent is InputEventMouseButton { Pressed: not false } inputEventMouseButton)
@@ -898,6 +1206,10 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		}
 	}
 
+	/// <summary>
+	/// Detects mouse wheel up/down and updates our scroll target accordingly
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void ProcessScrollEvent(InputEvent inputEvent)
 	{
 		if (CanScroll())
@@ -979,11 +1291,17 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		_actAnimTween.TweenProperty(_mapContainer, "position:y", -600f, _mapAnimDuration).SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Expo);
 		_actAnimTween.TweenCallback(Callable.From(SetInterruptable)).SetDelay(_mapAnimDuration * 0.25);
 		_targetDragPos = targetDragPos;
-		await ToSignal(_actAnimTween, Tween.SignalName.Finished);
-		_actAnimTween = null;
-		InitMapPrompt();
+		if (await _actAnimTween.AwaitFinished(this))
+		{
+			_actAnimTween = null;
+			InitMapPrompt();
+		}
 	}
 
+	/// <summary>
+	/// Initializes and begins to animate the "Select a Starting Room" message.
+	/// This only appears in the very first map screen you enter per Act.
+	/// </summary>
 	private void InitMapPrompt()
 	{
 		if (!TestMode.IsOn && !SaveManager.Instance.SeenFtue("map_select_ftue"))
@@ -1001,11 +1319,17 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		await nMapSelectFtue.WaitForPlayerToConfirm();
 	}
 
+	/// <summary>
+	/// Makes the map anim interruptable via click or scroll
+	/// </summary>
 	private void SetInterruptable()
 	{
 		_canInterruptAnim = true;
 	}
 
+	/// <summary>
+	/// During the first half of the map scroll animation, moving the map is disabled.
+	/// </summary>
 	private bool CanScroll()
 	{
 		if (_actAnimTween == null || _canInterruptAnim)
@@ -1015,6 +1339,9 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		return false;
 	}
 
+	/// <summary>
+	/// Allows the player to abort (aka cancel) the start of act animation early.
+	/// </summary>
 	private void TryCancelStartOfActAnim()
 	{
 		if (_actAnimTween != null && _canInterruptAnim)
@@ -1028,6 +1355,11 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		}
 	}
 
+	/// <summary>
+	/// This is used to disable scrolling and clicking on the map screen for 1/5 of a second
+	/// for when the player interrupts the map animation. Otherwise it's possible to double click
+	/// and stop the map at a strange position.
+	/// </summary>
 	private async Task DisableInputVeryBriefly()
 	{
 		_isInputDisabled = true;
@@ -1078,7 +1410,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 			NRun.Instance.GlobalUi.TopBar.Map.StopOscillation();
 			NHotkeyManager.Instance.RemoveHotkeyPressedBinding(MegaInput.accept, OnLegendHotkeyPressed);
 			NHotkeyManager.Instance.RemoveHotkeyPressedBinding(MegaInput.viewExhaustPileAndTabRight, OnDrawingToolsHotkeyPressed);
-			if (RunManager.Instance.IsSinglePlayerOrFakeMultiplayer)
+			if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
 			{
 				CombatManager.Instance.Unpause();
 			}
@@ -1109,11 +1441,19 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		_tween.TweenProperty(_mapLegend, "modulate:a", 0f, 0.15);
 		_tween.TweenProperty(_mapLegend, "position:x", MapLegendX + 120f, 0.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 		_tween.TweenProperty(_drawingTools, "modulate:a", 0f, 0.15);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		base.Visible = false;
-		base.ProcessMode = ProcessModeEnum.Disabled;
+		if (await _tween.AwaitFinished(this))
+		{
+			base.Visible = false;
+			base.ProcessMode = ProcessModeEnum.Disabled;
+		}
 	}
 
+	/// <summary>
+	/// Opens the map screen.
+	/// </summary>
+	/// <param name="isOpenedFromTopBar">If this is true, then we'll skip the full map animation. Should be true if
+	/// the player has opened the map manually instead of proceeding at the end of a room.</param>
+	/// <returns>The map screen that was just opened.</returns>
 	public NMapScreen Open(bool isOpenedFromTopBar = false)
 	{
 		if (IsOpen)
@@ -1131,7 +1471,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		}
 		base.ProcessMode = ProcessModeEnum.Inherit;
 		NRun.Instance.GlobalUi.TopBar.Map.StartOscillation();
-		if (RunManager.Instance.IsSinglePlayerOrFakeMultiplayer)
+		if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
 		{
 			CombatManager.Instance.Pause();
 		}
@@ -1192,11 +1532,17 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		if (_runState.VisitedMapCoords.Count != 0)
 		{
 			IReadOnlyList<MapCoord> visitedMapCoords = _runState.VisitedMapCoords;
-			MapCoord key = visitedMapCoords[visitedMapCoords.Count - 1];
-			if (_bossPointNode.Point.coord.row != key.row && _startingPointNode.Point.coord.row != key.row)
+			MapCoord mapCoord = visitedMapCoords[visitedMapCoords.Count - 1];
+			if (_bossPointNode.Point.coord.row != mapCoord.row && _startingPointNode.Point.coord.row != mapCoord.row)
 			{
-				NMapPoint mapPoint = _mapPointDictionary[key];
-				_marker.SetMapPoint(mapPoint);
+				if (_mapPointDictionary.TryGetValue(mapCoord, out NMapPoint value))
+				{
+					_marker.SetMapPoint(value);
+				}
+				else
+				{
+					Log.Error($"Last visited coord {mapCoord} not found in map, marker not placed");
+				}
 			}
 		}
 		SfxCmd.Play("event:/sfx/ui/map/map_open");
@@ -1301,7 +1647,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		NMapPingVfx nMapPingVfx = NMapPingVfx.Create();
 		nMapPingVfx.Modulate = player.Character.MapDrawingColor;
 		value.AddChildSafely(nMapPingVfx);
-		value.MoveChild(nMapPingVfx, 0);
+		value.MoveChildSafely(nMapPingVfx, 0);
 		nMapPingVfx.Position = Vector2.Zero;
 		nMapPingVfx.Size *= value.Size.X * (1f / 64f);
 		nMapPingVfx.PivotOffset = nMapPingVfx.Size * 0.5f;
@@ -1381,7 +1727,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 
 	public void CleanUp()
 	{
-		if (RunManager.Instance.IsSinglePlayerOrFakeMultiplayer)
+		if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
 		{
 			CombatManager.Instance.Unpause();
 		}
@@ -1395,6 +1741,11 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		_drawingToolsHotkeyIcon.Texture = NInputManager.Instance.GetHotkeyIcon(MegaInput.viewExhaustPileAndTabRight);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -1513,6 +1864,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -1764,6 +2116,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -1938,6 +2291,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -2129,6 +2483,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -2345,6 +2700,11 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -2393,6 +2753,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -2438,6 +2799,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		info.AddSignalEventDelegate(SignalName.Closed, backing_Closed);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -2600,6 +2962,11 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -2619,6 +2986,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		EmitSignal(SignalName.Closed);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -2636,6 +3004,7 @@ public class NMapScreen : Control, IScreenContext, INetCursorPositionTranslator
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

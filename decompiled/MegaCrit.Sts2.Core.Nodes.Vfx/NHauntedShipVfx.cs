@@ -10,34 +10,76 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NHauntedShipVfx.cs")]
 public class NHauntedShipVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'OnEyeBubblesStart' method.
+		/// </summary>
 		public static readonly StringName OnEyeBubblesStart = "OnEyeBubblesStart";
 
+		/// <summary>
+		/// Cached name for the 'OnEyeBubblesEnd' method.
+		/// </summary>
 		public static readonly StringName OnEyeBubblesEnd = "OnEyeBubblesEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnHeadBubblesStart' method.
+		/// </summary>
 		public static readonly StringName OnHeadBubblesStart = "OnHeadBubblesStart";
 
+		/// <summary>
+		/// Cached name for the 'OnHeadBubblesEnd' method.
+		/// </summary>
 		public static readonly StringName OnHeadBubblesEnd = "OnHeadBubblesEnd";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_eyeParticles1' field.
+		/// </summary>
 		public static readonly StringName _eyeParticles1 = "_eyeParticles1";
 
+		/// <summary>
+		/// Cached name for the '_eyeParticles2' field.
+		/// </summary>
 		public static readonly StringName _eyeParticles2 = "_eyeParticles2";
 
+		/// <summary>
+		/// Cached name for the '_eyeParticles3' field.
+		/// </summary>
 		public static readonly StringName _eyeParticles3 = "_eyeParticles3";
 
+		/// <summary>
+		/// Cached name for the '_headParticles1' field.
+		/// </summary>
 		public static readonly StringName _headParticles1 = "_headParticles1";
 
+		/// <summary>
+		/// Cached name for the '_headParticles2' field.
+		/// </summary>
 		public static readonly StringName _headParticles2 = "_headParticles2";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -113,6 +155,11 @@ public class NHauntedShipVfx : Node
 		_headParticles2.Emitting = false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -132,6 +179,7 @@ public class NHauntedShipVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -174,6 +222,7 @@ public class NHauntedShipVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -204,6 +253,7 @@ public class NHauntedShipVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -235,6 +285,7 @@ public class NHauntedShipVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -266,6 +317,11 @@ public class NHauntedShipVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -278,6 +334,7 @@ public class NHauntedShipVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -289,6 +346,7 @@ public class NHauntedShipVfx : Node
 		info.AddProperty(PropertyName._headParticles2, Variant.From(in _headParticles2));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

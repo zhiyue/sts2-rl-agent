@@ -37,7 +37,7 @@ public sealed class RanwidTheElder : EventModel
 		new StringVar("Relic", "Relic")
 	});
 
-	protected override Task BeforeEventStarted()
+	protected override Task BeforeEventStarted(bool isPreFinished)
 	{
 		base.Owner.CanRemovePotions = false;
 		return Task.CompletedTask;
@@ -48,7 +48,7 @@ public sealed class RanwidTheElder : EventModel
 		base.Owner.CanRemovePotions = true;
 	}
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		if (runState.CurrentActIndex == 0)
 		{

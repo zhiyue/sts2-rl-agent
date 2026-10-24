@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Godot;
+using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Localization.Formatters;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
@@ -24,14 +25,36 @@ namespace MegaCrit.Sts2.Core.Localization;
 
 public class LocManager
 {
+	private class PreOverrideState
+	{
+		public required string language;
+
+		public bool overridesActive;
+
+		public required IReadOnlyList<LocValidationError> validationErrors;
+
+		public required Dictionary<string, LocTable> tables;
+	}
+
 	public delegate void LocaleChangeCallback();
 
 	private Dictionary<string, LocTable> _tables = new Dictionary<string, LocTable>();
 
+	private Dictionary<string, LocTable>? _engTables;
+
+	private PreOverrideState? _stateBeforeOverridingWithEnglish;
+
 	private static SmartFormatter _smartFormatter = null;
 
+	/// <summary>
+	/// Weblate project slug used in nested export structure.
+	/// </summary>
 	private const string _weblateProjectSlug = "slaythespire2";
 
+	/// <summary>
+	/// Maps Weblate language codes to game's 3-letter language codes.
+	/// Keep in sync with ci/scripts/weblate.py LANGUAGES dictionary.
+	/// </summary>
 	private static readonly Dictionary<string, string> _weblateToGameLanguage = new Dictionary<string, string>
 	{
 		{ "de", "deu" },
@@ -49,22 +72,47 @@ public class LocManager
 		{ "zh_Hans", "zhs" }
 	};
 
+	/// <summary>
+	/// Maps game's 3-letter language codes to Weblate language codes.
+	/// </summary>
 	private static readonly Dictionary<string, string> _gameToWeblateLanguage = _weblateToGameLanguage.ToDictionary<KeyValuePair<string, string>, string, string>((KeyValuePair<string, string> kvp) => kvp.Value, (KeyValuePair<string, string> kvp) => kvp.Key);
 
+	/// <summary>
+	/// Dictionary counting the number of keys in each language set.
+	/// We don't want to calculate this dynamically, as it would involve loading a large number of JSON tables, so this
+	/// is loaded from a pre-computed JSON file. Re-generate it with the script 'localization/gen_completion.py'.
+	/// </summary>
 	private Dictionary<string, int> _languageKeyCount = new Dictionary<string, int>();
 
+	/// <summary>
+	/// User-accessible directory for localization overrides.
+	/// Translators can place modified JSON files here to test their translations without rebuilding the game.
+	/// Path resolves to: %AppData%/SlayTheSpire2/localization_override/ on Windows.
+	///
+	/// Override files are validated for SmartFormat syntax errors during load.
+	/// Invalid entries are logged to console and skipped (game uses base localization as fallback).
+	/// Check console output or game logs for validation errors.
+	/// </summary>
 	public const string locOverrideDir = "user://localization_override";
 
 	private readonly List<LocaleChangeCallback> _localeChangeCallbacks = new List<LocaleChangeCallback>();
 
-	private static readonly CultureInfo EnglishCultureInfo;
+	private static readonly CultureInfo _englishCultureInfo;
 
 	public static LocManager Instance { get; private set; } = null;
 
 	private static string LocalizationAssetDir => "res://localization";
 
+	/// <summary>
+	/// Indicates whether any localization override files were loaded from the user override directory.
+	/// Useful for debugging and UI indicators.
+	/// </summary>
 	public bool OverridesActive { get; private set; }
 
+	/// <summary>
+	/// List of validation errors found in localization override files.
+	/// Populated during LoadTablesFromPath() when override files contain JSON parsing errors or invalid SmartFormat syntax.
+	/// </summary>
 	public IReadOnlyList<LocValidationError> ValidationErrors { get; private set; } = Array.Empty<LocValidationError>();
 
 	public string Language { get; private set; }
@@ -73,6 +121,25 @@ public class LocManager
 
 	public CultureInfo CultureInfo { get; private set; }
 
+	public StringComparer StringComparer { get; private set; }
+
+	private static CultureInfo GetCultureInfoSafe(string name)
+	{
+		try
+		{
+			return System.Globalization.CultureInfo.GetCultureInfo(name);
+		}
+		catch (CultureNotFoundException)
+		{
+			return System.Globalization.CultureInfo.InvariantCulture;
+		}
+	}
+
+	/// <summary>
+	/// Initialize the singleton LocManager.
+	/// This is favored over a static constructor so that we can precisely control the initialization time relative to
+	/// other steps (mods must be initialized before this).
+	/// </summary>
 	public static void Initialize()
 	{
 		Instance = new LocManager();
@@ -85,6 +152,10 @@ public class LocManager
 
 	public LocManager()
 	{
+		if (_englishCultureInfo.Equals(System.Globalization.CultureInfo.InvariantCulture))
+		{
+			Log.Warn("Running in .NET globalization-invariant mode. Locale-specific formatting will be disabled.");
+		}
 		string text = SaveManager.Instance.SettingsSave.Language;
 		if (string.IsNullOrEmpty(text))
 		{
@@ -112,97 +183,59 @@ public class LocManager
 		LoadLocCompletionFile();
 	}
 
+	/// <summary>
+	/// Converts our three-letter code to a CultureInfo.
+	/// Most of our language codes are ISO 639-2 language codes, but not all of them.
+	/// </summary>
 	private CultureInfo CultureInfoFromThreeLetterCode(string language)
 	{
-		try
+		string text = language switch
 		{
-			CultureInfo cultureInfo = System.Globalization.CultureInfo.GetCultures(CultureTypes.NeutralCultures).FirstOrDefault((CultureInfo c) => c.ThreeLetterISOLanguageName == language);
-			if (cultureInfo != null)
-			{
-				return cultureInfo;
-			}
-		}
-		catch (CultureNotFoundException value)
+			"eng" => "en", 
+			"zhs" => "zh-hans", 
+			"zht" => "zh-hant", 
+			"deu" => "de", 
+			"esp" => "es-419", 
+			"fra" => "fr", 
+			"ita" => "it", 
+			"jpn" => "ja", 
+			"kor" => "ko", 
+			"pol" => "pl", 
+			"ptb" => "pt-br", 
+			"rus" => "ru", 
+			"spa" => "es-ES", 
+			"tha" => "th", 
+			"tur" => "tr", 
+			_ => null, 
+		};
+		if (text == null)
 		{
-			Log.Error($"Couldn't enumerate cultures: {value}");
+			string text2 = "Language code " + language + " could not be mapped to CultureInfo! Add a new manual mapping";
+			Log.Error(text2);
+			SentryService.CaptureMessage(text2);
+			return GetCultureInfoSafe("en");
 		}
-		if (language == "zhs")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("zh-hans");
-		}
-		if (language == "zht")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("zh-hant");
-		}
-		if (language == "ptb")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("pt-br");
-		}
-		if (language == "esp")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("es-419");
-		}
-		if (language == "spa")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("es-ES");
-		}
-		if (language == "deu")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("de");
-		}
-		if (language == "fra")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("fr");
-		}
-		if (language == "ita")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("it");
-		}
-		if (language == "jpn")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("ja");
-		}
-		if (language == "kor")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("ko");
-		}
-		if (language == "pol")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("pl");
-		}
-		if (language == "rus")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("ru");
-		}
-		if (language == "tha")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("th");
-		}
-		if (language == "tur")
-		{
-			return System.Globalization.CultureInfo.GetCultureInfo("tr");
-		}
-		string text = "Language code " + language + " could not be mapped to CultureInfo! Add a new manual mapping";
-		Log.Error(text);
-		SentrySdk.CaptureMessage(text);
-		return System.Globalization.CultureInfo.GetCultureInfo("en-us");
+		return GetCultureInfoSafe(text);
 	}
 
+	/// <summary>
+	/// This is where we explicitly load the localization formatters we need and only the ones we need.
+	/// </summary>
 	private void LoadLocFormatters()
 	{
 		_smartFormatter = new SmartFormatter();
 		ListFormatter listFormatter = new ListFormatter();
 		_smartFormatter.AddExtensions(listFormatter, new DictionarySource(), new ValueTupleSource(), new ReflectionSource(), new DefaultSource());
-		_smartFormatter.AddExtensions(listFormatter, new PluralLocalizationFormatter(), new ConditionalFormatter(), new ChooseFormatter(), new SubStringFormatter(), new IsMatchFormatter(), new DefaultFormatter(), new AbsoluteValueFormatter(), new EnergyIconsFormatter(), new StarIconsFormatter(), new HighlightDifferencesFormatter(), new HighlightDifferencesInverseFormatter(), new PercentMoreFormatter(), new PercentLessFormatter(), new ShowIfUpgradedFormatter());
+		_smartFormatter.AddExtensions(listFormatter, new PluralLocalizationFormatter(), new ConditionalFormatter(), new ChooseFormatter(), new SubStringFormatter(), new IsMatchFormatter(), new LocaleNumberFormatter(), new DefaultFormatter(), new AbsoluteValueFormatter(), new EnergyIconsFormatter(), new StarIconsFormatter(), new HighlightDifferencesFormatter(), new HighlightDifferencesInverseFormatter(), new PercentMoreFormatter(), new PercentLessFormatter(), new ShowIfUpgradedFormatter());
 		Smart.Default = _smartFormatter;
 	}
 
 	private void LoadLocCompletionFile()
 	{
-		using Godot.FileAccess fileAccess = Godot.FileAccess.Open("localization/completion.json", Godot.FileAccess.ModeFlags.Read);
+		using Godot.FileAccess fileAccess = Godot.FileAccess.Open("res://localization/completion.json", Godot.FileAccess.ModeFlags.Read);
 		if (fileAccess == null)
 		{
-			throw new LocException("Cannot find language completion file: localization/completion.json");
+			throw new LocException("Cannot find language completion file: res://localization/completion.json");
 		}
 		string asText = fileAccess.GetAsText();
 		_languageKeyCount = JsonSerializer.Deserialize(asText, LocManagerSerializerContext.Default.DictionaryStringInt32);
@@ -221,17 +254,21 @@ public class LocManager
 	{
 		string rawText = locString.GetRawText();
 		LocTable table = GetTable(locString.LocTable);
-		CultureInfo provider = (table.IsLocalKey(locString.LocEntryKey) ? CultureInfo : EnglishCultureInfo);
+		CultureInfo provider = (table.IsLocalKey(locString.LocEntryKey) ? CultureInfo : _englishCultureInfo);
 		try
 		{
 			return _smartFormatter.Format(provider, rawText, variables);
 		}
 		catch (Exception ex) when (((ex is FormattingException || ex is ParsingErrors) ? 1 : 0) != 0)
 		{
+			if (TestMode.IsOn)
+			{
+				throw;
+			}
 			string text = $"message={ex.Message}\ntable={locString.LocTable} key={locString.LocEntryKey} variables={ToString(variables)}";
 			Log.Error("Localization formatting error! " + text);
 			string errorPattern = Regex.Replace(ex.Message.Split('\n')[0], " at \\d+$", "");
-			SentrySdk.CaptureException(new LocException(text), delegate(Scope scope)
+			SentryService.CaptureException(new LocException(text), delegate(Scope scope)
 			{
 				scope.SetFingerprint("LocException", errorPattern);
 			});
@@ -239,6 +276,10 @@ public class LocManager
 		}
 	}
 
+	/// <summary>
+	/// Converts text to W/w characters for localization debugging while preserving
+	/// template expressions {like:this} and BBCode [tags].
+	/// </summary>
 	private static string ConvertToW(string input)
 	{
 		int num = 0;
@@ -279,22 +320,32 @@ public class LocManager
 		return "{" + string.Join(",", variables.Select<KeyValuePair<string, object>, string>((KeyValuePair<string, object> kp) => $"{kp.Key}:{kp.Value}")) + "}";
 	}
 
-	[MemberNotNull(new string[] { "CultureInfo", "Language" })]
+	/// <summary>
+	/// Updates what language is being used for translation.
+	/// Note that, since this is called temporarily sometimes, that it does not update the settings save file.
+	/// </summary>
+	/// <param name="language">The three-letter code of the language to load. These are based on ISO 639-2, but are not
+	/// all actual 639-2 codes because they don't map exactly to what we need.</param>
+	[MemberNotNull(new string[] { "CultureInfo", "StringComparer", "Language" })]
 	public void SetLanguage(string language)
 	{
-		(Dictionary<string, LocTable> tables, bool overridesActive, List<LocValidationError> validationErrors) tuple = LoadTablesFromPath(language);
-		Dictionary<string, LocTable> item = tuple.tables;
-		bool item2 = tuple.overridesActive;
-		List<LocValidationError> item3 = tuple.validationErrors;
-		_tables = item;
-		OverridesActive = item2;
-		ValidationErrors = item3.AsReadOnly();
+		var (tables, overridesActive, validationErrors) = LoadTablesFromPath(language);
+		SetLanguageInternal(language, tables, overridesActive, validationErrors);
+	}
+
+	[MemberNotNull(new string[] { "CultureInfo", "StringComparer", "Language" })]
+	private void SetLanguageInternal(string language, Dictionary<string, LocTable> tables, bool overridesActive, List<LocValidationError> validationErrors)
+	{
+		_tables = tables;
+		OverridesActive = overridesActive;
+		ValidationErrors = validationErrors.AsReadOnly();
 		Language = language;
 		if (OverridesActive)
 		{
 			Log.Info("Localization overrides are active for language '" + language + "'");
 		}
 		CultureInfo = CultureInfoFromThreeLetterCode(Language);
+		StringComparer = System.StringComparer.Create(CultureInfo, CompareOptions.None);
 		if (TestMode.IsOn)
 		{
 			Callable.From(TriggerLocaleChange).CallDeferred();
@@ -305,7 +356,52 @@ public class LocManager
 		}
 	}
 
-	private static (Dictionary<string, LocTable> tables, bool overridesActive, List<LocValidationError> validationErrors) LoadTablesFromPath(string language)
+	/// <summary>
+	/// Overrides the current language with english.
+	/// When we upload metrics, we always want to use the english locale. Importantly, we also don't allow overriding of
+	/// any sort in this mode (no localization override).
+	/// This method also caches the english tables so that we don't have to re-load them the next time we do this.
+	/// </summary>
+	public void StartOverridingLanguageAsEnglish()
+	{
+		if (_engTables == null)
+		{
+			if (!OverridesActive && Language == "eng")
+			{
+				_engTables = _tables;
+			}
+			else
+			{
+				(Dictionary<string, LocTable>, bool, List<LocValidationError>) tuple = LoadTablesFromPath("eng", allowOverride: false);
+				(_engTables, _, _) = tuple;
+				if (tuple.Item2)
+				{
+					throw new InvalidOperationException("Overrides should never be active when overriding as english!");
+				}
+			}
+		}
+		_stateBeforeOverridingWithEnglish = new PreOverrideState
+		{
+			language = Language,
+			overridesActive = OverridesActive,
+			validationErrors = ValidationErrors,
+			tables = _tables
+		};
+		SetLanguageInternal("eng", _engTables, overridesActive: false, new List<LocValidationError>());
+	}
+
+	public void StopOverridingLanguageAsEnglish()
+	{
+		if (_stateBeforeOverridingWithEnglish == null)
+		{
+			Log.Error("StopOverridingLanguageAsEnglish called, but we aren't overriding with english!");
+			return;
+		}
+		SetLanguageInternal(_stateBeforeOverridingWithEnglish.language, _stateBeforeOverridingWithEnglish.tables, _stateBeforeOverridingWithEnglish.overridesActive, _stateBeforeOverridingWithEnglish.validationErrors.ToList());
+		_stateBeforeOverridingWithEnglish = null;
+	}
+
+	private static (Dictionary<string, LocTable> tables, bool overridesActive, List<LocValidationError> validationErrors) LoadTablesFromPath(string language, bool allowOverride = true)
 	{
 		Dictionary<string, LocTable> dictionary = null;
 		if (language != "eng")
@@ -349,7 +445,7 @@ public class LocManager
 			}
 			LocTable fallback = dictionary?.GetValueOrDefault(fileNameWithoutExtension);
 			LocTable locTable = new LocTable(fileNameWithoutExtension, dictionary3, fallback);
-			if (!flag)
+			if (!flag && allowOverride)
 			{
 				if (flag3 && TryLoadWeblateNestedOverrides(text2, language, item2, locTable, list))
 				{
@@ -418,6 +514,13 @@ public class LocManager
 			select s).ToArray();
 	}
 
+	/// <summary>
+	/// Tries to load and validate an override file, merging valid entries into the LocTable.
+	/// </summary>
+	/// <param name="overrideFilePath">Absolute path to the override JSON file.</param>
+	/// <param name="locTable">The LocTable to merge validated entries into.</param>
+	/// <param name="validationErrors">List to append any validation errors to.</param>
+	/// <returns>True if the file was found and at least partially loaded, false if not found.</returns>
 	private static bool TryLoadOverrideFile(string overrideFilePath, LocTable locTable, List<LocValidationError> validationErrors)
 	{
 		if (!Godot.FileAccess.FileExists(overrideFilePath))
@@ -453,6 +556,17 @@ public class LocManager
 		}
 	}
 
+	/// <summary>
+	/// Tries to load overrides from Weblate's nested export structure.
+	/// Weblate exports as: {overrideDir}/{project}/{component}/{weblateCode}/{filename}
+	/// Example: localization_override/slaythespire2/cards/de/cards.json
+	/// </summary>
+	/// <param name="globalizedOverrideDir">The globalized path to the override directory.</param>
+	/// <param name="language">The game's 3-letter language code (e.g., "deu").</param>
+	/// <param name="filename">The localization filename (e.g., "cards.json").</param>
+	/// <param name="locTable">The LocTable to merge validated entries into.</param>
+	/// <param name="validationErrors">List to append any validation errors to.</param>
+	/// <returns>True if a nested override was found and loaded, false otherwise.</returns>
 	private static bool TryLoadWeblateNestedOverrides(string globalizedOverrideDir, string language, string filename, LocTable locTable, List<LocValidationError> validationErrors)
 	{
 		if (!_gameToWeblateLanguage.TryGetValue(language, out string value))
@@ -530,6 +644,6 @@ public class LocManager
 		num2++;
 		span[num2] = "tur";
 		Languages = list;
-		EnglishCultureInfo = System.Globalization.CultureInfo.GetCultureInfo("en");
+		_englishCultureInfo = GetCultureInfoSafe("en");
 	}
 }

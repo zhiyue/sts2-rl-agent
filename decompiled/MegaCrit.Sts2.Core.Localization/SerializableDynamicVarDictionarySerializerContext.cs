@@ -42,20 +42,44 @@ internal class SerializableDynamicVarDictionarySerializerContext : JsonSerialize
 
 	private static readonly JsonEncodedText PropName_string_value = JsonEncodedText.Encode("string_value");
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<bool> Boolean => _Boolean ?? (_Boolean = (JsonTypeInfo<bool>)base.Options.GetTypeInfo(typeof(bool)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<decimal> Decimal => _Decimal ?? (_Decimal = (JsonTypeInfo<decimal>)base.Options.GetTypeInfo(typeof(decimal)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<DynamicVarType> DynamicVarType => _DynamicVarType ?? (_DynamicVarType = (JsonTypeInfo<DynamicVarType>)base.Options.GetTypeInfo(typeof(DynamicVarType)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<SerializableDynamicVar> SerializableDynamicVar => _SerializableDynamicVar ?? (_SerializableDynamicVar = (JsonTypeInfo<SerializableDynamicVar>)base.Options.GetTypeInfo(typeof(SerializableDynamicVar)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<Dictionary<string, SerializableDynamicVar>> DictionaryStringSerializableDynamicVar => _DictionaryStringSerializableDynamicVar ?? (_DictionaryStringSerializableDynamicVar = (JsonTypeInfo<Dictionary<string, SerializableDynamicVar>>)base.Options.GetTypeInfo(typeof(Dictionary<string, SerializableDynamicVar>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<string> String => _String ?? (_String = (JsonTypeInfo<string>)base.Options.GetTypeInfo(typeof(string)));
 
+	/// <summary>
+	/// The default <see cref="T:System.Text.Json.Serialization.JsonSerializerContext" /> associated with a default <see cref="T:System.Text.Json.JsonSerializerOptions" /> instance.
+	/// </summary>
 	public static SerializableDynamicVarDictionarySerializerContext Default { get; } = new SerializableDynamicVarDictionarySerializerContext(new JsonSerializerOptions(s_defaultOptions));
 
+	/// <summary>
+	/// The source-generated options associated with this context.
+	/// </summary>
 	protected override JsonSerializerOptions? GeneratedSerializerOptions { get; } = s_defaultOptions;
 
 	private JsonTypeInfo<bool> Create_Boolean(JsonSerializerOptions options)
@@ -248,11 +272,13 @@ internal class SerializableDynamicVarDictionarySerializerContext : JsonSerialize
 		return jsonTypeInfo;
 	}
 
+	/// <inheritdoc />
 	public SerializableDynamicVarDictionarySerializerContext()
 		: base(null)
 	{
 	}
 
+	/// <inheritdoc />
 	public SerializableDynamicVarDictionarySerializerContext(JsonSerializerOptions options)
 		: base(options)
 	{
@@ -300,6 +326,7 @@ internal class SerializableDynamicVarDictionarySerializerContext : JsonSerialize
 		return converter;
 	}
 
+	/// <inheritdoc />
 	public override JsonTypeInfo? GetTypeInfo(Type type)
 	{
 		base.Options.TryGetTypeInfo(type, out JsonTypeInfo typeInfo);

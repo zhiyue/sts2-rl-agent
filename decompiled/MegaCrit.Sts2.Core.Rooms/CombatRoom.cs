@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
@@ -18,7 +17,6 @@ using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Runs;
-using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Rooms;
 
@@ -32,8 +30,14 @@ public class CombatRoom : AbstractRoom, ICombatRoomVisuals
 
 	public override ModelId ModelId => Encounter.Id;
 
+	/// <summary>
+	/// The mutable encounter that the player is facing in this room.
+	/// </summary>
 	public EncounterModel Encounter => CombatState.Encounter;
 
+	/// <summary>
+	/// The state of the combat that is currently in progress in this room.
+	/// </summary>
 	public CombatState CombatState { get; }
 
 	public IEnumerable<Creature> Allies => CombatState.Allies;
@@ -48,16 +52,35 @@ public class CombatRoom : AbstractRoom, ICombatRoomVisuals
 
 	public IReadOnlyDictionary<Player, List<Reward>> ExtraRewards => _extraRewards;
 
+	/// <summary>
+	/// Whether to create a combat room node for this combat room.
+	/// Usually true, but false for "delayed-start" combats, like events with combat-style layouts that can transition
+	/// to combats if certain options are selected.
+	/// </summary>
 	public bool ShouldCreateCombat { get; init; } = true;
 
+	/// <summary>
+	/// If this combat room is nested within an event room, should we resume the parent event after combat ends?
+	/// Usually true, but false for some combat-style events. In many of these cases, you transition from a visual-only
+	/// combat room into a real combat, and then you just proceed to the next map point after combat ends.
+	/// </summary>
 	public bool ShouldResumeParentEventAfterCombat { get; init; } = true;
 
+	/// <summary>
+	/// If this combat room is nested within an event room that should resume after combat,
+	/// this stores the parent event's ID so the event room can be recreated on load.
+	/// </summary>
 	public ModelId? ParentEventId { get; init; }
 
+	/// <summary>
+	/// Creates a combat room for the given encounter.
+	/// </summary>
+	/// <param name="encounter">Encounter that is taking place in this combat room.</param>
+	/// <param name="runState">State of the run that this combat room is a part of.</param>
 	public CombatRoom(EncounterModel encounter, IRunState? runState)
 	{
 		encounter.AssertMutable();
-		CombatState = new CombatState(encounter, runState, runState?.Modifiers, runState?.MultiplayerScalingModel);
+		CombatState = new CombatState(encounter, runState, runState?.Modifiers, runState?.BadgeModels, runState?.MultiplayerScalingModel);
 	}
 
 	public CombatRoom(CombatState combatState)
@@ -96,7 +119,7 @@ public class CombatRoom : AbstractRoom, ICombatRoomVisuals
 		return combatRoom;
 	}
 
-	public override async Task Enter(IRunState? runState, bool isRestoringRoomStackBase)
+	public override async Task EnterInternal(IRunState? runState, bool isRestoringRoomStackBase)
 	{
 		if (isRestoringRoomStackBase)
 		{
@@ -121,7 +144,7 @@ public class CombatRoom : AbstractRoom, ICombatRoomVisuals
 
 	public override Task Exit(IRunState? runState)
 	{
-		CombatManager.Instance.Reset();
+		CombatManager.Instance.Reset(graceful: true);
 		if (IsPreFinished)
 		{
 			foreach (Creature item in CombatState.PlayerCreatures.ToList())
@@ -189,7 +212,7 @@ public class CombatRoom : AbstractRoom, ICombatRoomVisuals
 				Creature creature = CombatState.CreateCreature(monsterModel, CombatSide.Enemy, slot);
 				CombatState.AddCreature(creature);
 			}
-			CombatState.RunState.CurrentMapPointHistoryEntry.Rooms.Last().MonsterIds.Add(monsterModel.Id);
+			CombatState.RunState.CurrentMapPointHistoryEntry?.Rooms.Last().MonsterIds.Add(monsterModel.Id);
 		}
 		if (ShouldCreateCombat)
 		{
@@ -209,27 +232,43 @@ public class CombatRoom : AbstractRoom, ICombatRoomVisuals
 
 	public void OnCombatEnded()
 	{
-		GoldProportion = 1f - (float)CombatState.EscapedCreatures.Count / (float)Encounter.MonstersWithSlots.Count;
+		GoldProportion = Encounter.CalculateGoldProportion(CombatState);
 	}
 
 	private async Task StartPreFinishedCombat()
 	{
-		if (TestMode.IsOn)
-		{
-			return;
-		}
 		Encounter.GenerateMonstersWithSlots(CombatState.RunState);
 		await PreloadManager.LoadRoomCombatAssets(Encounter, CombatState.RunState);
 		NCombatRoom nCombatRoom = NCombatRoom.Create(this, CombatRoomMode.FinishedCombat);
 		NRun.Instance?.SetCurrentRoom(nCombatRoom);
 		nCombatRoom?.SetUpBackground(CombatState.RunState);
-		NMapScreen.Instance.SetTravelEnabled(enabled: true);
+		NMapScreen.Instance?.SetTravelEnabled(enabled: true);
 		foreach (Player player in CombatState.RunState.Players)
 		{
 			player.ResetCombatState();
 		}
 		RunManager.Instance.ActionExecutor.Unpause();
-		Player me = LocalContext.GetMe(CombatState);
-		TaskHelper.RunSafely(RewardsCmd.OfferForRoomEnd(me, this));
+		if (Encounter.ShouldGiveRewards)
+		{
+			await OfferRoomEndRewards();
+		}
+		else if (nCombatRoom != null)
+		{
+			await nCombatRoom.Ui.ProceedWithoutRewards();
+		}
+	}
+
+	public async Task OfferRoomEndRewards()
+	{
+		List<RewardsSet> rewards = new List<RewardsSet>();
+		foreach (Player player in CombatState.Players)
+		{
+			List<RewardsSet> list = rewards;
+			list.Add(await RewardsCmd.GenerateForRoomEnd(player, this));
+		}
+		foreach (RewardsSet item in rewards)
+		{
+			TaskHelper.RunSafely(item.Offer());
+		}
 	}
 }

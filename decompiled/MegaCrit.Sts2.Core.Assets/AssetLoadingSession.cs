@@ -17,12 +17,31 @@ public class AssetLoadingSession
 
 	private readonly AssetCache? _assetCache;
 
+	/// <summary>
+	/// The paths of all the assets that need to be loaded. This starts out containing every asset that needs to be
+	/// loaded, and then is gradually emptied as ResourceLoader loads assets.
+	/// </summary>
 	private readonly Queue<string> _toLoad = new Queue<string>();
 
+	/// <summary>
+	/// The paths of all the assets that are in the middle of being loaded.
+	/// Assets are dequeued from <see cref="F:MegaCrit.Sts2.Core.Assets.AssetLoadingSession._toLoad" /> and enqueued here in <see cref="M:MegaCrit.Sts2.Core.Assets.AssetLoadingSession.ProcessLoadingQueue" />.
+	/// </summary>
 	private readonly Queue<string> _loading = new Queue<string>();
 
+	/// <summary>
+	/// The paths of all the assets that are finished loading.
+	/// Assets are dequeued from <see cref="F:MegaCrit.Sts2.Core.Assets.AssetLoadingSession._loading" /> and enqueued here in <see cref="M:MegaCrit.Sts2.Core.Assets.AssetLoadingSession.CheckLoadingStatus" /> when
+	/// ResourceLoader.LoadThreadedGetStatus finds that an asset has finished loading.
+	/// Assets are dequeued from here and added to the cache in <see cref="M:MegaCrit.Sts2.Core.Assets.AssetLoadingSession.FinalizeLoading" />.
+	/// </summary>
 	private readonly Queue<string> _finalizing = new Queue<string>();
 
+	/// <summary>
+	/// VFX scenes are loaded one at a time after other assets finish. Loading them concurrently causes
+	/// "Another resource is loaded from path" errors because many VFX scenes share the same ext_resources
+	/// (materials, textures) and Godot's threaded loader races on shared sub-resource loading.
+	/// </summary>
 	private readonly Queue<string> _vfxScenes = new Queue<string>();
 
 	private readonly TaskCompletionSource<bool> _completionSource = new TaskCompletionSource<bool>();
@@ -100,6 +119,11 @@ public class AssetLoadingSession
 		}
 	}
 
+	/// <summary>
+	/// Load VFX scenes one at a time via the async threaded loader. Many VFX scenes share ext_resources
+	/// (e.g. canvas_item_material_additive_shared.tres is used by 162 scenes), and loading them concurrently
+	/// causes Godot's threaded loader to race on shared sub-resource paths.
+	/// </summary>
 	private void ProcessVfxQueue()
 	{
 		if (_vfxLoading)
@@ -197,22 +221,18 @@ public class AssetLoadingSession
 				case ResourceLoader.ThreadLoadStatus.Loaded:
 					_finalizing.Enqueue(result);
 					continue;
-				case ResourceLoader.ThreadLoadStatus.Failed:
-					Log.Error("Failed loading asset: " + result);
-					_assetCache?.MarkAssetFailed(result);
-					continue;
 				case ResourceLoader.ThreadLoadStatus.InvalidResource:
+				case ResourceLoader.ThreadLoadStatus.Failed:
 				{
-					Log.Warn("InvalidResource status for " + result + ", falling back to sync load");
+					Log.Warn($"Threaded load status {threadLoadStatus} for {result}, falling back to sync load");
 					Resource resource = ResourceLoader.Load<Resource>(result, null, ResourceLoader.CacheMode.Reuse);
 					if (resource != null)
 					{
 						AddToCache(resource, result);
+						continue;
 					}
-					else
-					{
-						Log.Error("Failed to load resource synchronously: " + result);
-					}
+					Log.Error("Failed to load resource synchronously: " + result);
+					_assetCache?.MarkAssetFailed(result);
 					continue;
 				}
 				case ResourceLoader.ThreadLoadStatus.InProgress:

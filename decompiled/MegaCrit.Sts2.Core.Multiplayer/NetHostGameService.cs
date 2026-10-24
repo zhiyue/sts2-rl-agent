@@ -143,6 +143,12 @@ public class NetHostGameService : INetHostHandler, INetHandler, INetHostGameServ
 		}
 	}
 
+	/// <summary>
+	/// Starts sending broadcasted messages to a peer.
+	/// When a peer first connects, messages that have ShouldBroadcast set are not sent to that peer. They are only sent
+	/// to the newly connected peer after this method is called, passing the newly connected peer's ID.
+	/// This is used to prevent messages from being sent to a peer until the game-level connection flow has been completed.
+	/// </summary>
 	public void SetPeerReadyForBroadcasting(ulong peerId)
 	{
 		for (int i = 0; i < _connectedPeers.Count; i++)
@@ -202,6 +208,11 @@ public class NetHostGameService : INetHostHandler, INetHandler, INetHostGameServ
 	public void SetGameLoading(bool isLoading)
 	{
 		_qualityTracker.SetIsLoading(isLoading);
+	}
+
+	public void SetBufferMessages(bool bufferMessages)
+	{
+		_messageBus.SetBufferMessages(bufferMessages);
 	}
 
 	public string? GetRawLobbyIdentifier()

@@ -15,7 +15,7 @@ public sealed class VeilpiercerPower : PowerModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromKeyword(CardKeyword.Ethereal));
 
-	public override bool TryModifyEnergyCostInCombat(CardModel card, decimal originalCost, out decimal modifiedCost)
+	public override bool TryModifyEnergyCostInCombatLate(CardModel card, decimal originalCost, out decimal modifiedCost)
 	{
 		modifiedCost = originalCost;
 		if (card.Owner.Creature != base.Owner)

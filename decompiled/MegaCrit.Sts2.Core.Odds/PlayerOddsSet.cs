@@ -5,8 +5,14 @@ namespace MegaCrit.Sts2.Core.Odds;
 
 public class PlayerOddsSet
 {
+	/// <summary>
+	/// Manages the odds of rolling various rarities when generating cards (encounter rewards, shops, etc.) for each player.
+	/// </summary>
 	public CardRarityOdds CardRarity { get; private init; }
 
+	/// <summary>
+	/// Manages the odds of whether or not a potion drops after beating an encounter for each player.
+	/// </summary>
 	public PotionRewardOdds PotionReward { get; private init; }
 
 	private PlayerOddsSet()

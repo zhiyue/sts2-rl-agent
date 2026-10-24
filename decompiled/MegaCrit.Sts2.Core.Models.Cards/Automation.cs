@@ -22,7 +22,7 @@ public sealed class Automation : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<AutomationPower>(base.Owner.Creature, base.DynamicVars.Energy.IntValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<AutomationPower>(choiceContext, base.Owner.Creature, base.DynamicVars.Energy.IntValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

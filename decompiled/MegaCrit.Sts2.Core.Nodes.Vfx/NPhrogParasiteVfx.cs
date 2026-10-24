@@ -4,6 +4,7 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
+using MegaCrit.Sts2.Core.Helpers;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
@@ -11,34 +12,81 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NPhrogParasiteVfx.cs")]
 public class NPhrogParasiteVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationStart' method.
+		/// </summary>
+		public static readonly StringName OnAnimationStart = "OnAnimationStart";
+
+		/// <summary>
+		/// Cached name for the 'TurnOnInfect' method.
+		/// </summary>
 		public static readonly StringName TurnOnInfect = "TurnOnInfect";
 
+		/// <summary>
+		/// Cached name for the 'TurnOffInfect' method.
+		/// </summary>
 		public static readonly StringName TurnOffInfect = "TurnOffInfect";
 
+		/// <summary>
+		/// Cached name for the 'StartExplode' method.
+		/// </summary>
 		public static readonly StringName StartExplode = "StartExplode";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_bubbleParticlesA' field.
+		/// </summary>
 		public static readonly StringName _bubbleParticlesA = "_bubbleParticlesA";
 
+		/// <summary>
+		/// Cached name for the '_bubbleParticlesB' field.
+		/// </summary>
 		public static readonly StringName _bubbleParticlesB = "_bubbleParticlesB";
 
+		/// <summary>
+		/// Cached name for the '_bubbleParticlesC' field.
+		/// </summary>
 		public static readonly StringName _bubbleParticlesC = "_bubbleParticlesC";
 
+		/// <summary>
+		/// Cached name for the '_gooParticlesDeath' field.
+		/// </summary>
 		public static readonly StringName _gooParticlesDeath = "_gooParticlesDeath";
 
+		/// <summary>
+		/// Cached name for the '_wormParticlesDeath' field.
+		/// </summary>
 		public static readonly StringName _wormParticlesDeath = "_wormParticlesDeath";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -74,7 +122,11 @@ public class NPhrogParasiteVfx : Node
 		_wormParticlesDeath.Emitting = false;
 		_gooParticlesDeath.OneShot = true;
 		_wormParticlesDeath.OneShot = true;
-		_animController.GetAnimationState().SetAnimation("die");
+		this.RunWhenSpineReady(_animController, delegate(MegaAnimationState animState)
+		{
+			animState.SetAnimation("die");
+		});
+		_animController.ConnectAnimationStarted(Callable.From<GodotObject, GodotObject, GodotObject>(OnAnimationStart));
 	}
 
 	private void OnAnimationEvent(GodotObject _, GodotObject __, GodotObject ___, GodotObject spineEvent)
@@ -91,6 +143,11 @@ public class NPhrogParasiteVfx : Node
 			StartExplode();
 			break;
 		}
+	}
+
+	private void OnAnimationStart(GodotObject spineSprite, GodotObject animationState, GodotObject trackEntry)
+	{
+		TurnOffInfect();
 	}
 
 	private void TurnOnInfect()
@@ -113,10 +170,15 @@ public class NPhrogParasiteVfx : Node
 		_wormParticlesDeath.Restart();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(5);
+		List<MethodInfo> list = new List<MethodInfo>(6);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnAnimationEvent, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -125,12 +187,19 @@ public class NPhrogParasiteVfx : Node
 			new PropertyInfo(Variant.Type.Object, "___", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
 			new PropertyInfo(Variant.Type.Object, "spineEvent", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.OnAnimationStart, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Object, "spineSprite", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
+			new PropertyInfo(Variant.Type.Object, "animationState", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
+			new PropertyInfo(Variant.Type.Object, "trackEntry", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false)
+		}, null));
 		list.Add(new MethodInfo(MethodName.TurnOnInfect, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.TurnOffInfect, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.StartExplode, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -143,6 +212,12 @@ public class NPhrogParasiteVfx : Node
 		if (method == MethodName.OnAnimationEvent && args.Count == 4)
 		{
 			OnAnimationEvent(VariantUtils.ConvertTo<GodotObject>(in args[0]), VariantUtils.ConvertTo<GodotObject>(in args[1]), VariantUtils.ConvertTo<GodotObject>(in args[2]), VariantUtils.ConvertTo<GodotObject>(in args[3]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.OnAnimationStart && args.Count == 3)
+		{
+			OnAnimationStart(VariantUtils.ConvertTo<GodotObject>(in args[0]), VariantUtils.ConvertTo<GodotObject>(in args[1]), VariantUtils.ConvertTo<GodotObject>(in args[2]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -167,6 +242,7 @@ public class NPhrogParasiteVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -175,6 +251,10 @@ public class NPhrogParasiteVfx : Node
 			return true;
 		}
 		if (method == MethodName.OnAnimationEvent)
+		{
+			return true;
+		}
+		if (method == MethodName.OnAnimationStart)
 		{
 			return true;
 		}
@@ -193,6 +273,7 @@ public class NPhrogParasiteVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -229,6 +310,7 @@ public class NPhrogParasiteVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -265,6 +347,11 @@ public class NPhrogParasiteVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -278,6 +365,7 @@ public class NPhrogParasiteVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -290,6 +378,7 @@ public class NPhrogParasiteVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

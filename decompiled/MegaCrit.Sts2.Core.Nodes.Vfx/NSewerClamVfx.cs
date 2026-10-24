@@ -10,42 +10,96 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NSewerClamVfx.cs")]
 public class NSewerClamVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ScaleCoralTo' method.
+		/// </summary>
 		public static readonly StringName ScaleCoralTo = "ScaleCoralTo";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'OnDeathStart' method.
+		/// </summary>
 		public static readonly StringName OnDeathStart = "OnDeathStart";
 
+		/// <summary>
+		/// Cached name for the 'OnDeathEnd' method.
+		/// </summary>
 		public static readonly StringName OnDeathEnd = "OnDeathEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnDarknessStart' method.
+		/// </summary>
 		public static readonly StringName OnDarknessStart = "OnDarknessStart";
 
+		/// <summary>
+		/// Cached name for the 'OnDarknessEnd' method.
+		/// </summary>
 		public static readonly StringName OnDarknessEnd = "OnDarknessEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnChomp' method.
+		/// </summary>
 		public static readonly StringName OnChomp = "OnChomp";
 
+		/// <summary>
+		/// Cached name for the 'OnGrow' method.
+		/// </summary>
 		public static readonly StringName OnGrow = "OnGrow";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_deathParticles' field.
+		/// </summary>
 		public static readonly StringName _deathParticles = "_deathParticles";
 
+		/// <summary>
+		/// Cached name for the '_buffParticles' field.
+		/// </summary>
 		public static readonly StringName _buffParticles = "_buffParticles";
 
+		/// <summary>
+		/// Cached name for the '_chompParticles' field.
+		/// </summary>
 		public static readonly StringName _chompParticles = "_chompParticles";
 
+		/// <summary>
+		/// Cached name for the '_scaleNode' field.
+		/// </summary>
 		public static readonly StringName _scaleNode = "_scaleNode";
 
+		/// <summary>
+		/// Cached name for the '_keyDown' field.
+		/// </summary>
 		public static readonly StringName _keyDown = "_keyDown";
 
+		/// <summary>
+		/// Cached name for the '_onState' field.
+		/// </summary>
 		public static readonly StringName _onState = "_onState";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -152,6 +206,11 @@ public class NSewerClamVfx : Node
 		ScaleCoralTo(num);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -177,6 +236,7 @@ public class NSewerClamVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -237,6 +297,7 @@ public class NSewerClamVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -279,6 +340,7 @@ public class NSewerClamVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -315,6 +377,7 @@ public class NSewerClamVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -351,6 +414,11 @@ public class NSewerClamVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -364,6 +432,7 @@ public class NSewerClamVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -376,6 +445,7 @@ public class NSewerClamVfx : Node
 		info.AddProperty(PropertyName._onState, Variant.From(in _onState));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

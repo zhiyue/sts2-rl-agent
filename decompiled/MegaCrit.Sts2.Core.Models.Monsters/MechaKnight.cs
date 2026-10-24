@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -72,7 +73,7 @@ public sealed class MechaKnight : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<ArtifactPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<ArtifactPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -125,14 +126,14 @@ public sealed class MechaKnight : MonsterModel
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/mechaknight/mechaknight_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "windUp", 0.5f);
 		await CreatureCmd.GainBlock(base.Creature, 15m, ValueProp.Move, null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 5m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 5m, base.Creature, null);
 	}
 
 	private async Task FlamethrowerMove(IReadOnlyList<Creature> targets)
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/mechaknight/mechaknight_flamethrower");
 		await CreatureCmd.TriggerAnim(base.Creature, "flamethrower", 1.5f);
-		await CardPileCmd.AddToCombatAndPreview<Burn>(targets, PileType.Hand, 4, addedByPlayer: false);
+		await CardPileCmd.AddToCombatAndPreview<Burn>(targets, PileType.Hand, 4, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

@@ -24,60 +24,156 @@ namespace MegaCrit.Sts2.Core.Nodes.Events;
 [ScriptPath("res://src/Core/Nodes/Events/NEventLayout.cs")]
 public class NEventLayout : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'InitializeVisuals' method.
+		/// </summary>
 		public static readonly StringName InitializeVisuals = "InitializeVisuals";
 
+		/// <summary>
+		/// Cached name for the 'UpdatePhobiaMode' method.
+		/// </summary>
+		public static readonly StringName UpdatePhobiaMode = "UpdatePhobiaMode";
+
+		/// <summary>
+		/// Cached name for the 'SetPortrait' method.
+		/// </summary>
 		public static readonly StringName SetPortrait = "SetPortrait";
 
+		/// <summary>
+		/// Cached name for the 'AddVfxAnchoredToPortrait' method.
+		/// </summary>
 		public static readonly StringName AddVfxAnchoredToPortrait = "AddVfxAnchoredToPortrait";
 
+		/// <summary>
+		/// Cached name for the 'RemoveNodesOnPortrait' method.
+		/// </summary>
 		public static readonly StringName RemoveNodesOnPortrait = "RemoveNodesOnPortrait";
 
+		/// <summary>
+		/// Cached name for the 'SetTitle' method.
+		/// </summary>
 		public static readonly StringName SetTitle = "SetTitle";
 
+		/// <summary>
+		/// Cached name for the 'SetDescription' method.
+		/// </summary>
 		public static readonly StringName SetDescription = "SetDescription";
 
+		/// <summary>
+		/// Cached name for the 'AnimateIn' method.
+		/// </summary>
 		public static readonly StringName AnimateIn = "AnimateIn";
 
+		/// <summary>
+		/// Cached name for the 'ClearOptions' method.
+		/// </summary>
 		public static readonly StringName ClearOptions = "ClearOptions";
 
+		/// <summary>
+		/// Cached name for the 'OnSetupComplete' method.
+		/// </summary>
 		public static readonly StringName OnSetupComplete = "OnSetupComplete";
 
+		/// <summary>
+		/// Cached name for the 'AnimateButtonsIn' method.
+		/// </summary>
 		public static readonly StringName AnimateButtonsIn = "AnimateButtonsIn";
 
+		/// <summary>
+		/// Cached name for the 'DisableEventOptions' method.
+		/// </summary>
 		public static readonly StringName DisableEventOptions = "DisableEventOptions";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'ApplyDebugUiVisibility' method.
+		/// </summary>
 		public static readonly StringName ApplyDebugUiVisibility = "ApplyDebugUiVisibility";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'VfxContainer' property.
+		/// </summary>
 		public static readonly StringName VfxContainer = "VfxContainer";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_descriptionTween' field.
+		/// </summary>
 		public static readonly StringName _descriptionTween = "_descriptionTween";
 
+		/// <summary>
+		/// Cached name for the '_optionsContainer' field.
+		/// </summary>
 		public static readonly StringName _optionsContainer = "_optionsContainer";
 
+		/// <summary>
+		/// Cached name for the '_portrait' field.
+		/// </summary>
 		public static readonly StringName _portrait = "_portrait";
 
+		/// <summary>
+		/// Cached name for the '_currentPortraitTex' field.
+		/// </summary>
+		public static readonly StringName _currentPortraitTex = "_currentPortraitTex";
+
+		/// <summary>
+		/// Cached name for the '_currentPhobiaPortraitTex' field.
+		/// </summary>
+		public static readonly StringName _currentPhobiaPortraitTex = "_currentPhobiaPortraitTex";
+
+		/// <summary>
+		/// Cached name for the '_title' field.
+		/// </summary>
 		public static readonly StringName _title = "_title";
 
+		/// <summary>
+		/// Cached name for the '_sharedEventLabel' field.
+		/// </summary>
 		public static readonly StringName _sharedEventLabel = "_sharedEventLabel";
 
+		/// <summary>
+		/// Cached name for the '_description' field.
+		/// </summary>
 		public static readonly StringName _description = "_description";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -90,18 +186,33 @@ public class NEventLayout : Control
 
 	private TextureRect? _portrait;
 
+	private Texture2D? _currentPortraitTex;
+
+	private Texture2D? _currentPhobiaPortraitTex;
+
 	private MegaLabel? _title;
 
 	protected EventModel _event;
 
+	/// <summary>
+	/// The label to show when an event is "shared" (see <see cref="P:MegaCrit.Sts2.Core.Models.EventModel.IsShared" /> for details).
+	/// Can be null for event types that can't be shared (like <see cref="T:MegaCrit.Sts2.Core.Models.AncientEventModel" />).
+	/// </summary>
 	protected MegaLabel? _sharedEventLabel;
 
 	private static readonly LocString _sharedEventLoc = new LocString("events", "SHARED_EVENT_INFO");
 
+	/// <summary>
+	/// The event description label. Some events (like Ancients) have no descriptions, in which case this will be null.
+	/// </summary>
 	protected MegaRichTextLabel? _description;
 
 	private static bool _isDebugUiVisible;
 
+	/// <summary>
+	/// Container for event VFX nodes (ambient particles, etc.).
+	/// Can be null in some subclasses.
+	/// </summary>
 	public Control? VfxContainer { get; private set; }
 
 	public IEnumerable<NEventOptionButton> OptionButtons => _optionsContainer.GetChildren().OfType<NEventOptionButton>();
@@ -124,11 +235,13 @@ public class NEventLayout : Control
 	public override void _EnterTree()
 	{
 		RunManager.Instance.EventSynchronizer.PlayerVoteChanged += OnPlayerVoteChanged;
+		NGame.Instance?.Connect(NGame.SignalName.PhobiaModeToggled, Callable.From(UpdatePhobiaMode));
 	}
 
 	public override void _ExitTree()
 	{
 		RunManager.Instance.EventSynchronizer.PlayerVoteChanged -= OnPlayerVoteChanged;
+		NGame.Instance?.Disconnect(NGame.SignalName.PhobiaModeToggled, Callable.From(UpdatePhobiaMode));
 	}
 
 	public virtual void SetEvent(EventModel eventModel)
@@ -140,7 +253,14 @@ public class NEventLayout : Control
 
 	protected virtual void InitializeVisuals()
 	{
-		SetPortrait(_event.CreateInitialPortrait());
+		if (_event.HasPhobiaModePortrait)
+		{
+			SetPortrait(_event.CreateInitialPortrait(), _event.CreateInitialPhobiaModePortrait());
+		}
+		else
+		{
+			SetPortrait(_event.CreateInitialPortrait());
+		}
 		if (_event.HasVfx)
 		{
 			Node2D node2D = _event.CreateVfx();
@@ -149,20 +269,50 @@ public class NEventLayout : Control
 		}
 	}
 
-	public void SetPortrait(Texture2D portrait)
+	private void UpdatePhobiaMode()
+	{
+		if (_currentPhobiaPortraitTex != null)
+		{
+			if (_portrait == null)
+			{
+				throw new InvalidOperationException("Trying to set a portrait in an event layout that doesn't have one.");
+			}
+			if (SaveManager.Instance.PrefsSave.PhobiaMode)
+			{
+				_portrait.Texture = _currentPhobiaPortraitTex;
+			}
+			else
+			{
+				_portrait.Texture = _currentPortraitTex;
+			}
+		}
+	}
+
+	public void SetPortrait(Texture2D portrait, Texture2D? phobiaModePortrait = null)
 	{
 		if (_portrait == null)
 		{
 			throw new InvalidOperationException("Trying to set a portrait in an event layout that doesn't have one.");
 		}
-		_portrait.Texture = portrait;
+		_currentPortraitTex = portrait;
+		_currentPhobiaPortraitTex = phobiaModePortrait;
+		_portrait.Texture = ((SaveManager.Instance.PrefsSave.PhobiaMode && _currentPhobiaPortraitTex != null) ? _currentPhobiaPortraitTex : _currentPortraitTex);
 	}
 
+	/// <summary>
+	/// Adds a child node that's anchored to the portrait. Usually you'd want to add it to VfxContainer, but you can use
+	/// this method instead if your VFX's position is dependent on the portrait (usually due to resolution stuff)
+	/// </summary>
+	/// <param name="vfx">VFX to add</param>
 	public void AddVfxAnchoredToPortrait(Node? vfx)
 	{
 		_portrait.AddChildSafely(vfx);
 	}
 
+	/// <summary>
+	/// Removes ALL child nodes from the Portrait, vfx or not.
+	/// Useful for swapping out vfx if an event has multiple portraits.
+	/// </summary>
 	public void RemoveNodesOnPortrait()
 	{
 		foreach (Node child in _portrait.GetChildren())
@@ -257,6 +407,10 @@ public class NEventLayout : Control
 		}
 	}
 
+	/// <summary>
+	/// Called when this layout is finished being set up.
+	/// At this point, all the buttons for the initial page should be populated.
+	/// </summary>
 	public virtual void OnSetupComplete()
 	{
 	}
@@ -299,6 +453,9 @@ public class NEventLayout : Control
 		await chosenButton.FlashConfirmation();
 	}
 
+	/// <summary>
+	/// Called during a shared event when a player changes the option they voted on.
+	/// </summary>
 	private void OnPlayerVoteChanged(Player player)
 	{
 		foreach (NEventOptionButton optionButton in OptionButtons)
@@ -349,17 +506,24 @@ public class NEventLayout : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(16);
+		List<MethodInfo> list = new List<MethodInfo>(17);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.InitializeVisuals, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.UpdatePhobiaMode, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.SetPortrait, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
-			new PropertyInfo(Variant.Type.Object, "portrait", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Texture2D"), exported: false)
+			new PropertyInfo(Variant.Type.Object, "portrait", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Texture2D"), exported: false),
+			new PropertyInfo(Variant.Type.Object, "phobiaModePortrait", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Texture2D"), exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.AddVfxAnchoredToPortrait, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -387,6 +551,7 @@ public class NEventLayout : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -414,9 +579,15 @@ public class NEventLayout : Control
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.SetPortrait && args.Count == 1)
+		if (method == MethodName.UpdatePhobiaMode && args.Count == 0)
 		{
-			SetPortrait(VariantUtils.ConvertTo<Texture2D>(in args[0]));
+			UpdatePhobiaMode();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.SetPortrait && args.Count == 2)
+		{
+			SetPortrait(VariantUtils.ConvertTo<Texture2D>(in args[0]), VariantUtils.ConvertTo<Texture2D>(in args[1]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -489,6 +660,7 @@ public class NEventLayout : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -505,6 +677,10 @@ public class NEventLayout : Control
 			return true;
 		}
 		if (method == MethodName.InitializeVisuals)
+		{
+			return true;
+		}
+		if (method == MethodName.UpdatePhobiaMode)
 		{
 			return true;
 		}
@@ -559,6 +735,7 @@ public class NEventLayout : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -582,6 +759,16 @@ public class NEventLayout : Control
 			_portrait = VariantUtils.ConvertTo<TextureRect>(in value);
 			return true;
 		}
+		if (name == PropertyName._currentPortraitTex)
+		{
+			_currentPortraitTex = VariantUtils.ConvertTo<Texture2D>(in value);
+			return true;
+		}
+		if (name == PropertyName._currentPhobiaPortraitTex)
+		{
+			_currentPhobiaPortraitTex = VariantUtils.ConvertTo<Texture2D>(in value);
+			return true;
+		}
 		if (name == PropertyName._title)
 		{
 			_title = VariantUtils.ConvertTo<MegaLabel>(in value);
@@ -600,6 +787,7 @@ public class NEventLayout : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -631,6 +819,16 @@ public class NEventLayout : Control
 			value = VariantUtils.CreateFrom(in _portrait);
 			return true;
 		}
+		if (name == PropertyName._currentPortraitTex)
+		{
+			value = VariantUtils.CreateFrom(in _currentPortraitTex);
+			return true;
+		}
+		if (name == PropertyName._currentPhobiaPortraitTex)
+		{
+			value = VariantUtils.CreateFrom(in _currentPhobiaPortraitTex);
+			return true;
+		}
 		if (name == PropertyName._title)
 		{
 			value = VariantUtils.CreateFrom(in _title);
@@ -649,6 +847,11 @@ public class NEventLayout : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -657,6 +860,8 @@ public class NEventLayout : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._descriptionTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._optionsContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._portrait, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._currentPortraitTex, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._currentPhobiaPortraitTex, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._title, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._sharedEventLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._description, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -664,6 +869,7 @@ public class NEventLayout : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -672,11 +878,14 @@ public class NEventLayout : Control
 		info.AddProperty(PropertyName._descriptionTween, Variant.From(in _descriptionTween));
 		info.AddProperty(PropertyName._optionsContainer, Variant.From(in _optionsContainer));
 		info.AddProperty(PropertyName._portrait, Variant.From(in _portrait));
+		info.AddProperty(PropertyName._currentPortraitTex, Variant.From(in _currentPortraitTex));
+		info.AddProperty(PropertyName._currentPhobiaPortraitTex, Variant.From(in _currentPhobiaPortraitTex));
 		info.AddProperty(PropertyName._title, Variant.From(in _title));
 		info.AddProperty(PropertyName._sharedEventLabel, Variant.From(in _sharedEventLabel));
 		info.AddProperty(PropertyName._description, Variant.From(in _description));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -697,17 +906,25 @@ public class NEventLayout : Control
 		{
 			_portrait = value4.As<TextureRect>();
 		}
-		if (info.TryGetProperty(PropertyName._title, out var value5))
+		if (info.TryGetProperty(PropertyName._currentPortraitTex, out var value5))
 		{
-			_title = value5.As<MegaLabel>();
+			_currentPortraitTex = value5.As<Texture2D>();
 		}
-		if (info.TryGetProperty(PropertyName._sharedEventLabel, out var value6))
+		if (info.TryGetProperty(PropertyName._currentPhobiaPortraitTex, out var value6))
 		{
-			_sharedEventLabel = value6.As<MegaLabel>();
+			_currentPhobiaPortraitTex = value6.As<Texture2D>();
 		}
-		if (info.TryGetProperty(PropertyName._description, out var value7))
+		if (info.TryGetProperty(PropertyName._title, out var value7))
 		{
-			_description = value7.As<MegaRichTextLabel>();
+			_title = value7.As<MegaLabel>();
+		}
+		if (info.TryGetProperty(PropertyName._sharedEventLabel, out var value8))
+		{
+			_sharedEventLabel = value8.As<MegaLabel>();
+		}
+		if (info.TryGetProperty(PropertyName._description, out var value9))
+		{
+			_description = value9.As<MegaRichTextLabel>();
 		}
 	}
 }

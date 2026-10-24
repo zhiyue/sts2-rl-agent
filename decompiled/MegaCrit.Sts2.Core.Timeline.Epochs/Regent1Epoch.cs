@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Anomalous Planet
+/// </summary>
 public class Regent1Epoch : EpochModel
 {
 	public override string Id => "REGENT1_EPOCH";
@@ -14,8 +17,6 @@ public class Regent1Epoch : EpochModel
 	public override int EraPosition => 1;
 
 	public override string StoryId => "Regent";
-
-	public override bool IsArtPlaceholder => false;
 
 	public override EpochModel[] GetTimelineExpansion()
 	{

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 
@@ -12,9 +13,9 @@ public sealed class TrashToTreasurePower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override async Task AfterCardGeneratedForCombat(CardModel card, bool addedByPlayer)
+	public override async Task AfterCardGeneratedForCombat(CardModel card, Player? creator)
 	{
-		if (addedByPlayer && card.Type == CardType.Status)
+		if (card.Type == CardType.Status && creator != null && creator.Creature == base.Owner)
 		{
 			Flash();
 			for (int i = 0; i < base.Amount; i++)

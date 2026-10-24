@@ -18,15 +18,24 @@ namespace MegaCrit.Sts2.Core.Models.Events;
 
 public sealed class WhisperingHollow : EventModel
 {
+	private const int _baseGold = 35;
+
+	private const int _goldVariance = 9;
+
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new GoldVar(50),
+		new GoldVar(35),
 		new HpLossVar(9m)
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
-		return runState.Players.All((Player p) => (decimal)p.Gold >= base.DynamicVars.Gold.BaseValue);
+		return runState.Players.All((Player p) => p.Gold >= 44);
+	}
+
+	public override void CalculateVars()
+	{
+		base.DynamicVars.Gold.BaseValue += (decimal)base.Rng.NextInt(-9, 10);
 	}
 
 	protected override IReadOnlyList<EventOption> GenerateInitialOptions()

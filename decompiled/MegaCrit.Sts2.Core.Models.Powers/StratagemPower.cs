@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
@@ -22,9 +21,7 @@ public sealed class StratagemPower : PowerModel
 			return;
 		}
 		Flash();
-		foreach (CardModel item in await CardSelectCmd.FromSimpleGrid(choiceContext, (from c in PileType.Draw.GetPile(base.Owner.Player).Cards
-			orderby c.Rarity, c.Id
-			select c).ToList(), base.Owner.Player, new CardSelectorPrefs(base.SelectionScreenPrompt, base.Amount)))
+		foreach (CardModel item in await CardSelectCmd.FromCombatPile(choiceContext, PileType.Draw.GetPile(base.Owner.Player), base.Owner.Player, new CardSelectorPrefs(base.SelectionScreenPrompt, base.Amount)))
 		{
 			await CardPileCmd.Add(item, PileType.Hand);
 		}

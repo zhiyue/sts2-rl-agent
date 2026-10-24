@@ -1,5 +1,9 @@
 namespace MegaCrit.Sts2.Core.Audio;
 
+/// <summary>
+/// Set of FMOD sfx that are used more globally (vs being tied to a specific creature of vfx).
+/// Any Temporary Sfx or Sfx not using FMOD should be put into TmpSfx.cs
+/// </summary>
 public static class FmodSfx
 {
 	public const string block = "event:/sfx/block_gain";
@@ -77,4 +81,18 @@ public static class FmodSfx
 	public const string doomKill = "event:/sfx/characters/necrobinder/necrobinder_doom_kill";
 
 	public const string necrobinderSummon = "event:/sfx/characters/necrobinder/necrobinder_summon";
+
+	public const string cardImpactIntoMulti = "event:/sfx/ui/cards/card_impact_into_multi";
+
+	public const string cardImpactIntoSingle = "event:/sfx/ui/cards/card_impact_into_single";
+
+	public const string cardMovementIntoDeck = "event:/sfx/ui/cards/card_movement_B_into_deck";
+
+	public const string cardMovementIntoDiscard = "event:/sfx/ui/cards/card_movement_B_into_discard";
+
+	public const string cardMovementIntoDraw = "event:/sfx/ui/cards/card_movement_B_into_draw";
+
+	public const string cardMovementPlayIntoDiscard = "event:/sfx/ui/cards/card_movement_B_play_into_discard";
+
+	public const string cardMovementIntoPower = "event:/sfx/ui/cards/card_movement_B_power";
 }

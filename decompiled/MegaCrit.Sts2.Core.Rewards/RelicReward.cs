@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Factories;
@@ -11,9 +10,9 @@ using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Runs.History;
 using MegaCrit.Sts2.Core.Saves;
+using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Rewards;
 
@@ -21,6 +20,19 @@ public class RelicReward : Reward
 {
 	private readonly RelicRarity _rarity;
 
+	/// <summary>
+	/// The relic that this reward gives, if it's predetermined.
+	/// For randomly-rolled relic rewards (like from Elite combats), this is null.
+	/// For predetermined relic rewards (like from <see cref="T:MegaCrit.Sts2.Core.Models.Events.FakeMerchant" />), this is set to the predetermined relic.
+	/// </summary>
+	private RelicModel? _predeterminedRelic;
+
+	/// <summary>
+	/// The relic that this reward gives.
+	/// For randomly-rolled relic rewards (like from Elite combats), this starts out null, and is populated by
+	/// <see cref="M:MegaCrit.Sts2.Core.Rewards.RelicReward.Populate" />.
+	/// For predetermined relic rewards (like from <see cref="T:MegaCrit.Sts2.Core.Models.Events.FakeMerchant" />), this is set to the predetermined relic.
+	/// </summary>
 	private RelicModel? _relic;
 
 	private bool _wasTaken;
@@ -32,6 +44,8 @@ public class RelicReward : Reward
 	public RelicRarity Rarity => _rarity;
 
 	public RelicModel? ClaimedRelic { get; private set; }
+
+	public RelicModel? Relic => _relic;
 
 	public override LocString Description => _relic.Title;
 
@@ -48,6 +62,7 @@ public class RelicReward : Reward
 		: base(player)
 	{
 		relic.AssertMutable();
+		_predeterminedRelic = relic;
 		_relic = relic;
 	}
 
@@ -57,11 +72,11 @@ public class RelicReward : Reward
 		_rarity = rarity;
 	}
 
-	public override Task Populate()
+	public override void Populate()
 	{
 		if (_relic != null)
 		{
-			return Task.CompletedTask;
+			return;
 		}
 		if (_rarity == RelicRarity.None)
 		{
@@ -78,7 +93,6 @@ public class RelicReward : Reward
 		{
 			_relic = RelicFactory.PullNextRelicFromFront(base.Player, _rarity).ToMutable();
 		}
-		return Task.CompletedTask;
 	}
 
 	public override TextureRect CreateIcon()
@@ -94,9 +108,8 @@ public class RelicReward : Reward
 
 	protected override async Task<bool> OnSelect()
 	{
-		Log.Info($"Obtained {_relic.Id} from relic reward");
+		Log.Info($"Player {base.Player.NetId} obtained {_relic.Id} from relic reward");
 		ClaimedRelic = await RelicCmd.Obtain(_relic, base.Player);
-		RunManager.Instance.RewardSynchronizer.SyncLocalObtainedRelic(_relic);
 		_wasTaken = true;
 		return true;
 	}
@@ -105,13 +118,22 @@ public class RelicReward : Reward
 	{
 		if (!_wasTaken)
 		{
-			base.Player.RunState.CurrentMapPointHistoryEntry.GetEntry(LocalContext.NetId.Value).RelicChoices.Add(new ModelChoiceHistoryEntry(_relic.Id, wasPicked: false));
-			RunManager.Instance.RewardSynchronizer.SyncLocalSkippedRelic(_relic);
+			base.Player.RunState.CurrentMapPointHistoryEntry.GetEntry(base.Player.NetId).RelicChoices.Add(new ModelChoiceHistoryEntry(_relic.Id, wasPicked: false));
 		}
 	}
 
 	public override void MarkContentAsSeen()
 	{
 		SaveManager.Instance.MarkRelicAsSeen(_relic);
+	}
+
+	public override SerializableReward ToSerializable()
+	{
+		SerializableReward serializableReward = base.ToSerializable();
+		if (_predeterminedRelic != null)
+		{
+			serializableReward.PredeterminedModelId = _predeterminedRelic.Id;
+		}
+		return serializableReward;
 	}
 }

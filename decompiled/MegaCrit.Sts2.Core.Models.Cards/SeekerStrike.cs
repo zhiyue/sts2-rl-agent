@@ -18,7 +18,7 @@ public sealed class SeekerStrike : CardModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new DamageVar(6m, ValueProp.Move),
+		new DamageVar(9m, ValueProp.Move),
 		new CardsVar(3)
 	});
 
@@ -33,8 +33,8 @@ public sealed class SeekerStrike : CardModel
 		await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(choiceContext);
-		IEnumerable<CardModel> source = PileType.Draw.GetPile(base.Owner).Cards.ToList().StableShuffle(base.Owner.RunState.Rng.CombatCardSelection);
-		CardModel cardModel = (await CardSelectCmd.FromSimpleGrid(choiceContext, source.Take(base.DynamicVars.Cards.IntValue).ToList(), base.Owner, new CardSelectorPrefs(base.SelectionScreenPrompt, 1))).FirstOrDefault();
+		IEnumerable<CardModel> cardOptions = PileType.Draw.GetPile(base.Owner).Cards.ToList().StableShuffle(base.Owner.RunState.Rng.CombatCardSelection).Take(base.DynamicVars.Cards.IntValue);
+		CardModel cardModel = (await CardSelectCmd.FromCombatPile(choiceContext, PileType.Draw.GetPile(base.Owner), base.Owner, new CardSelectorPrefs(base.SelectionScreenPrompt, 1), (CardModel c) => cardOptions.Contains(c))).FirstOrDefault();
 		if (cardModel != null)
 		{
 			await CardPileCmd.Add(cardModel, PileType.Hand);

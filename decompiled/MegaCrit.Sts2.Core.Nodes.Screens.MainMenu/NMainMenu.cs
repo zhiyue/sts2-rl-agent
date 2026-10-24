@@ -38,124 +38,301 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NMainMenu.cs")]
 public class NMainMenu : Control, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectMainMenuTextButtonFocusLogic' method.
+		/// </summary>
 		public static readonly StringName ConnectMainMenuTextButtonFocusLogic = "ConnectMainMenuTextButtonFocusLogic";
 
+		/// <summary>
+		/// Cached name for the 'MainMenuButtonFocused' method.
+		/// </summary>
 		public static readonly StringName MainMenuButtonFocused = "MainMenuButtonFocused";
 
+		/// <summary>
+		/// Cached name for the 'MainMenuButtonUnfocused' method.
+		/// </summary>
 		public static readonly StringName MainMenuButtonUnfocused = "MainMenuButtonUnfocused";
 
+		/// <summary>
+		/// Cached name for the 'EnableBackstop' method.
+		/// </summary>
 		public static readonly StringName EnableBackstop = "EnableBackstop";
 
+		/// <summary>
+		/// Cached name for the 'DisableBackstop' method.
+		/// </summary>
 		public static readonly StringName DisableBackstop = "DisableBackstop";
 
+		/// <summary>
+		/// Cached name for the 'DisableBackstopInstantly' method.
+		/// </summary>
 		public static readonly StringName DisableBackstopInstantly = "DisableBackstopInstantly";
 
+		/// <summary>
+		/// Cached name for the 'EnableBackstopInstantly' method.
+		/// </summary>
 		public static readonly StringName EnableBackstopInstantly = "EnableBackstopInstantly";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderMix' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderMix = "UpdateShaderMix";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderLod' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderLod = "UpdateShaderLod";
 
+		/// <summary>
+		/// Cached name for the 'RefreshButtons' method.
+		/// </summary>
 		public static readonly StringName RefreshButtons = "RefreshButtons";
 
+		/// <summary>
+		/// Cached name for the 'UpdateTimelineButtonBehavior' method.
+		/// </summary>
 		public static readonly StringName UpdateTimelineButtonBehavior = "UpdateTimelineButtonBehavior";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuStackChanged' method.
+		/// </summary>
 		public static readonly StringName OnSubmenuStackChanged = "OnSubmenuStackChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnContinueButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnContinueButtonPressed = "OnContinueButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'DisplayLoadSaveError' method.
+		/// </summary>
 		public static readonly StringName DisplayLoadSaveError = "DisplayLoadSaveError";
 
+		/// <summary>
+		/// Cached name for the 'OnAbandonRunButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnAbandonRunButtonPressed = "OnAbandonRunButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'AbandonRun' method.
+		/// </summary>
 		public static readonly StringName AbandonRun = "AbandonRun";
 
+		/// <summary>
+		/// Cached name for the 'SingleplayerButtonPressed' method.
+		/// </summary>
 		public static readonly StringName SingleplayerButtonPressed = "SingleplayerButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OpenSingleplayerSubmenu' method.
+		/// </summary>
 		public static readonly StringName OpenSingleplayerSubmenu = "OpenSingleplayerSubmenu";
 
+		/// <summary>
+		/// Cached name for the 'OpenMultiplayerSubmenu' method.
+		/// </summary>
 		public static readonly StringName OpenMultiplayerSubmenu = "OpenMultiplayerSubmenu";
 
+		/// <summary>
+		/// Cached name for the 'OpenCompendiumSubmenu' method.
+		/// </summary>
 		public static readonly StringName OpenCompendiumSubmenu = "OpenCompendiumSubmenu";
 
+		/// <summary>
+		/// Cached name for the 'OpenTimelineScreen' method.
+		/// </summary>
 		public static readonly StringName OpenTimelineScreen = "OpenTimelineScreen";
 
+		/// <summary>
+		/// Cached name for the 'OpenSettingsMenu' method.
+		/// </summary>
 		public static readonly StringName OpenSettingsMenu = "OpenSettingsMenu";
 
+		/// <summary>
+		/// Cached name for the 'OpenProfileScreen' method.
+		/// </summary>
 		public static readonly StringName OpenProfileScreen = "OpenProfileScreen";
 
+		/// <summary>
+		/// Cached name for the 'OpenPatchNotes' method.
+		/// </summary>
 		public static readonly StringName OpenPatchNotes = "OpenPatchNotes";
 
+		/// <summary>
+		/// Cached name for the 'Quit' method.
+		/// </summary>
 		public static readonly StringName Quit = "Quit";
 
+		/// <summary>
+		/// Cached name for the 'OnWindowChange' method.
+		/// </summary>
 		public static readonly StringName OnWindowChange = "OnWindowChange";
 
+		/// <summary>
+		/// Cached name for the 'CheckCommandLineArgs' method.
+		/// </summary>
 		public static readonly StringName CheckCommandLineArgs = "CheckCommandLineArgs";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'PatchNotesScreen' property.
+		/// </summary>
 		public static readonly StringName PatchNotesScreen = "PatchNotesScreen";
 
+		/// <summary>
+		/// Cached name for the 'BlurBackstop' property.
+		/// </summary>
 		public static readonly StringName BlurBackstop = "BlurBackstop";
 
+		/// <summary>
+		/// Cached name for the 'MainMenuButtons' property.
+		/// </summary>
 		public static readonly StringName MainMenuButtons = "MainMenuButtons";
 
+		/// <summary>
+		/// Cached name for the 'SubmenuStack' property.
+		/// </summary>
 		public static readonly StringName SubmenuStack = "SubmenuStack";
 
+		/// <summary>
+		/// Cached name for the 'ContinueRunInfo' property.
+		/// </summary>
 		public static readonly StringName ContinueRunInfo = "ContinueRunInfo";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_window' field.
+		/// </summary>
 		public static readonly StringName _window = "_window";
 
+		/// <summary>
+		/// Cached name for the '_continueButton' field.
+		/// </summary>
 		public static readonly StringName _continueButton = "_continueButton";
 
+		/// <summary>
+		/// Cached name for the '_abandonRunButton' field.
+		/// </summary>
 		public static readonly StringName _abandonRunButton = "_abandonRunButton";
 
+		/// <summary>
+		/// Cached name for the '_singleplayerButton' field.
+		/// </summary>
 		public static readonly StringName _singleplayerButton = "_singleplayerButton";
 
+		/// <summary>
+		/// Cached name for the '_compendiumButton' field.
+		/// </summary>
 		public static readonly StringName _compendiumButton = "_compendiumButton";
 
+		/// <summary>
+		/// Cached name for the '_timelineButton' field.
+		/// </summary>
 		public static readonly StringName _timelineButton = "_timelineButton";
 
+		/// <summary>
+		/// Cached name for the '_settingsButton' field.
+		/// </summary>
 		public static readonly StringName _settingsButton = "_settingsButton";
 
+		/// <summary>
+		/// Cached name for the '_quitButton' field.
+		/// </summary>
 		public static readonly StringName _quitButton = "_quitButton";
 
+		/// <summary>
+		/// Cached name for the '_multiplayerButton' field.
+		/// </summary>
 		public static readonly StringName _multiplayerButton = "_multiplayerButton";
 
+		/// <summary>
+		/// Cached name for the '_buttonReticleLeft' field.
+		/// </summary>
 		public static readonly StringName _buttonReticleLeft = "_buttonReticleLeft";
 
+		/// <summary>
+		/// Cached name for the '_buttonReticleRight' field.
+		/// </summary>
 		public static readonly StringName _buttonReticleRight = "_buttonReticleRight";
 
+		/// <summary>
+		/// Cached name for the '_reticleTween' field.
+		/// </summary>
 		public static readonly StringName _reticleTween = "_reticleTween";
 
+		/// <summary>
+		/// Cached name for the '_patchNotesButtonNode' field.
+		/// </summary>
 		public static readonly StringName _patchNotesButtonNode = "_patchNotesButtonNode";
 
+		/// <summary>
+		/// Cached name for the '_openProfileScreenButton' field.
+		/// </summary>
 		public static readonly StringName _openProfileScreenButton = "_openProfileScreenButton";
 
+		/// <summary>
+		/// Cached name for the '_lastHitButton' field.
+		/// </summary>
 		public static readonly StringName _lastHitButton = "_lastHitButton";
 
+		/// <summary>
+		/// Cached name for the '_runInfo' field.
+		/// </summary>
 		public static readonly StringName _runInfo = "_runInfo";
 
+		/// <summary>
+		/// Cached name for the '_timelineNotificationDot' field.
+		/// </summary>
 		public static readonly StringName _timelineNotificationDot = "_timelineNotificationDot";
 
+		/// <summary>
+		/// Cached name for the '_backstopTween' field.
+		/// </summary>
 		public static readonly StringName _backstopTween = "_backstopTween";
 
+		/// <summary>
+		/// Cached name for the '_bg' field.
+		/// </summary>
 		public static readonly StringName _bg = "_bg";
 
+		/// <summary>
+		/// Cached name for the '_blur' field.
+		/// </summary>
 		public static readonly StringName _blur = "_blur";
 
+		/// <summary>
+		/// Cached name for the '_openTimeline' field.
+		/// </summary>
 		public static readonly StringName _openTimeline = "_openTimeline";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -269,7 +446,7 @@ public class NMainMenu : Control, IScreenContext
 		_multiplayerButton.Connect(NClickableControl.SignalName.Released, Callable.From((Action<NButton>)OpenMultiplayerSubmenu));
 		_multiplayerButton.SetLocalization("MULTIPLAYER");
 		_compendiumButton = GetNode<NMainMenuTextButton>("MainMenuTextButtons/CompendiumButton");
-		_compendiumButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OpenCompendiumSubmenu));
+		_compendiumButton.Connect(NClickableControl.SignalName.Released, Callable.From((Action<NButton>)OpenCompendiumSubmenu));
 		_compendiumButton.SetLocalization("COMPENDIUM");
 		_timelineButton = GetNode<NMainMenuTextButton>("MainMenuTextButtons/TimelineButton");
 		_timelineButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OpenTimelineScreen));
@@ -303,11 +480,11 @@ public class NMainMenu : Control, IScreenContext
 		ActiveScreenContext.Instance.Update();
 		RefreshButtons();
 		CheckCommandLineArgs();
-		if (SaveManager.Instance.SettingsSave.ModSettings == null && ModManager.AllMods.Count > 0)
+		if (SaveManager.Instance.SettingsSave.ModSettings == null && ModManager.Mods.Count > 0)
 		{
 			NModalContainer.Instance.Add(NConfirmModLoadingPopup.Create());
 		}
-		TaskHelper.RunSafely(NGame.Instance.Transition.FadeIn(3f));
+		TaskHelper.RunSafely(NGame.Instance.Transition.FadeIn(2f));
 		PlatformUtil.SetRichPresence("MAIN_MENU", null, null);
 		if (_openTimeline)
 		{
@@ -319,6 +496,9 @@ public class NMainMenu : Control, IScreenContext
 		}
 	}
 
+	/// <summary>
+	/// Helper to connect Focused/Unfocused signals to main menu text buttons.
+	/// </summary>
 	private void ConnectMainMenuTextButtonFocusLogic()
 	{
 		foreach (NMainMenuTextButton item in GetNode<Control>("%MainMenuTextButtons").GetChildren().OfType<NMainMenuTextButton>())
@@ -334,6 +514,9 @@ public class NMainMenu : Control, IScreenContext
 		}
 	}
 
+	/// <summary>
+	/// This handles the little carets animation for the main menu text buttons.
+	/// </summary>
 	private void MainMenuButtonFocused(NMainMenuTextButton button)
 	{
 		_reticleTween?.Kill();
@@ -413,6 +596,10 @@ public class NMainMenu : Control, IScreenContext
 		_blur.SetShaderParameter(_lod, obj);
 	}
 
+	/// <summary>
+	/// Re-checks the visibility of text buttons after we abandon a run from the main menu or
+	/// close the Timeline screen. Useful because we may have unlocked new features.
+	/// </summary>
 	public void RefreshButtons()
 	{
 		if (SaveManager.Instance.HasRunSave)
@@ -510,14 +697,14 @@ public class NMainMenu : Control, IScreenContext
 
 	private async Task OnContinueButtonPressedAsync()
 	{
-		_ = 2;
+		_ = 3;
 		try
 		{
 			_continueButton.Disable();
 			NAudioManager.Instance?.StopMusic();
 			SerializableRun serializableRun = _readRunSaveResult.SaveData;
 			RunState runState = RunState.FromSerializable(serializableRun);
-			RunManager.Instance.SetUpSavedSinglePlayer(runState, serializableRun);
+			await RunManager.Instance.SetUpSavedSingleplayer(runState, serializableRun);
 			Log.Info($"Continuing run with character: {serializableRun.Players[0].CharacterId}");
 			SfxCmd.Play(runState.Players[0].Character.CharacterTransitionSfx);
 			await NGame.Instance.Transition.FadeOut(0.8f, runState.Players[0].Character.CharacterSelectTransitionPath);
@@ -562,7 +749,7 @@ public class NMainMenu : Control, IScreenContext
 				RunHistoryUtilities.CreateRunHistoryEntry(saveData, victory: false, isAbandoned: true, saveData.PlatformType);
 				if (saveData.DailyTime.HasValue)
 				{
-					int score = ScoreUtility.CalculateScore(saveData, won: false);
+					int score = ScoreUtility.CalculateDailyScore(saveData, saveData.Players.First().NetId, isVictory: false);
 					TaskHelper.RunSafely(DailyRunUtility.UploadScore(saveData.DailyTime.Value, score, saveData.Players));
 				}
 			}
@@ -612,8 +799,13 @@ public class NMainMenu : Control, IScreenContext
 
 	private void OpenCompendiumSubmenu(NButton _)
 	{
+		OpenCompendiumSubmenu();
+	}
+
+	public NCompendiumSubmenu OpenCompendiumSubmenu()
+	{
 		_lastHitButton = _compendiumButton;
-		SubmenuStack.PushSubmenuType<NCompendiumSubmenu>();
+		return SubmenuStack.PushSubmenuType<NCompendiumSubmenu>();
 	}
 
 	private void OpenTimelineScreen(NButton obj)
@@ -695,6 +887,10 @@ public class NMainMenu : Control, IScreenContext
 		}
 	}
 
+	/// <summary>
+	/// For getting into multiplayer testing quickly. Checks some command line args and skips through menu clicking
+	/// based on the args.
+	/// </summary>
 	private void CheckCommandLineArgs()
 	{
 		if (!CommandLineHelper.TryGetValue("fastmp", out string value))
@@ -746,10 +942,15 @@ public class NMainMenu : Control, IScreenContext
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(31);
+		List<MethodInfo> list = new List<MethodInfo>(32);
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Bool, "openTimeline", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
@@ -803,6 +1004,7 @@ public class NMainMenu : Control, IScreenContext
 		{
 			new PropertyInfo(Variant.Type.Object, "_", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.OpenCompendiumSubmenu, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OpenTimelineScreen, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "obj", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
@@ -829,6 +1031,7 @@ public class NMainMenu : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -967,6 +1170,11 @@ public class NMainMenu : Control, IScreenContext
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.OpenCompendiumSubmenu && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<NCompendiumSubmenu>(OpenCompendiumSubmenu());
+			return true;
+		}
 		if (method == MethodName.OpenTimelineScreen && args.Count == 1)
 		{
 			OpenTimelineScreen(VariantUtils.ConvertTo<NButton>(in args[0]));
@@ -1036,6 +1244,7 @@ public class NMainMenu : Control, IScreenContext
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -1158,6 +1367,7 @@ public class NMainMenu : Control, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1284,6 +1494,7 @@ public class NMainMenu : Control, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1429,6 +1640,11 @@ public class NMainMenu : Control, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1463,6 +1679,7 @@ public class NMainMenu : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1493,6 +1710,7 @@ public class NMainMenu : Control, IScreenContext
 		info.AddProperty(PropertyName._openTimeline, Variant.From(in _openTimeline));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

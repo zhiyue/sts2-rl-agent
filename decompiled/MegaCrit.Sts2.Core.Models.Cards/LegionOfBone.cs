@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
+using MegaCrit.Sts2.Core.Models.Characters;
 
 namespace MegaCrit.Sts2.Core.Models.Cards;
 
@@ -27,7 +28,7 @@ public sealed class LegionOfBone : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, Necrobinder.GetSummonAnimIfApplicable(base.Owner.Character), Necrobinder.GetSummonDelayIfApplicable(base.Owner.Character));
 		IEnumerable<Creature> enumerable = base.CombatState.PlayerCreatures.Where((Creature c) => c?.IsAlive ?? false).ToList();
 		foreach (Creature item in enumerable)
 		{

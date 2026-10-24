@@ -23,6 +23,11 @@ public record struct HoverTip : IHoverTip
 
 	public AbstractModel? CanonicalModel { get; private set; }
 
+	/// <summary>
+	/// Defines whether or now we want to word wrap the description text on the hover tip node
+	/// or if we want the text to stretch the HoverTip horizontally. This is useful for situations
+	/// like our map point entry hover tips in the run history screen, that can be pretty long.
+	/// </summary>
 	public bool ShouldOverrideTextOverflow { get; set; }
 
 	public HoverTip(LocString description, Texture2D? icon = null)
@@ -90,6 +95,18 @@ public record struct HoverTip : IHoverTip
 		Icon = orb.Icon;
 	}
 
+	/// <summary>
+	/// Create a HoverTip from a PowerModel.
+	/// </summary>
+	/// <param name="power">Power to create the HoverTip for.</param>
+	/// <param name="description">string to use in the description field.</param>
+	/// <param name="isSmart">
+	///     Whether or not the power description is "smart".
+	///     For example, when the Strength HoverTip is displayed on the Body Slam card, it should be "dumb" because it's
+	///     just referring to the concept of Strength, rather than a specific amount.
+	///     On the flip side, when the Strength HoverTip is displayed when hovering over a creature with 3 Strength, it
+	///     should be "smart" because it's referring to an instance of 3 Strength.
+	/// </param>
 	public HoverTip(PowerModel power, string description, bool isSmart)
 	{
 		CanonicalModel = null;
@@ -99,7 +116,7 @@ public record struct HoverTip : IHoverTip
 		Description = description;
 		Icon = power.Icon;
 		IsDebuff = power.Type == PowerType.Debuff;
-		IsInstanced = power.IsInstanced;
+		IsInstanced = power.InstanceType != PowerInstanceType.None;
 		IsSmart = isSmart;
 	}
 
@@ -109,6 +126,9 @@ public record struct HoverTip : IHoverTip
 		CanonicalModel = model;
 	}
 
+	/// <summary>
+	/// We prefer to align HoverTips to be on the right-hand side of the hovered element. However, if we can't fit the HoverTip we left align.
+	/// </summary>
 	public static HoverTipAlignment GetHoverTipAlignment(Node2D node, float threshold = 0.75f)
 	{
 		if (!(node.GlobalPosition.X > node.GetViewport().GetVisibleRect().Size.X * threshold))

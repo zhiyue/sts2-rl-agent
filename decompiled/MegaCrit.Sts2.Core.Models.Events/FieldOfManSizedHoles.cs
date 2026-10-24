@@ -27,7 +27,7 @@ public sealed class FieldOfManSizedHoles : EventModel
 		new StringVar("Enchantment", ModelDb.Enchantment<PerfectFit>().Title.GetFormattedText())
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		return runState.Players.All((Player p) => CardPile.Get(PileType.Deck, p).Cards.Any(ModelDb.Enchantment<PerfectFit>().CanEnchant));
 	}

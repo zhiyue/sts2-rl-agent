@@ -15,11 +15,11 @@ public sealed class StoneCracker : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Uncommon;
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new CardsVar(3));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new CardsVar(2));
 
 	public override async Task AfterRoomEntered(AbstractRoom room)
 	{
-		if (room.RoomType == RoomType.Boss)
+		if (room is CombatRoom)
 		{
 			Flash();
 			List<CardModel> cards = PileType.Draw.GetPile(base.Owner).Cards.Where((CardModel c) => c.IsUpgradable).ToList().StableShuffle(base.Owner.RunState.Rng.CombatCardSelection)

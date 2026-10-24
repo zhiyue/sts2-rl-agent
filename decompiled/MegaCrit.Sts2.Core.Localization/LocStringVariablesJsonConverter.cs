@@ -6,6 +6,10 @@ using MegaCrit.Sts2.Core.Localization.DynamicVars;
 
 namespace MegaCrit.Sts2.Core.Localization;
 
+/// <summary>
+/// Serializes the variables of a LocString to JSON.
+/// Not all DynamicVar types are supported, so use with caution.
+/// </summary>
 public class LocStringVariablesJsonConverter : JsonConverter<Dictionary<string, object>>
 {
 	public override Dictionary<string, object> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

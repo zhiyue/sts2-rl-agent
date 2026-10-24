@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Laser Beams
+/// </summary>
 public class Defect6Epoch : EpochModel
 {
 	public override string Id => "DEFECT6_EPOCH";

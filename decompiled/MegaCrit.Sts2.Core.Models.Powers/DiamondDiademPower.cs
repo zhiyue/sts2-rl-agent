@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -14,6 +15,9 @@ public sealed class DiamondDiademPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Single;
 
+	/// <summary>
+	/// cuts damage received in half.
+	/// </summary>
 	public override decimal ModifyDamageMultiplicative(Creature? target, decimal amount, ValueProp props, Creature? dealer, CardModel? cardSource)
 	{
 		if (target != base.Owner)
@@ -27,7 +31,7 @@ public sealed class DiamondDiademPower : PowerModel
 		return 0.5m;
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
 		if (side == CombatSide.Enemy)
 		{

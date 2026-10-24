@@ -21,11 +21,11 @@ public sealed class DevourLifePower : PowerModel
 		HoverTipFactory.Static(StaticHoverTip.SummonStatic)
 	});
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card is Soul && cardPlay.Card.Owner.Creature == base.Owner)
 		{
-			await OstyCmd.Summon(context, cardPlay.Card.Owner, base.Amount, this);
+			await OstyCmd.Summon(choiceContext, cardPlay.Card.Owner, base.Amount, this);
 		}
 	}
 }

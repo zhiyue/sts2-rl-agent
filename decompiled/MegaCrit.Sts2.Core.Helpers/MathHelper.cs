@@ -2,15 +2,35 @@ using Godot;
 
 namespace MegaCrit.Sts2.Core.Helpers;
 
+/// <summary>
+/// A set of static math functions which are missing from Godot's Mathf.
+/// </summary>
 public static class MathHelper
 {
 	public const float degToRad = 0.0174533f;
 
+	/// <summary>
+	/// Linearly scales the input value from the source range [from1, to1] to the target range [from2, to2].
+	/// </summary>
+	/// <param name="value"></param>
+	/// <param name="from1"></param>
+	/// <param name="to1"></param>
+	/// <param name="from2"></param>
+	/// <param name="to2"></param>
+	/// <returns></returns>
 	public static float Remap(float value, float from1, float to1, float from2, float to2)
 	{
 		return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
 	}
 
+	/// <summary>
+	/// Bezier Curve curve function.
+	/// </summary>
+	/// <param name="v0"></param>
+	/// <param name="v1"></param>
+	/// <param name="c0"></param>
+	/// <param name="t"></param>
+	/// <returns></returns>
 	public static Vector2 BezierCurve(Vector2 v0, Vector2 v1, Vector2 c0, float t)
 	{
 		return Mathf.Pow(1f - t, 2f) * v0 + 2f * (1f - t) * t * c0 + Mathf.Pow(t, 2f) * v1;
@@ -21,12 +41,31 @@ public static class MathHelper
 		return Mathf.Atan2(vector.Y, vector.X);
 	}
 
+	/// <summary>
+	/// Clamps a Vector2, only if both X and Y are equal values.
+	/// </summary>
+	/// <param name="input"></param>
+	/// <param name="min"></param>
+	/// <param name="max"></param>
+	/// <returns></returns>
 	public static Vector2 Clamp(Vector2 input, float min, float max)
 	{
 		float num = Mathf.Clamp(input.X, min, max);
 		return new Vector2(num, num);
 	}
 
+	/// <summary>
+	/// Gradually changes a value towards a desired goal over time.
+	/// </summary>
+	/// <param name="current">The current value</param>
+	/// <param name="target">The target value</param>
+	/// <param name="currentVelocity">The current velocity. This should start at zero, be stored somewhere, and passed to
+	/// this method every frame.</param>
+	/// <param name="smoothTime">The approximate amount of time it will take to reach the target. Smaller values mean that
+	/// we'll reach the target value faster.</param>
+	/// <param name="deltaTime">The last process time.</param>
+	/// <param name="maxSpeed">Maximum speed we'll move towards the target.</param>
+	/// <returns>New value after interpolation.</returns>
 	public static float SmoothDamp(float current, float target, ref float currentVelocity, float smoothTime, float deltaTime, float maxSpeed = float.PositiveInfinity)
 	{
 		smoothTime = Mathf.Max(0.0001f, smoothTime);
@@ -49,6 +88,18 @@ public static class MathHelper
 		return num7;
 	}
 
+	/// <summary>
+	/// Gradually changes a value towards a desired goal over time.
+	/// </summary>
+	/// <param name="current">The current value</param>
+	/// <param name="target">The target value</param>
+	/// <param name="currentVelocity">The current velocity. This should start at zero, be stored somewhere, and passed to
+	/// this method every frame.</param>
+	/// <param name="smoothTime">The approximate amount of time it will take to reach the target. Smaller values mean that
+	/// we'll reach the target value faster.</param>
+	/// <param name="deltaTime">The last process time.</param>
+	/// <param name="maxSpeed">Maximum speed we'll move towards the target.</param>
+	/// <returns>New value after interpolation.</returns>
 	public static Vector2 SmoothDamp(Vector2 current, Vector2 target, ref Vector2 currentVelocity, float smoothTime, float deltaTime, float maxSpeed = float.PositiveInfinity)
 	{
 		smoothTime = Mathf.Max(0.0001f, smoothTime);

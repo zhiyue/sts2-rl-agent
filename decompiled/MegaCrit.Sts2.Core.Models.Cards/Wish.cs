@@ -19,11 +19,7 @@ public sealed class Wish : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		CardSelectorPrefs prefs = new CardSelectorPrefs(base.SelectionScreenPrompt, 1);
-		List<CardModel> cards = (from c in PileType.Draw.GetPile(base.Owner).Cards
-			orderby c.Rarity, c.Id
-			select c).ToList();
-		CardModel cardModel = (await CardSelectCmd.FromSimpleGrid(choiceContext, cards, base.Owner, prefs)).FirstOrDefault();
+		CardModel cardModel = (await CardSelectCmd.FromCombatPile(prefs: new CardSelectorPrefs(base.SelectionScreenPrompt, 1), context: choiceContext, pile: PileType.Draw.GetPile(base.Owner), player: base.Owner)).FirstOrDefault();
 		if (cardModel != null)
 		{
 			await CardPileCmd.Add(cardModel, PileType.Hand);

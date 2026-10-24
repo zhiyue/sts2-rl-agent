@@ -41,7 +41,7 @@ public sealed class Jackpot : CardModel
 			{
 				CardCmd.Upgrade(item);
 			}
-			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, base.Owner);
 		}
 	}
 

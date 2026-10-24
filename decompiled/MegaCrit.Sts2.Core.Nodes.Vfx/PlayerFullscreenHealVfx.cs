@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -7,8 +8,15 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
+/// <summary>
+/// Creates fullscreen VFX that occurs when healing at an event.
+/// </summary>
 public static class PlayerFullscreenHealVfx
 {
+	private static readonly string _scenePath = SceneHelper.GetScenePath("vfx/vfx_cross_heal_fullscreen");
+
+	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(_scenePath);
+
 	public static void Play(Player player, decimal healAmount, Control? vfxContainer)
 	{
 		if (!TestMode.IsOn && !(healAmount < 1m) && vfxContainer != null)
@@ -21,8 +29,7 @@ public static class PlayerFullscreenHealVfx
 			{
 				vfxContainer.AddChildSafely(nSmokyVignetteVfx);
 			}
-			string scenePath = SceneHelper.GetScenePath("vfx/vfx_cross_heal_fullscreen");
-			NVfxParticleSystem nVfxParticleSystem = PreloadManager.Cache.GetScene(scenePath).Instantiate<NVfxParticleSystem>(PackedScene.GenEditState.Disabled);
+			NVfxParticleSystem nVfxParticleSystem = PreloadManager.Cache.GetScene(_scenePath).Instantiate<NVfxParticleSystem>(PackedScene.GenEditState.Disabled);
 			Rect2 viewportRect = NGame.Instance.GetViewportRect();
 			nVfxParticleSystem.GlobalPosition = viewportRect.Size * 0.5f;
 			GpuParticles2D node = nVfxParticleSystem.GetNode<GpuParticles2D>("beam");

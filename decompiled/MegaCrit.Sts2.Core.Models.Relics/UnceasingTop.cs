@@ -15,10 +15,23 @@ public sealed class UnceasingTop : RelicModel
 
 	public override async Task AfterHandEmptied(PlayerChoiceContext choiceContext, Player player)
 	{
-		if (CombatManager.Instance.IsPlayPhase && player == base.Owner)
+		if (player == base.Owner && IsValidPhase(player.PlayerCombatState.Phase))
 		{
 			Flash();
 			await CardPileCmd.Draw(choiceContext, player);
 		}
+	}
+
+	/// <remarks>
+	/// Don't trigger before hand draw or after hand flush, because if a card is autoplayed during this time, the
+	/// player's hand will always be empty, so Unceasing Top will always draw.
+	/// </remarks>
+	private static bool IsValidPhase(PlayerTurnPhase phase)
+	{
+		if ((uint)(phase - 2) <= 2u)
+		{
+			return true;
+		}
+		return false;
 	}
 }

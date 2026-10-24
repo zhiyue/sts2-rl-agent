@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -90,14 +91,18 @@ public sealed class Kusarigama : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
+		if (!participants.Contains(base.Owner.Creature))
+		{
+			return Task.CompletedTask;
+		}
 		AttacksPlayedThisTurn = 0;
 		base.Status = RelicStatus.Normal;
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner != base.Owner || !CombatManager.Instance.IsInProgress || cardPlay.Card.Type != CardType.Attack)
 		{
@@ -111,7 +116,7 @@ public sealed class Kusarigama : RelicModel
 			if (creature != null)
 			{
 				TaskHelper.RunSafely(DoActivateVisuals());
-				await CreatureCmd.Damage(context, creature, base.DynamicVars.Damage, base.Owner.Creature);
+				await CreatureCmd.Damage(choiceContext, creature, base.DynamicVars.Damage, base.Owner.Creature);
 			}
 		}
 	}

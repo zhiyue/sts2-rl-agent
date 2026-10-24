@@ -21,7 +21,7 @@ public sealed class CallOfTheVoidPower : PowerModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromKeyword(CardKeyword.Ethereal));
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
 		if (player != base.Owner.Player)
 		{
@@ -42,7 +42,7 @@ public sealed class CallOfTheVoidPower : PowerModel
 				CardCmd.ApplyKeyword(array[num] = CardFactory.GetDistinctForCombat(player, readOnlyList, 1, combatCardGeneration).First(), CardKeyword.Ethereal);
 			}
 			Flash();
-			await CardPileCmd.AddGeneratedCardsToCombat(array, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardsToCombat(array, PileType.Hand, base.Owner.Player);
 		}
 	}
 }

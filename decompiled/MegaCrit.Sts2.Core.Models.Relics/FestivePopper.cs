@@ -20,8 +20,8 @@ public sealed class FestivePopper : RelicModel
 	{
 		if (player == base.Owner)
 		{
-			CombatState combatState = player.Creature.CombatState;
-			if (combatState.RoundNumber == 1)
+			ICombatState combatState = player.Creature.CombatState;
+			if (base.Owner.PlayerCombatState.TurnNumber == 1)
 			{
 				Flash();
 				VfxCmd.PlayOnCreatureCenters(combatState.HittableEnemies, "vfx/vfx_attack_slash");

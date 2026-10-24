@@ -7,61 +7,142 @@ using MegaCrit.Sts2.Core.Helpers;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// Special component used for creating dropdown containers dynamically. Supports scrolling
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NDropdownContainer.cs")]
 public class NDropdownContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnVisibilityChange' method.
+		/// </summary>
 		public static readonly StringName OnVisibilityChange = "OnVisibilityChange";
 
+		/// <summary>
+		/// Cached name for the 'RefreshLayout' method.
+		/// </summary>
 		public static readonly StringName RefreshLayout = "RefreshLayout";
 
+		/// <summary>
+		/// Cached name for the 'IsScrollbarNeeded' method.
+		/// </summary>
 		public static readonly StringName IsScrollbarNeeded = "IsScrollbarNeeded";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'ProcessGuiFocus' method.
+		/// </summary>
 		public static readonly StringName ProcessGuiFocus = "ProcessGuiFocus";
 
+		/// <summary>
+		/// Cached name for the 'UpdateScrollPosition' method.
+		/// </summary>
 		public static readonly StringName UpdateScrollPosition = "UpdateScrollPosition";
 
+		/// <summary>
+		/// Cached name for the 'UpdateScrollbar' method.
+		/// </summary>
 		public static readonly StringName UpdateScrollbar = "UpdateScrollbar";
 
+		/// <summary>
+		/// Cached name for the 'UpdatePositionBasedOnTrain' method.
+		/// </summary>
 		public static readonly StringName UpdatePositionBasedOnTrain = "UpdatePositionBasedOnTrain";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'ProcessMouseEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessMouseEvent = "ProcessMouseEvent";
 
+		/// <summary>
+		/// Cached name for the 'ProcessScrollEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessScrollEvent = "ProcessScrollEvent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_scrollbar' field.
+		/// </summary>
 		public static readonly StringName _scrollbar = "_scrollbar";
 
+		/// <summary>
+		/// Cached name for the '_scrollbarTrain' field.
+		/// </summary>
 		public static readonly StringName _scrollbarTrain = "_scrollbarTrain";
 
+		/// <summary>
+		/// Cached name for the '_dropdownItems' field.
+		/// </summary>
 		public static readonly StringName _dropdownItems = "_dropdownItems";
 
+		/// <summary>
+		/// Cached name for the '_maxHeight' field.
+		/// </summary>
 		public static readonly StringName _maxHeight = "_maxHeight";
 
+		/// <summary>
+		/// Cached name for the '_contentHeight' field.
+		/// </summary>
 		public static readonly StringName _contentHeight = "_contentHeight";
 
+		/// <summary>
+		/// Cached name for the '_startDragPos' field.
+		/// </summary>
 		public static readonly StringName _startDragPos = "_startDragPos";
 
+		/// <summary>
+		/// Cached name for the '_targetDragPos' field.
+		/// </summary>
 		public static readonly StringName _targetDragPos = "_targetDragPos";
 
+		/// <summary>
+		/// Cached name for the '_scrollLimitBottom' field.
+		/// </summary>
 		public static readonly StringName _scrollLimitBottom = "_scrollLimitBottom";
 
+		/// <summary>
+		/// Cached name for the '_isDragging' field.
+		/// </summary>
 		public static readonly StringName _isDragging = "_isDragging";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -115,6 +196,9 @@ public class NDropdownContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// This is where called whenever this container's layout is modified.
+	/// </summary>
 	public void RefreshLayout()
 	{
 		_scrollbar.Visible = IsScrollbarNeeded();
@@ -188,6 +272,9 @@ public class NDropdownContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Gets the current content's position and remap + clamps it to position the train so they're in sync.
+	/// </summary>
 	private void UpdateScrollbar()
 	{
 		if (_scrollbar.Visible && !_scrollbar.hasControl)
@@ -197,6 +284,10 @@ public class NDropdownContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Given the train's progress from 0 - 1f, sets the targetDragPosition to match
+	/// so the positions are in sync.
+	/// </summary>
 	public void UpdatePositionBasedOnTrain(float trainPosition)
 	{
 		_targetDragPos = new Vector2(_targetDragPos.X, _scrollLimitBottom + trainPosition * (0f - _scrollLimitBottom));
@@ -208,6 +299,10 @@ public class NDropdownContainer : Control
 		ProcessScrollEvent(inputEvent);
 	}
 
+	/// <summary>
+	/// Detects mouse click up/down and updates our scroll target accordingly
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void ProcessMouseEvent(InputEvent inputEvent)
 	{
 		if (_isDragging && inputEvent is InputEventMouseMotion inputEventMouseMotion)
@@ -245,6 +340,11 @@ public class NDropdownContainer : Control
 		_targetDragPos += new Vector2(0f, ScrollHelper.GetDragForScrollEvent(inputEvent));
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -287,6 +387,7 @@ public class NDropdownContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -376,6 +477,7 @@ public class NDropdownContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -438,6 +540,7 @@ public class NDropdownContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -489,6 +592,7 @@ public class NDropdownContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -540,6 +644,11 @@ public class NDropdownContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -556,6 +665,7 @@ public class NDropdownContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -571,6 +681,7 @@ public class NDropdownContainer : Control
 		info.AddProperty(PropertyName._isDragging, Variant.From(in _isDragging));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

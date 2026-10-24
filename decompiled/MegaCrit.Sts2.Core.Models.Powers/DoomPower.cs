@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 
@@ -24,13 +25,25 @@ public sealed class DoomPower : PowerModel
 
 	public override Color AmountLabelColor => PowerModel._normalAmountLabelColor;
 
+	/// <summary>
+	/// Kill the specified creatures with the <see cref="T:MegaCrit.Sts2.Core.Models.Powers.DoomPower" /> power.
+	/// All creatures being killed in a given Doom trigger (side turn finish, <see cref="T:MegaCrit.Sts2.Core.Models.Cards.EndOfDays" />, etc) should be
+	/// passed at the same time here, otherwise we can miss Fatal triggers for reviving powers like
+	/// <see cref="T:MegaCrit.Sts2.Core.Models.Powers.ReattachPower" />.
+	///
+	/// This does extra stuff in addition to a normal <see cref="M:MegaCrit.Sts2.Core.Commands.CreatureCmd.Kill(MegaCrit.Sts2.Core.Entities.Creatures.Creature,System.Boolean)" /> call:
+	/// * Plays special VFX.
+	/// * Runs <see cref="M:MegaCrit.Sts2.Core.Hooks.Hook.AfterDiedToDoom(MegaCrit.Sts2.Core.Combat.ICombatState,System.Collections.Generic.IReadOnlyList{MegaCrit.Sts2.Core.Entities.Creatures.Creature})" />.
+	///
+	/// It's in a public method so effects like <see cref="T:MegaCrit.Sts2.Core.Models.Cards.EndOfDays" /> can use it.
+	/// </summary>
 	public static async Task DoomKill(IReadOnlyList<Creature> creatures)
 	{
 		if (creatures.Count == 0)
 		{
 			return;
 		}
-		CombatState combatState = creatures.First().CombatState;
+		ICombatState combatState = creatures.First().CombatState;
 		foreach (Creature creature in creatures)
 		{
 			await PlayVfx(creature);
@@ -44,14 +57,17 @@ public sealed class DoomPower : PowerModel
 		return creatures.Where((Creature c) => c.GetPower<DoomPower>()?.IsOwnerDoomed() ?? false).ToList();
 	}
 
+	/// <summary>
+	/// Will the owner of this power die to Doom at the end of their turn?
+	/// </summary>
 	public bool IsOwnerDoomed()
 	{
 		return base.Owner.CurrentHp <= base.Amount;
 	}
 
-	public override async Task BeforeTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task BeforeSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side == base.Owner.Side && !base.Owner.IsDead && IsOwnerDoomed())
+		if (!CombatManager.Instance.IsOverOrEnding && participants.Contains(base.Owner) && !base.Owner.IsDead && IsOwnerDoomed())
 		{
 			IReadOnlyList<Creature> doomedCreatures = GetDoomedCreatures(base.Owner.CombatState.GetCreaturesOnSide(side));
 			if (doomedCreatures.First() == base.Owner)
@@ -103,16 +119,15 @@ public sealed class DoomPower : PowerModel
 			creature.Entity.Monster?.OnDieToDoom();
 			Tween tween = creature.AnimDisableUi();
 			tween.TweenCallback(Callable.From(creature.QueueFreeSafely));
-			task = WaitForTween(tween);
-			if (creature.HasSpineAnimation)
+			task = WaitForTween(tween, creature);
+			if (creature.SpineAnimation.IsValid)
 			{
 				creature.SetAnimationTrigger("Hit");
-				if (creature.SpineController.GetAnimationState().GetCurrent(0).GetAnimation()
-					.GetName() == "hurt")
+				MegaTrackEntry currentTrack = creature.SpineAnimation.GetCurrentTrack();
+				if (currentTrack?.GetAnimationName() == "hurt")
 				{
-					MegaTrackEntry current = creature.SpineController.GetAnimationState().GetCurrent(0);
-					current.SetTrackTime(0.1f);
-					current.SetTimeScale(0f);
+					currentTrack.SetTrackTime(0.1f);
+					currentTrack.SetTimeScale(0f);
 				}
 			}
 			NCombatRoom.Instance?.RemoveCreatureNode(creature);
@@ -128,11 +143,8 @@ public sealed class DoomPower : PowerModel
 		}
 	}
 
-	private static async Task WaitForTween(Tween t)
+	private static async Task WaitForTween(Tween t, Node owner)
 	{
-		if (t.IsValid() && t.IsRunning())
-		{
-			await t.ToSignal(t, Tween.SignalName.Finished);
-		}
+		await t.AwaitFinished(owner);
 	}
 }

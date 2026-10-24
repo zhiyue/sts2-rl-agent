@@ -17,12 +17,22 @@ public class CalculatedDamageVar : CalculatedVar
 
 	public bool IsFromOsty { get; private set; }
 
+	/// <summary>
+	/// Create a new <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.CalculatedDamageVar" />.
+	/// This will only work if the owner is a <see cref="T:MegaCrit.Sts2.Core.Models.CardModel" /> whose <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.DynamicVarSet" /> also has a
+	/// <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.CalculationBaseVar" /> and a <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.ExtraDamageVar" />.
+	/// Note: For cards whose values are entirely dynamic and have no base value (like <see cref="T:MegaCrit.Sts2.Core.Models.Cards.BodySlam" />), you
+	/// should use a <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.CalculationBaseVar" /> of 0 and a <see cref="T:MegaCrit.Sts2.Core.Localization.DynamicVars.ExtraDamageVar" /> of 1.
+	/// </summary>
 	public CalculatedDamageVar(ValueProp props)
 		: base("CalculatedDamage")
 	{
 		Props = props;
 	}
 
+	/// <summary>
+	/// Set this damage to come from Osty.
+	/// </summary>
 	public CalculatedDamageVar FromOsty()
 	{
 		IsFromOsty = true;
@@ -50,7 +60,7 @@ public class CalculatedDamageVar : CalculatedVar
 		decimal num = Calculate(target);
 		if (runGlobalHooks)
 		{
-			CombatState combatState = card.CombatState ?? card.Owner.Creature.CombatState;
+			ICombatState combatState = card.CombatState ?? card.Owner.Creature.CombatState;
 			base.PreviewValue = Hook.ModifyDamage(card.Owner.RunState, combatState, target, IsFromOsty ? card.Owner.Osty : card.Owner.Creature, num, Props, card, ModifyDamageHookType.All, previewMode, out IEnumerable<AbstractModel> _);
 		}
 		else if (!card.IsEnchantmentPreview)

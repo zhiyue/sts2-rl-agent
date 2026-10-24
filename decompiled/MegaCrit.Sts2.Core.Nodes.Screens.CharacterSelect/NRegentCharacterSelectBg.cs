@@ -10,30 +10,66 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 [ScriptPath("res://src/Core/Nodes/Screens/CharacterSelect/NRegentCharacterSelectBg.cs")]
 public class NRegentCharacterSelectBg : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetSkin' method.
+		/// </summary>
 		public static readonly StringName SetSkin = "SetSkin";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_sphereGuardianHover' field.
+		/// </summary>
 		public static readonly StringName _sphereGuardianHover = "_sphereGuardianHover";
 
+		/// <summary>
+		/// Cached name for the '_decaHover' field.
+		/// </summary>
 		public static readonly StringName _decaHover = "_decaHover";
 
+		/// <summary>
+		/// Cached name for the '_sentryHover' field.
+		/// </summary>
 		public static readonly StringName _sentryHover = "_sentryHover";
 
+		/// <summary>
+		/// Cached name for the '_sneckoHover' field.
+		/// </summary>
 		public static readonly StringName _sneckoHover = "_sneckoHover";
 
+		/// <summary>
+		/// Cached name for the '_cultistHover' field.
+		/// </summary>
 		public static readonly StringName _cultistHover = "_cultistHover";
 
+		/// <summary>
+		/// Cached name for the '_shapesHover' field.
+		/// </summary>
 		public static readonly StringName _shapesHover = "_shapesHover";
 
-		public static readonly StringName _amongusHover = "_amongusHover";
+		/// <summary>
+		/// Cached name for the '_amogusHover' field.
+		/// </summary>
+		public static readonly StringName _amogusHover = "_amogusHover";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -52,7 +88,7 @@ public class NRegentCharacterSelectBg : Control
 
 	private Control _shapesHover;
 
-	private Control _amongusHover;
+	private Control _amogusHover;
 
 	public override void _Ready()
 	{
@@ -111,12 +147,12 @@ public class NRegentCharacterSelectBg : Control
 		{
 			SetSkin("normal");
 		}));
-		_amongusHover = GetNode<Control>("AmongusHover");
-		_amongusHover.Connect(Control.SignalName.MouseEntered, Callable.From(delegate
+		_amogusHover = GetNode<Control>("AmogusHover");
+		_amogusHover.Connect(Control.SignalName.MouseEntered, Callable.From(delegate
 		{
-			SetSkin("amongus constellation");
+			SetSkin("amogus constellation");
 		}));
-		_amongusHover.Connect(Control.SignalName.MouseExited, Callable.From(delegate
+		_amogusHover.Connect(Control.SignalName.MouseExited, Callable.From(delegate
 		{
 			SetSkin("normal");
 		}));
@@ -125,10 +161,18 @@ public class NRegentCharacterSelectBg : Control
 	private void SetSkin(string skinName)
 	{
 		MegaSkeleton skeleton = _spineController.GetSkeleton();
-		skeleton.SetSkin(skeleton.GetData().FindSkin(skinName));
-		skeleton.SetSlotsToSetupPose();
+		if (skeleton != null)
+		{
+			skeleton.SetSkin(skeleton.GetData().FindSkin(skinName));
+			skeleton.SetSlotsToSetupPose();
+		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -141,6 +185,7 @@ public class NRegentCharacterSelectBg : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -159,6 +204,7 @@ public class NRegentCharacterSelectBg : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -173,6 +219,7 @@ public class NRegentCharacterSelectBg : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -206,14 +253,15 @@ public class NRegentCharacterSelectBg : Control
 			_shapesHover = VariantUtils.ConvertTo<Control>(in value);
 			return true;
 		}
-		if (name == PropertyName._amongusHover)
+		if (name == PropertyName._amogusHover)
 		{
-			_amongusHover = VariantUtils.ConvertTo<Control>(in value);
+			_amogusHover = VariantUtils.ConvertTo<Control>(in value);
 			return true;
 		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -247,14 +295,19 @@ public class NRegentCharacterSelectBg : Control
 			value = VariantUtils.CreateFrom(in _shapesHover);
 			return true;
 		}
-		if (name == PropertyName._amongusHover)
+		if (name == PropertyName._amogusHover)
 		{
-			value = VariantUtils.CreateFrom(in _amongusHover);
+			value = VariantUtils.CreateFrom(in _amogusHover);
 			return true;
 		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -265,10 +318,11 @@ public class NRegentCharacterSelectBg : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._sneckoHover, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._cultistHover, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._shapesHover, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._amongusHover, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._amogusHover, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -279,9 +333,10 @@ public class NRegentCharacterSelectBg : Control
 		info.AddProperty(PropertyName._sneckoHover, Variant.From(in _sneckoHover));
 		info.AddProperty(PropertyName._cultistHover, Variant.From(in _cultistHover));
 		info.AddProperty(PropertyName._shapesHover, Variant.From(in _shapesHover));
-		info.AddProperty(PropertyName._amongusHover, Variant.From(in _amongusHover));
+		info.AddProperty(PropertyName._amogusHover, Variant.From(in _amogusHover));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -310,9 +365,9 @@ public class NRegentCharacterSelectBg : Control
 		{
 			_shapesHover = value6.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._amongusHover, out var value7))
+		if (info.TryGetProperty(PropertyName._amogusHover, out var value7))
 		{
-			_amongusHover = value7.As<Control>();
+			_amogusHover = value7.As<Control>();
 		}
 	}
 }

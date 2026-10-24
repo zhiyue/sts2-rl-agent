@@ -20,6 +20,7 @@ public sealed class DoubleEnergy : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
 		await PlayerCmd.GainEnergy(base.Owner.PlayerCombatState.Energy, base.Owner);
 	}
 

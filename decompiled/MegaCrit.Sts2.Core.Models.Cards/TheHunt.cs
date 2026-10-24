@@ -42,10 +42,10 @@ public sealed class TheHunt : CardModel
 			AttackCommand attackCommand = await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
 				.WithHitFx("vfx/vfx_attack_slash")
 				.Execute(choiceContext);
-			if (shouldTriggerFatal && attackCommand.Results.Any((DamageResult r) => r.WasTargetKilled))
+			if (shouldTriggerFatal && attackCommand.Results.SelectMany((List<DamageResult> r) => r).Any((DamageResult r) => r.WasTargetKilled))
 			{
 				combatRoom.AddExtraReward(base.Owner, new CardReward(CardCreationOptions.ForRoom(base.Owner, combatRoom.RoomType), 3, base.Owner));
-				await PowerCmd.Apply<TheHuntPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+				await PowerCmd.Apply<TheHuntPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 			}
 		}
 	}

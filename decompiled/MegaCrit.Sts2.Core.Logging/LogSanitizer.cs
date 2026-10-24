@@ -10,6 +10,17 @@ public static class LogSanitizer
 {
 	private static readonly string _homeReplacement = (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "%USERPROFILE%" : "~");
 
+	/// <remarks>
+	/// Pattern:<br />
+	/// <code>\\b76561\\d{12}\\b</code><br />
+	/// Explanation:<br />
+	/// <code>
+	/// ○ Match if at a word boundary.<br />
+	/// ○ Match the string "76561".<br />
+	/// ○ Match a Unicode digit exactly 12 times.<br />
+	/// ○ Match if at a word boundary.<br />
+	/// </code>
+	/// </remarks>
 	[GeneratedRegex("\\b76561\\d{12}\\b")]
 	[GeneratedCode("System.Text.RegularExpressions.Generator", "9.0.12.31616")]
 	private static Regex SteamIdRegex()

@@ -12,6 +12,8 @@ public sealed class LuckyFysh : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Uncommon;
 
+	public override bool IsAllowedInShops => false;
+
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new GoldVar(15));
 
 	public override bool IsAllowed(IRunState runState)
@@ -19,7 +21,7 @@ public sealed class LuckyFysh : RelicModel
 		return RelicModel.IsBeforeAct3TreasureChest(runState);
 	}
 
-	public override async Task AfterCardChangedPiles(CardModel card, PileType oldPileType, AbstractModel? source)
+	public override async Task AfterCardChangedPiles(CardModel card, PileType oldPileType, AbstractModel? clonedBy)
 	{
 		CardPile? pile = card.Pile;
 		if (pile != null && pile.Type == PileType.Deck && card.Owner == base.Owner)

@@ -28,6 +28,6 @@ public sealed class Production : CardModel
 
 	protected override void OnUpgrade()
 	{
-		RemoveKeyword(CardKeyword.Exhaust);
+		base.DynamicVars.Energy.UpgradeValueBy(1m);
 	}
 }

@@ -11,13 +11,14 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Models.Relics;
 
 public sealed class WhisperingEarring : RelicModel
 {
-	private const int _maxCardsToPlay = 13;
+	public const int maxCardsToPlay = 13;
 
 	public override RelicRarity Rarity => RelicRarity.Ancient;
 
@@ -34,14 +35,17 @@ public sealed class WhisperingEarring : RelicModel
 		return amount + base.DynamicVars.Energy.BaseValue;
 	}
 
-	public override async Task BeforePlayPhaseStart(PlayerChoiceContext choiceContext, Player player)
+	/// <remarks>
+	/// We do this in Late because we want this to trigger after all other triggers fire (i.e. <see cref="T:MegaCrit.Sts2.Core.Models.Enchantments.Imbued" />).
+	/// </remarks>
+	public override async Task AfterAutoPrePlayPhaseEnteredLate(PlayerChoiceContext choiceContext, Player player)
 	{
 		if (player != base.Owner)
 		{
 			return;
 		}
-		CombatState combatState = player.Creature.CombatState;
-		if (combatState.RoundNumber > 1)
+		ICombatState combatState = player.Creature.CombatState;
+		if (base.Owner.PlayerCombatState.TurnNumber > 1)
 		{
 			return;
 		}
@@ -49,10 +53,19 @@ public sealed class WhisperingEarring : RelicModel
 		bool flag;
 		using (CardSelectCmd.PushSelector(new VakuuCardSelector()))
 		{
-			int cardsPlayed;
-			for (cardsPlayed = 0; cardsPlayed < 13; cardsPlayed++)
+			int cardsPlayed = 0;
+			int startTurn = base.Owner.PlayerCombatState.TurnNumber;
+			for (; cardsPlayed < 13; cardsPlayed++)
 			{
 				if (CombatManager.Instance.IsOverOrEnding)
+				{
+					break;
+				}
+				if (CombatManager.Instance.IsPlayerReadyToEndTurn(player))
+				{
+					break;
+				}
+				if (base.Owner.PlayerCombatState.TurnNumber != startTurn)
 				{
 					break;
 				}
@@ -73,10 +86,14 @@ public sealed class WhisperingEarring : RelicModel
 			}
 		}
 		LocString line = (flag ? new LocString("relics", "WHISPERING_EARRING.warning") : new LocString("relics", "WHISPERING_EARRING.approval"));
-		TalkCmd.Play(line, base.Owner.Creature);
+		TalkCmd.Play(line, base.Owner.Creature, VfxColor.Purple);
 	}
 
-	private Creature? GetTarget(CardModel card, CombatState combatState)
+	/// <summary>
+	/// Gets the target for a card during Vakuu's auto-play.
+	/// Enemies: leftmost first. Allies: random.
+	/// </summary>
+	private Creature? GetTarget(CardModel card, ICombatState combatState)
 	{
 		Rng combatTargets = base.Owner.RunState.Rng.CombatTargets;
 		return card.TargetType switch

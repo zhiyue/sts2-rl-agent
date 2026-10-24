@@ -6,21 +6,43 @@ using MegaCrit.Sts2.Core.Logging;
 
 namespace MegaCrit.Sts2.Core.Debug;
 
+/// <summary>
+/// Manages the loading and access of release information.
+/// </summary>
 public class ReleaseInfoManager
 {
 	private static ReleaseInfoManager? _instance;
 
 	private const string _releaseInfoFileName = "release_info.json";
 
+	/// <summary>
+	/// Gets the singleton instance of ReleaseInfoManager.
+	/// </summary>
 	public static ReleaseInfoManager Instance => _instance ?? (_instance = new ReleaseInfoManager());
 
+	/// <summary>
+	/// Gets the loaded release information.
+	/// </summary>
 	public ReleaseInfo? ReleaseInfo { get; }
+
+	/// <summary>
+	/// Gets the game version as a semantic version, parsed from ReleaseInfo.version.
+	/// </summary>
+	public SemanticVersion? SemVer { get; }
 
 	private ReleaseInfoManager()
 	{
 		ReleaseInfo = LoadConfig();
+		if (ReleaseInfo?.Version != null)
+		{
+			SemanticVersion.TryFromString(ReleaseInfo.Version, out SemanticVersion version);
+			SemVer = version;
+		}
 	}
 
+	/// <summary>
+	/// Loads the release configuration.
+	/// </summary>
 	private ReleaseInfo? LoadConfig()
 	{
 		string[] possibleReleaseInfoPaths = GetPossibleReleaseInfoPaths();
@@ -57,6 +79,9 @@ public class ReleaseInfoManager
 		return null;
 	}
 
+	/// <summary>
+	/// Gets possible paths for the release info file.
+	/// </summary>
 	private static string[] GetPossibleReleaseInfoPaths()
 	{
 		string executablePath = OS.GetExecutablePath();

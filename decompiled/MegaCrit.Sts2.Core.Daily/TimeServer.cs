@@ -1,10 +1,14 @@
 using System;
 using System.Net.Http;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Logging;
 
 namespace MegaCrit.Sts2.Core.Daily;
 
+/// <summary>
+/// Static class for interfacing with MegaCrit's time server.
+/// </summary>
 public static class TimeServer
 {
 	private const string _timeServerUrl = "https://time.megacrit.com";
@@ -19,7 +23,10 @@ public static class TimeServer
 
 	private static async Task<TimeServerResult?> RequestTime(string url)
 	{
-		using HttpClient client = new HttpClient();
+		using HttpClient client = new HttpClient
+		{
+			Timeout = TimeSpan.FromSeconds(5L)
+		};
 		Exception exception = null;
 		int retries = 0;
 		while (retries < 2)
@@ -51,10 +58,10 @@ public static class TimeServer
 				await Task.Delay(TimeSpan.FromSeconds(seconds));
 			}
 		}
-		_logger.Warn("Gave up trying to retrieve server time. Will use local time instead");
+		_logger.Warn("Gave up trying to retrieve server time");
 		if (exception != null)
 		{
-			throw exception;
+			ExceptionDispatchInfo.Capture(exception).Throw();
 		}
 		return null;
 	}
@@ -78,6 +85,9 @@ public static class TimeServer
 		return null;
 	}
 
+	/// <summary>
+	/// Begins fetching the time from the time server. After this, RequestTimeTask is non-null.
+	/// </summary>
 	public static Task<TimeServerResult?> FetchDailyTime()
 	{
 		RequestTimeTask = RequestTime("https://time.megacrit.com");

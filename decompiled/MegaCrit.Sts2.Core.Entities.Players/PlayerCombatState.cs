@@ -22,7 +22,40 @@ public class PlayerCombatState
 
 	private int _stars;
 
+	private PlayerTurnPhase _phase;
+
 	public IReadOnlyList<Creature> Pets => _pets;
+
+	/// <summary>
+	/// The turn number that this player is currently on.
+	/// This is different from <see cref="P:MegaCrit.Sts2.Core.Combat.ICombatState.RoundNumber" />; if a player takes an extra turn after their
+	/// current one, this will be incremented, while the round number will not.
+	/// This number can also be different between players in multiplayer. If one player takes an extra turn (due to an
+	/// effect like <see cref="T:MegaCrit.Sts2.Core.Models.Relics.PaelsEye" />), their turn number will increment, but other players' will not.
+	/// This starts at 1, so it should never be 0.
+	/// </summary>
+	public int TurnNumber { get; private set; } = 1;
+
+	/// <summary>
+	/// The current phase of this player's turn. <see cref="F:MegaCrit.Sts2.Core.Combat.PlayerTurnPhase.None" /> when combat is not in progress
+	/// and during the enemy's turn. See <see cref="T:MegaCrit.Sts2.Core.Combat.PlayerTurnPhase" /> for the meaning of each phase.
+	/// Managed by <see cref="T:MegaCrit.Sts2.Core.Combat.CombatManager" /> and <see cref="M:MegaCrit.Sts2.Core.Hooks.Hook.AfterAutoPrePlayPhaseEntered(MegaCrit.Sts2.Core.GameActions.Multiplayer.HookPlayerChoiceContext,MegaCrit.Sts2.Core.Combat.ICombatState,MegaCrit.Sts2.Core.Entities.Players.Player)" />.
+	/// </summary>
+	public PlayerTurnPhase Phase
+	{
+		get
+		{
+			return _phase;
+		}
+		set
+		{
+			if (value != _phase)
+			{
+				_phase = value;
+				this.PlayerTurnPhaseChanged?.Invoke();
+			}
+		}
+	}
 
 	public CardPile Hand { get; } = new CardPile(PileType.Hand);
 
@@ -87,6 +120,8 @@ public class PlayerCombatState
 
 	public OrbQueue OrbQueue { get; }
 
+	public event Action? PlayerTurnPhaseChanged;
+
 	public event Action<int, int>? EnergyChanged;
 
 	public event Action<int, int>? StarsChanged;
@@ -115,6 +150,15 @@ public class PlayerCombatState
 		_pets.Clear();
 	}
 
+	/// <summary>
+	/// Increment this player's current turn number.
+	/// See <see cref="P:MegaCrit.Sts2.Core.Entities.Players.PlayerCombatState.TurnNumber" /> for details on turn number versus <see cref="P:MegaCrit.Sts2.Core.Combat.ICombatState.RoundNumber" />.
+	/// </summary>
+	public void IncrementTurnNumber()
+	{
+		TurnNumber++;
+	}
+
 	public void ResetEnergy()
 	{
 		Energy = MaxEnergy;
@@ -131,7 +175,7 @@ public class PlayerCombatState
 		{
 			throw new ArgumentException("Must not be negative.", "amount");
 		}
-		Energy = (int)Math.Max((decimal)Energy - amount, 0m);
+		Energy = (int)Math.Clamp((decimal)Energy - amount, 0m, 999999999m);
 	}
 
 	public void GainEnergy(decimal amount)
@@ -140,7 +184,7 @@ public class PlayerCombatState
 		{
 			throw new ArgumentException("Must not be negative.", "amount");
 		}
-		Energy = (int)Math.Max((decimal)Energy + amount, 0m);
+		Energy = (int)Math.Clamp((decimal)Energy + amount, 0m, 999999999m);
 	}
 
 	public bool HasEnoughResourcesFor(CardModel card, out UnplayableReason reason)
@@ -182,6 +226,11 @@ public class PlayerCombatState
 		Stars = (int)Math.Max((decimal)Stars + amount, 0m);
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY <see cref="M:MegaCrit.Sts2.Core.Commands.PlayerCmd.AddPet``1(MegaCrit.Sts2.Core.Entities.Players.Player)" /> and save/load stuff should be calling this.
+	/// </summary>
+	/// <param name="pet">Pet to add.</param>
 	public void AddPetInternal(Creature pet)
 	{
 		pet.Monster.AssertMutable();
@@ -196,6 +245,13 @@ public class PlayerCombatState
 		}
 	}
 
+	/// <summary>
+	/// Get one of this player's pets.
+	/// If the player has multiple of the same type of pet, just get the first one.
+	/// If the player has none of this type of pet, returns null.
+	/// </summary>
+	/// <typeparam name="T">Type of pet to get.</typeparam>
+	/// <returns>Matching pet.</returns>
 	public Creature? GetPet<T>() where T : MonsterModel
 	{
 		return Pets.FirstOrDefault((Creature p) => p.Monster is T);
@@ -226,7 +282,7 @@ public class PlayerCombatState
 	{
 		if (!_pets.Contains(pet))
 		{
-			throw new InvalidOperationException("Player does not have pet " + pet.Name);
+			throw new InvalidOperationException("Player does not have pet " + pet.LogName);
 		}
 		if (Hook.ShouldCreatureBeRemovedFromCombatAfterDeath(pet.CombatState, pet))
 		{

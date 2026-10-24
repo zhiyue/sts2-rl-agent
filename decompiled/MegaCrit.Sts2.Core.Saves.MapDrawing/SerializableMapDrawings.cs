@@ -4,6 +4,9 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Saves.MapDrawing;
 
+/// <summary>
+/// A serializable form of the drawings that all players have drawn on the map.
+/// </summary>
 public class SerializableMapDrawings : IPacketSerializable
 {
 	public List<SerializablePlayerMapDrawings> drawings = new List<SerializablePlayerMapDrawings>();

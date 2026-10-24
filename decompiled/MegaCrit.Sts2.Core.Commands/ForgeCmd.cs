@@ -25,6 +25,14 @@ public static class ForgeCmd
 
 	private const string _forgeRefineSfx = "event:/sfx/characters/regent/regent_refine";
 
+	/// <summary>
+	/// Applies Forge to the player. Adds Sovereign Blade to their hand if they haven't
+	/// forged this combat, and adds the amount of damage to it.
+	/// </summary>
+	/// <param name="amount">Amount of damage to add to Forge.</param>
+	/// <param name="player">Player to give the stars to.</param>
+	/// <param name="source">Model that caused the forging</param>
+	/// <returns>All of the player's un-Exhausted Sovereign Blade cards.</returns>
 	public static async Task<IEnumerable<SovereignBlade>> Forge(decimal amount, Player player, AbstractModel? source)
 	{
 		if (CombatManager.Instance.IsOverOrEnding)
@@ -36,7 +44,7 @@ public static class ForgeCmd
 		{
 			SovereignBlade sovereignBlade = player.Creature.CombatState.CreateCard<SovereignBlade>(player);
 			sovereignBlade.CreatedThroughForge = true;
-			await CardPileCmd.AddGeneratedCardToCombat(sovereignBlade, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(sovereignBlade, PileType.Hand, player);
 			blades.Add(sovereignBlade);
 		}
 		IncreaseSovereignBladeDamage(amount, player);

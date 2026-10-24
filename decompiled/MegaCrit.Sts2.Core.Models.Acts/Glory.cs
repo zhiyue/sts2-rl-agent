@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using MegaCrit.Sts2.Core.Entities.Ascension;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models.Encounters;
 using MegaCrit.Sts2.Core.Models.Events;
@@ -19,7 +17,7 @@ public sealed class Glory : ActModel
 	{
 		ModelDb.Encounter<QueenBoss>(),
 		ModelDb.Encounter<TestSubjectBoss>(),
-		ModelDb.Encounter<DoormakerBoss>()
+		ModelDb.Encounter<AeonglassBoss>()
 	});
 
 	public override IEnumerable<AncientEventModel> AllAncients => new global::_003C_003Ez__ReadOnlyArray<AncientEventModel>(new AncientEventModel[3]
@@ -43,6 +41,10 @@ public sealed class Glory : ActModel
 	protected override int NumberOfWeakEncounters => 2;
 
 	protected override int BaseNumberOfRooms => 13;
+
+	public override int Index => 2;
+
+	public override bool IsDefault => true;
 
 	public override string[] BgMusicOptions => new string[2] { "event:/music/act3_a1_v1", "event:/music/act3_a2_v1" };
 
@@ -69,7 +71,7 @@ public sealed class Glory : ActModel
 			ModelDb.Encounter<AxebotsNormal>(),
 			ModelDb.Encounter<ConstructMenagerieNormal>(),
 			ModelDb.Encounter<DevotedSculptorWeak>(),
-			ModelDb.Encounter<DoormakerBoss>(),
+			ModelDb.Encounter<AeonglassBoss>(),
 			ModelDb.Encounter<FabricatorNormal>(),
 			ModelDb.Encounter<FrogKnightNormal>(),
 			ModelDb.Encounter<GlobeHeadNormal>(),
@@ -96,19 +98,15 @@ public sealed class Glory : ActModel
 	{
 	}
 
+	public override bool IsUnlocked(UnlockState unlockState)
+	{
+		return true;
+	}
+
 	public override MapPointTypeCounts GetMapPointTypes(Rng mapRng)
 	{
-		Rng rng = new Rng(mapRng.Seed, mapRng.Counter);
-		MapPointTypeCounts mapPointTypeCounts = new MapPointTypeCounts(rng);
-		int num = mapRng.NextInt(5, 7);
-		if (AscensionHelper.HasAscension(AscensionLevel.Gloom))
-		{
-			num--;
-		}
-		return new MapPointTypeCounts(mapRng)
-		{
-			NumOfUnknowns = mapPointTypeCounts.NumOfUnknowns - 1,
-			NumOfRests = num
-		};
+		int restCount = mapRng.NextInt(5, 7);
+		int unknownCount = MapPointTypeCounts.StandardRandomUnknownCount(mapRng) - 1;
+		return new MapPointTypeCounts(unknownCount, restCount);
 	}
 }

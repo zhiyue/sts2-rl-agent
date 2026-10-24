@@ -19,11 +19,11 @@ public sealed class Speedster : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<SpeedsterPower>(base.Owner.Creature, base.DynamicVars["SpeedsterPower"].IntValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<SpeedsterPower>(choiceContext, base.Owner.Creature, base.DynamicVars["SpeedsterPower"].IntValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars["SpeedsterPower"].UpgradeValueBy(1m);
+		AddKeyword(CardKeyword.Innate);
 	}
 }

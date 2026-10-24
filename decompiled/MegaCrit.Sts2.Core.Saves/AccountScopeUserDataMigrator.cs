@@ -4,6 +4,25 @@ using MegaCrit.Sts2.Core.Logging;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// TEMPORARY: This class handles the one-time migration of user data from the legacy unscoped
+/// directory structure to the new user-scoped directory structure introduced for playtesters.
+///
+/// This migrator is designed to help existing playtesters transition their save data, replays,
+/// and console history to the new platform-specific, user-scoped directory structure without
+/// losing their progress.
+///
+/// This class should be removed a few months after the user-scoped directory feature has been
+/// released to playtesters, once we're confident that all active users have migrated their data.
+///
+/// The migration moves data from:
+///   - user://saves/       -&gt; user://{platform}/{userId}/profile1/saves/
+///   - user://replays/     -&gt; user://{platform}/{userId}/profile1/replays/
+///   - user://console_history.log -&gt; user://{platform}/{userId}/profile1/console_history.log
+///
+/// Note: Logs are intentionally NOT migrated as they remain in the legacy location (user://logs/)
+/// since Godot controls the log file creation.
+/// </summary>
 public static class AccountScopeUserDataMigrator
 {
 	private static bool _migrationPerformed;

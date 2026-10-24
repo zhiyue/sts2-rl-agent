@@ -66,7 +66,7 @@ public sealed class BookOfFiveRings : RelicModel
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
 		new CardsVar(5),
-		new HealVar(15m)
+		new HealVar(20m)
 	});
 
 	public override bool IsAllowed(IRunState runState)
@@ -74,7 +74,7 @@ public sealed class BookOfFiveRings : RelicModel
 		return RelicModel.IsBeforeAct3TreasureChest(runState);
 	}
 
-	public override async Task AfterCardChangedPiles(CardModel card, PileType oldPileType, AbstractModel? source)
+	public override async Task AfterCardChangedPiles(CardModel card, PileType oldPileType, AbstractModel? clonedBy)
 	{
 		if (base.Owner.Creature.IsDead || card.Owner != base.Owner)
 		{

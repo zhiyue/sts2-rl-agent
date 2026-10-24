@@ -10,6 +10,9 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles the card reward selection screen after combat.
+/// </summary>
 public class CardRewardScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NCardRewardSelectionScreen);

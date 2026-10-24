@@ -19,12 +19,12 @@ public sealed class SerpentForm : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<SerpentFormPower>(base.Owner.Creature, base.DynamicVars["SerpentFormPower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<SerpentFormPower>(choiceContext, base.Owner.Creature, base.DynamicVars["SerpentFormPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars["SerpentFormPower"].UpgradeValueBy(1m);
+		base.DynamicVars["SerpentFormPower"].UpgradeValueBy(2m);
 	}
 }

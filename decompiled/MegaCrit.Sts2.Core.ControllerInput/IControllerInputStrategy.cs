@@ -17,4 +17,6 @@ public interface IControllerInputStrategy
 	void ProcessInput();
 
 	Texture2D? GetHotkeyIcon(string hotkey);
+
+	string GetControllerName();
 }

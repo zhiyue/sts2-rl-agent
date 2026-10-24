@@ -62,6 +62,9 @@ public sealed class SharedPotionPool : PotionPoolModel
 		});
 	}
 
+	/// <summary>
+	/// Returns a list of Potions but prunes out any potions if the associated Epochs aren't revealed.
+	/// </summary>
 	public override IEnumerable<PotionModel> GetUnlockedPotions(UnlockState unlockState)
 	{
 		List<PotionModel> list = base.AllPotions.ToList();

@@ -45,7 +45,7 @@ public sealed class TrashHeap : EventModel
 		new GoldVar(100)
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		return runState.Players.All((Player player) => player.Creature.CurrentHp > 5);
 	}

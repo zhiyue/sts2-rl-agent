@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -14,7 +14,7 @@ public sealed class IAmInvincible : CardModel
 {
 	public override bool GainsBlock => true;
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new BlockVar(9m, ValueProp.Move));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new BlockVar(10m, ValueProp.Move));
 
 	public IAmInvincible()
 		: base(1, CardType.Skill, CardRarity.Rare, TargetType.Self)
@@ -26,9 +26,9 @@ public sealed class IAmInvincible : CardModel
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterAutoPostPlayPhaseEntered(PlayerChoiceContext choiceContext, Player player)
 	{
-		if (side == base.Owner.Creature.Side)
+		if (player == base.Owner)
 		{
 			CardPile pile = PileType.Draw.GetPile(base.Owner);
 			if (pile.Cards.FirstOrDefault() == this)

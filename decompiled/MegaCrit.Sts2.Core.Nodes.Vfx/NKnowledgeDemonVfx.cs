@@ -4,6 +4,7 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
+using MegaCrit.Sts2.Core.Helpers;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
@@ -11,50 +12,121 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NKnowledgeDemonVfx.cs")]
 public class NKnowledgeDemonVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationStart' method.
+		/// </summary>
+		public static readonly StringName OnAnimationStart = "OnAnimationStart";
+
+		/// <summary>
+		/// Cached name for the 'OnExplode' method.
+		/// </summary>
 		public static readonly StringName OnExplode = "OnExplode";
 
+		/// <summary>
+		/// Cached name for the 'OnTakeDamage' method.
+		/// </summary>
 		public static readonly StringName OnTakeDamage = "OnTakeDamage";
 
+		/// <summary>
+		/// Cached name for the 'OnBurningStart' method.
+		/// </summary>
 		public static readonly StringName OnBurningStart = "OnBurningStart";
 
+		/// <summary>
+		/// Cached name for the 'OnEmbersStart' method.
+		/// </summary>
 		public static readonly StringName OnEmbersStart = "OnEmbersStart";
 
+		/// <summary>
+		/// Cached name for the 'OnThinEmbersStart' method.
+		/// </summary>
 		public static readonly StringName OnThinEmbersStart = "OnThinEmbersStart";
 
+		/// <summary>
+		/// Cached name for the 'OnBurningEnd' method.
+		/// </summary>
 		public static readonly StringName OnBurningEnd = "OnBurningEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnEmbersEnd' method.
+		/// </summary>
 		public static readonly StringName OnEmbersEnd = "OnEmbersEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnThinEmbersEnd' method.
+		/// </summary>
 		public static readonly StringName OnThinEmbersEnd = "OnThinEmbersEnd";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_fireNode1' field.
+		/// </summary>
 		public static readonly StringName _fireNode1 = "_fireNode1";
 
+		/// <summary>
+		/// Cached name for the '_fireNode2' field.
+		/// </summary>
 		public static readonly StringName _fireNode2 = "_fireNode2";
 
+		/// <summary>
+		/// Cached name for the '_fireNode3' field.
+		/// </summary>
 		public static readonly StringName _fireNode3 = "_fireNode3";
 
+		/// <summary>
+		/// Cached name for the '_fireNode4' field.
+		/// </summary>
 		public static readonly StringName _fireNode4 = "_fireNode4";
 
+		/// <summary>
+		/// Cached name for the '_explosionParticles' field.
+		/// </summary>
 		public static readonly StringName _explosionParticles = "_explosionParticles";
 
+		/// <summary>
+		/// Cached name for the '_damageParticles' field.
+		/// </summary>
 		public static readonly StringName _damageParticles = "_damageParticles";
 
+		/// <summary>
+		/// Cached name for the '_emberParticles' field.
+		/// </summary>
 		public static readonly StringName _emberParticles = "_emberParticles";
 
+		/// <summary>
+		/// Cached name for the '_thinEmberParticles' field.
+		/// </summary>
 		public static readonly StringName _thinEmberParticles = "_thinEmberParticles";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -84,6 +156,7 @@ public class NKnowledgeDemonVfx : Node
 		_parent = GetParent<Node2D>();
 		_animController = new MegaSprite(_parent);
 		_animController.ConnectAnimationEvent(Callable.From<GodotObject, GodotObject, GodotObject, GodotObject>(OnAnimationEvent));
+		_animController.ConnectAnimationStarted(Callable.From<GodotObject, GodotObject, GodotObject>(OnAnimationStart));
 		_fireNode1 = _parent.GetNode<Node2D>("FireSlot1/FireHolder1");
 		_fireNode2 = _parent.GetNode<Node2D>("FireSlot2/FireHolder2");
 		_fireNode3 = _parent.GetNode<Node2D>("FireSlot3/FireHolder3");
@@ -103,7 +176,10 @@ public class NKnowledgeDemonVfx : Node
 		_emberParticles.Emitting = false;
 		_thinEmberParticles.Emitting = false;
 		OnBurningEnd();
-		_animController.GetAnimationState().SetAnimation("idle_loop");
+		this.RunWhenSpineReady(_animController, delegate(MegaAnimationState animState)
+		{
+			animState.SetAnimation("idle_loop");
+		});
 	}
 
 	private void OnAnimationEvent(GodotObject _, GodotObject __, GodotObject ___, GodotObject spineEvent)
@@ -176,6 +252,13 @@ public class NKnowledgeDemonVfx : Node
 		}
 	}
 
+	private void OnAnimationStart(GodotObject spineSprite, GodotObject animationState, GodotObject trackEntry)
+	{
+		OnBurningEnd();
+		OnEmbersEnd();
+		OnThinEmbersEnd();
+	}
+
 	private void OnExplode()
 	{
 		_explosionParticles.Restart();
@@ -222,10 +305,15 @@ public class NKnowledgeDemonVfx : Node
 		_thinEmberParticles.Emitting = false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(10);
+		List<MethodInfo> list = new List<MethodInfo>(11);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnAnimationEvent, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -233,6 +321,12 @@ public class NKnowledgeDemonVfx : Node
 			new PropertyInfo(Variant.Type.Object, "__", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
 			new PropertyInfo(Variant.Type.Object, "___", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
 			new PropertyInfo(Variant.Type.Object, "spineEvent", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false)
+		}, null));
+		list.Add(new MethodInfo(MethodName.OnAnimationStart, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Object, "spineSprite", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
+			new PropertyInfo(Variant.Type.Object, "animationState", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
+			new PropertyInfo(Variant.Type.Object, "trackEntry", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.OnExplode, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnTakeDamage, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -245,6 +339,7 @@ public class NKnowledgeDemonVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -257,6 +352,12 @@ public class NKnowledgeDemonVfx : Node
 		if (method == MethodName.OnAnimationEvent && args.Count == 4)
 		{
 			OnAnimationEvent(VariantUtils.ConvertTo<GodotObject>(in args[0]), VariantUtils.ConvertTo<GodotObject>(in args[1]), VariantUtils.ConvertTo<GodotObject>(in args[2]), VariantUtils.ConvertTo<GodotObject>(in args[3]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.OnAnimationStart && args.Count == 3)
+		{
+			OnAnimationStart(VariantUtils.ConvertTo<GodotObject>(in args[0]), VariantUtils.ConvertTo<GodotObject>(in args[1]), VariantUtils.ConvertTo<GodotObject>(in args[2]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -311,6 +412,7 @@ public class NKnowledgeDemonVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -319,6 +421,10 @@ public class NKnowledgeDemonVfx : Node
 			return true;
 		}
 		if (method == MethodName.OnAnimationEvent)
+		{
+			return true;
+		}
+		if (method == MethodName.OnAnimationStart)
 		{
 			return true;
 		}
@@ -357,6 +463,7 @@ public class NKnowledgeDemonVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -408,6 +515,7 @@ public class NKnowledgeDemonVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -459,6 +567,11 @@ public class NKnowledgeDemonVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -475,6 +588,7 @@ public class NKnowledgeDemonVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -490,6 +604,7 @@ public class NKnowledgeDemonVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

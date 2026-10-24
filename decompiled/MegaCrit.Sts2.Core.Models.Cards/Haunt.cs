@@ -22,8 +22,8 @@ public sealed class Haunt : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<HauntPower>(base.Owner.Creature, base.DynamicVars.HpLoss.BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<HauntPower>(choiceContext, base.Owner.Creature, base.DynamicVars.HpLoss.BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

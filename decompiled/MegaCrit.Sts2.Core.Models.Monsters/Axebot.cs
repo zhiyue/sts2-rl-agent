@@ -6,9 +6,9 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
-using MegaCrit.Sts2.Core.MonsterMoves;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -17,11 +17,7 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Axebot : MonsterModel
 {
-	private const int _bootUpBlock = 10;
-
 	private const int _oneTwoRepeat = 2;
-
-	private const int _sharpenStrengthGain = 4;
 
 	private const string _hammerUppercutTrigger = "uppercut";
 
@@ -37,13 +33,17 @@ public sealed class Axebot : MonsterModel
 
 	private bool _shouldPlaySpawnAnimation;
 
-	private int OneTwoDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 6, 5);
+	private int BootUpBlock => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 15, 10);
 
-	private int HammerUppercutDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 10, 8);
+	private int OneTwoDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 10, 9);
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 42, 40);
+	private int BootUpStrGain => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 4, 3);
 
-	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 46, 44);
+	private int HammerUppercutDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 14, 12);
+
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 76, 70);
+
+	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 86, 78);
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Armor;
 
@@ -77,7 +77,7 @@ public sealed class Axebot : MonsterModel
 	{
 		if (StockAmount > 0)
 		{
-			await PowerCmd.Apply<StockPower>(base.Creature, StockAmount, null, null);
+			await PowerCmd.Apply<StockPower>(new ThrowingPlayerChoiceContext(), base.Creature, StockAmount, null, null);
 		}
 	}
 
@@ -86,26 +86,17 @@ public sealed class Axebot : MonsterModel
 		List<MonsterState> list = new List<MonsterState>();
 		MoveState moveState = new MoveState("BOOT_UP_MOVE", BootUpMove, new DefendIntent(), new BuffIntent());
 		MoveState moveState2 = new MoveState("ONE_TWO_MOVE", OneTwoMove, new MultiAttackIntent(OneTwoDamage, 2));
-		MoveState moveState3 = new MoveState("SHARPEN_MOVE", SharpenMove, new BuffIntent());
-		MoveState moveState4 = new MoveState("HAMMER_UPPERCUT_MOVE", HammerUppercutMove, new SingleAttackIntent(HammerUppercutDamage), new DebuffIntent());
-		RandomBranchState randomBranchState = new RandomBranchState("RAND_MOVE");
-		randomBranchState.AddBranch(moveState2, 2);
-		randomBranchState.AddBranch(moveState3, MoveRepeatType.CannotRepeat);
-		randomBranchState.AddBranch(moveState4, 2);
-		moveState.FollowUpState = randomBranchState;
-		moveState2.FollowUpState = randomBranchState;
-		moveState3.FollowUpState = randomBranchState;
-		moveState4.FollowUpState = randomBranchState;
+		MoveState moveState3 = (MoveState)(moveState.FollowUpState = new MoveState("HAMMER_UPPERCUT_MOVE", HammerUppercutMove, new SingleAttackIntent(HammerUppercutDamage), new DebuffIntent()));
+		moveState3.FollowUpState = moveState2;
+		moveState2.FollowUpState = moveState3;
 		list.Add(moveState);
 		list.Add(moveState2);
 		list.Add(moveState3);
-		list.Add(moveState4);
-		list.Add(randomBranchState);
 		if (_stockOverrideAmount.HasValue)
 		{
 			return new MonsterMoveStateMachine(list, moveState);
 		}
-		return new MonsterMoveStateMachine(list, randomBranchState);
+		return new MonsterMoveStateMachine(list, moveState3);
 	}
 
 	private async Task BootUpMove(IReadOnlyList<Creature> targets)
@@ -113,8 +104,8 @@ public sealed class Axebot : MonsterModel
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/axebot/axebot_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "sharpen", 0.3f);
 		await Cmd.Wait(0.25f);
-		await CreatureCmd.GainBlock(base.Creature, 10m, ValueProp.Move, null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 1m, base.Creature, null);
+		await CreatureCmd.GainBlock(base.Creature, BootUpBlock, ValueProp.Move, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, BootUpStrGain * (2 - StockAmount), base.Creature, null);
 	}
 
 	private async Task OneTwoMove(IReadOnlyList<Creature> targets)
@@ -127,21 +118,14 @@ public sealed class Axebot : MonsterModel
 			.Execute(null);
 	}
 
-	private async Task SharpenMove(IReadOnlyList<Creature> targets)
-	{
-		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/axebot/axebot_buff");
-		await CreatureCmd.TriggerAnim(base.Creature, "sharpen", 0.3f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 4m, base.Creature, null);
-	}
-
 	private async Task HammerUppercutMove(IReadOnlyList<Creature> targets)
 	{
 		await DamageCmd.Attack(HammerUppercutDamage).FromMonster(this).WithAttackerAnim("uppercut", 0.8f)
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/axebot/axebot_attack_spin")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<WeakPower>(targets, 1m, base.Creature, null);
-		await PowerCmd.Apply<FrailPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

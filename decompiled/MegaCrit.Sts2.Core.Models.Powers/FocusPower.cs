@@ -1,5 +1,4 @@
 using System;
-using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
 
 namespace MegaCrit.Sts2.Core.Models.Powers;
@@ -12,9 +11,9 @@ public sealed class FocusPower : PowerModel
 
 	public override bool AllowNegative => true;
 
-	public override decimal ModifyOrbValue(Player player, decimal value)
+	public override decimal ModifyOrbValue(OrbModel orb, decimal value)
 	{
-		if (base.Owner.Player != player)
+		if (base.Owner.Player != orb.Owner)
 		{
 			return value;
 		}

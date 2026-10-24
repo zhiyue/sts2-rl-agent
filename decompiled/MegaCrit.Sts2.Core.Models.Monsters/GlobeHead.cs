@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Audio;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -13,6 +14,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class GlobeHead : MonsterModel
 {
+	private const string _galvanicBurstMove = "GALVANIC_BURST";
+
 	private const string _chargeSfx = "event:/sfx/enemy/enemy_attacks/globe_head/globe_head_charge";
 
 	private const string _slapSfx = "event:/sfx/enemy/enemy_attacks/globe_head/globe_head_slap";
@@ -38,7 +41,7 @@ public sealed class GlobeHead : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<GalvanicPower>(base.Creature, 6m, base.Creature, null);
+		await PowerCmd.Apply<GalvanicPower>(new ThrowingPlayerChoiceContext(), base.Creature, 6m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -72,7 +75,7 @@ public sealed class GlobeHead : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/globe_head/globe_head_slap")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<FrailPower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	private async Task GalvanicBurstMove(IReadOnlyList<Creature> targets)
@@ -80,6 +83,11 @@ public sealed class GlobeHead : MonsterModel
 		await DamageCmd.Attack(GalvanicBurstDamage).FromMonster(this).WithAttackerAnim("Attack", 0.5f)
 			.WithHitFx("vfx/vfx_attack_lightning", null, "blunt_attack.mp3")
 			.Execute(null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "GALVANIC_BURST";
 	}
 }

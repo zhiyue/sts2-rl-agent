@@ -30,124 +30,301 @@ public class NCardGrid : Control
 	[Signal]
 	public delegate void HolderAltPressedEventHandler(NCardHolder card);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'UpdateScrollLimitBottom' method.
+		/// </summary>
 		public static readonly StringName UpdateScrollLimitBottom = "UpdateScrollLimitBottom";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the '_Notification' method.
+		/// </summary>
 		public new static readonly StringName _Notification = "_Notification";
 
+		/// <summary>
+		/// Cached name for the 'SetScrollPosition' method.
+		/// </summary>
 		public static readonly StringName SetScrollPosition = "SetScrollPosition";
 
+		/// <summary>
+		/// Cached name for the 'SetCanScroll' method.
+		/// </summary>
 		public static readonly StringName SetCanScroll = "SetCanScroll";
 
+		/// <summary>
+		/// Cached name for the 'InsetForTopBar' method.
+		/// </summary>
 		public static readonly StringName InsetForTopBar = "InsetForTopBar";
 
+		/// <summary>
+		/// Cached name for the 'ProcessMouseEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessMouseEvent = "ProcessMouseEvent";
 
+		/// <summary>
+		/// Cached name for the 'ProcessScrollEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessScrollEvent = "ProcessScrollEvent";
 
+		/// <summary>
+		/// Cached name for the 'ProcessGuiFocus' method.
+		/// </summary>
 		public static readonly StringName ProcessGuiFocus = "ProcessGuiFocus";
 
+		/// <summary>
+		/// Cached name for the 'UpdateScrollPosition' method.
+		/// </summary>
 		public static readonly StringName UpdateScrollPosition = "UpdateScrollPosition";
 
+		/// <summary>
+		/// Cached name for the 'ClearGrid' method.
+		/// </summary>
 		public static readonly StringName ClearGrid = "ClearGrid";
 
+		/// <summary>
+		/// Cached name for the 'CalculateRowsNeeded' method.
+		/// </summary>
 		public static readonly StringName CalculateRowsNeeded = "CalculateRowsNeeded";
 
+		/// <summary>
+		/// Cached name for the 'InitGrid' method.
+		/// </summary>
 		public static readonly StringName InitGrid = "InitGrid";
 
+		/// <summary>
+		/// Cached name for the 'GetContainedCardsSize' method.
+		/// </summary>
 		public static readonly StringName GetContainedCardsSize = "GetContainedCardsSize";
 
+		/// <summary>
+		/// Cached name for the 'ReflowColumns' method.
+		/// </summary>
 		public static readonly StringName ReflowColumns = "ReflowColumns";
 
+		/// <summary>
+		/// Cached name for the 'UpdateGridPositions' method.
+		/// </summary>
 		public static readonly StringName UpdateGridPositions = "UpdateGridPositions";
 
+		/// <summary>
+		/// Cached name for the 'OnHolderPressed' method.
+		/// </summary>
 		public static readonly StringName OnHolderPressed = "OnHolderPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnHolderAltPressed' method.
+		/// </summary>
 		public static readonly StringName OnHolderAltPressed = "OnHolderAltPressed";
 
+		/// <summary>
+		/// Cached name for the 'GetTotalRowCount' method.
+		/// </summary>
 		public static readonly StringName GetTotalRowCount = "GetTotalRowCount";
 
+		/// <summary>
+		/// Cached name for the 'AllocateCardHolders' method.
+		/// </summary>
 		public static readonly StringName AllocateCardHolders = "AllocateCardHolders";
 
+		/// <summary>
+		/// Cached name for the 'ReallocateAll' method.
+		/// </summary>
 		public static readonly StringName ReallocateAll = "ReallocateAll";
 
+		/// <summary>
+		/// Cached name for the 'UpdateGridNavigation' method.
+		/// </summary>
 		public static readonly StringName UpdateGridNavigation = "UpdateGridNavigation";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'CanScroll' property.
+		/// </summary>
 		public static readonly StringName CanScroll = "CanScroll";
 
+		/// <summary>
+		/// Cached name for the 'DisplayedRows' property.
+		/// </summary>
 		public static readonly StringName DisplayedRows = "DisplayedRows";
 
+		/// <summary>
+		/// Cached name for the 'Columns' property.
+		/// </summary>
 		public static readonly StringName Columns = "Columns";
 
+		/// <summary>
+		/// Cached name for the 'CardPadding' property.
+		/// </summary>
 		public static readonly StringName CardPadding = "CardPadding";
 
+		/// <summary>
+		/// Cached name for the 'IsCardLibrary' property.
+		/// </summary>
 		public static readonly StringName IsCardLibrary = "IsCardLibrary";
 
+		/// <summary>
+		/// Cached name for the 'ScrollLimitBottom' property.
+		/// </summary>
 		public static readonly StringName ScrollLimitBottom = "ScrollLimitBottom";
 
+		/// <summary>
+		/// Cached name for the 'ScrollLimitTop' property.
+		/// </summary>
 		public static readonly StringName ScrollLimitTop = "ScrollLimitTop";
 
+		/// <summary>
+		/// Cached name for the 'IsAnimatingOut' property.
+		/// </summary>
 		public static readonly StringName IsAnimatingOut = "IsAnimatingOut";
 
+		/// <summary>
+		/// Cached name for the 'IsShowingUpgrades' property.
+		/// </summary>
 		public static readonly StringName IsShowingUpgrades = "IsShowingUpgrades";
 
+		/// <summary>
+		/// Cached name for the 'YOffset' property.
+		/// </summary>
 		public static readonly StringName YOffset = "YOffset";
 
+		/// <summary>
+		/// Cached name for the 'CenterGrid' property.
+		/// </summary>
 		public static readonly StringName CenterGrid = "CenterGrid";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the 'FocusedControlFromTopBar' property.
+		/// </summary>
 		public static readonly StringName FocusedControlFromTopBar = "FocusedControlFromTopBar";
 
+		/// <summary>
+		/// Cached name for the '_startDrag' field.
+		/// </summary>
 		public static readonly StringName _startDrag = "_startDrag";
 
+		/// <summary>
+		/// Cached name for the '_targetDrag' field.
+		/// </summary>
 		public static readonly StringName _targetDrag = "_targetDrag";
 
+		/// <summary>
+		/// Cached name for the '_isDragging' field.
+		/// </summary>
 		public static readonly StringName _isDragging = "_isDragging";
 
+		/// <summary>
+		/// Cached name for the '_scrollingEnabled' field.
+		/// </summary>
 		public static readonly StringName _scrollingEnabled = "_scrollingEnabled";
 
+		/// <summary>
+		/// Cached name for the '_scrollContainer' field.
+		/// </summary>
 		public static readonly StringName _scrollContainer = "_scrollContainer";
 
+		/// <summary>
+		/// Cached name for the '_scrollbarPressed' field.
+		/// </summary>
 		public static readonly StringName _scrollbarPressed = "_scrollbarPressed";
 
+		/// <summary>
+		/// Cached name for the '_scrollbar' field.
+		/// </summary>
 		public static readonly StringName _scrollbar = "_scrollbar";
 
+		/// <summary>
+		/// Cached name for the '_slidingWindowCardIndex' field.
+		/// </summary>
 		public static readonly StringName _slidingWindowCardIndex = "_slidingWindowCardIndex";
 
+		/// <summary>
+		/// Cached name for the '_pileType' field.
+		/// </summary>
 		public static readonly StringName _pileType = "_pileType";
 
+		/// <summary>
+		/// Cached name for the '_cardSize' field.
+		/// </summary>
 		public static readonly StringName _cardSize = "_cardSize";
 
+		/// <summary>
+		/// Cached name for the '_cardsAnimatingOutForSetCards' field.
+		/// </summary>
 		public static readonly StringName _cardsAnimatingOutForSetCards = "_cardsAnimatingOutForSetCards";
 
+		/// <summary>
+		/// Cached name for the '_isShowingUpgrades' field.
+		/// </summary>
 		public static readonly StringName _isShowingUpgrades = "_isShowingUpgrades";
 
+		/// <summary>
+		/// Cached name for the '_lastFocusedHolder' field.
+		/// </summary>
 		public static readonly StringName _lastFocusedHolder = "_lastFocusedHolder";
 
+		/// <summary>
+		/// Cached name for the '_needsReinit' field.
+		/// </summary>
 		public static readonly StringName _needsReinit = "_needsReinit";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'HolderPressed' signal.
+		/// </summary>
 		public static readonly StringName HolderPressed = "HolderPressed";
 
+		/// <summary>
+		/// Cached name for the 'HolderAltPressed' signal.
+		/// </summary>
 		public static readonly StringName HolderAltPressed = "HolderAltPressed";
 	}
 
@@ -187,6 +364,8 @@ public class NCardGrid : Control
 
 	private bool _cardsAnimatingOutForSetCards;
 
+	private CancellationTokenSource _cts = new CancellationTokenSource();
+
 	private CancellationTokenSource? _setCardsCancellation;
 
 	private bool _isShowingUpgrades;
@@ -218,7 +397,7 @@ public class NCardGrid : Control
 					},
 					{
 						SortingOrders.CostAscending,
-						(CardModel a, CardModel b) => a.EnergyCost.Canonical.CompareTo(b.EnergyCost.Canonical)
+						(CardModel a, CardModel b) => a.EnergyCost.GetResolved().CompareTo(b.EnergyCost.GetResolved())
 					},
 					{
 						SortingOrders.TypeAscending,
@@ -234,7 +413,7 @@ public class NCardGrid : Control
 					},
 					{
 						SortingOrders.CostDescending,
-						(CardModel a, CardModel b) => -a.EnergyCost.Canonical.CompareTo(b.EnergyCost.Canonical)
+						(CardModel a, CardModel b) => -a.EnergyCost.GetResolved().CompareTo(b.EnergyCost.GetResolved())
 					},
 					{
 						SortingOrders.TypeDescending,
@@ -305,10 +484,17 @@ public class NCardGrid : Control
 		}
 	}
 
+	/// <summary>
+	/// Returns the currently displayed cards.
+	/// Since the grid only displays chunks of cards at a time, remember that this may not hold all the cards in the grid.
+	/// </summary>
 	public IEnumerable<NGridCardHolder> CurrentlyDisplayedCardHolders => _cardRows.SelectMany((List<NGridCardHolder> r) => r);
 
 	public IEnumerable<CardModel> CurrentlyDisplayedCards => CurrentlyDisplayedCardHolders.Select((NGridCardHolder h) => h.CardModel);
 
+	/// <summary>
+	/// True when the card library is animating or has animated out all cards that were displayed.
+	/// </summary>
 	public bool IsAnimatingOut
 	{
 		get
@@ -376,6 +562,7 @@ public class NCardGrid : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Cards.NCardGrid.HolderPressedEventHandler" />
 	public event HolderPressedEventHandler HolderPressed
 	{
 		add
@@ -388,6 +575,7 @@ public class NCardGrid : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Cards.NCardGrid.HolderAltPressedEventHandler" />
 	public event HolderAltPressedEventHandler HolderAltPressed
 	{
 		add
@@ -454,12 +642,15 @@ public class NCardGrid : Control
 	public override void _EnterTree()
 	{
 		base._EnterTree();
+		_cts = new CancellationTokenSource();
 		GetViewport().Connect(Viewport.SignalName.GuiFocusChanged, Callable.From<Control>(ProcessGuiFocus));
 	}
 
 	public override void _ExitTree()
 	{
 		base._ExitTree();
+		_cts.Cancel();
+		_setCardsCancellation?.Cancel();
 		GetViewport().Disconnect(Viewport.SignalName.GuiFocusChanged, Callable.From<Control>(ProcessGuiFocus));
 		foreach (List<NGridCardHolder> cardRow in _cardRows)
 		{
@@ -528,6 +719,10 @@ public class NCardGrid : Control
 		SetAnchorAndOffset(Side.Top, 0f, 80f);
 	}
 
+	/// <summary>
+	/// Detects mouse click up/down and updates our scroll target accordingly
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void ProcessMouseEvent(InputEvent inputEvent)
 	{
 		if (_isDragging && inputEvent is InputEventMouseMotion inputEventMouseMotion)
@@ -560,6 +755,10 @@ public class NCardGrid : Control
 		}
 	}
 
+	/// <summary>
+	/// Detects mouse wheel up/down and updates our scroll target accordingly
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void ProcessScrollEvent(InputEvent inputEvent)
 	{
 		_targetDrag += ScrollHelper.GetDragForScrollEvent(inputEvent);
@@ -619,6 +818,15 @@ public class NCardGrid : Control
 		TaskHelper.RunSafely(InitGrid(null));
 	}
 
+	/// <summary>
+	/// Sets the cards to display in the grid.
+	/// If IsCardLibrary is true, then the old cards will be animated out and the new cards will be animated in.
+	/// </summary>
+	/// <param name="cardsToDisplay">The set of cards to display.</param>
+	/// <param name="pileType">The type of pile we are displaying. Used when updating the text on the cards.</param>
+	/// <param name="sortingPriority">The sorting applied to the cards.</param>
+	/// <param name="taskToWaitOn">If non-null, the new cards will not be displayed until this task is finished. Prefer
+	/// passing it over awaiting it, as the old cards can still animate out while the task is running and hide loading.</param>
 	public void SetCards(IReadOnlyList<CardModel> cardsToDisplay, PileType pileType, List<SortingOrders> sortingPriority, Task? taskToWaitOn = null)
 	{
 		_cardsCache.Clear();
@@ -658,6 +866,12 @@ public class NCardGrid : Control
 		}
 	}
 
+	/// <summary>
+	/// Animate the grid out.
+	/// If this grid is not the card library grid, then this does nothing.
+	/// If this is called before SetCards, then SetCards will wait for this animation to be completed before the cards
+	/// animate back in. Otherwise, SetCards itself will call this.
+	/// </summary>
 	public Task AnimateOut()
 	{
 		_animatingOutTask = AnimateOutInternal();
@@ -681,7 +895,7 @@ public class NCardGrid : Control
 			tween.TweenProperty(item, "position:y", item.Position.Y + 40f, 0.2).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 			tween.TweenProperty(item, "modulate:a", 0f, 0.2);
 		}
-		await ToSignal(tween, Tween.SignalName.Finished);
+		await tween.AwaitFinished(this);
 	}
 
 	private async Task AnimateIn()
@@ -719,7 +933,7 @@ public class NCardGrid : Control
 			{
 				tween.Kill();
 			}
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrame(_cts.Token);
 		}
 	}
 
@@ -793,7 +1007,7 @@ public class NCardGrid : Control
 					nGridCardHolder.Scale = nGridCardHolder.SmallScale;
 					_scrollContainer.AddChildSafely(nGridCardHolder);
 					nCard.UpdateVisuals(_pileType, CardPreviewMode.Normal);
-					if (nGridCardHolder.CardModel.CanonicalInstance.IsUpgradable)
+					if (nGridCardHolder.CardModel.IsUpgradable)
 					{
 						nGridCardHolder.SetIsPreviewingUpgrade(IsShowingUpgrades);
 					}
@@ -1019,6 +1233,11 @@ public class NCardGrid : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -1089,6 +1308,7 @@ public class NCardGrid : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -1254,6 +1474,7 @@ public class NCardGrid : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -1368,6 +1589,7 @@ public class NCardGrid : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1459,6 +1681,7 @@ public class NCardGrid : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1617,6 +1840,11 @@ public class NCardGrid : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1651,6 +1879,7 @@ public class NCardGrid : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1676,6 +1905,7 @@ public class NCardGrid : Control
 		info.AddSignalEventDelegate(SignalName.HolderAltPressed, backing_HolderAltPressed);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1758,6 +1988,11 @@ public class NCardGrid : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -1783,6 +2018,7 @@ public class NCardGrid : Control
 		EmitSignal(SignalName.HolderAltPressed, card);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -1800,6 +2036,7 @@ public class NCardGrid : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

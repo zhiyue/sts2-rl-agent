@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -34,7 +35,10 @@ public sealed class PlatingPower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, CombatState combatState)
+	/// <summary>
+	/// We want enemies that start with Plating to also start combat with block.
+	/// </summary>
+	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
 		if (side != CombatSide.Player)
 		{
@@ -44,34 +48,42 @@ public sealed class PlatingPower : PowerModel
 		{
 			return Task.CompletedTask;
 		}
-		if (combatState.RoundNumber != 1)
+		if (combatState.RoundNumber > 1)
 		{
 			return Task.CompletedTask;
 		}
 		return CreatureCmd.GainBlock(base.Owner, base.Amount, ValueProp.Unpowered, null);
 	}
 
-	public override async Task BeforeTurnEndEarly(PlayerChoiceContext choiceContext, CombatSide side)
+	/// <summary>
+	/// We do this in early so that it triggers before end-of-turn damage effects.
+	/// </summary>
+	public override async Task BeforeSideTurnEndEarly(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side == base.Owner.Side)
+		if (participants.Contains(base.Owner))
 		{
 			Flash();
 			await CreatureCmd.GainBlock(base.Owner, base.Amount, ValueProp.Unpowered, null);
 		}
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == CombatSide.Enemy)
+		if (participants.Contains(base.Owner) && (base.Owner.Player == null || base.Owner.Player.PlayerCombatState.TurnNumber != 1) && (base.Owner.Side != CombatSide.Enemy || combatState.RoundNumber != 1))
 		{
 			if (base.Owner.Side == CombatSide.Enemy)
 			{
-				await PowerCmd.ModifyAmount(this, -base.DynamicVars["Decrement"].BaseValue, null, null);
+				await PowerCmd.ModifyAmount(new ThrowingPlayerChoiceContext(), this, -base.DynamicVars["Decrement"].BaseValue, null, null);
 			}
 			else
 			{
 				await PowerCmd.Decrement(this);
 			}
 		}
+	}
+
+	public override decimal GetScaledAmountForMultiplayer(ICombatState combatState, Creature? applier, decimal amount, Creature target, CardModel? cardSource)
+	{
+		return (decimal)((combatState.Players.Count - 1) * 2 + 1) * amount;
 	}
 }

@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -111,12 +112,10 @@ public sealed class ToughEgg : MonsterModel
 		}
 	}
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
-		MegaSkin megaSkin = visuals.SpineBody.NewSkin("custom-skin");
-		MegaSkeletonDataResource data = skeleton.GetData();
-		megaSkin.AddSkin(data.FindSkin(base.Rng.NextItem(_eggOptions)));
+		MegaSkin megaSkin = spine.NewSkin("custom-skin");
+		megaSkin.AddSkin(skeleton.GetData().FindSkin(base.Rng.NextItem(_eggOptions)));
 		skeleton.SetSkin(megaSkin);
 		skeleton.SetSlotsToSetupPose();
 	}
@@ -132,7 +131,7 @@ public sealed class ToughEgg : MonsterModel
 		if (!IsHatched)
 		{
 			int num = ((base.CombatState.CurrentSide != CombatSide.Enemy) ? 1 : 2);
-			await PowerCmd.Apply<HatchPower>(base.Creature, num, base.Creature, null);
+			await PowerCmd.Apply<HatchPower>(new ThrowingPlayerChoiceContext(), base.Creature, num, base.Creature, null);
 		}
 		else
 		{

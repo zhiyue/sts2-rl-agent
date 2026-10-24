@@ -6,6 +6,9 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.Rooms;
 
+/// <summary>
+/// Represents the visuals that should be used for a combat-style event.
+/// </summary>
 public class CombatEventVisuals : ICombatRoomVisuals
 {
 	public EncounterModel Encounter { get; }

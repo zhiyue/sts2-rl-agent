@@ -27,7 +27,7 @@ public sealed class Intercept : CardModel
 	{
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<CoveredPower>(cardPlay.Target, 1m, base.Owner.Creature, this);
+		await PowerCmd.Apply<CoveredPower>(choiceContext, cardPlay.Target, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

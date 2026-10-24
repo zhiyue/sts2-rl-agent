@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -13,61 +14,107 @@ using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Runs;
-using MegaCrit.Sts2.addons.mega_text;
+using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen;
 
+/// <summary>
+/// Animates the Run Summary portion of the Death Screen.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/GameOverScreen/NRunSummary.cs")]
 public class NRunSummary : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
+
+		/// <summary>
+		/// Cached name for the 'SetControllerNav' method.
+		/// </summary>
+		public static readonly StringName SetControllerNav = "SetControllerNav";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
-		public static readonly StringName _badgeContainer = "_badgeContainer";
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
+		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_discoveryContainer' field.
+		/// </summary>
 		public static readonly StringName _discoveryContainer = "_discoveryContainer";
 
+		/// <summary>
+		/// Cached name for the '_discoveryHeader' field.
+		/// </summary>
 		public static readonly StringName _discoveryHeader = "_discoveryHeader";
 
+		/// <summary>
+		/// Cached name for the '_discoveredContents' field.
+		/// </summary>
+		public static readonly StringName _discoveredContents = "_discoveredContents";
+
+		/// <summary>
+		/// Cached name for the '_discoveredCards' field.
+		/// </summary>
 		public static readonly StringName _discoveredCards = "_discoveredCards";
 
+		/// <summary>
+		/// Cached name for the '_discoveredRelics' field.
+		/// </summary>
 		public static readonly StringName _discoveredRelics = "_discoveredRelics";
 
+		/// <summary>
+		/// Cached name for the '_discoveredPotions' field.
+		/// </summary>
 		public static readonly StringName _discoveredPotions = "_discoveredPotions";
 
+		/// <summary>
+		/// Cached name for the '_discoveredEnemies' field.
+		/// </summary>
 		public static readonly StringName _discoveredEnemies = "_discoveredEnemies";
 
+		/// <summary>
+		/// Cached name for the '_discoveredEpochs' field.
+		/// </summary>
 		public static readonly StringName _discoveredEpochs = "_discoveredEpochs";
 
-		public static readonly StringName _cardCount = "_cardCount";
-
-		public static readonly StringName _relicCount = "_relicCount";
-
-		public static readonly StringName _potionCount = "_potionCount";
-
-		public static readonly StringName _enemyCount = "_enemyCount";
-
-		public static readonly StringName _epochCount = "_epochCount";
-
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_waitTween' field.
+		/// </summary>
 		public static readonly StringName _waitTween = "_waitTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
 
-	private Control _badgeContainer;
-
 	private Control _discoveryContainer;
 
 	private Control _discoveryHeader;
+
+	private Control _discoveredContents;
 
 	private NDiscoveredItem _discoveredCards;
 
@@ -79,37 +126,24 @@ public class NRunSummary : Control
 
 	private NDiscoveredItem _discoveredEpochs;
 
-	private MegaLabel _cardCount;
-
-	private MegaLabel _relicCount;
-
-	private MegaLabel _potionCount;
-
-	private MegaLabel _enemyCount;
-
-	private MegaLabel _epochCount;
-
 	private Tween? _tween;
 
 	private Tween? _waitTween;
 
 	private const int _maxItemsToList = 10;
 
+	public Control? DefaultFocusedControl => _discoveredContents.GetChildren().OfType<Control>().FirstOrDefault((Control c) => c.IsVisible());
+
 	public override void _Ready()
 	{
-		_badgeContainer = GetNode<Control>("%BadgeContainer");
 		_discoveryContainer = GetNode<Control>("%DiscoveryContainer");
 		_discoveryHeader = GetNode<Control>("%DiscoveryHeader");
-		_cardCount = GetNode<MegaLabel>("%CardCount");
-		_relicCount = GetNode<MegaLabel>("%RelicCount");
-		_potionCount = GetNode<MegaLabel>("%PotionCount");
-		_enemyCount = GetNode<MegaLabel>("%EnemyCount");
-		_epochCount = GetNode<MegaLabel>("%EpochCount");
-		_discoveredCards = _cardCount.GetParent<NDiscoveredItem>();
-		_discoveredRelics = _relicCount.GetParent<NDiscoveredItem>();
-		_discoveredPotions = _potionCount.GetParent<NDiscoveredItem>();
-		_discoveredEnemies = _enemyCount.GetParent<NDiscoveredItem>();
-		_discoveredEpochs = _epochCount.GetParent<NDiscoveredItem>();
+		_discoveredContents = GetNode<Control>("%DiscoveredContents");
+		_discoveredCards = GetNode<NDiscoveredItem>("%DiscoveredCards");
+		_discoveredRelics = GetNode<NDiscoveredItem>("%DiscoveredRelics");
+		_discoveredPotions = GetNode<NDiscoveredItem>("%DiscoveredPotions");
+		_discoveredEnemies = GetNode<NDiscoveredItem>("%DiscoveredEnemies");
+		_discoveredEpochs = GetNode<NDiscoveredItem>("%DiscoveredEpochs");
 		_discoveredCards.Visible = false;
 		_discoveredRelics.Visible = false;
 		_discoveredPotions.Visible = false;
@@ -117,7 +151,7 @@ public class NRunSummary : Control
 		_discoveredEpochs.Visible = false;
 	}
 
-	public async Task AnimateInDiscoveries(RunState runState)
+	public async Task AnimateInDiscoveries(RunState runState, CancellationToken ct)
 	{
 		Player player = LocalContext.GetMe(runState);
 		if (player.DiscoveredCards.Count + player.DiscoveredRelics.Count + player.DiscoveredPotions.Count + player.DiscoveredEnemies.Count + player.DiscoveredEpochs.Count == 0)
@@ -127,31 +161,35 @@ public class NRunSummary : Control
 		}
 		Tween tween = CreateTween();
 		tween.TweenProperty(_discoveryHeader, "modulate:a", 1f, 0.25);
-		await Task.Delay(100);
+		await Task.Delay(100, ct);
+		if (!this.IsValid())
+		{
+			return;
+		}
 		if (player.DiscoveredCards.Count > 0)
 		{
-			string discoveryBodyText = GetDiscoveryBodyText(player.DiscoveredCards, (ModelId id) => ModelDb.GetById<CardModel>(id).Title, "game_over_screen", "DISCOVERY_BODY_CARD", "CardCount");
+			string discoveryBodyText = GetDiscoveryBodyText(player.DiscoveredCards, (ModelId id) => SaveUtil.CardOrDeprecated(id).Title, "game_over_screen", "DISCOVERY_BODY_CARD", "CardCount");
 			_discoveredCards.SetHoverTip(new HoverTip(new LocString("game_over_screen", "DISCOVERY_HEADER_CARD"), discoveryBodyText));
 			_discoveredCards.Visible = true;
 			_discoveredCards.Modulate = StsColors.transparentBlack;
 		}
 		if (player.DiscoveredRelics.Count > 0)
 		{
-			string discoveryBodyText2 = GetDiscoveryBodyText(player.DiscoveredRelics, (ModelId id) => ModelDb.GetById<RelicModel>(id).Title.GetFormattedText(), "game_over_screen", "DISCOVERY_BODY_RELIC", "RelicCount");
+			string discoveryBodyText2 = GetDiscoveryBodyText(player.DiscoveredRelics, (ModelId id) => SaveUtil.RelicOrDeprecated(id).Title.GetFormattedText(), "game_over_screen", "DISCOVERY_BODY_RELIC", "RelicCount");
 			_discoveredRelics.SetHoverTip(new HoverTip(new LocString("game_over_screen", "DISCOVERY_HEADER_RELIC"), discoveryBodyText2));
 			_discoveredRelics.Visible = true;
 			_discoveredRelics.Modulate = StsColors.transparentBlack;
 		}
 		if (player.DiscoveredPotions.Count > 0)
 		{
-			string discoveryBodyText3 = GetDiscoveryBodyText(player.DiscoveredPotions, (ModelId id) => ModelDb.GetById<PotionModel>(id).Title.GetFormattedText(), "game_over_screen", "DISCOVERY_BODY_POTION", "PotionCount");
+			string discoveryBodyText3 = GetDiscoveryBodyText(player.DiscoveredPotions, (ModelId id) => SaveUtil.PotionOrDeprecated(id).Title.GetFormattedText(), "game_over_screen", "DISCOVERY_BODY_POTION", "PotionCount");
 			_discoveredPotions.SetHoverTip(new HoverTip(new LocString("game_over_screen", "DISCOVERY_HEADER_POTION"), discoveryBodyText3));
 			_discoveredPotions.Visible = true;
 			_discoveredPotions.Modulate = StsColors.transparentBlack;
 		}
 		if (player.DiscoveredEnemies.Count > 0)
 		{
-			string discoveryBodyText4 = GetDiscoveryBodyText(player.DiscoveredEnemies, (ModelId id) => ModelDb.GetById<MonsterModel>(id).Title.GetFormattedText(), "game_over_screen", "DISCOVERY_BODY_ENEMY", "EnemyCount");
+			string discoveryBodyText4 = GetDiscoveryBodyText(player.DiscoveredEnemies, (ModelId id) => SaveUtil.MonsterOrDeprecated(id).Title.GetFormattedText(), "game_over_screen", "DISCOVERY_BODY_ENEMY", "EnemyCount");
 			_discoveredEnemies.SetHoverTip(new HoverTip(new LocString("game_over_screen", "DISCOVERY_HEADER_ENEMY"), discoveryBodyText4));
 			_discoveredEnemies.Visible = true;
 			_discoveredEnemies.Modulate = StsColors.transparentBlack;
@@ -168,27 +206,27 @@ public class NRunSummary : Control
 		}
 		if (_discoveredCards.Visible)
 		{
-			_cardCount.SetTextAutoSize($"{player.DiscoveredCards.Count}");
+			_discoveredCards.SetText($"{player.DiscoveredCards.Count}");
 			await TaskHelper.RunSafely(DiscoveryAnimHelper(_discoveredCards));
 		}
 		if (_discoveredRelics.Visible)
 		{
-			_relicCount.SetTextAutoSize($"{player.DiscoveredRelics.Count}");
+			_discoveredRelics.SetText($"{player.DiscoveredRelics.Count}");
 			await TaskHelper.RunSafely(DiscoveryAnimHelper(_discoveredRelics));
 		}
 		if (_discoveredPotions.Visible)
 		{
-			_potionCount.SetTextAutoSize($"{player.DiscoveredPotions.Count}");
+			_discoveredPotions.SetText($"{player.DiscoveredPotions.Count}");
 			await TaskHelper.RunSafely(DiscoveryAnimHelper(_discoveredPotions));
 		}
 		if (_discoveredEnemies.Visible)
 		{
-			_enemyCount.SetTextAutoSize($"{player.DiscoveredEnemies.Count}");
+			_discoveredEnemies.SetText($"{player.DiscoveredEnemies.Count}");
 			await TaskHelper.RunSafely(DiscoveryAnimHelper(_discoveredEnemies));
 		}
 		if (_discoveredEpochs.Visible)
 		{
-			_epochCount.SetTextAutoSize($"{player.DiscoveredEpochs.Count}");
+			_discoveredEpochs.SetText($"{player.DiscoveredEpochs.Count}");
 			await TaskHelper.RunSafely(DiscoveryAnimHelper(_discoveredEpochs));
 		}
 	}
@@ -201,7 +239,7 @@ public class NRunSummary : Control
 		_tween.TweenProperty(node, "modulate", Colors.White, 0.3);
 		_tween.TweenProperty(node, "position:y", 0f, 0.3).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back)
 			.From(100f);
-		await ToSignal(_tween, Tween.SignalName.Finished);
+		await _tween.AwaitFinished(this);
 	}
 
 	private static string GetDiscoveryBodyText<T>(List<T> discoveredIds, Func<T, string> getTitle, string locTable, string locKey, string countParam)
@@ -216,14 +254,39 @@ public class NRunSummary : Control
 		return locString.GetFormattedText() + "\n\n" + text;
 	}
 
+	public void SetControllerNav(Control? focusNeighborTop)
+	{
+		Control[] array = (from c in _discoveredContents.GetChildren().OfType<Control>()
+			where c.IsVisible()
+			select c).ToArray();
+		for (int num = 0; num < array.Length; num++)
+		{
+			Control control = array[num];
+			control.FocusNeighborTop = ((focusNeighborTop != null) ? focusNeighborTop.GetPath() : control.GetPath());
+			control.FocusNeighborBottom = control.GetPath();
+			control.FocusNeighborLeft = ((num > 0) ? array[num - 1].GetPath() : array[^1].GetPath());
+			control.FocusNeighborRight = ((num < array.Length - 1) ? array[num + 1].GetPath() : array[0].GetPath());
+		}
+	}
+
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(1);
+		List<MethodInfo> list = new List<MethodInfo>(2);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.SetControllerNav, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Object, "focusNeighborTop", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
+		}, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -233,9 +296,16 @@ public class NRunSummary : Control
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.SetControllerNav && args.Count == 1)
+		{
+			SetControllerNav(VariantUtils.ConvertTo<Control>(in args[0]));
+			ret = default(godot_variant);
+			return true;
+		}
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -243,17 +313,17 @@ public class NRunSummary : Control
 		{
 			return true;
 		}
+		if (method == MethodName.SetControllerNav)
+		{
+			return true;
+		}
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
-		if (name == PropertyName._badgeContainer)
-		{
-			_badgeContainer = VariantUtils.ConvertTo<Control>(in value);
-			return true;
-		}
 		if (name == PropertyName._discoveryContainer)
 		{
 			_discoveryContainer = VariantUtils.ConvertTo<Control>(in value);
@@ -262,6 +332,11 @@ public class NRunSummary : Control
 		if (name == PropertyName._discoveryHeader)
 		{
 			_discoveryHeader = VariantUtils.ConvertTo<Control>(in value);
+			return true;
+		}
+		if (name == PropertyName._discoveredContents)
+		{
+			_discoveredContents = VariantUtils.ConvertTo<Control>(in value);
 			return true;
 		}
 		if (name == PropertyName._discoveredCards)
@@ -289,31 +364,6 @@ public class NRunSummary : Control
 			_discoveredEpochs = VariantUtils.ConvertTo<NDiscoveredItem>(in value);
 			return true;
 		}
-		if (name == PropertyName._cardCount)
-		{
-			_cardCount = VariantUtils.ConvertTo<MegaLabel>(in value);
-			return true;
-		}
-		if (name == PropertyName._relicCount)
-		{
-			_relicCount = VariantUtils.ConvertTo<MegaLabel>(in value);
-			return true;
-		}
-		if (name == PropertyName._potionCount)
-		{
-			_potionCount = VariantUtils.ConvertTo<MegaLabel>(in value);
-			return true;
-		}
-		if (name == PropertyName._enemyCount)
-		{
-			_enemyCount = VariantUtils.ConvertTo<MegaLabel>(in value);
-			return true;
-		}
-		if (name == PropertyName._epochCount)
-		{
-			_epochCount = VariantUtils.ConvertTo<MegaLabel>(in value);
-			return true;
-		}
 		if (name == PropertyName._tween)
 		{
 			_tween = VariantUtils.ConvertTo<Tween>(in value);
@@ -327,12 +377,13 @@ public class NRunSummary : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
-		if (name == PropertyName._badgeContainer)
+		if (name == PropertyName.DefaultFocusedControl)
 		{
-			value = VariantUtils.CreateFrom(in _badgeContainer);
+			value = VariantUtils.CreateFrom<Control>(DefaultFocusedControl);
 			return true;
 		}
 		if (name == PropertyName._discoveryContainer)
@@ -343,6 +394,11 @@ public class NRunSummary : Control
 		if (name == PropertyName._discoveryHeader)
 		{
 			value = VariantUtils.CreateFrom(in _discoveryHeader);
+			return true;
+		}
+		if (name == PropertyName._discoveredContents)
+		{
+			value = VariantUtils.CreateFrom(in _discoveredContents);
 			return true;
 		}
 		if (name == PropertyName._discoveredCards)
@@ -370,31 +426,6 @@ public class NRunSummary : Control
 			value = VariantUtils.CreateFrom(in _discoveredEpochs);
 			return true;
 		}
-		if (name == PropertyName._cardCount)
-		{
-			value = VariantUtils.CreateFrom(in _cardCount);
-			return true;
-		}
-		if (name == PropertyName._relicCount)
-		{
-			value = VariantUtils.CreateFrom(in _relicCount);
-			return true;
-		}
-		if (name == PropertyName._potionCount)
-		{
-			value = VariantUtils.CreateFrom(in _potionCount);
-			return true;
-		}
-		if (name == PropertyName._enemyCount)
-		{
-			value = VariantUtils.CreateFrom(in _enemyCount);
-			return true;
-		}
-		if (name == PropertyName._epochCount)
-		{
-			value = VariantUtils.CreateFrom(in _epochCount);
-			return true;
-		}
 		if (name == PropertyName._tween)
 		{
 			value = VariantUtils.CreateFrom(in _tween);
@@ -408,64 +439,62 @@ public class NRunSummary : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._badgeContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._discoveryContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._discoveryHeader, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._discoveredContents, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._discoveredCards, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._discoveredRelics, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._discoveredPotions, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._discoveredEnemies, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._discoveredEpochs, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._cardCount, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._relicCount, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._potionCount, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._enemyCount, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._epochCount, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._tween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._waitTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.DefaultFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
-		info.AddProperty(PropertyName._badgeContainer, Variant.From(in _badgeContainer));
 		info.AddProperty(PropertyName._discoveryContainer, Variant.From(in _discoveryContainer));
 		info.AddProperty(PropertyName._discoveryHeader, Variant.From(in _discoveryHeader));
+		info.AddProperty(PropertyName._discoveredContents, Variant.From(in _discoveredContents));
 		info.AddProperty(PropertyName._discoveredCards, Variant.From(in _discoveredCards));
 		info.AddProperty(PropertyName._discoveredRelics, Variant.From(in _discoveredRelics));
 		info.AddProperty(PropertyName._discoveredPotions, Variant.From(in _discoveredPotions));
 		info.AddProperty(PropertyName._discoveredEnemies, Variant.From(in _discoveredEnemies));
 		info.AddProperty(PropertyName._discoveredEpochs, Variant.From(in _discoveredEpochs));
-		info.AddProperty(PropertyName._cardCount, Variant.From(in _cardCount));
-		info.AddProperty(PropertyName._relicCount, Variant.From(in _relicCount));
-		info.AddProperty(PropertyName._potionCount, Variant.From(in _potionCount));
-		info.AddProperty(PropertyName._enemyCount, Variant.From(in _enemyCount));
-		info.AddProperty(PropertyName._epochCount, Variant.From(in _epochCount));
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 		info.AddProperty(PropertyName._waitTween, Variant.From(in _waitTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
 		base.RestoreGodotObjectData(info);
-		if (info.TryGetProperty(PropertyName._badgeContainer, out var value))
+		if (info.TryGetProperty(PropertyName._discoveryContainer, out var value))
 		{
-			_badgeContainer = value.As<Control>();
+			_discoveryContainer = value.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._discoveryContainer, out var value2))
+		if (info.TryGetProperty(PropertyName._discoveryHeader, out var value2))
 		{
-			_discoveryContainer = value2.As<Control>();
+			_discoveryHeader = value2.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._discoveryHeader, out var value3))
+		if (info.TryGetProperty(PropertyName._discoveredContents, out var value3))
 		{
-			_discoveryHeader = value3.As<Control>();
+			_discoveredContents = value3.As<Control>();
 		}
 		if (info.TryGetProperty(PropertyName._discoveredCards, out var value4))
 		{
@@ -487,33 +516,13 @@ public class NRunSummary : Control
 		{
 			_discoveredEpochs = value8.As<NDiscoveredItem>();
 		}
-		if (info.TryGetProperty(PropertyName._cardCount, out var value9))
+		if (info.TryGetProperty(PropertyName._tween, out var value9))
 		{
-			_cardCount = value9.As<MegaLabel>();
+			_tween = value9.As<Tween>();
 		}
-		if (info.TryGetProperty(PropertyName._relicCount, out var value10))
+		if (info.TryGetProperty(PropertyName._waitTween, out var value10))
 		{
-			_relicCount = value10.As<MegaLabel>();
-		}
-		if (info.TryGetProperty(PropertyName._potionCount, out var value11))
-		{
-			_potionCount = value11.As<MegaLabel>();
-		}
-		if (info.TryGetProperty(PropertyName._enemyCount, out var value12))
-		{
-			_enemyCount = value12.As<MegaLabel>();
-		}
-		if (info.TryGetProperty(PropertyName._epochCount, out var value13))
-		{
-			_epochCount = value13.As<MegaLabel>();
-		}
-		if (info.TryGetProperty(PropertyName._tween, out var value14))
-		{
-			_tween = value14.As<Tween>();
-		}
-		if (info.TryGetProperty(PropertyName._waitTween, out var value15))
-		{
-			_waitTween = value15.As<Tween>();
+			_waitTween = value10.As<Tween>();
 		}
 	}
 }

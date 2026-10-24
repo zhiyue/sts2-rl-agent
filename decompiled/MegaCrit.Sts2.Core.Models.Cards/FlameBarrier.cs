@@ -34,7 +34,7 @@ public sealed class FlameBarrier : CardModel
 		NFireBurningVfx child = NFireBurningVfx.Create(base.Owner.Creature, 0.75f, goingRight: false);
 		NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(child);
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<FlameBarrierPower>(base.Owner.Creature, base.DynamicVars["DamageBack"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<FlameBarrierPower>(choiceContext, base.Owner.Creature, base.DynamicVars["DamageBack"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

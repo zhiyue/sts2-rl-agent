@@ -13,6 +13,11 @@ public sealed class AfterimagePower : PowerModel
 {
 	private class Data
 	{
+		/// <summary>
+		/// Keep track of the cards we've seen played and the power amount at the time they were played.
+		/// This lets After Image avoid triggering on cards that started play before it was applied, and avoid gaining
+		/// extra block on multiple plays of After Image.
+		/// </summary>
 		public readonly Dictionary<CardModel, int> amountsForPlayedCards = new Dictionary<CardModel, int>();
 	}
 
@@ -37,7 +42,7 @@ public sealed class AfterimagePower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner.Creature == base.Owner && GetInternalData<Data>().amountsForPlayedCards.Remove(cardPlay.Card, out var value) && value > 0)
 		{

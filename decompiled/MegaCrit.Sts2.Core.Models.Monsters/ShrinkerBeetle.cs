@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Audio;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -15,6 +16,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class ShrinkerBeetle : MonsterModel
 {
+	private const string _stompMove = "STOMP_MOVE";
+
 	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 40, 38);
 
 	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 42, 40);
@@ -45,7 +48,7 @@ public sealed class ShrinkerBeetle : MonsterModel
 		SfxCmd.Play(CastSfx);
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.5f);
 		NCombatRoom.Instance?.RadialBlur(VfxPosition.Left);
-		await PowerCmd.Apply<ShrinkPower>(targets, -1m, base.Creature, null);
+		await PowerCmd.Apply<ShrinkPower>(new ThrowingPlayerChoiceContext(), targets, -1m, base.Creature, null);
 	}
 
 	private async Task ChompMove(IReadOnlyList<Creature> targets)
@@ -62,5 +65,10 @@ public sealed class ShrinkerBeetle : MonsterModel
 			.WithAttackerFx(null, AttackSfx)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "STOMP_MOVE";
 	}
 }

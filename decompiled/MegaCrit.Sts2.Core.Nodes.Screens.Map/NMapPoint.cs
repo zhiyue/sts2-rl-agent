@@ -23,60 +23,141 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Map;
 [ScriptPath("res://src/Core/Nodes/Screens/Map/NMapPoint.cs")]
 public abstract class NMapPoint : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public new static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'IsInputAllowed' method.
+		/// </summary>
 		public static readonly StringName IsInputAllowed = "IsInputAllowed";
 
+		/// <summary>
+		/// Cached name for the 'RefreshVisualsInstantly' method.
+		/// </summary>
 		public static readonly StringName RefreshVisualsInstantly = "RefreshVisualsInstantly";
 
+		/// <summary>
+		/// Cached name for the 'OnSelected' method.
+		/// </summary>
 		public static readonly StringName OnSelected = "OnSelected";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'RefreshColorInstantly' method.
+		/// </summary>
 		public static readonly StringName RefreshColorInstantly = "RefreshColorInstantly";
 
+		/// <summary>
+		/// Cached name for the 'RefreshState' method.
+		/// </summary>
 		public static readonly StringName RefreshState = "RefreshState";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'TraveledColor' property.
+		/// </summary>
 		public static readonly StringName TraveledColor = "TraveledColor";
 
+		/// <summary>
+		/// Cached name for the 'UntravelableColor' property.
+		/// </summary>
 		public static readonly StringName UntravelableColor = "UntravelableColor";
 
+		/// <summary>
+		/// Cached name for the 'HoveredColor' property.
+		/// </summary>
 		public static readonly StringName HoveredColor = "HoveredColor";
 
+		/// <summary>
+		/// Cached name for the 'HoverScale' property.
+		/// </summary>
 		public static readonly StringName HoverScale = "HoverScale";
 
+		/// <summary>
+		/// Cached name for the 'DownScale' property.
+		/// </summary>
 		public static readonly StringName DownScale = "DownScale";
 
+		/// <summary>
+		/// Cached name for the 'AllowFocusWhileDisabled' property.
+		/// </summary>
 		public new static readonly StringName AllowFocusWhileDisabled = "AllowFocusWhileDisabled";
 
+		/// <summary>
+		/// Cached name for the 'VoteContainer' property.
+		/// </summary>
 		public static readonly StringName VoteContainer = "VoteContainer";
 
+		/// <summary>
+		/// Cached name for the 'IsTravelable' property.
+		/// </summary>
 		public static readonly StringName IsTravelable = "IsTravelable";
 
+		/// <summary>
+		/// Cached name for the 'State' property.
+		/// </summary>
 		public static readonly StringName State = "State";
 
+		/// <summary>
+		/// Cached name for the 'TargetColor' property.
+		/// </summary>
 		public static readonly StringName TargetColor = "TargetColor";
 
+		/// <summary>
+		/// Cached name for the '_state' field.
+		/// </summary>
 		public static readonly StringName _state = "_state";
 
+		/// <summary>
+		/// Cached name for the '_outlineColor' field.
+		/// </summary>
 		public static readonly StringName _outlineColor = "_outlineColor";
 
+		/// <summary>
+		/// Cached name for the '_controllerSelectionReticle' field.
+		/// </summary>
 		public static readonly StringName _controllerSelectionReticle = "_controllerSelectionReticle";
 
+		/// <summary>
+		/// Cached name for the '_screen' field.
+		/// </summary>
 		public static readonly StringName _screen = "_screen";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -109,6 +190,11 @@ public abstract class NMapPoint : NButton
 
 	public NMultiplayerVoteContainer VoteContainer { get; set; }
 
+	/// <summary>
+	/// Indicates whether a node is an adjacent node above the current node (you're able to travel to
+	/// it IF you have completed the room).
+	/// If you want logic to trigger based on the button being clickable, use _isEnabled instead.
+	/// </summary>
 	protected bool IsTravelable
 	{
 		get
@@ -128,6 +214,9 @@ public abstract class NMapPoint : NButton
 
 	public MapPoint Point { get; protected set; }
 
+	/// <summary>
+	/// This map point's current state. Affects how it looks and its hoverability/clickability.
+	/// </summary>
 	public MapPointState State
 	{
 		get
@@ -184,13 +273,16 @@ public abstract class NMapPoint : NButton
 		return false;
 	}
 
+	/// <summary>
+	/// Returns true when a player's icon should be displayed to indicate that they've voted for this map point.
+	/// </summary>
 	private bool ShouldDisplayPlayerVote(Player player)
 	{
 		if (_screen.PlayerVoteDictionary.TryGetValue(player, out var value) && value.HasValue)
 		{
 			return value == Point.coord;
 		}
-		return _runState.CurrentLocation.coord == Point.coord;
+		return _runState.MapLocation.coord == Point.coord;
 	}
 
 	public void RefreshVisualsInstantly()
@@ -200,10 +292,18 @@ public abstract class NMapPoint : NButton
 		RefreshState();
 	}
 
+	/// <summary>
+	/// Override this to add extra behavior when a map node selection.
+	/// Usually for visuals.
+	/// </summary>
 	public virtual void OnSelected()
 	{
 	}
 
+	/// <summary>
+	/// The base class handles the logic for selecting a map point, so we don't allow overriding it. Instead, override
+	/// OnSelected to run logic before selecting the map point.
+	/// </summary>
 	protected sealed override void OnRelease()
 	{
 		if (IsTravelable && (Point.coord.row != 0 || !TestMode.IsOff || SaveManager.Instance.SeenFtue("map_select_ftue")) && _screen.Drawings.GetLocalDrawingMode() == DrawingMode.None && (_screen.IsNodeOnScreen(this) || !NControllerManager.Instance.IsUsingController))
@@ -238,11 +338,11 @@ public abstract class NMapPoint : NButton
 		{
 			_controllerSelectionReticle.OnSelect();
 		}
-		if (_state != MapPointState.Traveled || !(_runState.CurrentLocation.coord != Point.coord) || NControllerManager.Instance.IsUsingController)
+		if (_state != MapPointState.Traveled || !(_runState.MapLocation.coord != Point.coord) || NControllerManager.Instance.IsUsingController)
 		{
 			return;
 		}
-		MapPointHistoryEntry historyEntryFor = _runState.GetHistoryEntryFor(new RunLocation(Point.coord, _runState.CurrentActIndex));
+		MapPointHistoryEntry historyEntryFor = _runState.GetHistoryEntryFor(new MapLocation(Point.coord, _runState.CurrentActIndex));
 		if (historyEntryFor != null)
 		{
 			int num = Point.coord.row + 1;
@@ -264,6 +364,11 @@ public abstract class NMapPoint : NButton
 		NHoverTipSet.Remove(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -281,6 +386,7 @@ public abstract class NMapPoint : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -346,6 +452,7 @@ public abstract class NMapPoint : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -392,6 +499,7 @@ public abstract class NMapPoint : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -428,6 +536,7 @@ public abstract class NMapPoint : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -515,6 +624,11 @@ public abstract class NMapPoint : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -536,6 +650,7 @@ public abstract class NMapPoint : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -548,6 +663,7 @@ public abstract class NMapPoint : NButton
 		info.AddProperty(PropertyName._screen, Variant.From(in _screen));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

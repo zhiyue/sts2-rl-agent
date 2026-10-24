@@ -5,18 +5,20 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Wriggler : MonsterModel
 {
+	private const string _nastyBiteMoveId = "NASTY_BITE_MOVE";
+
 	private const string _spawnedMoveId = "SPAWNED_MOVE";
 
 	private const string _initMoveId = "INIT_MOVE";
@@ -91,10 +93,19 @@ public sealed class Wriggler : MonsterModel
 			NWormyImpactVfx nWormyImpactVfx = NWormyImpactVfx.Create(target);
 			if (nWormyImpactVfx != null)
 			{
-				NCombatRoom.Instance.CombatVfxContainer.AddChildSafely(nWormyImpactVfx);
+				target.GetVfxContainer()?.AddChildSafely(nWormyImpactVfx);
 			}
 		}
-		await CardPileCmd.AddToCombatAndPreview<Infection>(targets, PileType.Discard, 1, addedByPlayer: false);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await CardPileCmd.AddToCombatAndPreview<Infection>(targets, PileType.Discard, 1, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		if (moveStateId != "NASTY_BITE_MOVE")
+		{
+			return moveStateId != "SPAWNED_MOVE";
+		}
+		return false;
 	}
 }

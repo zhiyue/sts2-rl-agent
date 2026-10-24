@@ -8,21 +8,40 @@ using Godot.NativeInterop;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
+/// <summary>
+/// Lays out buttons centered in a vertical column. When that column is full, starts a new column and centers both.
+/// This assumes that all children are the same size.
+/// </summary>
 [Tool]
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NJoinFriendScreenButtonLayout.cs")]
 public class NJoinFriendScreenButtonLayout : Container
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Container.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Notification' method.
+		/// </summary>
 		public new static readonly StringName _Notification = "_Notification";
 
+		/// <summary>
+		/// Cached name for the 'LayoutChildren' method.
+		/// </summary>
 		public static readonly StringName LayoutChildren = "LayoutChildren";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Container.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Container.SignalName
 	{
 	}
@@ -53,6 +72,11 @@ public class NJoinFriendScreenButtonLayout : Container
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -65,6 +89,7 @@ public class NJoinFriendScreenButtonLayout : Container
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -83,6 +108,7 @@ public class NJoinFriendScreenButtonLayout : Container
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -97,12 +123,14 @@ public class NJoinFriendScreenButtonLayout : Container
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

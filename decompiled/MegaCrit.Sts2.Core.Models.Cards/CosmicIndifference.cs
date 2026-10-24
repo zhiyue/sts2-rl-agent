@@ -25,9 +25,26 @@ public sealed class CosmicIndifference : CardModel
 	{
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
 		CardSelectorPrefs prefs = new CardSelectorPrefs(base.SelectionScreenPrompt, 1);
-		CardPile pile = PileType.Discard.GetPile(base.Owner);
-		CardModel cardModel = (await CardSelectCmd.FromSimpleGrid(choiceContext, pile.Cards, base.Owner, prefs)).FirstOrDefault();
-		if (cardModel != null)
+		PileType.Discard.GetPile(base.Owner);
+		CardModel cardModel = (await CardSelectCmd.FromCombatPile(choiceContext, PileType.Discard.GetPile(base.Owner), base.Owner, prefs)).FirstOrDefault();
+		bool flag = cardModel != null;
+		bool flag2 = flag;
+		if (flag2)
+		{
+			bool flag3;
+			switch (cardModel.Pile?.Type)
+			{
+			case PileType.Draw:
+			case PileType.Discard:
+				flag3 = true;
+				break;
+			default:
+				flag3 = false;
+				break;
+			}
+			flag2 = flag3;
+		}
+		if (flag2)
 		{
 			await CardPileCmd.Add(cardModel, PileType.Draw, CardPilePosition.Top);
 		}

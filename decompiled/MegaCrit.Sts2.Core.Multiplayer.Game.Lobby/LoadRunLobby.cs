@@ -14,6 +14,12 @@ using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 
+/// <summary>
+/// Class which handles the connection flow for players resuming a run from a save file.
+/// This exists before Run, giving players an opportunity to all join before the run is resumed.
+/// Only connections from players in the loaded save file will be accepted; all other connections will be denied.
+/// <see cref="T:MegaCrit.Sts2.Core.Multiplayer.Game.Lobby.RunLobby" /> handles player connection and disconnection after the run begins.
+/// </summary>
 public class LoadRunLobby
 {
 	private struct ConnectingPlayer : IEquatable<ConnectingPlayer>
@@ -64,22 +70,12 @@ public class LoadRunLobby
 
 	public HashSet<ulong> ConnectedPlayerIds { get; } = new HashSet<ulong>();
 
-	public GameMode GameMode
-	{
-		get
-		{
-			if (Run.Modifiers.Count <= 0)
-			{
-				return GameMode.Standard;
-			}
-			if (!Run.DailyTime.HasValue)
-			{
-				return GameMode.Custom;
-			}
-			return GameMode.Daily;
-		}
-	}
+	public GameMode GameMode => Run.GameMode;
 
+	/// <summary>
+	/// If we are the host, this is the amount of time we give clients to send the handshake response in milliseconds.
+	/// Public for tests.
+	/// </summary>
 	public int HandshakeTimeout { get; set; } = 10000;
 
 	public LoadRunLobby(INetGameService netService, ILoadRunLobbyListener lobbyListener, SerializableRun runSave)
@@ -114,7 +110,15 @@ public class LoadRunLobby
 		}
 	}
 
-	public void CleanUp(bool disconnectSession)
+	/// <summary>
+	/// This should be called to cleanup the lobby before exiting the lobby screen.
+	/// </summary>
+	/// <param name="disconnectSession">
+	/// If true, the net service will be disconnected. Pass true if the lobby is being closed rather than transitioning
+	/// to a run.
+	/// </param>
+	/// <param name="error">If disconnectSession is true, this is the error that is sent to clients.</param>
+	public void CleanUp(bool disconnectSession, NetError error = NetError.Quit)
 	{
 		NetService.UnregisterMessageHandler<ClientLoadJoinRequestMessage>(HandleClientLoadJoinRequestMessage);
 		NetService.UnregisterMessageHandler<ClientLobbyJoinRequestMessage>(HandleClientLobbyJoinRequestMessage);
@@ -127,7 +131,7 @@ public class LoadRunLobby
 		{
 			if (NetService.IsConnected)
 			{
-				NetService.Disconnect(NetError.Quit);
+				NetService.Disconnect(error);
 			}
 			InputSynchronizer.Dispose();
 		}
@@ -140,6 +144,9 @@ public class LoadRunLobby
 		}
 	}
 
+	/// <summary>
+	/// Should be called when the lobby opens on the host player's side to generate the host's lobby player.
+	/// </summary>
 	public void AddLocalHostPlayer()
 	{
 		if (NetService.Type == NetGameType.Client)
@@ -252,35 +259,47 @@ public class LoadRunLobby
 		{
 			LobbyListener.PlayerReadyChanged(senderId);
 		}
-		BeginRunIfAllPlayersReady();
+		BeginRunForAllPlayersIfAllReady();
 	}
 
 	private void HandleLobbyBeginRunMessage(LobbyBeginLoadedRunMessage message, ulong senderId)
 	{
 		_logger.Debug("Received LobbyBeginLoadedRunMessage");
 		_isBeginningRun = true;
-		LobbyListener.BeginRun();
+		BeginRunLocally();
 	}
 
-	private async Task TryBeginRun()
+	private async Task TryBeginRunForAllPlayers()
 	{
 		if (NetService.Type == NetGameType.Client)
 		{
-			throw new InvalidOperationException("Can only begin run as host!");
+			throw new InvalidOperationException("Can only begin run for all peers as host!");
 		}
+		if (_isBeginningRun)
+		{
+			_logger.Warn("Tried to begin run twice, ignoring second one!");
+			return;
+		}
+		_isBeginningRun = true;
 		if (!(await LobbyListener.ShouldAllowRunToBegin()))
 		{
 			SetReady(ready: false);
+			_isBeginningRun = false;
 			return;
 		}
 		NetService.SendMessage(default(LobbyBeginLoadedRunMessage));
-		_isBeginningRun = true;
-		LobbyListener.BeginRun();
+		BeginRunLocally();
 		if (NetService.Type == NetGameType.Host)
 		{
 			INetHostGameService netHostGameService = (INetHostGameService)NetService;
 			netHostGameService.NetHost?.SetHostIsClosed(isClosed: true);
 		}
+	}
+
+	private void BeginRunLocally()
+	{
+		NetService.SetBufferMessages(bufferMessages: true);
+		LobbyListener.BeginRun();
 	}
 
 	public void SetReady(bool ready)
@@ -299,7 +318,8 @@ public class LoadRunLobby
 		};
 		NetService.SendMessage(message);
 		LobbyListener.PlayerReadyChanged(NetService.NetId);
-		BeginRunIfAllPlayersReady();
+		_logger.Info($"Local player {NetService.NetId} is ready");
+		BeginRunForAllPlayersIfAllReady();
 	}
 
 	public bool IsPlayerReady(ulong playerId)
@@ -307,11 +327,24 @@ public class LoadRunLobby
 		return _readyPlayers.Contains(playerId);
 	}
 
-	private void BeginRunIfAllPlayersReady()
+	public bool IsAboutToBeginGame()
 	{
-		if (_connectingPlayers.Count <= 0 && (NetService.Type == NetGameType.Host || NetService.Type == NetGameType.Singleplayer) && !ConnectedPlayerIds.Except(_readyPlayers).Any())
+		if (_connectingPlayers.Count > 0)
 		{
-			TaskHelper.RunSafely(TryBeginRun());
+			return false;
+		}
+		if (NetService.Type.IsMultiplayer() && ConnectedPlayerIds.Count == 1)
+		{
+			return false;
+		}
+		return !ConnectedPlayerIds.Except(_readyPlayers).Any();
+	}
+
+	private void BeginRunForAllPlayersIfAllReady()
+	{
+		if ((NetService.Type == NetGameType.Host || NetService.Type == NetGameType.Singleplayer) && IsAboutToBeginGame())
+		{
+			TaskHelper.RunSafely(TryBeginRunForAllPlayers());
 		}
 	}
 
@@ -356,7 +389,7 @@ public class LoadRunLobby
 			int num = _connectingPlayers.IndexOf(connectingPlayer);
 			if (num >= 0)
 			{
-				Log.Info($"Disconnecting player {connectingPlayer.id} because they did not respond to the initial game join handshake within {HandshakeTimeout}ms");
+				_logger.Info($"Disconnecting player {connectingPlayer.id} because they did not respond to the initial game join handshake within {HandshakeTimeout}ms");
 				INetHostGameService netHostGameService = (INetHostGameService)NetService;
 				netHostGameService.DisconnectClient(connectingPlayer.id, NetError.HandshakeTimeout);
 			}
@@ -378,7 +411,7 @@ public class LoadRunLobby
 			RemoveConnectingPlayer(playerId);
 			InputSynchronizer.OnPlayerDisconnected(message.playerId);
 			LobbyListener.RemotePlayerDisconnected(playerId);
-			BeginRunIfAllPlayersReady();
+			BeginRunForAllPlayersIfAllReady();
 		}
 	}
 

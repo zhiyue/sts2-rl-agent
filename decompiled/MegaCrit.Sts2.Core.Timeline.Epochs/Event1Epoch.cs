@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Cultists
+/// </summary>
 public class Event1Epoch : EpochModel
 {
 	public override string Id => "EVENT1_EPOCH";

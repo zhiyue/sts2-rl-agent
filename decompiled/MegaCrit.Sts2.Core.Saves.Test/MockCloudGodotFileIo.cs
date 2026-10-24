@@ -3,8 +3,13 @@ using System.Linq;
 
 namespace MegaCrit.Sts2.Core.Saves.Test;
 
+/// <summary>
+/// A minimalist mock implementation of ICloudSaveStore for testing.
+/// </summary>
 public class MockCloudGodotFileIo : MockGodotFileIo, ICloudSaveStore, ISaveStore
 {
+	public bool hasUserEnabledCloudSync = true;
+
 	public MockCloudGodotFileIo(string saveDir)
 		: base(saveDir)
 	{
@@ -41,5 +46,10 @@ public class MockCloudGodotFileIo : MockGodotFileIo, ICloudSaveStore, ISaveStore
 
 	public void EndSaveBatch()
 	{
+	}
+
+	public bool HasUserEnabledCloudSync()
+	{
+		return hasUserEnabledCloudSync;
 	}
 }

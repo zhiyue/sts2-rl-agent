@@ -26,6 +26,6 @@ public sealed class LiquidBronze : PotionModel
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
-		await PowerCmd.Apply<ThornsPower>(target, base.DynamicVars["ThornsPower"].BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<ThornsPower>(choiceContext, target, base.DynamicVars["ThornsPower"].BaseValue, base.Owner.Creature, null);
 	}
 }

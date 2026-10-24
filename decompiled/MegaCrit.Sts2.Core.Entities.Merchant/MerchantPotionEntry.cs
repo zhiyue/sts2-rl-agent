@@ -15,6 +15,10 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Entities.Merchant;
 
+/// <summary>
+/// Manages a purchasable potion in the merchant shop.
+///
+/// </summary>
 public sealed class MerchantPotionEntry : MerchantEntry
 {
 	public PotionModel? Model { get; private set; }

@@ -6,6 +6,10 @@ using MegaCrit.Sts2.Core.Rooms;
 
 namespace MegaCrit.Sts2.Core.Entities.Merchant;
 
+/// <summary>
+/// Represents purchasable entry in the merchant shop.
+/// Wrapped in an NMerchant_Node that manages the UI interactions.
+/// </summary>
 public abstract class MerchantEntry
 {
 	protected readonly Player _player;
@@ -64,6 +68,11 @@ public abstract class MerchantEntry
 
 	public async Task<bool> OnTryPurchaseWrapper(MerchantInventory? inventory, bool ignoreCost = false)
 	{
+		if (!IsStocked)
+		{
+			InvokePurchaseFailed(PurchaseStatus.FailureOutOfStock);
+			return false;
+		}
 		if (!EnoughGold && !ignoreCost)
 		{
 			InvokePurchaseFailed(PurchaseStatus.FailureGold);
@@ -86,9 +95,22 @@ public abstract class MerchantEntry
 		return success;
 	}
 
+	/// <summary>
+	/// Subclass-specific logic for purchasing the item in the entry.
+	/// </summary>
+	/// <param name="inventory">Inventory that the entry is being purchased in.</param>
+	/// <param name="ignoreCost">Whether or not the cost should be ignored</param>
+	/// <returns>Tuple containing whether or not the purchase was successful and the amount of gold spent.</returns>
 	protected abstract Task<(bool, int)> OnTryPurchase(MerchantInventory? inventory, bool ignoreCost);
 
+	/// <summary>
+	/// Subclass-specific logic for clearing the entry after a purchase.
+	/// </summary>
 	protected abstract void ClearAfterPurchase();
 
+	/// <summary>
+	/// Subclass-specific logic for restocking the entry after a purchase if the player has an effect like
+	/// <see cref="T:MegaCrit.Sts2.Core.Models.Relics.TheCourier" />.
+	/// </summary>
 	protected abstract void RestockAfterPurchase(MerchantInventory? inventory);
 }

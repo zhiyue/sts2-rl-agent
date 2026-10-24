@@ -29,6 +29,6 @@ public sealed class WeakPotion : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		NCombatRoom.Instance?.PlaySplashVfx(target, new Color("94f882"));
-		await PowerCmd.Apply<WeakPower>(target, base.DynamicVars.Weak.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<WeakPower>(choiceContext, target, base.DynamicVars.Weak.BaseValue, base.Owner.Creature, null);
 	}
 }

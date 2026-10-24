@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -21,38 +22,96 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.PotionLab;
 [ScriptPath("res://src/Core/Nodes/Screens/PotionLab/NPotionLab.cs")]
 public class NPotionLab : NSubmenu
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
+		public new static readonly StringName _EnterTree = "_EnterTree";
+
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuClosed' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuClosed = "OnSubmenuClosed";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuShown' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuShown = "OnSubmenuShown";
 
+		/// <summary>
+		/// Cached name for the 'ClearPotions' method.
+		/// </summary>
 		public static readonly StringName ClearPotions = "ClearPotions";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_screenContents' field.
+		/// </summary>
 		public static readonly StringName _screenContents = "_screenContents";
 
+		/// <summary>
+		/// Cached name for the '_common' field.
+		/// </summary>
 		public static readonly StringName _common = "_common";
 
+		/// <summary>
+		/// Cached name for the '_uncommon' field.
+		/// </summary>
 		public static readonly StringName _uncommon = "_uncommon";
 
+		/// <summary>
+		/// Cached name for the '_rare' field.
+		/// </summary>
 		public static readonly StringName _rare = "_rare";
 
+		/// <summary>
+		/// Cached name for the '_special' field.
+		/// </summary>
 		public static readonly StringName _special = "_special";
 
+		/// <summary>
+		/// Cached name for the '_screenTween' field.
+		/// </summary>
 		public static readonly StringName _screenTween = "_screenTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
 	}
@@ -68,6 +127,8 @@ public class NPotionLab : NSubmenu
 	private NPotionLabCategory _rare;
 
 	private NPotionLabCategory _special;
+
+	private CancellationTokenSource _cts = new CancellationTokenSource();
 
 	private Tween? _screenTween;
 
@@ -99,6 +160,16 @@ public class NPotionLab : NSubmenu
 		_uncommon = GetNode<NPotionLabCategory>("%Uncommon");
 		_rare = GetNode<NPotionLabCategory>("%Rare");
 		_special = GetNode<NPotionLabCategory>("%Special");
+	}
+
+	public override void _EnterTree()
+	{
+		_cts = new CancellationTokenSource();
+	}
+
+	public override void _ExitTree()
+	{
+		_cts.Cancel();
 	}
 
 	public override void OnSubmenuOpened()
@@ -185,7 +256,7 @@ public class NPotionLab : NSubmenu
 				}
 			}
 		}
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame(_cts.Token);
 		_common.Modulate = Colors.White;
 		_uncommon.Modulate = Colors.White;
 		_rare.Modulate = Colors.White;
@@ -202,12 +273,19 @@ public class NPotionLab : NSubmenu
 		_special.ClearPotions();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(6);
+		List<MethodInfo> list = new List<MethodInfo>(8);
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal | MethodFlags.Static, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnSubmenuOpened, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnSubmenuClosed, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnSubmenuShown, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -215,6 +293,7 @@ public class NPotionLab : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -226,6 +305,18 @@ public class NPotionLab : NSubmenu
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._EnterTree && args.Count == 0)
+		{
+			_EnterTree();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -268,6 +359,7 @@ public class NPotionLab : NSubmenu
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -276,6 +368,14 @@ public class NPotionLab : NSubmenu
 			return true;
 		}
 		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName._EnterTree)
+		{
+			return true;
+		}
+		if (method == MethodName._ExitTree)
 		{
 			return true;
 		}
@@ -298,6 +398,7 @@ public class NPotionLab : NSubmenu
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -334,6 +435,7 @@ public class NPotionLab : NSubmenu
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -375,6 +477,11 @@ public class NPotionLab : NSubmenu
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -389,6 +496,7 @@ public class NPotionLab : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -401,6 +509,7 @@ public class NPotionLab : NSubmenu
 		info.AddProperty(PropertyName._screenTween, Variant.From(in _screenTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

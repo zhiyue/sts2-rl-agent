@@ -33,6 +33,10 @@ public class UnlockConsoleCmd : AbstractConsoleCmd
 		{
 			c.UnlockEvents(s);
 		},
+		["acts"] = delegate(UnlockConsoleCmd c, List<string>? s)
+		{
+			c.UnlockActs();
+		},
 		["epochs"] = delegate(UnlockConsoleCmd c, List<string>? s)
 		{
 			c.UnlockEpochs(s);
@@ -48,6 +52,7 @@ public class UnlockConsoleCmd : AbstractConsoleCmd
 			c.UnlockRelics(null);
 			c.UnlockMonsters(null);
 			c.UnlockEvents(null);
+			c.UnlockActs();
 			c.UnlockEpochs(null);
 			c.UnlockAscensions(null);
 		}
@@ -69,7 +74,7 @@ public class UnlockConsoleCmd : AbstractConsoleCmd
 
 	public override string Args => "<type:string>";
 
-	public override string Description => "Marks all cards/potions/relics/monsters/events/epochs/ascensions as discovered, or 'all' to unlock everything.";
+	public override string Description => "Marks all cards/potions/relics/monsters/events/acts/epochs/ascensions as discovered, or 'all' to unlock everything.";
 
 	public override bool IsNetworked => false;
 
@@ -151,6 +156,14 @@ public class UnlockConsoleCmd : AbstractConsoleCmd
 					Wins = 1
 				});
 			}
+		}
+	}
+
+	private void UnlockActs()
+	{
+		foreach (ActModel act in ModelDb.Acts)
+		{
+			SaveManager.Instance.Progress.MarkActAsSeen(act.Id);
 		}
 	}
 

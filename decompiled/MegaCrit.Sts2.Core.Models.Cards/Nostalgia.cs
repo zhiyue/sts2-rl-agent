@@ -15,7 +15,7 @@ public sealed class Nostalgia : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<NostalgiaPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		await PowerCmd.Apply<NostalgiaPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

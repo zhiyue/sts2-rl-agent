@@ -28,7 +28,7 @@ public sealed class FightThrough : CardModel
 		for (int i = 0; i < 2; i++)
 		{
 			CardModel card = base.CombatState.CreateCard<Wound>(base.Owner);
-			CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, addedByPlayer: true));
+			CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, base.Owner));
 		}
 	}
 

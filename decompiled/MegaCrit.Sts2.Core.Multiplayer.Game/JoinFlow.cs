@@ -17,6 +17,9 @@ using MegaCrit.Sts2.Core.Unlocks;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game;
 
+/// <summary>
+/// Object which manages the join flow for the local player, who joins as a client.
+/// </summary>
 public class JoinFlow
 {
 	private TaskCompletionSource<InitialGameInfoMessage>? _connectCompletion;
@@ -33,6 +36,15 @@ public class JoinFlow
 
 	public CancellationTokenSource CancelToken { get; private set; } = new CancellationTokenSource();
 
+	/// <summary>
+	/// Begins the join flow.
+	/// This task returns either a JoinResult with the final message in the join flow, for use initializing the run or
+	/// the Lobby in the case of a rejoin or a join, respectively.
+	/// </summary>
+	/// <param name="initializer">The object to use when initializing the connection.</param>
+	/// <param name="sceneTree">Scene tree to use for hooking into update.</param>
+	/// <throws>ClientConnectionFailedException if the join fails. In this case, you should not use NetService. An error
+	/// should be shown to the user and they may try to join again.</throws>
 	public async Task<JoinResult> Begin(IClientConnectionInitializer initializer, SceneTree sceneTree)
 	{
 		MegaCrit.Sts2.Core.Logging.Logger.logLevelTypeMap[LogType.Network] = LogLevel.Debug;
@@ -79,8 +91,8 @@ public class JoinFlow
 				{
 					throw new ClientConnectionFailedException("Version mismatch. Host: " + initialMessage.version + " Ours: " + text, new NetErrorInfo(ConnectionFailureReason.VersionMismatch));
 				}
-				List<string> list = ModManager.GetModNameList() ?? new List<string>();
-				List<string> list2 = initialMessage.mods ?? new List<string>();
+				List<string> list = ModManager.GetGameplayRelevantModNameList() ?? new List<string>();
+				List<string> list2 = initialMessage.gameplayAffectingMods ?? new List<string>();
 				List<string> list3 = list2.Except(list).ToList();
 				List<string> list4 = list.Except(list2).ToList();
 				ConnectionFailureExtraInfo extraInfo = new ConnectionFailureExtraInfo
@@ -90,13 +102,21 @@ public class JoinFlow
 				};
 				if (list3.Count > 0 || list4.Count > 0)
 				{
-					_logger.Warn($"Mod mismatch! Mods that host has that we don't: {string.Join(",", list3)}. Mods that we have that host doesn't: {string.Join(",", list4)}.");
+					_logger.Warn($"Mismatch in gameplay-relevant mods with the host!\nMods that host has that we don't: {string.Join(",", list3)}.\nMods that we have that host doesn't: {string.Join(",", list4)}.");
 					throw new ClientConnectionFailedException("Mod mismatch. Host mods: " + string.Join(",", list2) + " Local mods: " + string.Join(",", list), new NetErrorInfo(ConnectionFailureReason.ModMismatch, extraInfo));
 				}
 				if (initialMessage.idDatabaseHash != ModelIdSerializationCache.Hash)
 				{
 					_logger.Warn("Our version " + text + " matches the host's, but our Model ID hash does not! Disconnecting");
 					throw new ClientConnectionFailedException($"ModelDb hash mismatch. Host: {initialMessage.idDatabaseHash} Ours: {ModelIdSerializationCache.Hash}", new NetErrorInfo(ConnectionFailureReason.VersionMismatch, extraInfo));
+				}
+				List<string> list5 = ModManager.GetNonGameplayRelevantModNameList() ?? new List<string>();
+				List<string> list6 = initialMessage.otherMods ?? new List<string>();
+				List<string> list7 = list6.Except(list5).ToList();
+				List<string> list8 = list5.Except(list6).ToList();
+				if (list8.Count > 0 || list7.Count > 0)
+				{
+					_logger.Warn($"Mismatch in non-gameplay relevant mods. This is allowed, but it's up to the mod authors to guarantee that it doesn't break anything.\nNon-gameplay relevant mods that host has that we don't: {string.Join(",", list7)}.\nNon-gameplay relevant mods that we have that host doesn't: {string.Join(",", list8)}.");
 				}
 				switch (state)
 				{

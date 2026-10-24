@@ -12,15 +12,27 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 [ScriptPath("res://src/Core/Nodes/Vfx/Utilities/LocalizedTexture.cs")]
 public class LocalizedTexture : Resource
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Resource.MethodName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Resource.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_textures' field.
+		/// </summary>
 		public static readonly StringName _textures = "_textures";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Resource.SignalName
 	{
 	}
@@ -48,6 +60,7 @@ public class LocalizedTexture : Resource
 		return true;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -59,6 +72,7 @@ public class LocalizedTexture : Resource
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -70,6 +84,11 @@ public class LocalizedTexture : Resource
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -78,6 +97,7 @@ public class LocalizedTexture : Resource
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -85,6 +105,7 @@ public class LocalizedTexture : Resource
 		info.AddProperty(PropertyName._textures, Variant.CreateFrom(_textures));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

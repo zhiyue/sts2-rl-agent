@@ -4,6 +4,7 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
+using MegaCrit.Sts2.Core.Helpers;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
@@ -11,26 +12,56 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NCubexConstructVfx.cs")]
 public class NCubexConstructVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'StartLaser' method.
+		/// </summary>
 		public static readonly StringName StartLaser = "StartLaser";
 
+		/// <summary>
+		/// Cached name for the 'EndLaser' method.
+		/// </summary>
 		public static readonly StringName EndLaser = "EndLaser";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_laser' field.
+		/// </summary>
 		public static readonly StringName _laser = "_laser";
 
+		/// <summary>
+		/// Cached name for the '_rings' field.
+		/// </summary>
 		public static readonly StringName _rings = "_rings";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -47,19 +78,21 @@ public class NCubexConstructVfx : Node
 	{
 		_parent = GetParent<Node2D>();
 		_animController = new MegaSprite(_parent);
-		_animController.ConnectAnimationEvent(Callable.From<GodotObject, GodotObject, GodotObject, GodotObject>(OnAnimationEvent));
 		_laser = _parent.GetNode<NLaserVfx>("LaserBone/Laser");
 		_rings = _parent.GetNode<Node2D>("LaserBone/Rings");
-		MegaSkin megaSkin = _animController.NewSkin("newSkin");
-		MegaSkeleton skeleton = _animController.GetSkeleton();
-		MegaSkin skin = skeleton.GetData().FindSkin("moss3");
-		megaSkin.AddSkin(skin);
-		skeleton.SetSkin(megaSkin);
-		_animController.GetAnimationState().SetAnimation("idle_loop");
 		_rings.Visible = false;
 		_laser.Scale = Vector2.One / _parent.Scale;
 		_laser.Visible = false;
 		_laser.ResetLaser();
+		this.RunWhenSpineReady(_animController, delegate(MegaAnimationState animState)
+		{
+			MegaSkeleton skeleton = _animController.GetSkeleton();
+			_animController.ConnectAnimationEvent(Callable.From<GodotObject, GodotObject, GodotObject, GodotObject>(OnAnimationEvent));
+			MegaSkin megaSkin = _animController.NewSkin("newSkin");
+			megaSkin.AddSkin(skeleton.GetData().FindSkin("moss3"));
+			skeleton.SetSkin(megaSkin);
+			animState.SetAnimation("idle_loop");
+		});
 	}
 
 	private void OnAnimationEvent(GodotObject _, GodotObject __, GodotObject ___, GodotObject spineEvent)
@@ -95,6 +128,11 @@ public class NCubexConstructVfx : Node
 		_rings.Visible = false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -112,6 +150,7 @@ public class NCubexConstructVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -142,6 +181,7 @@ public class NCubexConstructVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -164,6 +204,7 @@ public class NCubexConstructVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -185,6 +226,7 @@ public class NCubexConstructVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -206,6 +248,11 @@ public class NCubexConstructVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -216,6 +263,7 @@ public class NCubexConstructVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -225,6 +273,7 @@ public class NCubexConstructVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

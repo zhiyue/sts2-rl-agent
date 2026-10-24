@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -22,9 +23,9 @@ public sealed class TwistedFunnel : RelicModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromPower<PoisonPower>());
 
-	public override async Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, CombatState combatState)
+	public override async Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side != base.Owner.Creature.Side || combatState.RoundNumber > 1)
+		if (!participants.Contains(base.Owner.Creature) || base.Owner.PlayerCombatState.TurnNumber > 1)
 		{
 			return;
 		}
@@ -36,7 +37,7 @@ public sealed class TwistedFunnel : RelicModel
 		await Cmd.CustomScaledWait(0.2f, 0.4f);
 		foreach (Creature hittableEnemy2 in base.Owner.Creature.CombatState.HittableEnemies)
 		{
-			await PowerCmd.Apply<PoisonPower>(hittableEnemy2, base.DynamicVars["PoisonPower"].IntValue, base.Owner.Creature, null);
+			await PowerCmd.Apply<PoisonPower>(choiceContext, hittableEnemy2, base.DynamicVars["PoisonPower"].IntValue, base.Owner.Creature, null);
 		}
 	}
 }

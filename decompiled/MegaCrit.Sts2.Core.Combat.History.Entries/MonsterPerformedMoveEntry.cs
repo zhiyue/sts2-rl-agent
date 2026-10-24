@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 
@@ -32,8 +33,8 @@ public class MonsterPerformedMoveEntry : CombatHistoryEntry
 		}
 	}
 
-	public MonsterPerformedMoveEntry(MonsterModel monster, MoveState move, IEnumerable<Creature>? targets, int roundNumber, CombatSide currentSide, CombatHistory history)
-		: base(monster.Creature, roundNumber, currentSide, history)
+	public MonsterPerformedMoveEntry(MonsterModel monster, MoveState move, IEnumerable<Creature>? targets, int roundNumber, CombatSide currentSide, CombatHistory history, IEnumerable<Player> players)
+		: base(monster.Creature, roundNumber, currentSide, history, players)
 	{
 		Monster = monster;
 		Move = move;

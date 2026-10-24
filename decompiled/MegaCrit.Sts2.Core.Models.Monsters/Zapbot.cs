@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Audio;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Encounters;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -17,9 +18,9 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Zapbot : MonsterModel
 {
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 24, 23);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 19, 18);
 
-	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 29, 28);
+	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 24, 23);
 
 	private int ZapDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 15, 14);
 
@@ -33,7 +34,7 @@ public sealed class Zapbot : MonsterModel
 			NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(base.Creature);
 			FabricatorNormal.SetBotFallPosition(creatureNode);
 		}
-		await PowerCmd.Apply<HighVoltagePower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<HighVoltagePower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()

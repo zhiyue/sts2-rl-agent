@@ -21,7 +21,7 @@ public sealed class ReaperFormPower : PowerModel
 	{
 		if (dealer != null && (dealer == base.Owner || dealer.PetOwner?.Creature == base.Owner) && props.IsPoweredAttack() && result.TotalDamage > 0)
 		{
-			await PowerCmd.Apply<DoomPower>(target, result.TotalDamage * base.Amount, base.Owner, null);
+			await PowerCmd.Apply<DoomPower>(choiceContext, target, result.TotalDamage * base.Amount, base.Owner, null);
 		}
 	}
 }

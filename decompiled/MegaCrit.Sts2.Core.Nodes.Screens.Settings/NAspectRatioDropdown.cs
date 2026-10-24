@@ -12,27 +12,57 @@ using MegaCrit.Sts2.Core.Settings;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 
+/// <summary>
+/// The display mode dropdown in the SettingsScreen.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NAspectRatioDropdown.cs")]
 public class NAspectRatioDropdown : NSettingsDropdown, IResettableSettingNode
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSettingsDropdown.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetFromSettings' method.
+		/// </summary>
 		public static readonly StringName SetFromSettings = "SetFromSettings";
 
+		/// <summary>
+		/// Cached name for the 'AddDropdownItem' method.
+		/// </summary>
 		public static readonly StringName AddDropdownItem = "AddDropdownItem";
 
+		/// <summary>
+		/// Cached name for the 'OnDropdownItemSelected' method.
+		/// </summary>
 		public static readonly StringName OnDropdownItemSelected = "OnDropdownItemSelected";
 
+		/// <summary>
+		/// Cached name for the 'GetAspectRatioSettingString' method.
+		/// </summary>
 		public static readonly StringName GetAspectRatioSettingString = "GetAspectRatioSettingString";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSettingsDropdown.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_currentAspectRatioSetting' field.
+		/// </summary>
 		public static readonly StringName _currentAspectRatioSetting = "_currentAspectRatioSetting";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSettingsDropdown.SignalName
 	{
 	}
@@ -95,6 +125,11 @@ public class NAspectRatioDropdown : NSettingsDropdown, IResettableSettingNode
 		};
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -116,6 +151,7 @@ public class NAspectRatioDropdown : NSettingsDropdown, IResettableSettingNode
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -163,6 +199,7 @@ public class NAspectRatioDropdown : NSettingsDropdown, IResettableSettingNode
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -189,6 +226,7 @@ public class NAspectRatioDropdown : NSettingsDropdown, IResettableSettingNode
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -200,6 +238,7 @@ public class NAspectRatioDropdown : NSettingsDropdown, IResettableSettingNode
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -211,6 +250,11 @@ public class NAspectRatioDropdown : NSettingsDropdown, IResettableSettingNode
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -219,6 +263,7 @@ public class NAspectRatioDropdown : NSettingsDropdown, IResettableSettingNode
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -226,6 +271,7 @@ public class NAspectRatioDropdown : NSettingsDropdown, IResettableSettingNode
 		info.AddProperty(PropertyName._currentAspectRatioSetting, Variant.From(in _currentAspectRatioSetting));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

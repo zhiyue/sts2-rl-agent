@@ -13,6 +13,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Settings;
@@ -23,14 +24,23 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NMonsterDeathVfx.cs")]
 public class NMonsterDeathVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -57,6 +67,12 @@ public class NMonsterDeathVfx : Node2D
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ScenePath);
 
+	/// <summary>
+	/// Creates an instance of NMonsterDeathVfx for the specified creature.
+	/// </summary>
+	/// <param name="creatureNode">The creature node.</param>
+	/// <param name="cancelToken">The cancellation token.</param>
+	/// <returns>The created NMonsterDeathVfx instance, or null if cancellation is requested or NCombatRoom.Instance is null.</returns>
 	public static NMonsterDeathVfx? Create(NCreature creatureNode, CancellationToken cancelToken)
 	{
 		if (TestMode.IsOn)
@@ -90,6 +106,13 @@ public class NMonsterDeathVfx : Node2D
 		return nMonsterDeathVfx;
 	}
 
+	/// <summary>
+	/// Creates an instance of NMonsterDeathVfx for the specified creature.
+	/// This should be used on creatures like the Decimillipede that are made of several different creatures that fade
+	/// out together.
+	/// </summary>
+	/// <param name="creatureNodes">The creature nodes.</param>
+	/// <returns>The created NMonsterDeathVfx instance, or null if cancellation is requested or NCombatRoom.Instance is null.</returns>
 	public static NMonsterDeathVfx? Create(List<NCreature> creatureNodes)
 	{
 		if (TestMode.IsOn)
@@ -121,21 +144,25 @@ public class NMonsterDeathVfx : Node2D
 		{
 			NCreature nCreature = _creatureNodes[i];
 			NCreatureVisuals visuals = nCreature.Visuals;
-			MegaSprite spineBody = visuals.SpineBody;
-			Vector2 scale = visuals.Body.Scale;
+			Vector2 scale = visuals.GetCurrentBody().Scale;
 			Vector2 vector = nCreature.Entity.Monster?.ExtraDeathVfxPadding ?? MonsterModel.defaultDeathVfxPadding;
-			if (visuals.HasSpineAnimation)
+			if (visuals != null && visuals.HasSpineAnimation && !visuals.IsUsingPhobiaModeBody)
 			{
-				Vector2 scale2 = instance.SceneContainer.Scale;
-				Rect2 bounds = spineBody.GetSkeleton().GetBounds();
-				Rect2 rect2 = new Rect2(bounds.Position * scale * scale2, bounds.Size * scale * scale2);
-				Vector2 vector2 = new Vector2(Math.Min(rect2.Position.X, rect2.End.X), Math.Min(rect2.Position.Y, rect2.End.Y));
-				Vector2 vector3 = new Vector2(Math.Max(rect2.Position.X, rect2.End.X), Math.Max(rect2.Position.Y, rect2.End.Y));
-				Vector2 vector4 = vector3 - vector2;
-				Vector2 vector5 = vector4 * vector;
-				Vector2 vector6 = (vector5 - vector4) * 0.5f;
-				Rect2 rect3 = new Rect2(visuals.Body.GlobalPosition + vector2 - vector6, vector5);
-				rect = (rect.HasValue ? new Rect2?(rect.Value.Merge(rect3)) : new Rect2?(rect3));
+				MegaSprite spineBody = visuals.SpineBody;
+				MegaSkeleton skeleton = spineBody.GetSkeleton();
+				if (skeleton != null)
+				{
+					Vector2 scale2 = instance.SceneContainer.Scale;
+					Rect2 bounds = skeleton.GetBounds();
+					Rect2 rect2 = new Rect2(bounds.Position * scale * scale2, bounds.Size * scale * scale2);
+					Vector2 vector2 = new Vector2(Math.Min(rect2.Position.X, rect2.End.X), Math.Min(rect2.Position.Y, rect2.End.Y));
+					Vector2 vector3 = new Vector2(Math.Max(rect2.Position.X, rect2.End.X), Math.Max(rect2.Position.Y, rect2.End.Y));
+					Vector2 vector4 = vector3 - vector2;
+					Vector2 vector5 = vector4 * vector;
+					Vector2 vector6 = (vector5 - vector4) * 0.5f;
+					Rect2 rect3 = new Rect2(visuals.GetCurrentBody().GlobalPosition + vector2 - vector6, vector5);
+					rect = (rect.HasValue ? new Rect2?(rect.Value.Merge(rect3)) : new Rect2?(rect3));
+				}
 			}
 			else
 			{
@@ -157,13 +184,13 @@ public class NMonsterDeathVfx : Node2D
 		Vector2 vector10 = base.GlobalPosition - size * 0.5f;
 		foreach (NCreature creatureNode in _creatureNodes)
 		{
-			if (GodotObject.IsInstanceValid(creatureNode.Visuals.Body))
+			if (GodotObject.IsInstanceValid(creatureNode.Visuals.GetCurrentBody()))
 			{
-				Vector2 globalPosition = creatureNode.Visuals.Body.GlobalPosition;
-				creatureNode.Visuals.Body.Reparent(node);
-				if (GodotObject.IsInstanceValid(creatureNode.Visuals.Body))
+				Vector2 globalPosition = creatureNode.Visuals.GetCurrentBody().GlobalPosition;
+				creatureNode.Visuals.GetCurrentBody().Reparent(node);
+				if (GodotObject.IsInstanceValid(creatureNode.Visuals.GetCurrentBody()))
 				{
-					creatureNode.Visuals.Body.Position = globalPosition - vector10;
+					creatureNode.Visuals.GetCurrentBody().Position = globalPosition - vector10;
 				}
 			}
 		}
@@ -183,16 +210,18 @@ public class NMonsterDeathVfx : Node2D
 		float num2 = Math.Min((float)node.Size.X / num * 2.5f, 2.5f);
 		using Tween tween = CreateTween();
 		tween.TweenProperty(node2.Material, "shader_parameter/threshold", 0f, num2).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
-		await ToSignal(tween, Tween.SignalName.Finished);
+		await tween.AwaitFinished(this);
 		this.QueueFreeSafely();
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

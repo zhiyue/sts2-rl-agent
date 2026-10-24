@@ -4,6 +4,7 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
+using MegaCrit.Sts2.Core.Helpers;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
@@ -11,52 +12,121 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NRegentVfx.cs")]
 public class NRegentVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'TurnOnDying' method.
+		/// </summary>
 		public static readonly StringName TurnOnDying = "TurnOnDying";
 
+		/// <summary>
+		/// Cached name for the 'TurnOnDying2' method.
+		/// </summary>
 		public static readonly StringName TurnOnDying2 = "TurnOnDying2";
 
+		/// <summary>
+		/// Cached name for the 'TurnOffDying' method.
+		/// </summary>
 		public static readonly StringName TurnOffDying = "TurnOffDying";
 
+		/// <summary>
+		/// Cached name for the 'Explode' method.
+		/// </summary>
 		public static readonly StringName Explode = "Explode";
 
+		/// <summary>
+		/// Cached name for the 'DisableExplode' method.
+		/// </summary>
 		public static readonly StringName DisableExplode = "DisableExplode";
 
+		/// <summary>
+		/// Cached name for the 'Attack' method.
+		/// </summary>
 		public static readonly StringName Attack = "Attack";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationStart' method.
+		/// </summary>
 		public static readonly StringName OnAnimationStart = "OnAnimationStart";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_deathParticlesArm' field.
+		/// </summary>
 		public static readonly StringName _deathParticlesArm = "_deathParticlesArm";
 
+		/// <summary>
+		/// Cached name for the '_deathParticlesChest' field.
+		/// </summary>
 		public static readonly StringName _deathParticlesChest = "_deathParticlesChest";
 
+		/// <summary>
+		/// Cached name for the '_deathParticlesBack' field.
+		/// </summary>
 		public static readonly StringName _deathParticlesBack = "_deathParticlesBack";
 
+		/// <summary>
+		/// Cached name for the '_deathParticlesLeg' field.
+		/// </summary>
 		public static readonly StringName _deathParticlesLeg = "_deathParticlesLeg";
 
+		/// <summary>
+		/// Cached name for the '_deathParticlesLegL' field.
+		/// </summary>
 		public static readonly StringName _deathParticlesLegL = "_deathParticlesLegL";
 
+		/// <summary>
+		/// Cached name for the '_explosionParticles' field.
+		/// </summary>
 		public static readonly StringName _explosionParticles = "_explosionParticles";
 
+		/// <summary>
+		/// Cached name for the '_attackParticlesSmall' field.
+		/// </summary>
 		public static readonly StringName _attackParticlesSmall = "_attackParticlesSmall";
 
+		/// <summary>
+		/// Cached name for the '_attackParticlesSmall2' field.
+		/// </summary>
 		public static readonly StringName _attackParticlesSmall2 = "_attackParticlesSmall2";
 
+		/// <summary>
+		/// Cached name for the '_attackParticlesLarge' field.
+		/// </summary>
 		public static readonly StringName _attackParticlesLarge = "_attackParticlesLarge";
 
+		/// <summary>
+		/// Cached name for the '_curWeapon' field.
+		/// </summary>
 		public static readonly StringName _curWeapon = "_curWeapon";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -83,9 +153,9 @@ public class NRegentVfx : Node
 
 	private GpuParticles2D _attackParticlesLarge;
 
-	private MegaAnimationState _weaponAnimState;
+	private MegaAnimationState? _weaponAnimState;
 
-	private MegaAnimationState _weaponAnimState2;
+	private MegaAnimationState? _weaponAnimState2;
 
 	private int _curWeapon = 1;
 
@@ -107,8 +177,14 @@ public class NRegentVfx : Node
 		_explosionParticles = _parent.GetNode<GpuParticles2D>("Explosion");
 		_weapon = new MegaSprite(_parent.GetNode("Weapons/WeaponAnim1"));
 		_weapon2 = new MegaSprite(_parent.GetNode("Weapons/WeaponAnim2"));
-		_weaponAnimState = _weapon.GetAnimationState();
-		_weaponAnimState2 = _weapon2.GetAnimationState();
+		this.RunWhenSpineReady(_weapon, delegate(MegaAnimationState animState)
+		{
+			_weaponAnimState = animState;
+		});
+		this.RunWhenSpineReady(_weapon2, delegate(MegaAnimationState animState)
+		{
+			_weaponAnimState2 = animState;
+		});
 		_deathParticlesArm.Emitting = false;
 		_deathParticlesChest.Emitting = false;
 		_deathParticlesBack.Emitting = false;
@@ -178,25 +254,34 @@ public class NRegentVfx : Node
 	{
 		if (_curWeapon == 1)
 		{
-			_weaponAnimState.SetAnimation("attack", loop: false);
+			_weaponAnimState?.SetAnimation("attack", loop: false);
 			_curWeapon = 2;
 		}
 		else
 		{
-			_weaponAnimState2.SetAnimation("attack2", loop: false);
+			_weaponAnimState2?.SetAnimation("attack2", loop: false);
 			_curWeapon = 1;
 		}
 	}
 
+	/// <summary>
+	/// Check if we want to make sure we turn off any vfx between animations. We have to do this if the animation that
+	/// is supposed to turn off the vfx is interrupted early.
+	/// </summary>
 	private void OnAnimationStart(GodotObject spineSprite, GodotObject animationState, GodotObject trackEntry)
 	{
-		if (new MegaAnimationState(animationState).GetCurrent(0).GetAnimation().GetName() != "die")
+		if (new MegaAnimationState(animationState).GetCurrentAnimationName() != "die")
 		{
 			DisableExplode();
 			TurnOffDying();
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -224,6 +309,7 @@ public class NRegentVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -284,6 +370,7 @@ public class NRegentVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -326,6 +413,7 @@ public class NRegentVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -387,6 +475,7 @@ public class NRegentVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -448,6 +537,11 @@ public class NRegentVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -466,6 +560,7 @@ public class NRegentVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -483,6 +578,7 @@ public class NRegentVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

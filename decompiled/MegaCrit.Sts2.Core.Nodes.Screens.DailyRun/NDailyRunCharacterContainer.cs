@@ -15,28 +15,61 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.DailyRun;
 [ScriptPath("res://src/Core/Nodes/Screens/DailyRun/NDailyRunCharacterContainer.cs")]
 public class NDailyRunCharacterContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetIsReady' method.
+		/// </summary>
 		public static readonly StringName SetIsReady = "SetIsReady";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_characterIconContainer' field.
+		/// </summary>
 		public static readonly StringName _characterIconContainer = "_characterIconContainer";
 
+		/// <summary>
+		/// Cached name for the '_playerNameLabel' field.
+		/// </summary>
 		public static readonly StringName _playerNameLabel = "_playerNameLabel";
 
+		/// <summary>
+		/// Cached name for the '_characterNameLabel' field.
+		/// </summary>
 		public static readonly StringName _characterNameLabel = "_characterNameLabel";
 
+		/// <summary>
+		/// Cached name for the '_ascensionLabel' field.
+		/// </summary>
 		public static readonly StringName _ascensionLabel = "_ascensionLabel";
 
+		/// <summary>
+		/// Cached name for the '_ascensionNumberLabel' field.
+		/// </summary>
 		public static readonly StringName _ascensionNumberLabel = "_ascensionNumberLabel";
 
+		/// <summary>
+		/// Cached name for the '_readyIndicator' field.
+		/// </summary>
 		public static readonly StringName _readyIndicator = "_readyIndicator";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -78,7 +111,7 @@ public class NDailyRunCharacterContainer : Control
 		_characterNameLabel.Modulate = (flag ? StsColors.cream : StsColors.gold);
 		_characterIconContainer.AddChildSafely(icon);
 		_characterNameLabel.SetTextAutoSize(character.Title.GetFormattedText());
-		_playerNameLabel.SetTextAutoSize(PlatformUtil.GetPlayerName(netService.Platform, playerId));
+		_playerNameLabel.SetTextAutoSize(PlatformUtil.GetPlayerNameRaw(netService.Platform, playerId));
 		_ascensionLabel.SetTextAutoSize(_ascensionLoc.GetFormattedText());
 		_ascensionNumberLabel.SetTextAutoSize(ascension.ToString());
 	}
@@ -88,6 +121,11 @@ public class NDailyRunCharacterContainer : Control
 		_readyIndicator.Visible = isReady;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -100,6 +138,7 @@ public class NDailyRunCharacterContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -118,6 +157,7 @@ public class NDailyRunCharacterContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -132,6 +172,7 @@ public class NDailyRunCharacterContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -168,6 +209,7 @@ public class NDailyRunCharacterContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -204,6 +246,11 @@ public class NDailyRunCharacterContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -217,6 +264,7 @@ public class NDailyRunCharacterContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -229,6 +277,7 @@ public class NDailyRunCharacterContainer : Control
 		info.AddProperty(PropertyName._readyIndicator, Variant.From(in _readyIndicator));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

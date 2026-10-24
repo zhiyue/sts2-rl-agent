@@ -29,7 +29,7 @@ public sealed class Largesse : CardModel
 			{
 				CardCmd.Upgrade(cardModel);
 			}
-			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, base.Owner);
 		}
 	}
 }

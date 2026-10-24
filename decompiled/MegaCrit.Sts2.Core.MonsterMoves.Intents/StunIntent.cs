@@ -18,6 +18,10 @@ public class StunIntent : AbstractIntent
 
 	protected override string SpritePath => "atlases/intent_atlas.sprites/intent_stun.tres";
 
+	/// <summary>
+	/// A special HoverTip override for the StunIntent so that it can be used in a static context
+	/// ie: for the Whistle card.
+	/// </summary>
 	public static HoverTip GetStaticHoverTip()
 	{
 		string imagePath = ImageHelper.GetImagePath("atlases/intent_atlas.sprites/intent_stun.tres");

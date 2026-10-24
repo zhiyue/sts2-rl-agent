@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
@@ -28,7 +29,8 @@ public sealed class Nightmare : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		if (TestMode.IsOff)
+		IEnumerable<CardModel> cards = await CardSelectCmd.FromHand(prefs: new CardSelectorPrefs(base.SelectionScreenPrompt, 1), context: choiceContext, player: base.Owner, filter: null, source: this);
+		if (TestMode.IsOff && LocalContext.IsMe(base.Owner))
 		{
 			NSmokyVignetteVfx child = NSmokyVignetteVfx.Create(new Color(0.8f, 0.3f, 0.8f, 0.66f), new Color(0f, 0f, 4f, 0.33f));
 			NGame.Instance.CurrentRunNode.GlobalUi.AddChildSafely(child);
@@ -36,10 +38,10 @@ public sealed class Nightmare : CardModel
 			await Cmd.CustomScaledWait(0.1f, 0.25f);
 		}
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		CardModel selectedCard = (await CardSelectCmd.FromHand(prefs: new CardSelectorPrefs(base.SelectionScreenPrompt, 1), context: choiceContext, player: base.Owner, filter: null, source: this)).FirstOrDefault();
+		CardModel selectedCard = cards.FirstOrDefault();
 		if (selectedCard != null)
 		{
-			(await PowerCmd.Apply<NightmarePower>(base.Owner.Creature, 3m, base.Owner.Creature, this)).SetSelectedCard(selectedCard);
+			(await PowerCmd.Apply<NightmarePower>(choiceContext, base.Owner.Creature, 3m, base.Owner.Creature, this)).SetSelectedCard(selectedCard);
 		}
 	}
 

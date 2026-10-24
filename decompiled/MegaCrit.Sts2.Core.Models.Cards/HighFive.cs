@@ -39,7 +39,7 @@ public sealed class HighFive : CardModel
 			await DamageCmd.Attack(base.DynamicVars.OstyDamage.BaseValue).FromOsty(base.Owner.Osty, this).TargetingAllOpponents(base.CombatState)
 				.WithHitFx("vfx/vfx_attack_blunt", null, "blunt_attack.mp3")
 				.Execute(choiceContext);
-			await PowerCmd.Apply<VulnerablePower>(base.CombatState.HittableEnemies, base.DynamicVars.Vulnerable.BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<VulnerablePower>(choiceContext, base.CombatState.HittableEnemies, base.DynamicVars.Vulnerable.BaseValue, base.Owner.Creature, this);
 		}
 	}
 

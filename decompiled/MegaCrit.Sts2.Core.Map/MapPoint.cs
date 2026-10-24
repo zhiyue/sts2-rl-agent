@@ -13,6 +13,10 @@ public class MapPoint : IComparable<MapPoint>
 
 	public MapCoord coord;
 
+	/// <summary>
+	/// Is used to let Models that modify a map after it is generated to ensure that we don't modify this point.
+	/// Is set by the ActMap if false (ie StandardActMap.AssignPointTypes).
+	/// </summary>
 	public bool CanBeModified { get; set; } = true;
 
 	public MapPointType PointType { get; set; }

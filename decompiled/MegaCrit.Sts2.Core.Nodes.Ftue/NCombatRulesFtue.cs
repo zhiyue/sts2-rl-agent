@@ -21,50 +21,116 @@ namespace MegaCrit.Sts2.Core.Nodes.Ftue;
 [ScriptPath("res://src/Core/Nodes/Ftue/NCombatRulesFtue.cs")]
 public class NCombatRulesFtue : NFtue
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NFtue.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Start' method.
+		/// </summary>
 		public static readonly StringName Start = "Start";
 
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'ToggleLeft' method.
+		/// </summary>
 		public static readonly StringName ToggleLeft = "ToggleLeft";
 
+		/// <summary>
+		/// Cached name for the 'ToggleRight' method.
+		/// </summary>
 		public static readonly StringName ToggleRight = "ToggleRight";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NFtue.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_image1' field.
+		/// </summary>
 		public static readonly StringName _image1 = "_image1";
 
+		/// <summary>
+		/// Cached name for the '_image2' field.
+		/// </summary>
 		public static readonly StringName _image2 = "_image2";
 
+		/// <summary>
+		/// Cached name for the '_image3' field.
+		/// </summary>
 		public static readonly StringName _image3 = "_image3";
 
+		/// <summary>
+		/// Cached name for the '_prevButton' field.
+		/// </summary>
 		public static readonly StringName _prevButton = "_prevButton";
 
+		/// <summary>
+		/// Cached name for the '_nextButton' field.
+		/// </summary>
 		public static readonly StringName _nextButton = "_nextButton";
 
+		/// <summary>
+		/// Cached name for the '_pageCount' field.
+		/// </summary>
 		public static readonly StringName _pageCount = "_pageCount";
 
+		/// <summary>
+		/// Cached name for the '_image' field.
+		/// </summary>
 		public static readonly StringName _image = "_image";
 
+		/// <summary>
+		/// Cached name for the '_bodyText' field.
+		/// </summary>
 		public static readonly StringName _bodyText = "_bodyText";
 
+		/// <summary>
+		/// Cached name for the '_header' field.
+		/// </summary>
 		public static readonly StringName _header = "_header";
 
+		/// <summary>
+		/// Cached name for the '_currentPage' field.
+		/// </summary>
 		public static readonly StringName _currentPage = "_currentPage";
 
+		/// <summary>
+		/// Cached name for the '_imagePosition' field.
+		/// </summary>
 		public static readonly StringName _imagePosition = "_imagePosition";
 
+		/// <summary>
+		/// Cached name for the '_textPosition' field.
+		/// </summary>
 		public static readonly StringName _textPosition = "_textPosition";
 
+		/// <summary>
+		/// Cached name for the '_pageTurnTween' field.
+		/// </summary>
 		public static readonly StringName _pageTurnTween = "_pageTurnTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NFtue.SignalName
 	{
 	}
@@ -258,6 +324,11 @@ public class NCombatRulesFtue : NFtue
 			.From(0f);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -280,6 +351,7 @@ public class NCombatRulesFtue : NFtue
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -333,6 +405,7 @@ public class NCombatRulesFtue : NFtue
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -363,6 +436,7 @@ public class NCombatRulesFtue : NFtue
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -434,6 +508,7 @@ public class NCombatRulesFtue : NFtue
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -505,6 +580,11 @@ public class NCombatRulesFtue : NFtue
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -525,6 +605,7 @@ public class NCombatRulesFtue : NFtue
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -544,6 +625,7 @@ public class NCombatRulesFtue : NFtue
 		info.AddProperty(PropertyName._pageTurnTween, Variant.From(in _pageTurnTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

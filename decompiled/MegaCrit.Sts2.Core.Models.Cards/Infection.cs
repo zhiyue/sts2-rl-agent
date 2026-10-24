@@ -28,7 +28,7 @@ public sealed class Infection : CardModel
 	{
 	}
 
-	public override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
+	protected override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
 	{
 		VfxCmd.PlayOnCreatureCenter(base.Owner.Creature, "vfx/vfx_bloody_impact");
 		NWormyImpactVfx nWormyImpactVfx = NWormyImpactVfx.Create(base.Owner.Creature);

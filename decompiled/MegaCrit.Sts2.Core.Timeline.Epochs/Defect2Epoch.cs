@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Tricked
+/// </summary>
 public class Defect2Epoch : EpochModel
 {
 	public override string Id => "DEFECT2_EPOCH";

@@ -9,6 +9,8 @@ public sealed class LagavulinMatriarchBoss : EncounterModel
 {
 	public override RoomType RoomType => RoomType.Boss;
 
+	protected override bool HasCustomBackground => true;
+
 	public override string BossNodePath => "res://images/map/placeholder/" + base.Id.Entry.ToLowerInvariant() + "_icon";
 
 	public override MegaSkeletonDataResource? BossNodeSpineResource => null;

@@ -17,38 +17,86 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NInputSettingsPanel.cs")]
 public class NInputSettingsPanel : NSettingsPanel
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSettingsPanel.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnViewportSizeChange' method.
+		/// </summary>
 		public static readonly StringName OnViewportSizeChange = "OnViewportSizeChange";
 
+		/// <summary>
+		/// Cached name for the 'OnVisibilityChange' method.
+		/// </summary>
 		public new static readonly StringName OnVisibilityChange = "OnVisibilityChange";
 
+		/// <summary>
+		/// Cached name for the 'SetAsListeningEntry' method.
+		/// </summary>
 		public static readonly StringName SetAsListeningEntry = "SetAsListeningEntry";
 
+		/// <summary>
+		/// Cached name for the '_UnhandledKeyInput' method.
+		/// </summary>
 		public new static readonly StringName _UnhandledKeyInput = "_UnhandledKeyInput";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSettingsPanel.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_minPadding' field.
+		/// </summary>
 		public new static readonly StringName _minPadding = "_minPadding";
 
+		/// <summary>
+		/// Cached name for the '_listeningEntry' field.
+		/// </summary>
 		public static readonly StringName _listeningEntry = "_listeningEntry";
 
+		/// <summary>
+		/// Cached name for the '_resetToDefaultButton' field.
+		/// </summary>
 		public static readonly StringName _resetToDefaultButton = "_resetToDefaultButton";
 
+		/// <summary>
+		/// Cached name for the '_commandHeader' field.
+		/// </summary>
 		public static readonly StringName _commandHeader = "_commandHeader";
 
+		/// <summary>
+		/// Cached name for the '_keyboardHeader' field.
+		/// </summary>
 		public static readonly StringName _keyboardHeader = "_keyboardHeader";
 
+		/// <summary>
+		/// Cached name for the '_controllerHeader' field.
+		/// </summary>
 		public static readonly StringName _controllerHeader = "_controllerHeader";
 
+		/// <summary>
+		/// Cached name for the '_steamInputPrompt' field.
+		/// </summary>
 		public static readonly StringName _steamInputPrompt = "_steamInputPrompt";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSettingsPanel.SignalName
 	{
 	}
@@ -113,8 +161,8 @@ public class NInputSettingsPanel : NSettingsPanel
 
 	private async Task RefreshSize()
 	{
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame();
+		await this.AwaitProcessFrame();
 		Vector2 size = GetParent<Control>().Size;
 		Vector2 minimumSize = base.Content.GetMinimumSize();
 		if (minimumSize.Y + _minPadding >= size.Y)
@@ -173,6 +221,11 @@ public class NInputSettingsPanel : NSettingsPanel
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -195,6 +248,7 @@ public class NInputSettingsPanel : NSettingsPanel
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -237,6 +291,7 @@ public class NInputSettingsPanel : NSettingsPanel
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -267,6 +322,7 @@ public class NInputSettingsPanel : NSettingsPanel
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -308,6 +364,7 @@ public class NInputSettingsPanel : NSettingsPanel
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -349,6 +406,11 @@ public class NInputSettingsPanel : NSettingsPanel
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -363,6 +425,7 @@ public class NInputSettingsPanel : NSettingsPanel
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -376,6 +439,7 @@ public class NInputSettingsPanel : NSettingsPanel
 		info.AddProperty(PropertyName._steamInputPrompt, Variant.From(in _steamInputPrompt));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

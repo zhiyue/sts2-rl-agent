@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Slumber
+/// </summary>
 public class Colorless4Epoch : EpochModel
 {
 	public override string Id => "COLORLESS4_EPOCH";

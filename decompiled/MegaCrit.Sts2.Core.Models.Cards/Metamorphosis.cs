@@ -28,7 +28,7 @@ public sealed class Metamorphosis : CardModel
 		foreach (CardModel item in forCombat)
 		{
 			item.SetToFreeThisCombat();
-			CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Draw, addedByPlayer: true, CardPilePosition.Random));
+			CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Draw, base.Owner, CardPilePosition.Random));
 		}
 	}
 

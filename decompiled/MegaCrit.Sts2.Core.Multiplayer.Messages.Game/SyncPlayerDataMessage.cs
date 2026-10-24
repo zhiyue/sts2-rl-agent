@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Game;
 
+/// <summary>
+/// Broadcast to all peers at the start of combat to sync player data (deck, HP, max potion slots, etc).
+/// </summary>
 public struct SyncPlayerDataMessage : INetMessage, IPacketSerializable
 {
 	public SerializablePlayer player;
@@ -14,6 +17,8 @@ public struct SyncPlayerDataMessage : INetMessage, IPacketSerializable
 	public NetTransferMode Mode => NetTransferMode.Reliable;
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
+
+	public bool ShouldBuffer => true;
 
 	public void Serialize(PacketWriter writer)
 	{

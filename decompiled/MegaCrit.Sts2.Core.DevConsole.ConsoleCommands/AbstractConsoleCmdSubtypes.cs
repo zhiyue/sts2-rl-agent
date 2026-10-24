@@ -25,82 +25,82 @@ public static class AbstractConsoleCmdSubtypes
 	private static readonly Type _t5 = typeof(ArtConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t6 = typeof(BlockConsoleCmd);
+	private static readonly Type _t6 = typeof(BestiaryConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t7 = typeof(CardConsoleCmd);
+	private static readonly Type _t7 = typeof(BlockConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t8 = typeof(CloudConsoleCmd);
+	private static readonly Type _t8 = typeof(CardConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t9 = typeof(DamageConsoleCmd);
+	private static readonly Type _t9 = typeof(CloudConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t10 = typeof(DieConsoleCmd);
+	private static readonly Type _t10 = typeof(DamageConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t11 = typeof(DrawConsoleCmd);
+	private static readonly Type _t11 = typeof(DieConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t12 = typeof(DumpConsoleCmd);
+	private static readonly Type _t12 = typeof(DrawConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t13 = typeof(EnchantConsoleCmd);
+	private static readonly Type _t13 = typeof(DumpConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t14 = typeof(EnergyConsoleCmd);
+	private static readonly Type _t14 = typeof(EnchantConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t15 = typeof(EventConsoleCmd);
+	private static readonly Type _t15 = typeof(EnergyConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t16 = typeof(FightConsoleCmd);
+	private static readonly Type _t16 = typeof(EventConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t17 = typeof(GetLogsConsoleCmd);
+	private static readonly Type _t17 = typeof(FightConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t18 = typeof(GodModeConsoleCmd);
+	private static readonly Type _t18 = typeof(GetLogsConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t19 = typeof(GoldConsoleCmd);
+	private static readonly Type _t19 = typeof(GodModeConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t20 = typeof(HealConsoleCmd);
+	private static readonly Type _t20 = typeof(GoldConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t21 = typeof(InstantConsoleCmd);
+	private static readonly Type _t21 = typeof(HealConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t22 = typeof(KillConsoleCmd);
+	private static readonly Type _t22 = typeof(InstantConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t23 = typeof(LeaderboardConsoleCmd);
+	private static readonly Type _t23 = typeof(KillConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t24 = typeof(LogConsoleCmd);
+	private static readonly Type _t24 = typeof(LeaderboardConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t25 = typeof(MultiplayerConsoleCmd);
+	private static readonly Type _t25 = typeof(LogConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t26 = typeof(OpenConsoleCmd);
+	private static readonly Type _t26 = typeof(MultiplayerConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t27 = typeof(PotionConsoleCmd);
+	private static readonly Type _t27 = typeof(OpenConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t28 = typeof(RelicConsoleCmd);
+	private static readonly Type _t28 = typeof(PotionConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t29 = typeof(RemoveCardConsoleCmd);
+	private static readonly Type _t29 = typeof(RelicConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t30 = typeof(RoomConsoleCmd);
+	private static readonly Type _t30 = typeof(RemoveCardConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-	private static readonly Type _t31 = typeof(SaveHistoryCmd);
+	private static readonly Type _t31 = typeof(RoomConsoleCmd);
 
 	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 	private static readonly Type _t32 = typeof(SentryConsoleCmd);

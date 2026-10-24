@@ -8,6 +8,10 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles the game over screen (shown after victory or death).
+/// Clicks through the summary to return to main menu.
+/// </summary>
 public class GameOverScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NGameOverScreen);

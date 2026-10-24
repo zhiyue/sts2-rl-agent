@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Saves.Migrations;
 
 namespace MegaCrit.Sts2.Core.Saves.Managers;
@@ -42,21 +41,5 @@ public class ProfileSaveManager
 			Profile = readSaveResult.SaveData;
 		}
 		return readSaveResult;
-	}
-
-	public async Task SyncCloudToLocal()
-	{
-		if (_saveStore is CloudSaveStore cloudSaveStore)
-		{
-			await cloudSaveStore.SyncCloudToLocal(ProfilePath);
-		}
-	}
-
-	public async Task OverwriteCloudWithLocal()
-	{
-		if (_saveStore is CloudSaveStore cloudSaveStore)
-		{
-			await cloudSaveStore.OverwriteCloudWithLocal(ProfilePath);
-		}
 	}
 }

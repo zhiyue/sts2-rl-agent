@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 
@@ -15,9 +15,9 @@ public sealed class StampedePower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override async Task BeforeTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterAutoPostPlayPhaseEntered(PlayerChoiceContext choiceContext, Player player)
 	{
-		if (side != base.Owner.Side)
+		if (player != base.Owner.Player)
 		{
 			return;
 		}

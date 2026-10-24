@@ -34,7 +34,7 @@ public sealed class OutbreakPower : PowerModel
 		return new Data();
 	}
 
-	public override async Task AfterPowerAmountChanged(PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
+	public override async Task AfterPowerAmountChanged(PlayerChoiceContext choiceContext, PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
 	{
 		if (applier == base.Owner && !(amount <= 0m) && power is PoisonPower)
 		{
@@ -44,7 +44,7 @@ public sealed class OutbreakPower : PowerModel
 			{
 				InvokeDisplayAmountChanged();
 				Flash();
-				await CreatureCmd.Damage(new ThrowingPlayerChoiceContext(), base.Owner.CombatState.HittableEnemies, base.Amount, ValueProp.Unpowered, base.Owner, null);
+				await CreatureCmd.Damage(choiceContext, base.Owner.CombatState.HittableEnemies, base.Amount, ValueProp.Unpowered, base.Owner, null);
 				data.timesPoisoned %= 3;
 			}
 			InvokeDisplayAmountChanged();

@@ -8,6 +8,8 @@ internal interface IPlatformUtilStrategy
 {
 	bool SupportsInviteDialog { get; }
 
+	bool IsPlatformOverlayOpen { get; }
+
 	string GetPlayerName(ulong playerId);
 
 	ulong GetLocalPlayerId();
@@ -22,7 +24,7 @@ internal interface IPlatformUtilStrategy
 
 	void CloseVirtualKeyboard();
 
-	string? GetPlatformBranch();
+	PlatformBranch GetPlatformBranch();
 
 	string? GetThreeLetterLanguageCode();
 

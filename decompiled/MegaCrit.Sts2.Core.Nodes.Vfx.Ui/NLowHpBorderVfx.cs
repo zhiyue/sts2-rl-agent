@@ -6,44 +6,94 @@ using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx.Ui;
 
 [ScriptPath("res://src/Core/Nodes/Vfx/Ui/NLowHpBorderVfx.cs")]
 public class NLowHpBorderVfx : ColorRect
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : ColorRect.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetProperties' method.
+		/// </summary>
 		public static readonly StringName SetProperties = "SetProperties";
 
+		/// <summary>
+		/// Cached name for the 'RandomizeInitialOffset' method.
+		/// </summary>
 		public static readonly StringName RandomizeInitialOffset = "RandomizeInitialOffset";
 
+		/// <summary>
+		/// Cached name for the 'Play' method.
+		/// </summary>
 		public static readonly StringName Play = "Play";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : ColorRect.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_duration' field.
+		/// </summary>
 		public static readonly StringName _duration = "_duration";
 
+		/// <summary>
+		/// Cached name for the '_alphaMultiplierCurve' field.
+		/// </summary>
 		public static readonly StringName _alphaMultiplierCurve = "_alphaMultiplierCurve";
 
+		/// <summary>
+		/// Cached name for the '_noiseOffsetCurve' field.
+		/// </summary>
 		public static readonly StringName _noiseOffsetCurve = "_noiseOffsetCurve";
 
+		/// <summary>
+		/// Cached name for the '_gradient' field.
+		/// </summary>
 		public static readonly StringName _gradient = "_gradient";
 
+		/// <summary>
+		/// Cached name for the '_originalMaterial' field.
+		/// </summary>
 		public static readonly StringName _originalMaterial = "_originalMaterial";
 
+		/// <summary>
+		/// Cached name for the '_materialCopy' field.
+		/// </summary>
 		public static readonly StringName _materialCopy = "_materialCopy";
 
+		/// <summary>
+		/// Cached name for the '_isPlaying' field.
+		/// </summary>
 		public static readonly StringName _isPlaying = "_isPlaying";
 
+		/// <summary>
+		/// Cached name for the '_currentTimer' field.
+		/// </summary>
 		public static readonly StringName _currentTimer = "_currentTimer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : ColorRect.SignalName
 	{
 	}
@@ -76,8 +126,12 @@ public class NLowHpBorderVfx : ColorRect
 
 	private static readonly StringName _mainColorString = new StringName("main_color");
 
-	public static NLowHpBorderVfx Create()
+	public static NLowHpBorderVfx? Create()
 	{
+		if (TestMode.IsOn)
+		{
+			return null;
+		}
 		return PreloadManager.Cache.GetScene(scenePath).Instantiate<NLowHpBorderVfx>(PackedScene.GenEditState.Disabled);
 	}
 
@@ -126,12 +180,17 @@ public class NLowHpBorderVfx : ColorRect
 			float properties = (float)(_currentTimer / (double)_duration);
 			SetProperties(properties);
 			_currentTimer += GetProcessDeltaTime();
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrame();
 		}
 		SetProperties(1f);
 		_isPlaying = false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -147,6 +206,7 @@ public class NLowHpBorderVfx : ColorRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -194,6 +254,7 @@ public class NLowHpBorderVfx : ColorRect
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -220,6 +281,7 @@ public class NLowHpBorderVfx : ColorRect
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -266,6 +328,7 @@ public class NLowHpBorderVfx : ColorRect
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -312,6 +375,11 @@ public class NLowHpBorderVfx : ColorRect
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -327,6 +395,7 @@ public class NLowHpBorderVfx : ColorRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -341,6 +410,7 @@ public class NLowHpBorderVfx : ColorRect
 		info.AddProperty(PropertyName._currentTimer, Variant.From(in _currentTimer));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

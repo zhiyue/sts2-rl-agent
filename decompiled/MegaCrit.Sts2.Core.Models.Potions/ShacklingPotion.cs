@@ -32,6 +32,6 @@ public sealed class ShacklingPotion : PotionModel
 		{
 			NCombatRoom.Instance?.PlaySplashVfx(hittableEnemy, new Color("91a19f"));
 		}
-		await PowerCmd.Apply<ShacklingPotionPower>(creature.CombatState.HittableEnemies, base.DynamicVars.Strength.IntValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<ShacklingPotionPower>(choiceContext, creature.CombatState.HittableEnemies, base.DynamicVars.Strength.IntValue, base.Owner.Creature, null);
 	}
 }

@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Models.Achievements;
 
+/// <summary>
+/// Grants an achievement when a player deals a large amount of damage in a single blow.
+/// </summary>
 public class SkillIronclad2Achievement : AchievementModel
 {
 	private const int _damageRequirement = 999;

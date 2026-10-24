@@ -25,7 +25,7 @@ public sealed class Oblivion : CardModel
 	{
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<OblivionPower>(cardPlay.Target, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<OblivionPower>(choiceContext, cardPlay.Target, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

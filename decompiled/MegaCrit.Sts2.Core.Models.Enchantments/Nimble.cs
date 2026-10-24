@@ -1,5 +1,3 @@
-using MegaCrit.Sts2.Core.ValueProps;
-
 namespace MegaCrit.Sts2.Core.Models.Enchantments;
 
 public sealed class Nimble : EnchantmentModel
@@ -15,12 +13,8 @@ public sealed class Nimble : EnchantmentModel
 		return false;
 	}
 
-	public override decimal EnchantBlockAdditive(decimal originalBlock, ValueProp props)
+	public override decimal EnchantBlockAdditive(decimal originalBlock)
 	{
-		if (!props.IsPoweredCardOrMonsterMoveBlock())
-		{
-			return 0m;
-		}
 		return base.Amount;
 	}
 }

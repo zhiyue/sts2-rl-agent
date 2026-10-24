@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -39,7 +40,7 @@ public sealed class SlitheringStrangler : MonsterModel
 	{
 		List<MonsterState> list = new List<MonsterState>();
 		MoveState moveState = new MoveState("CONSTRICT", ConstrictMove, new DebuffIntent());
-		MoveState moveState2 = new MoveState("TWACK", ThwackMove, new SingleAttackIntent(ThwackDamage), new DefendIntent());
+		MoveState moveState2 = new MoveState("THWACK", ThwackMove, new SingleAttackIntent(ThwackDamage), new DefendIntent());
 		MoveState moveState3 = new MoveState("LASH", LashMove, new SingleAttackIntent(LashDamage));
 		RandomBranchState randomBranchState = (RandomBranchState)(moveState.FollowUpState = new RandomBranchState("rand"));
 		moveState2.FollowUpState = moveState;
@@ -57,7 +58,7 @@ public sealed class SlitheringStrangler : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/slithering_strangler/slithering_strangler_cast");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.6f);
-		await PowerCmd.Apply<ConstrictPower>(targets, 3m, base.Creature, null);
+		await PowerCmd.Apply<ConstrictPower>(new ThrowingPlayerChoiceContext(), targets, 3m, base.Creature, null);
 	}
 
 	private async Task ThwackMove(IReadOnlyList<Creature> targets)

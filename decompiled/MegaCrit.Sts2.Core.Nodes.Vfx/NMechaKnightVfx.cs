@@ -11,40 +11,91 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NMechaKnightVfx.cs")]
 public class NMechaKnightVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationStart' method.
+		/// </summary>
 		public static readonly StringName OnAnimationStart = "OnAnimationStart";
 
+		/// <summary>
+		/// Cached name for the 'TurnOnFlameThrower' method.
+		/// </summary>
 		public static readonly StringName TurnOnFlameThrower = "TurnOnFlameThrower";
 
+		/// <summary>
+		/// Cached name for the 'TurnOffFlameThrower' method.
+		/// </summary>
 		public static readonly StringName TurnOffFlameThrower = "TurnOffFlameThrower";
 
+		/// <summary>
+		/// Cached name for the 'TurnOnEngine' method.
+		/// </summary>
 		public static readonly StringName TurnOnEngine = "TurnOnEngine";
 
+		/// <summary>
+		/// Cached name for the 'TurnOffEngine' method.
+		/// </summary>
 		public static readonly StringName TurnOffEngine = "TurnOffEngine";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_flameThrowerParticlesDark' field.
+		/// </summary>
 		public static readonly StringName _flameThrowerParticlesDark = "_flameThrowerParticlesDark";
 
+		/// <summary>
+		/// Cached name for the '_flameThrowerParticlesLight' field.
+		/// </summary>
 		public static readonly StringName _flameThrowerParticlesLight = "_flameThrowerParticlesLight";
 
+		/// <summary>
+		/// Cached name for the '_cinderParticles' field.
+		/// </summary>
 		public static readonly StringName _cinderParticles = "_cinderParticles";
 
+		/// <summary>
+		/// Cached name for the '_glowParticles' field.
+		/// </summary>
 		public static readonly StringName _glowParticles = "_glowParticles";
 
+		/// <summary>
+		/// Cached name for the '_engineParticles' field.
+		/// </summary>
 		public static readonly StringName _engineParticles = "_engineParticles";
 
+		/// <summary>
+		/// Cached name for the '_engineParticlesDark' field.
+		/// </summary>
 		public static readonly StringName _engineParticlesDark = "_engineParticlesDark";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -102,11 +153,12 @@ public class NMechaKnightVfx : Node
 
 	private void OnAnimationStart(GodotObject spineSprite, GodotObject animationState, GodotObject trackEntry)
 	{
-		if (new MegaAnimationState(animationState).GetCurrent(0).GetAnimation().GetName() != "attack")
+		string currentAnimationName = new MegaAnimationState(animationState).GetCurrentAnimationName();
+		if (currentAnimationName != "attack")
 		{
 			TurnOffFlameThrower();
 		}
-		bool flag = new MegaAnimationState(animationState).GetCurrent(0).GetAnimation().GetName() == "hurt";
+		bool flag = currentAnimationName == "hurt";
 		_flameThrowerParticlesDark.Visible = !flag;
 		_flameThrowerParticlesLight.Visible = !flag;
 		_cinderParticles.Visible = !flag;
@@ -141,6 +193,11 @@ public class NMechaKnightVfx : Node
 		_engineParticlesDark.Emitting = false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -166,6 +223,7 @@ public class NMechaKnightVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -214,6 +272,7 @@ public class NMechaKnightVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -248,6 +307,7 @@ public class NMechaKnightVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -289,6 +349,7 @@ public class NMechaKnightVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -330,6 +391,11 @@ public class NMechaKnightVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -344,6 +410,7 @@ public class NMechaKnightVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -357,6 +424,7 @@ public class NMechaKnightVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

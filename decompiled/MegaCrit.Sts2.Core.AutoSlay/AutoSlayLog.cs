@@ -7,6 +7,10 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.AutoSlay;
 
+/// <summary>
+/// Structured logging for AutoSlay with consistent prefixes for easy filtering.
+/// Writes to both the standard Godot log and a dedicated autoslay.log file.
+/// </summary>
 public static class AutoSlayLog
 {
 	private const string _prefix = "[AutoSlay]";
@@ -15,6 +19,7 @@ public static class AutoSlayLog
 
 	private static readonly object _lock = new object();
 
+	/// <summary>Opens the log file for writing. Call at start of autoslay run.</summary>
 	public static void OpenLogFile(string path)
 	{
 		lock (_lock)
@@ -27,6 +32,7 @@ public static class AutoSlayLog
 		}
 	}
 
+	/// <summary>Closes the log file. Call at end of autoslay run.</summary>
 	public static void CloseLogFile()
 	{
 		lock (_lock)

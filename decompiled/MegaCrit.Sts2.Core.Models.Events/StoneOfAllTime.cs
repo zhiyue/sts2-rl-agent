@@ -49,7 +49,10 @@ public sealed class StoneOfAllTime : EventModel
 		new DynamicVar("PushVigorousAmount", 8m)
 	});
 
-	public override bool IsAllowed(RunState runState)
+	/// <summary>
+	/// Only appears in Act 2 and requires all players to have at least 1 potion
+	/// </summary>
+	public override bool IsAllowed(IRunState runState)
 	{
 		if (runState.CurrentActIndex == 1)
 		{
@@ -58,7 +61,7 @@ public sealed class StoneOfAllTime : EventModel
 		return false;
 	}
 
-	protected override Task BeforeEventStarted()
+	protected override Task BeforeEventStarted(bool isPreFinished)
 	{
 		base.Owner.CanRemovePotions = false;
 		return Task.CompletedTask;

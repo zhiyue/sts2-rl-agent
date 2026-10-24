@@ -17,13 +17,15 @@ public class RunMetrics
 
 	public required List<ModelId> Team { get; init; }
 
-	public string BuildType { get; } = "Beta";
+	public required string BuildType { get; init; }
 
 	public int Ascension { get; init; }
 
 	public required float TotalPlaytime { get; init; }
 
 	public required float TotalWinRate { get; init; }
+
+	public required int NumReloads { get; init; }
 
 	public required float RunPlaytime { get; init; }
 

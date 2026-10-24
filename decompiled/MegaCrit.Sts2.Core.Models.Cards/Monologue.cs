@@ -25,7 +25,7 @@ public sealed class Monologue : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		MonologuePower monologuePower = await PowerCmd.Apply<MonologuePower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		MonologuePower monologuePower = await PowerCmd.Apply<MonologuePower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 		if (monologuePower != null)
 		{
 			monologuePower.DynamicVars.Strength.BaseValue = base.DynamicVars["Power"].BaseValue;

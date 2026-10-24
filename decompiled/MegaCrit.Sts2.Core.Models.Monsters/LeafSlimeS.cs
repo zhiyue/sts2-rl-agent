@@ -28,7 +28,7 @@ public sealed class LeafSlimeS : MonsterModel
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
-		MoveState moveState = new MoveState("BUTT_MOVE", TackleMove, new SingleAttackIntent(TackleDamage));
+		MoveState moveState = new MoveState("TACKLE_MOVE", TackleMove, new SingleAttackIntent(TackleDamage));
 		MoveState moveState2 = new MoveState("GOOP_MOVE", GoopMove, new StatusIntent(1));
 		RandomBranchState randomBranchState = (RandomBranchState)(moveState2.FollowUpState = (moveState.FollowUpState = new RandomBranchState("RAND")));
 		randomBranchState.AddBranch(moveState, MoveRepeatType.CannotRepeat);
@@ -52,6 +52,6 @@ public sealed class LeafSlimeS : MonsterModel
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.5f);
 		SfxCmd.Play(AttackSfx);
 		VfxCmd.PlayOnCreatureCenters(targets, "vfx/vfx_slime_impact");
-		await CardPileCmd.AddToCombatAndPreview<Slimed>(targets, PileType.Discard, 1, addedByPlayer: false);
+		await CardPileCmd.AddToCombatAndPreview<Slimed>(targets, PileType.Discard, 1, null);
 	}
 }

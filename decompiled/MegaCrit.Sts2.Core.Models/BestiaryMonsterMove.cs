@@ -1,8 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Localization;
 
 namespace MegaCrit.Sts2.Core.Models;
 
-public class BestiaryMonsterMove
+/// <summary>
+/// Encapsulates the data needed to play an animation and accompanied sfx for a
+/// "move" for a given creature in the Bestiary.
+/// </summary>
+public struct BestiaryMonsterMove
 {
 	private static readonly LocString _attackMoveName = new LocString("bestiary", "ACTION_NAME.attack");
 
@@ -16,43 +24,94 @@ public class BestiaryMonsterMove
 
 	private static readonly LocString _stunMoveName = new LocString("bestiary", "ACTION_NAME.stun");
 
-	public string moveName;
+	public string displayName;
 
-	public readonly string animId;
+	public string? animId;
 
-	public readonly string? sfx;
+	public string? sfx;
 
-	public float sfxDelay;
+	public string? stateId;
 
-	public BestiaryMonsterMove(string moveName, string animId, string sfx = "", float sfxDelay = 0f)
+	public Func<IReadOnlyList<Creature>, Task>? nonStateMove;
+
+	public Func<Task>? action;
+
+	public bool stopSfxLoops;
+
+	public static BestiaryMonsterMove FromAnim(string animId, string? sfx)
 	{
-		this.moveName = moveName;
-		this.animId = animId;
-		this.sfx = sfx;
-		this.sfxDelay = sfxDelay;
-		InitName();
-	}
-
-	public BestiaryMonsterMove(LocString moveName, string animId, string sfx = "", float sfxDelay = 0f)
-	{
-		this.moveName = moveName.GetRawText();
-		this.animId = animId;
-		this.sfx = sfx;
-		this.sfxDelay = sfxDelay;
-	}
-
-	private void InitName()
-	{
-		string text = animId;
-		string text2 = (animId.StartsWith("attack") ? _attackMoveName.GetRawText() : (text switch
+		BestiaryMonsterMove result = new BestiaryMonsterMove
+		{
+			animId = animId
+		};
+		string text = (animId.StartsWith("attack") ? _attackMoveName.GetRawText() : (animId switch
 		{
 			"cast" => _castMoveName.GetRawText(), 
 			"die" => _dieMoveName.GetRawText(), 
 			"hurt" => _hurtMoveName.GetRawText(), 
 			"revive" => _reviveMoveName.GetRawText(), 
 			"stun" => _stunMoveName.GetRawText(), 
-			_ => "MISSING_CASE", 
+			_ => animId, 
 		}));
-		moveName = text2;
+		result.displayName = text;
+		result.sfx = sfx;
+		return result;
+	}
+
+	public BestiaryMonsterMove StopOtherSfx()
+	{
+		stopSfxLoops = true;
+		return this;
+	}
+
+	public static BestiaryMonsterMove FromAnim(LocString moveName, string animId, string? sfx)
+	{
+		return new BestiaryMonsterMove
+		{
+			animId = animId,
+			displayName = moveName.GetRawText(),
+			sfx = sfx
+		};
+	}
+
+	public static BestiaryMonsterMove FromState(LocString moveName, string stateId)
+	{
+		return new BestiaryMonsterMove
+		{
+			displayName = moveName.GetRawText(),
+			stateId = stateId
+		};
+	}
+
+	public static BestiaryMonsterMove FromState(string stateId)
+	{
+		return new BestiaryMonsterMove
+		{
+			displayName = stateId,
+			stateId = stateId
+		};
+	}
+
+	public static BestiaryMonsterMove FromNonStateMove(LocString moveName, Func<IReadOnlyList<Creature>, Task> nonStateMove)
+	{
+		return new BestiaryMonsterMove
+		{
+			displayName = moveName.GetRawText(),
+			nonStateMove = nonStateMove
+		};
+	}
+
+	public static BestiaryMonsterMove FromAction(LocString moveName, Func<Task> action)
+	{
+		return new BestiaryMonsterMove
+		{
+			displayName = moveName.GetRawText(),
+			action = action
+		};
+	}
+
+	public static BestiaryMonsterMove FromStun(Func<Task> action)
+	{
+		return FromAction(new LocString("monsters", "GENERIC.moves.STUNNED.title"), action);
 	}
 }

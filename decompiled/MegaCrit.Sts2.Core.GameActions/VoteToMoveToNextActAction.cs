@@ -6,8 +6,16 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.GameActions;
 
+/// <summary>
+/// An action enqueued at the rewards screen when the player is ready to move to the next act.
+/// Once a player receives actions from all other players indicating that they're ready to move to the next act, then
+/// the player should begin transitioning to the next act.
+/// </summary>
 public class VoteToMoveToNextActAction : GameAction
 {
+	/// <summary>
+	/// The player who is voting.
+	/// </summary>
 	private readonly Player _player;
 
 	public override ulong OwnerId => _player.NetId;

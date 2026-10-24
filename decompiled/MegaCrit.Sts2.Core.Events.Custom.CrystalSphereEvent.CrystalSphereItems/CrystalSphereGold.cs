@@ -1,15 +1,13 @@
-using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rewards;
 
 namespace MegaCrit.Sts2.Core.Events.Custom.CrystalSphereEvent.CrystalSphereItems;
 
 public class CrystalSphereGold : CrystalSphereItem
 {
-	private readonly CrystalSphereMinigame _grid;
-
 	private readonly bool _isBig;
 
 	private const int _smallAmount = 10;
@@ -54,15 +52,22 @@ public class CrystalSphereGold : CrystalSphereItem
 
 	public override bool IsGood => true;
 
-	public CrystalSphereGold(CrystalSphereMinigame grid, bool isBig)
+	public CrystalSphereGold(bool isBig)
 	{
-		_grid = grid;
 		_isBig = isBig;
 	}
 
-	public override async Task RevealItem(Player owner)
+	public override Reward? ToReward(Player owner, Rng rng)
 	{
-		await base.RevealItem(owner);
-		_grid.AddReward(new GoldReward(Amount, owner).SetRng(_grid.Rng));
+		return new GoldReward(Amount, owner).SetRng(rng);
+	}
+
+	public override SerializableCrystalSphereItem ToSerializable()
+	{
+		return new SerializableCrystalSphereItem
+		{
+			type = CrystalSphereItemType.Gold,
+			isBigGold = _isBig
+		};
 	}
 }

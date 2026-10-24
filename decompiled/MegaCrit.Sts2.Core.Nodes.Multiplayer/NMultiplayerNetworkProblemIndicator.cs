@@ -13,23 +13,47 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 
+/// <summary>
+/// This indicator is displayed over players' indicators when we detect that our connection with them is bad.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NMultiplayerNetworkProblemIndicator.cs")]
 public class NMultiplayerNetworkProblemIndicator : TextureRect
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : TextureRect.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Initialize' method.
+		/// </summary>
 		public static readonly StringName Initialize = "Initialize";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : TextureRect.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsShown' property.
+		/// </summary>
 		public static readonly StringName IsShown = "IsShown";
 
+		/// <summary>
+		/// Cached name for the '_peerId' field.
+		/// </summary>
 		public static readonly StringName _peerId = "_peerId";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : TextureRect.SignalName
 	{
 	}
@@ -85,6 +109,11 @@ public class NMultiplayerNetworkProblemIndicator : TextureRect
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -96,6 +125,7 @@ public class NMultiplayerNetworkProblemIndicator : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -108,6 +138,7 @@ public class NMultiplayerNetworkProblemIndicator : TextureRect
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -118,6 +149,7 @@ public class NMultiplayerNetworkProblemIndicator : TextureRect
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -139,6 +171,7 @@ public class NMultiplayerNetworkProblemIndicator : TextureRect
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -160,6 +193,11 @@ public class NMultiplayerNetworkProblemIndicator : TextureRect
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -170,6 +208,7 @@ public class NMultiplayerNetworkProblemIndicator : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -179,6 +218,7 @@ public class NMultiplayerNetworkProblemIndicator : TextureRect
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

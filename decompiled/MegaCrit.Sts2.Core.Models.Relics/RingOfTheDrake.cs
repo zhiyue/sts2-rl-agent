@@ -23,7 +23,7 @@ public sealed class RingOfTheDrake : RelicModel
 		{
 			return count;
 		}
-		if ((decimal)player.Creature.CombatState.RoundNumber > base.DynamicVars["Turns"].BaseValue)
+		if ((decimal)base.Owner.PlayerCombatState.TurnNumber > base.DynamicVars["Turns"].BaseValue)
 		{
 			return count;
 		}

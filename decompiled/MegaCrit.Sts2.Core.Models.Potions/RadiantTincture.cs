@@ -31,6 +31,6 @@ public sealed class RadiantTincture : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		await PlayerCmd.GainEnergy(base.DynamicVars.Energy.IntValue, target.Player);
-		await PowerCmd.Apply<RadiancePower>(target, base.DynamicVars["RadiancePower"].BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<RadiancePower>(choiceContext, target, base.DynamicVars["RadiancePower"].BaseValue, base.Owner.Creature, null);
 	}
 }

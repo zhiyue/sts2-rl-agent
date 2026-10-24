@@ -12,45 +12,104 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 
+/// <summary>
+/// Base class for Paginator controls for Max FPS and Combat Speed in the settings screen.
+/// Use a dropdown if there are a lot of settings.
+/// TODO: Does this need to override NButton for controller support?
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NPaginator.cs")]
 public class NPaginator : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'OnIndexChanged' method.
+		/// </summary>
 		public static readonly StringName OnIndexChanged = "OnIndexChanged";
 
+		/// <summary>
+		/// Cached name for the 'SetIndex' method.
+		/// </summary>
 		public static readonly StringName SetIndex = "SetIndex";
 
+		/// <summary>
+		/// Cached name for the 'PageLeft' method.
+		/// </summary>
 		public static readonly StringName PageLeft = "PageLeft";
 
+		/// <summary>
+		/// Cached name for the 'PageRight' method.
+		/// </summary>
 		public static readonly StringName PageRight = "PageRight";
 
+		/// <summary>
+		/// Cached name for the 'IndexChangeHelper' method.
+		/// </summary>
 		public static readonly StringName IndexChangeHelper = "IndexChangeHelper";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_vfxLabel' field.
+		/// </summary>
 		public static readonly StringName _vfxLabel = "_vfxLabel";
 
+		/// <summary>
+		/// Cached name for the '_selectionReticle' field.
+		/// </summary>
 		public static readonly StringName _selectionReticle = "_selectionReticle";
 
+		/// <summary>
+		/// Cached name for the '_currentIndex' field.
+		/// </summary>
 		public static readonly StringName _currentIndex = "_currentIndex";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -163,6 +222,11 @@ public class NPaginator : Control
 		_selectionReticle.OnDeselect();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -192,6 +256,7 @@ public class NPaginator : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -258,6 +323,7 @@ public class NPaginator : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -304,6 +370,7 @@ public class NPaginator : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -335,6 +402,7 @@ public class NPaginator : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -366,6 +434,11 @@ public class NPaginator : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -378,6 +451,7 @@ public class NPaginator : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -389,6 +463,7 @@ public class NPaginator : Control
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

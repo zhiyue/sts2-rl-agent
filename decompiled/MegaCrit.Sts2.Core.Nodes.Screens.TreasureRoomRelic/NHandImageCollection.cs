@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -10,57 +11,111 @@ using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.TreasureRelicPicking;
-using MegaCrit.Sts2.Core.Extensions;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Multiplayer.Game.PeerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.TreasureRoomRelic;
 
+/// <summary>
+/// Spawns hand images at the treasure room relic picking screen.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/TreasureRoomRelic/NHandImageCollection.cs")]
 public class NHandImageCollection : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnInputStateAdded' method.
+		/// </summary>
 		public static readonly StringName OnInputStateAdded = "OnInputStateAdded";
 
+		/// <summary>
+		/// Cached name for the 'OnInputStateRemoved' method.
+		/// </summary>
 		public static readonly StringName OnInputStateRemoved = "OnInputStateRemoved";
 
+		/// <summary>
+		/// Cached name for the 'AddHand' method.
+		/// </summary>
 		public static readonly StringName AddHand = "AddHand";
 
+		/// <summary>
+		/// Cached name for the 'OnInputStateChanged' method.
+		/// </summary>
 		public static readonly StringName OnInputStateChanged = "OnInputStateChanged";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'ProcessGuiFocus' method.
+		/// </summary>
 		public static readonly StringName ProcessGuiFocus = "ProcessGuiFocus";
 
+		/// <summary>
+		/// Cached name for the 'GetHand' method.
+		/// </summary>
 		public static readonly StringName GetHand = "GetHand";
 
+		/// <summary>
+		/// Cached name for the 'RemoveHand' method.
+		/// </summary>
 		public static readonly StringName RemoveHand = "RemoveHand";
 
+		/// <summary>
+		/// Cached name for the 'UpdateHandVisibility' method.
+		/// </summary>
 		public static readonly StringName UpdateHandVisibility = "UpdateHandVisibility";
 
+		/// <summary>
+		/// Cached name for the 'BeforeRelicsAwarded' method.
+		/// </summary>
 		public static readonly StringName BeforeRelicsAwarded = "BeforeRelicsAwarded";
 
+		/// <summary>
+		/// Cached name for the 'AnimateHandsIn' method.
+		/// </summary>
 		public static readonly StringName AnimateHandsIn = "AnimateHandsIn";
-
-		public static readonly StringName AnimateHandsAway = "AnimateHandsAway";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_handAnimateInProgress' field.
+		/// </summary>
 		public static readonly StringName _handAnimateInProgress = "_handAnimateInProgress";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
+
+	private CancellationTokenSource _cts = new CancellationTokenSource();
 
 	private PeerInputSynchronizer? _synchronizer;
 
@@ -73,11 +128,13 @@ public class NHandImageCollection : Control
 	public override void _EnterTree()
 	{
 		base._EnterTree();
+		_cts = new CancellationTokenSource();
 		GetViewport().Connect(Viewport.SignalName.GuiFocusChanged, Callable.From<Control>(ProcessGuiFocus));
 	}
 
 	public override void _ExitTree()
 	{
+		_cts.Cancel();
 		if (_synchronizer != null)
 		{
 			_synchronizer.StateAdded -= OnInputStateAdded;
@@ -96,7 +153,7 @@ public class NHandImageCollection : Control
 			return;
 		}
 		_synchronizer = RunManager.Instance.InputSynchronizer;
-		_synchronizer.StateAdded -= OnInputStateAdded;
+		_synchronizer.StateAdded += OnInputStateAdded;
 		_synchronizer.StateChanged += OnInputStateChanged;
 		_synchronizer.StateRemoved += OnInputStateRemoved;
 		foreach (Player player in _runState.Players)
@@ -204,17 +261,23 @@ public class NHandImageCollection : Control
 		NetScreenType screenType = _synchronizer.GetScreenType(LocalContext.NetId.Value);
 		foreach (NHandImage hand in _hands)
 		{
-			NetScreenType netScreenType = ((!RunManager.Instance.IsSinglePlayerOrFakeMultiplayer) ? _synchronizer.GetScreenType(hand.Player.NetId) : NetScreenType.SharedRelicPicking);
+			NetScreenType netScreenType = ((!RunManager.Instance.IsSingleplayerOrFakeMultiplayer) ? _synchronizer.GetScreenType(hand.Player.NetId) : NetScreenType.SharedRelicPicking);
 			bool flag = netScreenType == NetScreenType.SharedRelicPicking && screenType == NetScreenType.SharedRelicPicking;
-			if (!hand.Visible && flag)
+			if (!hand.IsShown && flag)
 			{
 				hand.AnimateIn();
 			}
-			hand.Visible = flag;
+			else if (hand.IsShown && !flag)
+			{
+				hand.AnimateAway();
+			}
 		}
 		NGame.Instance.CursorManager.SetCursorShown(screenType != NetScreenType.SharedRelicPicking);
 	}
 
+	/// <summary>
+	/// Animates hands to a neutral space near the edges of the screen.
+	/// </summary>
 	public void BeforeRelicsAwarded()
 	{
 		foreach (NHandImage hand in _hands)
@@ -223,6 +286,12 @@ public class NHandImageCollection : Control
 		}
 	}
 
+	/// <summary>
+	/// Z-indexes hands to 1 so that they appear above the fight backdrop, modulates them to white regardless of whether
+	/// they belong to the local player, and adjusts their pivot in preparation for throwing RPS moves.
+	/// Note that should happen before DoFight is called, because the hands should already be z-index up as the fight
+	/// backdrop starts fading in.
+	/// </summary>
 	public void BeforeFightStarted(List<Player> playersInvolved)
 	{
 		foreach (Player item in playersInvolved)
@@ -232,6 +301,9 @@ public class NHandImageCollection : Control
 		}
 	}
 
+	/// <summary>
+	/// Animates the hands in just before the relic picking finishes.
+	/// </summary>
 	public void AnimateHandsIn()
 	{
 		foreach (NHandImage hand in _hands)
@@ -243,14 +315,12 @@ public class NHandImageCollection : Control
 		}
 	}
 
-	public void AnimateHandsAway()
-	{
-		foreach (NHandImage hand in _hands)
-		{
-			hand.AnimateAway();
-		}
-	}
-
+	/// <summary>
+	/// Animates the results of a relic picking fight.
+	/// result.type must be FoughtOver, and result.fight must be non-null.
+	/// </summary>
+	/// <param name="result">The relic fight to animate.</param>
+	/// <param name="holder">The relic holder that is displaying result.relic.</param>
 	public async Task DoFight(RelicPickingResult result, NTreasureRoomRelicHolder holder)
 	{
 		RelicPickingFight fight = result.fight;
@@ -271,7 +341,7 @@ public class NHandImageCollection : Control
 					tweens.Add(hand.DoFightMove(relicPickingFightMove.Value, 1.5f * durationMultiplier));
 				}
 			}
-			await Task.WhenAll(tweens.Select((Tween t) => ToSignal(t, Tween.SignalName.Finished).ToTask()));
+			await Task.WhenAll(tweens.Select((Tween t) => t.AwaitFinished(_cts.Token)));
 			List<Player> list = new List<Player>();
 			for (int num = 0; num < fight.playersInvolved.Count; num++)
 			{
@@ -295,13 +365,13 @@ public class NHandImageCollection : Control
 			}
 			if (i == fight.rounds.Count - 1)
 			{
-				await Cmd.Wait(0.5f);
+				await Cmd.Wait(0.5f, _cts.Token);
 				NHandImage hand2 = GetHand(result.player.NetId);
 				tasks.Add(hand2.GrabRelic(holder));
 			}
 			if (tasks.Count == 0)
 			{
-				await Cmd.Wait(1f * durationMultiplier);
+				await Cmd.Wait(1f * durationMultiplier, _cts.Token);
 			}
 			else
 			{
@@ -322,10 +392,15 @@ public class NHandImageCollection : Control
 		hand.SetIsInFight(inFight: false);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(14);
+		List<MethodInfo> list = new List<MethodInfo>(13);
 		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnInputStateAdded, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
@@ -363,10 +438,10 @@ public class NHandImageCollection : Control
 		list.Add(new MethodInfo(MethodName.UpdateHandVisibility, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.BeforeRelicsAwarded, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.AnimateHandsIn, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
-		list.Add(new MethodInfo(MethodName.AnimateHandsAway, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -447,15 +522,10 @@ public class NHandImageCollection : Control
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.AnimateHandsAway && args.Count == 0)
-		{
-			AnimateHandsAway();
-			ret = default(godot_variant);
-			return true;
-		}
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -511,13 +581,10 @@ public class NHandImageCollection : Control
 		{
 			return true;
 		}
-		if (method == MethodName.AnimateHandsAway)
-		{
-			return true;
-		}
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -529,6 +596,7 @@ public class NHandImageCollection : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -540,6 +608,11 @@ public class NHandImageCollection : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -548,6 +621,7 @@ public class NHandImageCollection : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -555,6 +629,7 @@ public class NHandImageCollection : Control
 		info.AddProperty(PropertyName._handAnimateInProgress, Variant.From(in _handAnimateInProgress));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

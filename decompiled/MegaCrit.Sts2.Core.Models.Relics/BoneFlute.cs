@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Commands.Builders;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Monsters;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -15,7 +16,7 @@ public sealed class BoneFlute : RelicModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new BlockVar(2m, ValueProp.Unpowered));
 
-	public override Task AfterAttack(AttackCommand command)
+	public override Task AfterAttack(PlayerChoiceContext choiceContext, AttackCommand command)
 	{
 		if (!(command.Attacker?.Monster is Osty))
 		{

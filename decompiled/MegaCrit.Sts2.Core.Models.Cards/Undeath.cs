@@ -23,7 +23,7 @@ public sealed class Undeath : CardModel
 	{
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
 		CardModel card = CreateClone();
-		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, addedByPlayer: true), 2.2f);
+		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, base.Owner), 2.2f);
 	}
 
 	protected override void OnUpgrade()

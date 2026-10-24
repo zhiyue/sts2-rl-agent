@@ -20,21 +20,21 @@ namespace MegaCrit.Sts2.Core.Models.Events;
 
 public sealed class WaterloggedScriptorium : EventModel
 {
-	private const int _spawnGoldRequirement = 65;
+	private const int _spawnGoldRequirement = 55;
 
 	private const string _pricklySpongeGoldKey = "PricklySpongeGold";
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[4]
 	{
 		new MaxHpVar(6m),
-		new GoldVar(65),
-		new GoldVar("PricklySpongeGold", 155),
+		new GoldVar(55),
+		new GoldVar("PricklySpongeGold", 99),
 		new CardsVar(2)
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
-		return runState.Players.All((Player p) => p.Gold >= 65);
+		return runState.Players.All((Player p) => p.Gold >= 55);
 	}
 
 	protected override IReadOnlyList<EventOption> GenerateInitialOptions()

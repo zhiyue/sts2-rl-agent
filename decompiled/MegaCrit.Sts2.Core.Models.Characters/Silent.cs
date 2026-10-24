@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.PotionPools;
 using MegaCrit.Sts2.Core.Models.RelicPools;
 using MegaCrit.Sts2.Core.Models.Relics;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Models.Characters;
 
@@ -24,6 +25,10 @@ public sealed class Silent : CharacterModel
 
 	public override CharacterGender Gender => CharacterGender.Feminine;
 
+	/// <remarks>
+	/// You'll always unlock Silent by doing a run with Ironclad since he's the only character you start out with, but
+	/// technically you unlock her by doing a run with any character.
+	/// </remarks>
 	protected override CharacterModel? UnlocksAfterRunAs => null;
 
 	public override int StartingHp => 70;
@@ -61,6 +66,8 @@ public sealed class Silent : CharacterModel
 	public override Color EnergyLabelOutlineColor => new Color("004f04FF");
 
 	public override Color DialogueColor => new Color("284719");
+
+	public override VfxColor SpeechBubbleColor => VfxColor.Swamp;
 
 	public override Color MapDrawingColor => new Color("2F6729");
 
@@ -107,6 +114,7 @@ public sealed class Silent : CharacterModel
 		creatureAnimator.AddAnyState("Cast", animState2);
 		creatureAnimator.AddAnyState("Shiv", animState5);
 		creatureAnimator.AddAnyState("Relaxed", animState6);
+		creatureAnimator.AddAnyState("PowerUp", animState2);
 		return creatureAnimator;
 	}
 }

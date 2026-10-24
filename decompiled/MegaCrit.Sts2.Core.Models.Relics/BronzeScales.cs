@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -22,7 +23,7 @@ public sealed class BronzeScales : RelicModel
 		if (room is CombatRoom)
 		{
 			Flash();
-			await PowerCmd.Apply<ThornsPower>(base.Owner.Creature, base.DynamicVars["ThornsPower"].BaseValue, base.Owner.Creature, null);
+			await PowerCmd.Apply<ThornsPower>(new ThrowingPlayerChoiceContext(), base.Owner.Creature, base.DynamicVars["ThornsPower"].BaseValue, base.Owner.Creature, null);
 		}
 	}
 }

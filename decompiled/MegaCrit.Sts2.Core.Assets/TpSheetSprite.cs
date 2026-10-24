@@ -1,5 +1,8 @@
 namespace MegaCrit.Sts2.Core.Assets;
 
+/// <summary>
+/// Individual sprite within a texture page.
+/// </summary>
 public class TpSheetSprite
 {
 	public string Filename { get; set; } = "";

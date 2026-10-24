@@ -13,7 +13,6 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Monsters;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Odds;
 using MegaCrit.Sts2.Core.Random;
@@ -38,6 +37,8 @@ public class Player
 
 	private int _gold;
 
+	private bool _canRemovePotions = true;
+
 	public int MaxPotionCount => _potionSlots.Count;
 
 	public CharacterModel Character { get; }
@@ -46,14 +47,43 @@ public class Player
 
 	public ulong NetId { get; }
 
+	/// <summary>
+	/// Player-scoped RNG set.
+	/// Note that this state is not deterministic outside of combat, events and rest sites
+	/// This is initialized with a seed of 0, but is updated to a real seed when added to a <see cref="P:MegaCrit.Sts2.Core.Entities.Players.Player.RunState" />.
+	/// </summary>
 	public PlayerRngSet PlayerRng { get; private set; }
 
+	/// <summary>
+	/// Player-scoped odds set.
+	/// Note that this state is not deterministic outside of combat, events and rest sites.
+	/// This is initialized with a seed of 0, but is updated to a real seed when added to a <see cref="P:MegaCrit.Sts2.Core.Entities.Players.Player.RunState" />.
+	/// </summary>
 	public PlayerOddsSet PlayerOdds { get; private set; }
 
+	/// <summary>
+	/// Player-scoped relic grab bag.
+	/// See <see cref="P:MegaCrit.Sts2.Core.Runs.IRunState.SharedRelicGrabBag" /> for the difference between this and the shared grab bag.
+	/// Note that this state is not deterministic outside of combat, events and rest sites.
+	/// </summary>
 	public RelicGrabBag RelicGrabBag { get; }
 
+	/// <summary>
+	/// The set of unlocks the player entered the run with.
+	/// This serves several purposes:
+	/// - In multiplayer, this keeps track of each player's unlocks so that we generate only cards/potions/relics that
+	///   the player has unlocked.
+	/// - In both singleplayer and multiplayer, unlocking epochs outside of the run does not change the unlocks in a
+	///   run that you load. The unlocks are saved into the run save file.
+	/// </summary>
 	public UnlockState UnlockState { get; }
 
+	/// <summary>
+	/// The state of the run that the player is in.
+	/// Will usually be an instance of <see cref="P:MegaCrit.Sts2.Core.Entities.Players.Player.RunState" />, but will be <see cref="T:MegaCrit.Sts2.Core.Runs.NullRunState" /> in some spots
+	/// for testing, debugging, or one-off combat scenarios. You should never have to check for this though, as
+	/// <see cref="T:MegaCrit.Sts2.Core.Runs.NullRunState" /> should always behave appropriately.
+	/// </summary>
 	public IRunState RunState
 	{
 		get
@@ -70,6 +100,15 @@ public class Player
 		}
 	}
 
+	/// <summary>
+	/// This is almost equivalent to Creature.IsAlive, except for a brief period of time between when the player's HP
+	/// reaches zero and when DieInternal is called.
+	/// It is used to allow hooks that prevent death to run before the player is fully considered dead.
+	/// This is on Player and not Creature because monsters use a different mechanism for death prevention. Since
+	/// creatures are always removed from combat after they are fully dead, their powers are always iterated, and we
+	/// rely on creature removal to remove their powers from Hook. Players are different - they stick around after they
+	/// are fully dead, and so we rely on this flag to stop model iteration.
+	/// </summary>
 	public bool IsActiveForHooks { get; private set; }
 
 	public PlayerCombatState? PlayerCombatState { get; private set; }
@@ -82,10 +121,24 @@ public class Player
 
 	public IEnumerable<PotionModel> Potions => _potionSlots.Where((PotionModel p) => p != null).OfType<PotionModel>();
 
+	/// <summary>
+	/// Get this player's Osty pet Creature.
+	/// If Osty is not in combat, this will return null.
+	/// If Osty is dead, this will return the dead Osty Creature instance.
+	///
+	/// Note: If you want to check that Osty is both present in combat and alive, use <see cref="P:MegaCrit.Sts2.Core.Entities.Players.Player.IsOstyAlive" />.
+	/// If you want to check that Osty is missing from combat or dead, use <see cref="P:MegaCrit.Sts2.Core.Entities.Players.Player.IsOstyMissing" />.
+	/// </summary>
 	public Creature? Osty => PlayerCombatState?.GetPet<Osty>();
 
+	/// <summary>
+	/// Is Osty present in combat and alive?
+	/// </summary>
 	public bool IsOstyAlive => Osty?.IsAlive ?? false;
 
+	/// <summary>
+	/// Is Osty missing from combat or dead?
+	/// </summary>
 	public bool IsOstyMissing => !IsOstyAlive;
 
 	public int Gold
@@ -104,12 +157,32 @@ public class Player
 		}
 	}
 
+	/// <summary>
+	/// The player's character's max ascension level when the run started.
+	/// We need to keep track of this in order to properly show the "ascension unlocked" message when winning a run.
+	/// </summary>
 	public int MaxAscensionWhenRunStarted { get; }
 
 	public bool HasOpenPotionSlots => _potionSlots.Any((PotionModel p) => p == null);
 
-	public bool CanRemovePotions { get; set; } = true;
+	public bool CanRemovePotions
+	{
+		get
+		{
+			return _canRemovePotions;
+		}
+		set
+		{
+			_canRemovePotions = value;
+			this.CanRemovePotionsChanged?.Invoke();
+		}
+	}
 
+	/// <summary>
+	/// Has this player's inventory been populated?
+	/// A player object is initially created unpopulated, but the various populating methods should be called before
+	/// the run they're in has fully been launched.
+	/// </summary>
 	private bool IsInventoryPopulated
 	{
 		get
@@ -166,6 +239,8 @@ public class Player
 
 	public event Action? GoldChanged;
 
+	public event Action? CanRemovePotionsChanged;
+
 	public bool HasEventPet()
 	{
 		if (!Relics.Any((RelicModel r) => r.AddsPet))
@@ -198,11 +273,31 @@ public class Player
 		MaxAscensionWhenRunStarted = (SaveManager.Instance?.Progress.GetStatsForCharacter(Character.Id))?.MaxAscension ?? 0;
 	}
 
+	/// <summary>
+	/// Create a new player for use at the start of a new run.
+	/// The player's inventory will be populated with the chosen character's starting cards, relics, etc., but these
+	/// models will not work properly until the player is added to a <see cref="P:MegaCrit.Sts2.Core.Entities.Players.Player.RunState" /> and/or
+	/// <see cref="T:MegaCrit.Sts2.Core.Combat.CombatState" />.
+	/// </summary>
+	/// <param name="unlockState">The set of unlocks the player entered the run with.</param>
+	/// <param name="netId">ID for uniquely identifying this player in multiplayer games.</param>
+	/// <typeparam name="T">The type of the character that the player is playing as.</typeparam>
+	/// <returns>A new player with an empty inventory.</returns>
 	public static Player CreateForNewRun<T>(UnlockState unlockState, ulong netId) where T : CharacterModel
 	{
 		return CreateForNewRun(ModelDb.Character<T>(), unlockState, netId);
 	}
 
+	/// <summary>
+	/// Create a new player for use at the start of a new run.
+	/// The player's inventory will be populated with the chosen character's starting cards, relics, etc., but these
+	/// models will not work properly until the player is added to a <see cref="P:MegaCrit.Sts2.Core.Entities.Players.Player.RunState" /> and/or
+	/// <see cref="T:MegaCrit.Sts2.Core.Combat.CombatState" />.
+	/// </summary>
+	/// <param name="character">The character that the player is playing as.</param>
+	/// <param name="unlockState">The set of unlocks the player entered the run with.</param>
+	/// <param name="netId">ID for uniquely identifying this player in multiplayer games.</param>
+	/// <returns>A new player with an empty inventory.</returns>
 	public static Player CreateForNewRun(CharacterModel character, UnlockState unlockState, ulong netId)
 	{
 		Player player = new Player(character, netId, character.StartingHp, character.StartingHp, character.MaxEnergy, character.StartingGold, 3, character.BaseOrbSlotCount, new RelicGrabBag(), unlockState);
@@ -210,6 +305,12 @@ public class Player
 		return player;
 	}
 
+	/// <summary>
+	/// Load a player from a SerializablePlayer.
+	/// The player's inventory will be populated with the cards, relics, etc. from the SerializablePlayer., but these
+	/// models will not work properly until the player is added to a <see cref="P:MegaCrit.Sts2.Core.Entities.Players.Player.RunState" /> and/or
+	/// <see cref="T:MegaCrit.Sts2.Core.Combat.CombatState" />.
+	/// </summary>
 	public static Player FromSerializable(SerializablePlayer save)
 	{
 		Player player = new Player(ModelDb.GetById<CharacterModel>(save.CharacterId), save.NetId, save.CurrentHp, save.MaxHp, save.MaxEnergy, save.Gold, save.MaxPotionSlotCount, save.BaseOrbSlotCount, MegaCrit.Sts2.Core.Runs.RelicGrabBag.FromSerializable(save.RelicGrabBag), MegaCrit.Sts2.Core.Unlocks.UnlockState.FromSerializable(save.UnlockState), save.DiscoveredCards.ToList(), save.DiscoveredEnemies.ToList(), save.DiscoveredEpochs.ToList(), save.DiscoveredPotions.ToList(), save.DiscoveredRelics.ToList());
@@ -222,7 +323,7 @@ public class Player
 
 	public void InitializeSeed(string seed)
 	{
-		PlayerRng = new PlayerRngSet((uint)((ulong)StringHelper.GetDeterministicHashCode(seed) + NetId));
+		PlayerRng = new PlayerRngSet((uint)(StringHelper.GetDeterministicHashCode(seed) + _runState.GetPlayerSlotIndex(this)));
 		PlayerOdds = new PlayerOddsSet(PlayerRng);
 	}
 
@@ -333,9 +434,17 @@ public class Player
 		DiscoveredEpochs = player.DiscoveredEpochs.ToList();
 		DiscoveredPotions = player.DiscoveredPotions.ToList();
 		DiscoveredRelics = player.DiscoveredRelics.ToList();
+		ExtraFields = ExtraPlayerFields.FromSerializable(player.ExtraFields);
 		IsActiveForHooks = Creature.IsAlive;
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// Only RelicCmd.Obtain and save/load stuff should be calling this.
+	/// </summary>
+	/// <param name="relic">Relic to add.</param>
+	/// <param name="index">Index at which relic should be inserted. -1 means at the end.</param>
+	/// <param name="silent">If true, RelicObtained will not be called.</param>
 	public void AddRelicInternal(RelicModel relic, int index = -1, bool silent = false)
 	{
 		relic.AssertMutable();
@@ -358,6 +467,12 @@ public class Player
 		}
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY RelicCmd.Remove should be calling this.
+	/// </summary>
+	/// <param name="relic">Relic to remove.</param>
+	/// <param name="silent">If true, RelicRemoved will not be called.</param>
 	public void RemoveRelicInternal(RelicModel relic, bool silent = false)
 	{
 		if (!_relics.Contains(relic))
@@ -376,6 +491,11 @@ public class Player
 		}
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY RelicCmd.Melt should be calling this.
+	/// </summary>
+	/// <param name="relic">Relic to melt.</param>
 	public void MeltRelicInternal(RelicModel relic)
 	{
 		if (!relic.IsWax)
@@ -398,6 +518,13 @@ public class Player
 		relic.Status = RelicStatus.Disabled;
 	}
 
+	/// <summary>
+	/// Get one of this player's relics.
+	/// If the player has multiple of the same type of relic, just get the first one.
+	/// If the player has none of this type of relic, returns null.
+	/// </summary>
+	/// <typeparam name="T">Type of relic to get.</typeparam>
+	/// <returns>Matching relic.</returns>
 	public T? GetRelic<T>() where T : RelicModel
 	{
 		return Relics.FirstOrDefault((RelicModel r) => r is T) as T;
@@ -408,11 +535,17 @@ public class Player
 		return Relics.FirstOrDefault((RelicModel r) => r.Id == id);
 	}
 
+	/// <summary>
+	/// Returns the slot index of the potion in the player's belt, or -1 if it is not in the belt.
+	/// </summary>
 	public int GetPotionSlotIndex(PotionModel model)
 	{
 		return _potionSlots.IndexOf(model);
 	}
 
+	/// <summary>
+	/// Returns the potion at the slot index, or throws if the index is out of range.
+	/// </summary>
 	public PotionModel? GetPotionAtSlotIndex(int index)
 	{
 		if (index < 0 || index >= _potionSlots.Count)
@@ -422,16 +555,29 @@ public class Player
 		return _potionSlots[index];
 	}
 
+	/// <summary>
+	/// Increases the maximum amount of potions the player can hold.
+	/// </summary>
+	/// <param name="maxPotionCountIncrease">The increased count of maximum amount of potions the player can carry.</param>
 	public void AddToMaxPotionCount(int maxPotionCountIncrease)
 	{
 		SetMaxPotionCountInternal(_potionSlots.Count + maxPotionCountIncrease);
 	}
 
+	/// <summary>
+	/// Decreases the maximum amount of potions the player can hold.
+	/// </summary>
+	/// <param name="maxPotionCountDecrease">The decreased count of maximum amount of potions the player can carry.</param>
 	public void SubtractFromMaxPotionCount(int maxPotionCountDecrease)
 	{
 		SetMaxPotionCountInternal(_potionSlots.Count - maxPotionCountDecrease);
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY save/load stuff should be calling this.
+	/// </summary>
+	/// <param name="newMaxPotionCount">The new maximum amount of potions the player can carry.</param>
 	private void SetMaxPotionCountInternal(int newMaxPotionCount)
 	{
 		if (newMaxPotionCount > _potionSlots.Count)
@@ -468,6 +614,13 @@ public class Player
 		}
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY PotionCmd.Procure and save/load stuff should be calling this.
+	/// </summary>
+	/// <param name="potion">Potion to add.</param>
+	/// <param name="slotIndex">Slot at which to add the potion. If -1, the potion will be added in the first available slot.</param>
+	/// <param name="silent">If true, no events will be called.</param>
 	public PotionProcureResult AddPotionInternal(PotionModel potion, int slotIndex = -1, bool silent = false)
 	{
 		potion.AssertMutable();
@@ -512,6 +665,12 @@ public class Player
 		return potionProcureResult;
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY PotionModel.Discard should be calling this.
+	/// </summary>
+	/// <param name="potion">Potion to discard.</param>
+	/// <param name="silent">If true, PotionDiscarded will not be called.</param>
 	public void DiscardPotionInternal(PotionModel potion, bool silent = false)
 	{
 		RemovePotionInternal(potion);
@@ -521,6 +680,11 @@ public class Player
 		}
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY PotionModel.Remove should be calling this.
+	/// </summary>
+	/// <param name="potion">Used potion to remove.</param>
 	public void RemoveUsedPotionInternal(PotionModel potion)
 	{
 		RemovePotionInternal(potion);
@@ -537,6 +701,9 @@ public class Player
 		_potionSlots[num] = null;
 	}
 
+	/// <summary>
+	/// Populates the character's starting deck to start a new game.
+	/// </summary>
 	private void PopulateStartingDeck()
 	{
 		List<CardModel> list = new List<CardModel>();
@@ -549,6 +716,14 @@ public class Player
 		PopulateDeck(list);
 	}
 
+	/// <summary>
+	/// Populates a player's existing deck.
+	/// This can be from a multiplayer sync or from a save file.
+	/// </summary>
+	/// <param name="cards">Cards to load.</param>
+	/// <param name="silent">
+	/// Whether or not to emit events. If loading from a multiplayer sync, we don't want to emit events.
+	/// </param>
 	private void PopulateDeck(IEnumerable<CardModel> cards, bool silent = false)
 	{
 		if (Deck.Cards.Any())
@@ -572,6 +747,14 @@ public class Player
 		PopulateRelics(list);
 	}
 
+	/// <summary>
+	/// Loads a player's existing relic set.
+	/// This can be from the player's starting relics, from a multiplayer sync, or from a save file.
+	/// </summary>
+	/// <param name="relics">Relics to load.</param>
+	/// <param name="silent">
+	/// Whether or not to emit events. If loading from a multiplayer sync, we don't want to emit events.
+	/// </param>
 	private void PopulateRelics(IEnumerable<RelicModel> relics, bool silent = false)
 	{
 		if (Relics.Any())
@@ -584,6 +767,12 @@ public class Player
 		}
 	}
 
+	/// <summary>
+	/// Loads a player's existing potion set.
+	/// This can be from a multiplayer sync or from a save file.
+	/// </summary>
+	/// <param name="serializablePotions">Cards to load.</param>
+	/// <param name="silent">Whether or not to emit events. If loading from a multiplayer sync, we don't want to emit events.</param>
 	private void LoadPotions(List<SerializablePotion> serializablePotions, bool silent = false)
 	{
 		if (Potions.Any())
@@ -596,11 +785,20 @@ public class Player
 		}
 	}
 
+	/// <summary>
+	/// Resets the player's combat state to an empty state.
+	/// This will leave the player with no cards in combat, so you should usually call <see cref="M:MegaCrit.Sts2.Core.Entities.Players.Player.PopulateCombatState(MegaCrit.Sts2.Core.Random.Rng,MegaCrit.Sts2.Core.Combat.CombatState)" />
+	/// after.
+	/// </summary>
 	public void ResetCombatState()
 	{
 		PlayerCombatState = new PlayerCombatState(this);
 	}
 
+	/// <summary>
+	/// Populates the player's combat state with everything they should get at the start of combat.
+	/// For example, this clones all the cards from their deck into their draw pile in a random order.
+	/// </summary>
 	public void PopulateCombatState(Rng rng, CombatState state)
 	{
 		foreach (CardModel item in Deck.Cards.ToList())
@@ -612,6 +810,14 @@ public class Player
 		PlayerCombatState.DrawPile.RandomizeOrderInternal(this, rng, state);
 	}
 
+	/// <summary>
+	/// Revives the player before the combat ends, in multiplayer only. Should only trigger when combat ends with other
+	/// players alive.
+	/// It is very important to do this _before_ combat ends instead of after. If the player is still dead during
+	/// HookBus.AfterCombatEnd, their relics will not be subscribed to the HookBus, and relics which rely on AfterCombatEnd
+	/// to reset state will not be reset for the next combat.
+	/// See: Centennial Puzzle, Captain's Wheel, or any other relics that use AfterCombatEnd.
+	/// </summary>
 	public async Task ReviveBeforeCombatEnd()
 	{
 		if (Creature.IsDead)
@@ -620,6 +826,10 @@ public class Player
 		}
 	}
 
+	/// <summary>
+	/// Called after combat ends, giving the player the opportunity to do things like clear out their combat state and
+	/// other combat teardown stuff.
+	/// </summary>
 	public void AfterCombatEnd()
 	{
 		Creature.RemoveAllPowersInternalExcept();
@@ -632,7 +842,7 @@ public class Player
 		SfxCmd.Play(relic.FlashSfx);
 		foreach (Creature target in targets)
 		{
-			NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(NRelicFlashVfx.Create(relic, target));
+			target.GetVfxContainer()?.AddChildSafely(NRelicFlashVfx.Create(relic, target));
 		}
 	}
 
@@ -640,11 +850,21 @@ public class Player
 	{
 	}
 
+	/// <summary>
+	/// Called from Creature when the player reaches zero health, after all hooks that prevent death are called, as well
+	/// as <see cref="M:MegaCrit.Sts2.Core.Hooks.Hook.AfterDeath(MegaCrit.Sts2.Core.Runs.IRunState,MegaCrit.Sts2.Core.Combat.ICombatState,MegaCrit.Sts2.Core.Entities.Creatures.Creature,System.Boolean,System.Single)" />.
+	/// </summary>
 	public void DeactivateHooks()
 	{
 		IsActiveForHooks = false;
 	}
 
+	/// <summary>
+	/// Called from Creature when the player changes from a dead state to a non-dead state.
+	/// This is _not_ called in the scenario when death is prevented, e.g. by Fairy in a Bottle.
+	/// Likely only called in multiplayer scenarios - players cannot revive in singleplayer (remember that death
+	/// prevention is different).
+	/// </summary>
 	public void ActivateHooks()
 	{
 		IsActiveForHooks = true;

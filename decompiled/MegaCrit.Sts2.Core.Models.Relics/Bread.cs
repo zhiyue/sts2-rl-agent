@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -31,17 +33,17 @@ public sealed class Bread : RelicModel
 		{
 			return amount;
 		}
-		CombatState? combatState = player.Creature.CombatState;
-		if (combatState != null && combatState.RoundNumber == 1)
+		PlayerCombatState? playerCombatState = base.Owner.PlayerCombatState;
+		if (playerCombatState != null && playerCombatState.TurnNumber == 1)
 		{
 			return amount;
 		}
 		return amount + base.DynamicVars["GainEnergy"].BaseValue;
 	}
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Creature.Side && combatState.RoundNumber == 1)
+		if (participants.Contains(base.Owner.Creature) && base.Owner.PlayerCombatState.TurnNumber == 1)
 		{
 			await PlayerCmd.LoseEnergy(base.DynamicVars["LoseEnergy"].BaseValue, base.Owner);
 		}

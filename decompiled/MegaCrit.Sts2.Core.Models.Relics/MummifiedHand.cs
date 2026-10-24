@@ -13,13 +13,13 @@ public sealed class MummifiedHand : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Rare;
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		if (cardPlay.Card.Owner != base.Owner)
+		if (!CombatManager.Instance.IsInProgress)
 		{
 			return Task.CompletedTask;
 		}
-		if (!CombatManager.Instance.IsInProgress)
+		if (cardPlay.Card.Owner != base.Owner)
 		{
 			return Task.CompletedTask;
 		}
@@ -27,12 +27,21 @@ public sealed class MummifiedHand : RelicModel
 		{
 			return Task.CompletedTask;
 		}
-		IReadOnlyList<CardModel> cards = PileType.Hand.GetPile(base.Owner).Cards;
 		Rng combatCardSelection = base.Owner.RunState.Rng.CombatCardSelection;
-		CardModel cardModel = combatCardSelection.NextItem(cards.Where((CardModel c) => c.CostsEnergyOrStars(includeGlobalModifiers: false)));
+		IReadOnlyList<CardModel> cards = PileType.Hand.GetPile(base.Owner).Cards;
+		List<CardModel> list = cards.Where((CardModel c) => c.EnergyCost.GetWithModifiers(CostModifiers.None) > 0 || c.BaseStarCost > 0).ToList();
+		CardModel cardModel = combatCardSelection.NextItem(list.Where((CardModel c) => c.CostsEnergyOrStars(includeGlobalModifiers: true)));
 		if (cardModel == null)
 		{
-			combatCardSelection.NextItem(cards.Where((CardModel c) => c.CostsEnergyOrStars(includeGlobalModifiers: true)));
+			cardModel = combatCardSelection.NextItem(cards.Where((CardModel c) => c.CostsEnergyOrStars(includeGlobalModifiers: true)));
+		}
+		if (cardModel == null)
+		{
+			cardModel = combatCardSelection.NextItem(list);
+		}
+		if (cardModel == null)
+		{
+			cardModel = combatCardSelection.NextItem(cards);
 		}
 		cardModel?.SetToFreeThisTurn();
 		return Task.CompletedTask;

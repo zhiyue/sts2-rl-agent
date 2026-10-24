@@ -35,7 +35,7 @@ public sealed class GunkUp : CardModel
 			.WithHitVfxNode(NGoopyImpactVfx.Create)
 			.Execute(choiceContext);
 		CardModel card = base.CombatState.CreateCard<Slimed>(base.Owner);
-		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, addedByPlayer: true));
+		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, base.Owner));
 		await Cmd.Wait(0.5f);
 	}
 

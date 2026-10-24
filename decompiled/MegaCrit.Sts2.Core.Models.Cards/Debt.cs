@@ -23,7 +23,7 @@ public sealed class Debt : CardModel
 	{
 	}
 
-	public override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
+	protected override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
 	{
 		int num = Mathf.Min(base.DynamicVars.Gold.IntValue, base.Owner.Gold);
 		await PlayerCmd.LoseGold(num, base.Owner);

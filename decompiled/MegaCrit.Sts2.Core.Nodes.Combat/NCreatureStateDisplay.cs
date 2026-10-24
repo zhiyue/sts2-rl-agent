@@ -19,62 +19,146 @@ namespace MegaCrit.Sts2.Core.Nodes.Combat;
 [ScriptPath("res://src/Core/Nodes/Combat/NCreatureStateDisplay.cs")]
 public class NCreatureStateDisplay : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'SubscribeToCreatureEvents' method.
+		/// </summary>
 		public static readonly StringName SubscribeToCreatureEvents = "SubscribeToCreatureEvents";
 
+		/// <summary>
+		/// Cached name for the 'DebugToggleVisibility' method.
+		/// </summary>
 		public static readonly StringName DebugToggleVisibility = "DebugToggleVisibility";
 
+		/// <summary>
+		/// Cached name for the 'SetCreatureBounds' method.
+		/// </summary>
 		public static readonly StringName SetCreatureBounds = "SetCreatureBounds";
 
+		/// <summary>
+		/// Cached name for the 'RefreshValues' method.
+		/// </summary>
 		public static readonly StringName RefreshValues = "RefreshValues";
 
+		/// <summary>
+		/// Cached name for the 'OnHovered' method.
+		/// </summary>
 		public static readonly StringName OnHovered = "OnHovered";
 
+		/// <summary>
+		/// Cached name for the 'OnUnhovered' method.
+		/// </summary>
 		public static readonly StringName OnUnhovered = "OnUnhovered";
 
+		/// <summary>
+		/// Cached name for the 'ShowNameplate' method.
+		/// </summary>
 		public static readonly StringName ShowNameplate = "ShowNameplate";
 
+		/// <summary>
+		/// Cached name for the 'HideNameplate' method.
+		/// </summary>
 		public static readonly StringName HideNameplate = "HideNameplate";
 
+		/// <summary>
+		/// Cached name for the 'HideImmediately' method.
+		/// </summary>
 		public static readonly StringName HideImmediately = "HideImmediately";
 
+		/// <summary>
+		/// Cached name for the 'AnimateIn' method.
+		/// </summary>
 		public static readonly StringName AnimateIn = "AnimateIn";
 
+		/// <summary>
+		/// Cached name for the 'AnimateInBlock' method.
+		/// </summary>
 		public static readonly StringName AnimateInBlock = "AnimateInBlock";
 
+		/// <summary>
+		/// Cached name for the 'AnimateOut' method.
+		/// </summary>
 		public static readonly StringName AnimateOut = "AnimateOut";
 
+		/// <summary>
+		/// Cached name for the 'OnBlockTrackingCreatureBlockChanged' method.
+		/// </summary>
 		public static readonly StringName OnBlockTrackingCreatureBlockChanged = "OnBlockTrackingCreatureBlockChanged";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_powerContainer' field.
+		/// </summary>
 		public static readonly StringName _powerContainer = "_powerContainer";
 
+		/// <summary>
+		/// Cached name for the '_nameplateContainer' field.
+		/// </summary>
 		public static readonly StringName _nameplateContainer = "_nameplateContainer";
 
+		/// <summary>
+		/// Cached name for the '_nameplateLabel' field.
+		/// </summary>
 		public static readonly StringName _nameplateLabel = "_nameplateLabel";
 
+		/// <summary>
+		/// Cached name for the '_healthBar' field.
+		/// </summary>
 		public static readonly StringName _healthBar = "_healthBar";
 
+		/// <summary>
+		/// Cached name for the '_hpBarHitbox' field.
+		/// </summary>
 		public static readonly StringName _hpBarHitbox = "_hpBarHitbox";
 
+		/// <summary>
+		/// Cached name for the '_creatureSize' field.
+		/// </summary>
 		public static readonly StringName _creatureSize = "_creatureSize";
 
+		/// <summary>
+		/// Cached name for the '_showHideTween' field.
+		/// </summary>
 		public static readonly StringName _showHideTween = "_showHideTween";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_originalPosition' field.
+		/// </summary>
 		public static readonly StringName _originalPosition = "_originalPosition";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -93,6 +177,9 @@ public class NCreatureStateDisplay : Control
 
 	private Vector2 _creatureSize;
 
+	/// <summary>
+	/// See <see cref="M:MegaCrit.Sts2.Core.Nodes.Combat.NCreature.TrackBlockStatus(MegaCrit.Sts2.Core.Entities.Creatures.Creature)" /> for details.
+	/// </summary>
 	private Creature? _blockTrackingCreature;
 
 	private Tween? _showHideTween;
@@ -220,20 +307,22 @@ public class NCreatureStateDisplay : Control
 	{
 		_hoverTween?.Kill();
 		_hoverTween = CreateTween().SetParallel();
-		_hoverTween.TweenProperty(_powerContainer, "modulate:a", 0.5f, 0.15000000596046448);
-		_hoverTween.TweenProperty(_nameplateContainer, "modulate:a", 1, 0.15000000596046448);
+		_hoverTween.TweenProperty(_powerContainer, "modulate:a", 0.5f, 0.15);
+		_hoverTween.TweenProperty(_nameplateContainer, "modulate:a", 1f, 0.15);
 	}
 
 	public void HideNameplate()
 	{
 		_hoverTween?.Kill();
 		_hoverTween = CreateTween().SetParallel();
-		_hoverTween.TweenProperty(_powerContainer, "modulate:a", 1f, 0.20000000298023224);
-		_hoverTween.TweenProperty(_nameplateContainer, "modulate:a", 0, 0.20000000298023224);
+		_hoverTween.TweenProperty(_powerContainer, "modulate:a", 1f, 0.2);
+		_hoverTween.TweenProperty(_nameplateContainer, "modulate:a", 0f, 0.2);
 	}
 
 	public void HideImmediately()
 	{
+		_showHideTween?.Kill();
+		_hoverTween?.Kill();
 		Color modulate = base.Modulate;
 		modulate.A = 0f;
 		base.Modulate = modulate;
@@ -259,9 +348,9 @@ public class NCreatureStateDisplay : Control
 		}
 		_showHideTween?.Kill();
 		_showHideTween = CreateTween().SetParallel();
-		_showHideTween.TweenProperty(this, "modulate:a", 1f, (mode == HealthBarAnimMode.FromHidden) ? 0.15f : 1f).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine)
+		_showHideTween.TweenProperty(this, "modulate:a", 1f, (mode == HealthBarAnimMode.FromHidden) ? 0.15 : 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine)
 			.SetDelay(num);
-		_showHideTween.TweenProperty(this, "position", _originalPosition, (mode == HealthBarAnimMode.FromHidden) ? 0.15f : 0.5f).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Quad)
+		_showHideTween.TweenProperty(this, "position", _originalPosition, (mode == HealthBarAnimMode.FromHidden) ? 0.15 : 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Quad)
 			.SetDelay(num);
 	}
 
@@ -307,11 +396,19 @@ public class NCreatureStateDisplay : Control
 		_healthBar.TrackBlockStatus(creature);
 	}
 
+	/// <summary>
+	/// See <see cref="M:MegaCrit.Sts2.Core.Nodes.Combat.NCreature.TrackBlockStatus(MegaCrit.Sts2.Core.Entities.Creatures.Creature)" /> for details.
+	/// </summary>
 	private void OnBlockTrackingCreatureBlockChanged(int oldBlock, int blockGain)
 	{
 		_healthBar.RefreshValues();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -349,6 +446,7 @@ public class NCreatureStateDisplay : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -451,6 +549,7 @@ public class NCreatureStateDisplay : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -521,6 +620,7 @@ public class NCreatureStateDisplay : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -572,6 +672,7 @@ public class NCreatureStateDisplay : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -623,6 +724,11 @@ public class NCreatureStateDisplay : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -639,6 +745,7 @@ public class NCreatureStateDisplay : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -654,6 +761,7 @@ public class NCreatureStateDisplay : Control
 		info.AddProperty(PropertyName._originalPosition, Variant.From(in _originalPosition));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

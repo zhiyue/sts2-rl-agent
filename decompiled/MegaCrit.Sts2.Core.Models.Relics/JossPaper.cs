@@ -1,13 +1,16 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
+using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Models.Relics;
@@ -70,6 +73,11 @@ public sealed class JossPaper : RelicModel
 		}
 	}
 
+	/// <summary>
+	/// If Ethereal cards are exhausted at turn end, we want to give the resulting cards to the player after the
+	/// flush occurs. In STS1 this is handled because the card draws are put on the queue, but here we have to
+	/// manually defer.
+	/// </summary>
 	private int EtherealCount
 	{
 		get
@@ -105,9 +113,9 @@ public sealed class JossPaper : RelicModel
 		}
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side == CombatSide.Player)
+		if (participants.Contains(base.Owner.Creature))
 		{
 			CardsExhausted += EtherealCount;
 			EtherealCount = 0;
@@ -131,5 +139,11 @@ public sealed class JossPaper : RelicModel
 		Flash();
 		await Cmd.Wait(1f);
 		IsActivating = false;
+	}
+
+	public override Task AfterCombatEnd(CombatRoom room)
+	{
+		EtherealCount = 0;
+		return Task.CompletedTask;
 	}
 }

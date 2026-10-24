@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Insects
+/// </summary>
 public class Relic5Epoch : EpochModel
 {
 	public override string Id => "RELIC5_EPOCH";

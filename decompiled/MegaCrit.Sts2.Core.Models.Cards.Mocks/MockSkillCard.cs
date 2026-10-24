@@ -24,6 +24,13 @@ public sealed class MockSkillCard : MockCardModel
 		public TargetType targetType;
 	}
 
+	private struct CardCreation
+	{
+		public CardModel canonicalCard;
+
+		public int amount;
+	}
+
 	private const string _drawKey = "Draw";
 
 	private const string _discardKey = "Discard";
@@ -34,15 +41,18 @@ public sealed class MockSkillCard : MockCardModel
 
 	private List<PowerApplication> _powerApplications = new List<PowerApplication>();
 
+	private List<CardCreation> _cardCreations = new List<CardCreation>();
+
 	public override CardType Type => CardType.Skill;
 
 	public override TargetType TargetType => _targetType;
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[6]
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[7]
 	{
 		new BlockVar(5m, ValueProp.Move),
 		new CardsVar("Draw", 0),
 		new CardsVar("Discard", 0),
+		new EnergyVar(0),
 		new ForgeVar(0),
 		new StarsVar(0),
 		new SummonVar(0m)
@@ -52,6 +62,7 @@ public sealed class MockSkillCard : MockCardModel
 	{
 		base.DeepCloneFields();
 		_powerApplications = _powerApplications.ToList();
+		_cardCreations = _cardCreations.ToList();
 	}
 
 	public override MockSkillCard MockBlock(int block)
@@ -103,6 +114,13 @@ public sealed class MockSkillCard : MockCardModel
 		return this;
 	}
 
+	public MockSkillCard MockEnergyGain(decimal energy)
+	{
+		AssertMutable();
+		base.DynamicVars.Energy.BaseValue = energy;
+		return this;
+	}
+
 	public MockSkillCard MockPower<TPower>(int amount, TargetType targetType) where TPower : PowerModel
 	{
 		AssertMutable();
@@ -116,6 +134,17 @@ public sealed class MockSkillCard : MockCardModel
 			powerType = typeof(TPower),
 			amount = amount,
 			targetType = targetType
+		});
+		return this;
+	}
+
+	public MockSkillCard MockCreateCards<TCard>(int amount) where TCard : CardModel
+	{
+		AssertMutable();
+		_cardCreations.Add(new CardCreation
+		{
+			canonicalCard = ModelDb.Card<TCard>(),
+			amount = amount
 		});
 		return this;
 	}
@@ -155,6 +184,10 @@ public sealed class MockSkillCard : MockCardModel
 		{
 			await OstyCmd.Summon(choiceContext, base.Owner, base.DynamicVars.Summon.BaseValue, this);
 		}
+		if (base.DynamicVars.Energy.BaseValue > 0m)
+		{
+			await PlayerCmd.GainEnergy(base.DynamicVars.Energy.BaseValue, base.Owner);
+		}
 		foreach (PowerApplication application in _powerApplications)
 		{
 			foreach (Creature item in application.targetType switch
@@ -166,7 +199,29 @@ public sealed class MockSkillCard : MockCardModel
 			})
 			{
 				PowerModel power = ModelDb.GetById<PowerModel>(ModelDb.GetId(application.powerType)).ToMutable();
-				await PowerCmd.Apply(power, item, application.amount, base.Owner.Creature, this);
+				await PowerCmd.Apply(choiceContext, power, item, application.amount, base.Owner.Creature, this);
+			}
+		}
+		foreach (CardCreation cardCreation in _cardCreations)
+		{
+			CardModel canonicalCard = cardCreation.canonicalCard;
+			if (!(canonicalCard is Shiv))
+			{
+				if (canonicalCard is Soul)
+				{
+					await Soul.CreateInHand(base.Owner, cardCreation.amount, base.CombatState);
+					continue;
+				}
+				List<CardModel> list = new List<CardModel>();
+				for (int j = 0; j < cardCreation.amount; j++)
+				{
+					list.Add(base.CombatState.CreateCard(cardCreation.canonicalCard, base.Owner));
+				}
+				await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Hand, base.Owner);
+			}
+			else
+			{
+				await Shiv.CreateInHand(base.Owner, cardCreation.amount, base.CombatState);
 			}
 		}
 		if (_mockExtraLogic != null)

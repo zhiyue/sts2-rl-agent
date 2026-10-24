@@ -10,17 +10,17 @@ public class ModSettings
 	[JsonPropertyName("mods_enabled")]
 	public bool PlayerAgreedToModLoading { get; set; }
 
-	[JsonPropertyName("disabled_mods")]
+	[JsonPropertyName("mod_list")]
 	[JsonSerializeCondition(SerializationCondition.SaveIfNotCollectionEmptyOrNull)]
-	public List<DisabledMod> DisabledMods { get; set; } = new List<DisabledMod>();
+	public List<SettingsSaveMod> ModList { get; set; } = new List<SettingsSaveMod>();
 
 	public bool IsModDisabled(Mod mod)
 	{
-		return IsModDisabled(mod.pckName, mod.modSource);
+		return IsModDisabled(mod.manifest?.id, mod.modSource);
 	}
 
-	public bool IsModDisabled(string pckName, ModSource source)
+	public bool IsModDisabled(string? id, ModSource source)
 	{
-		return DisabledMods.Any((DisabledMod m) => m.Name == pckName && m.Source == source);
+		return ModList.Any((SettingsSaveMod m) => m.Id == id && m.Source == source && !m.IsEnabled);
 	}
 }

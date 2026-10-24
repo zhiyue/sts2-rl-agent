@@ -19,42 +19,96 @@ namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NRemoteLobbyPlayer.cs")]
 public class NRemoteLobbyPlayer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RefreshVisuals' method.
+		/// </summary>
 		public static readonly StringName RefreshVisuals = "RefreshVisuals";
 
+		/// <summary>
+		/// Cached name for the 'CancelShake' method.
+		/// </summary>
 		public static readonly StringName CancelShake = "CancelShake";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'PlayerId' property.
+		/// </summary>
 		public static readonly StringName PlayerId = "PlayerId";
 
+		/// <summary>
+		/// Cached name for the '_characterIcon' field.
+		/// </summary>
 		public static readonly StringName _characterIcon = "_characterIcon";
 
+		/// <summary>
+		/// Cached name for the '_readyIndicator' field.
+		/// </summary>
 		public static readonly StringName _readyIndicator = "_readyIndicator";
 
+		/// <summary>
+		/// Cached name for the '_disconnectedIndicator' field.
+		/// </summary>
 		public static readonly StringName _disconnectedIndicator = "_disconnectedIndicator";
 
+		/// <summary>
+		/// Cached name for the '_nameplateLabel' field.
+		/// </summary>
 		public static readonly StringName _nameplateLabel = "_nameplateLabel";
 
+		/// <summary>
+		/// Cached name for the '_characterLabel' field.
+		/// </summary>
 		public static readonly StringName _characterLabel = "_characterLabel";
 
+		/// <summary>
+		/// Cached name for the '_platform' field.
+		/// </summary>
 		public static readonly StringName _platform = "_platform";
 
+		/// <summary>
+		/// Cached name for the '_isSingleplayer' field.
+		/// </summary>
 		public static readonly StringName _isSingleplayer = "_isSingleplayer";
 
+		/// <summary>
+		/// Cached name for the '_playerId' field.
+		/// </summary>
 		public static readonly StringName _playerId = "_playerId";
 
+		/// <summary>
+		/// Cached name for the '_isReady' field.
+		/// </summary>
 		public static readonly StringName _isReady = "_isReady";
 
+		/// <summary>
+		/// Cached name for the '_isConnected' field.
+		/// </summary>
 		public static readonly StringName _isConnected = "_isConnected";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -124,7 +178,7 @@ public class NRemoteLobbyPlayer : Control
 		_disconnectedIndicator = GetNode<TextureRect>("%DisconnectedIndicator");
 		if (!_isSingleplayer)
 		{
-			_nameplateLabel.SetTextAutoSize(PlatformUtil.GetPlayerName(_platform, _playerId));
+			_nameplateLabel.SetTextAutoSize(PlatformUtil.GetPlayerNameRaw(_platform, _playerId));
 		}
 		else
 		{
@@ -198,6 +252,11 @@ public class NRemoteLobbyPlayer : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -212,6 +271,7 @@ public class NRemoteLobbyPlayer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -242,6 +302,7 @@ public class NRemoteLobbyPlayer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -264,6 +325,7 @@ public class NRemoteLobbyPlayer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -320,6 +382,7 @@ public class NRemoteLobbyPlayer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -381,6 +444,11 @@ public class NRemoteLobbyPlayer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -399,6 +467,7 @@ public class NRemoteLobbyPlayer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -415,6 +484,7 @@ public class NRemoteLobbyPlayer : Control
 		info.AddProperty(PropertyName._isConnected, Variant.From(in _isConnected));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -15,7 +15,7 @@ public sealed class Skewer : CardModel
 {
 	protected override bool HasEnergyCostX => true;
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(7m, ValueProp.Move));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(8m, ValueProp.Move));
 
 	public Skewer()
 		: base(0, CardType.Attack, CardRarity.Uncommon, TargetType.AnyEnemy)

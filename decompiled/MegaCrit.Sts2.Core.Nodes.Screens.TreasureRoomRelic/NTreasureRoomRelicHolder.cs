@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
@@ -18,40 +19,91 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.TreasureRoomRelic;
 [ScriptPath("res://src/Core/Nodes/Screens/TreasureRoomRelic/NTreasureRoomRelicHolder.cs")]
 public class NTreasureRoomRelicHolder : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'AnimateAwayVotes' method.
+		/// </summary>
 		public static readonly StringName AnimateAwayVotes = "AnimateAwayVotes";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Index' property.
+		/// </summary>
 		public static readonly StringName Index = "Index";
 
+		/// <summary>
+		/// Cached name for the 'VoteContainer' property.
+		/// </summary>
 		public static readonly StringName VoteContainer = "VoteContainer";
 
+		/// <summary>
+		/// Cached name for the 'Relic' property.
+		/// </summary>
 		public static readonly StringName Relic = "Relic";
 
+		/// <summary>
+		/// Cached name for the '_uncommonGlow' field.
+		/// </summary>
 		public static readonly StringName _uncommonGlow = "_uncommonGlow";
 
+		/// <summary>
+		/// Cached name for the '_rareGlow' field.
+		/// </summary>
 		public static readonly StringName _rareGlow = "_rareGlow";
 
+		/// <summary>
+		/// Cached name for the '_animatedIn' field.
+		/// </summary>
 		public static readonly StringName _animatedIn = "_animatedIn";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_initTween' field.
+		/// </summary>
 		public static readonly StringName _initTween = "_initTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -109,7 +161,12 @@ public class NTreasureRoomRelicHolder : NButton
 
 	private bool PlayerVotedForRelic(Player player)
 	{
-		return RunManager.Instance.TreasureRoomRelicSynchronizer.GetPlayerVote(player) == Index;
+		TreasureRoomRelicSynchronizer.PlayerVote playerVote = RunManager.Instance.TreasureRoomRelicSynchronizer.GetPlayerVote(player);
+		if (playerVote.voteReceived)
+		{
+			return playerVote.index == Index;
+		}
+		return false;
 	}
 
 	public void AnimateAwayVotes()
@@ -123,8 +180,7 @@ public class NTreasureRoomRelicHolder : NButton
 		_tween?.Kill();
 		_tween = CreateTween().SetParallel();
 		_tween.TweenProperty(Relic, "scale", Vector2.One * 2.1f, 0.05);
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, Relic.Model.HoverTips);
-		nHoverTipSet.SetAlignmentForRelic(Relic);
+		NHoverTipSet.CreateAndShow(this, Relic.Model.HoverTips)?.SetAlignmentForRelic(Relic);
 	}
 
 	protected override void OnUnfocus()
@@ -152,6 +208,11 @@ public class NTreasureRoomRelicHolder : NButton
 		_tween.TweenProperty(Relic, "scale", Vector2.One * 2f, 0.05).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -165,6 +226,7 @@ public class NTreasureRoomRelicHolder : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -207,6 +269,7 @@ public class NTreasureRoomRelicHolder : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -237,6 +300,7 @@ public class NTreasureRoomRelicHolder : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -283,6 +347,7 @@ public class NTreasureRoomRelicHolder : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -329,6 +394,11 @@ public class NTreasureRoomRelicHolder : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -344,6 +414,7 @@ public class NTreasureRoomRelicHolder : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -358,6 +429,7 @@ public class NTreasureRoomRelicHolder : NButton
 		info.AddProperty(PropertyName._initTween, Variant.From(in _initTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

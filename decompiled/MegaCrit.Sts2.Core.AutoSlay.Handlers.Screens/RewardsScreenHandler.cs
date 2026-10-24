@@ -17,6 +17,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles the rewards screen after combat.
+/// </summary>
 public class RewardsScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NRewardsScreen);

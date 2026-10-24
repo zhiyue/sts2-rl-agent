@@ -13,6 +13,8 @@ public sealed class HiddenGem : CardModel
 {
 	private const string _replayKey = "Replay";
 
+	public override bool CanBeGeneratedInCombat => false;
+
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new IntVar("Replay", 2m));
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.Static(StaticHoverTip.ReplayStatic));
@@ -40,7 +42,7 @@ public sealed class HiddenGem : CardModel
 				bool flag3 = (uint)(type - 5) <= 1u;
 				flag2 = !flag3;
 			}
-			return flag2;
+			return flag2 && c.GetEnchantedReplayCount() < 1;
 		}).ToList();
 		List<CardModel> list3 = list2.Where(delegate(CardModel c)
 		{

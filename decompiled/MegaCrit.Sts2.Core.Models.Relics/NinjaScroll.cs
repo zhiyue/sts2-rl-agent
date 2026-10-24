@@ -18,11 +18,11 @@ public sealed class NinjaScroll : RelicModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DynamicVar("Shivs", 3m));
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Shiv>());
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => HoverTipFactory.FromCardWithCardHoverTips<Shiv>();
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
-		if (player == base.Owner && combatState.RoundNumber <= 1)
+		if (player == base.Owner && base.Owner.PlayerCombatState.TurnNumber <= 1)
 		{
 			Flash();
 			await Shiv.CreateInHand(base.Owner, base.DynamicVars["Shivs"].IntValue, combatState);

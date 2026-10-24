@@ -19,9 +19,7 @@ public sealed class DropletOfPrecognition : PotionModel
 
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
-		CardModel cardModel = (await CardSelectCmd.FromSimpleGrid(choiceContext, (from c in PileType.Draw.GetPile(base.Owner).Cards
-			orderby c.Rarity, c.Id
-			select c).ToList(), base.Owner, new CardSelectorPrefs(base.SelectionScreenPrompt, 1))).FirstOrDefault();
+		CardModel cardModel = (await CardSelectCmd.FromCombatPile(choiceContext, PileType.Draw.GetPile(base.Owner), base.Owner, new CardSelectorPrefs(base.SelectionScreenPrompt, 1))).FirstOrDefault();
 		if (cardModel != null)
 		{
 			await CardPileCmd.Add(cardModel, PileType.Hand);

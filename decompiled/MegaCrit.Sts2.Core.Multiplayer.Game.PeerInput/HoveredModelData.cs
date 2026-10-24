@@ -6,6 +6,13 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game.PeerInput;
 
+/// <summary>
+/// A bundle of data that resolves to a model that a player is hovering.
+/// This intermediate structure is necessary because references to models may not yet be available at the time that we
+/// receive the hover data. For example:
+/// - Player 1 is in fast mode, plays Alchemize, and hovers the resulting potion
+/// - Player 2 is in slow mode, and is still in the middle of the enemy turn when player 1 hovers the potion
+/// </summary>
 public struct HoveredModelData : IPacketSerializable, IEquatable<HoveredModelData>
 {
 	public HoveredModelType type;

@@ -34,6 +34,6 @@ public sealed class OrobicAcid : PotionModel
 		{
 			item.SetToFreeThisTurn();
 		}
-		await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Hand, addedByPlayer: true);
+		await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Hand, base.Owner);
 	}
 }

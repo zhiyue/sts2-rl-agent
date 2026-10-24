@@ -16,6 +16,11 @@ public sealed class MassiveScroll : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Ancient;
 
+	public override bool IsAllowed(IRunState runState)
+	{
+		return runState.Players.Count > 1;
+	}
+
 	public override async Task AfterObtained()
 	{
 		IEnumerable<CardModel> customCardPool = from c in ModelDb.CardPool<ColorlessCardPool>().GetUnlockedCards(base.Owner.RunState.UnlockState, base.Owner.RunState.CardMultiplayerConstraint).Concat(base.Owner.Character.CardPool.GetUnlockedCards(base.Owner.RunState.UnlockState, base.Owner.RunState.CardMultiplayerConstraint))

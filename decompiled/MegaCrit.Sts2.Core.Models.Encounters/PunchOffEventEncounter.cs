@@ -13,7 +13,7 @@ public sealed class PunchOffEventEncounter : EncounterModel
 	protected override IReadOnlyList<(MonsterModel, string?)> GenerateMonsters()
 	{
 		PunchConstruct punchConstruct = (PunchConstruct)ModelDb.Monster<PunchConstruct>().ToMutable();
-		punchConstruct.StartsWithStrongPunch = true;
+		punchConstruct.StartsWithFastPunch = true;
 		punchConstruct.StartingHpReduction = base.Rng.NextInt(2, 10);
 		PunchConstruct punchConstruct2 = (PunchConstruct)ModelDb.Monster<PunchConstruct>().ToMutable();
 		punchConstruct2.StartingHpReduction = base.Rng.NextInt(2, 10);

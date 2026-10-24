@@ -8,41 +8,84 @@ using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.RichTextTags;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes;
 
+/// <summary>
+/// This VFX dramatically shows the name and epithet of an Ancient when you enter their room.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/NAncientNameBanner.cs")]
 public class NAncientNameBanner : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'UpdateTransform' method.
+		/// </summary>
 		public static readonly StringName UpdateTransform = "UpdateTransform";
 
+		/// <summary>
+		/// Cached name for the 'UpdateGlyphSpace' method.
+		/// </summary>
 		public static readonly StringName UpdateGlyphSpace = "UpdateGlyphSpace";
 
+		/// <summary>
+		/// Cached name for the 'GetTextCenterGlyphIndex' method.
+		/// </summary>
 		public static readonly StringName GetTextCenterGlyphIndex = "GetTextCenterGlyphIndex";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_titleLabel' field.
+		/// </summary>
 		public static readonly StringName _titleLabel = "_titleLabel";
 
+		/// <summary>
+		/// Cached name for the '_ancientBannerEffect' field.
+		/// </summary>
 		public static readonly StringName _ancientBannerEffect = "_ancientBannerEffect";
 
+		/// <summary>
+		/// Cached name for the '_epithetLabel' field.
+		/// </summary>
 		public static readonly StringName _epithetLabel = "_epithetLabel";
 
+		/// <summary>
+		/// Cached name for the '_moveTween' field.
+		/// </summary>
 		public static readonly StringName _moveTween = "_moveTween";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -79,7 +122,7 @@ public class NAncientNameBanner : Control
 		_titleLabel = GetNode<MegaRichTextLabel>("%Title");
 		string text = _ancient.Title.GetFormattedText().ToUpper();
 		_ancientBannerEffect = new RichTextAncientBanner();
-		_ancientBannerEffect.CenterCharacter = GetTextCenterGlyphIndex(text, _titleLabel.GetThemeFont(ThemeConstants.RichTextLabel.normalFont, "RichTextLabel"), _titleLabel.GetThemeFontSize(ThemeConstants.RichTextLabel.normalFontSize, "RichTextLabel"));
+		_ancientBannerEffect.CenterCharacter = GetTextCenterGlyphIndex(text, _titleLabel.GetThemeFont(ThemeConstants.RichTextLabel.NormalFont, "RichTextLabel"), _titleLabel.GetThemeFontSize(ThemeConstants.RichTextLabel.NormalFontSize, "RichTextLabel"));
 		_titleLabel.InstallEffect(_ancientBannerEffect);
 		_titleLabel.BbcodeEnabled = true;
 		_titleLabel.Text = "[ancient_banner]" + text + "[/ancient_banner]";
@@ -107,28 +150,30 @@ public class NAncientNameBanner : Control
 		_tween.TweenProperty(_titleLabel, "modulate:a", 0f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 		_tween.TweenProperty(_epithetLabel, "modulate", Colors.Red, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 		_tween.TweenProperty(_epithetLabel, "modulate:a", 0f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		_moveTween.Kill();
-		_moveTween = CreateTween().SetParallel();
-		base.Position = new Vector2(0f, -80f);
-		_titleLabel.Modulate = Colors.White;
-		_titleLabel.HorizontalAlignment = HorizontalAlignment.Left;
-		_titleLabel.VerticalAlignment = VerticalAlignment.Bottom;
-		_titleLabel.Position = Vector2.Zero;
-		_titleLabel.AddThemeFontSizeOverride(ThemeConstants.RichTextLabel.normalFontSize, 54);
-		_titleLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.fontOutlineColor, Colors.Transparent);
-		_titleLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.fontShadowColor, Colors.Transparent);
-		_titleLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.defaultColor, StsColors.cream);
-		_epithetLabel.HorizontalAlignment = HorizontalAlignment.Left;
-		_epithetLabel.VerticalAlignment = VerticalAlignment.Bottom;
-		_epithetLabel.Modulate = new Color(1f, 1f, 1f, 0f);
-		_epithetLabel.AddThemeFontSizeOverride(ThemeConstants.Label.fontSize, 18);
-		_epithetLabel.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, Colors.Transparent);
-		_epithetLabel.AddThemeColorOverride(ThemeConstants.Label.fontShadowColor, Colors.Transparent);
-		_epithetLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, StsColors.cream);
-		_moveTween.TweenProperty(_epithetLabel, "modulate:a", 0.5f, 2.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Circ);
-		_moveTween.TweenProperty(this, "position:x", 48f, 2.0).SetEase(Tween.EaseType.Out).From(0)
-			.SetTrans(Tween.TransitionType.Circ);
+		if (await _tween.AwaitFinished(this) && this.IsValid())
+		{
+			_moveTween.Kill();
+			_moveTween = CreateTween().SetParallel();
+			base.Position = new Vector2(0f, -80f);
+			_titleLabel.Modulate = Colors.White;
+			_titleLabel.HorizontalAlignment = HorizontalAlignment.Left;
+			_titleLabel.VerticalAlignment = VerticalAlignment.Bottom;
+			_titleLabel.Position = Vector2.Zero;
+			_titleLabel.AddThemeFontSizeOverride(ThemeConstants.RichTextLabel.NormalFontSize, 54);
+			_titleLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.FontOutlineColor, Colors.Transparent);
+			_titleLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.FontShadowColor, Colors.Transparent);
+			_titleLabel.AddThemeColorOverride(ThemeConstants.RichTextLabel.DefaultColor, StsColors.cream);
+			_epithetLabel.HorizontalAlignment = HorizontalAlignment.Left;
+			_epithetLabel.VerticalAlignment = VerticalAlignment.Bottom;
+			_epithetLabel.Modulate = new Color(1f, 1f, 1f, 0f);
+			_epithetLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 18);
+			_epithetLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, Colors.Transparent);
+			_epithetLabel.AddThemeColorOverride(ThemeConstants.Label.FontShadowColor, Colors.Transparent);
+			_epithetLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, StsColors.cream);
+			_moveTween.TweenProperty(_epithetLabel, "modulate:a", 0.5f, 2.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Circ);
+			_moveTween.TweenProperty(this, "position:x", 48f, 2.0).SetEase(Tween.EaseType.Out).From(0)
+				.SetTrans(Tween.TransitionType.Circ);
+		}
 	}
 
 	private void UpdateTransform(float obj)
@@ -141,6 +186,10 @@ public class NAncientNameBanner : Control
 		_ancientBannerEffect.Spacing = spacing * 1000f;
 	}
 
+	/// <summary>
+	/// Returns the index of the glyph in the center of the text.
+	/// Returns a fractional value if the midline is in the middle of a glyph (which it usually is).
+	/// </summary>
 	private float GetTextCenterGlyphIndex(string text, Font font, int fontSize)
 	{
 		using TextParagraph textParagraph = new TextParagraph();
@@ -172,17 +221,22 @@ public class NAncientNameBanner : Control
 	{
 		_moveTween?.Kill();
 		_tween?.Kill();
-		_titleLabel.RemoveThemeFontSizeOverride(ThemeConstants.RichTextLabel.normalFontSize);
-		_titleLabel.RemoveThemeColorOverride(ThemeConstants.RichTextLabel.fontOutlineColor);
-		_titleLabel.RemoveThemeColorOverride(ThemeConstants.RichTextLabel.fontShadowColor);
-		_titleLabel.RemoveThemeColorOverride(ThemeConstants.RichTextLabel.defaultColor);
-		_epithetLabel.RemoveThemeFontSizeOverride(ThemeConstants.Label.fontSize);
-		_epithetLabel.RemoveThemeColorOverride(ThemeConstants.Label.fontOutlineColor);
-		_epithetLabel.RemoveThemeColorOverride(ThemeConstants.Label.fontShadowColor);
-		_epithetLabel.RemoveThemeColorOverride(ThemeConstants.Label.fontColor);
+		_titleLabel.RemoveThemeFontSizeOverride(ThemeConstants.RichTextLabel.NormalFontSize);
+		_titleLabel.RemoveThemeColorOverride(ThemeConstants.RichTextLabel.FontOutlineColor);
+		_titleLabel.RemoveThemeColorOverride(ThemeConstants.RichTextLabel.FontShadowColor);
+		_titleLabel.RemoveThemeColorOverride(ThemeConstants.RichTextLabel.DefaultColor);
+		_epithetLabel.RemoveThemeFontSizeOverride(ThemeConstants.Label.FontSize);
+		_epithetLabel.RemoveThemeColorOverride(ThemeConstants.Label.FontOutlineColor);
+		_epithetLabel.RemoveThemeColorOverride(ThemeConstants.Label.FontShadowColor);
+		_epithetLabel.RemoveThemeColorOverride(ThemeConstants.Label.FontColor);
 		base._ExitTree();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -206,6 +260,7 @@ public class NAncientNameBanner : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -241,6 +296,7 @@ public class NAncientNameBanner : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -267,6 +323,7 @@ public class NAncientNameBanner : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -298,6 +355,7 @@ public class NAncientNameBanner : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -329,6 +387,11 @@ public class NAncientNameBanner : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -341,6 +404,7 @@ public class NAncientNameBanner : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -352,6 +416,7 @@ public class NAncientNameBanner : Control
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

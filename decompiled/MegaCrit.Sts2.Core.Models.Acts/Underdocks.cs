@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using MegaCrit.Sts2.Core.Entities.Ascension;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models.Encounters;
 using MegaCrit.Sts2.Core.Models.Events;
@@ -43,6 +41,10 @@ public sealed class Underdocks : ActModel
 
 	protected override int BaseNumberOfRooms => 15;
 
+	public override int Index => 0;
+
+	public override bool IsDefault => false;
+
 	public override string[] BgMusicOptions => new string[1] { "event:/music/act1_b1_v1" };
 
 	public override string[] MusicBankPaths => new string[1] { "res://banks/desktop/act1_b1.bank" };
@@ -68,20 +70,20 @@ public sealed class Underdocks : ActModel
 			ModelDb.Encounter<CorpseSlugsNormal>(),
 			ModelDb.Encounter<CorpseSlugsWeak>(),
 			ModelDb.Encounter<CultistsNormal>(),
-			ModelDb.Encounter<LivingFogNormal>(),
 			ModelDb.Encounter<FossilStalkerNormal>(),
 			ModelDb.Encounter<GremlinMercNormal>(),
 			ModelDb.Encounter<HauntedShipNormal>(),
 			ModelDb.Encounter<LagavulinMatriarchBoss>(),
-			ModelDb.Encounter<SkulkingColonyElite>(),
+			ModelDb.Encounter<LivingFogNormal>(),
 			ModelDb.Encounter<PhantasmalGardenersElite>(),
 			ModelDb.Encounter<PunchConstructNormal>(),
+			ModelDb.Encounter<SeapunkNormal>(),
 			ModelDb.Encounter<SeapunkWeak>(),
 			ModelDb.Encounter<SewerClamNormal>(),
+			ModelDb.Encounter<SkulkingColonyElite>(),
 			ModelDb.Encounter<SludgeSpinnerWeak>(),
 			ModelDb.Encounter<SoulFyshBoss>(),
 			ModelDb.Encounter<TerrorEelElite>(),
-			ModelDb.Encounter<ToadpolesNormal>(),
 			ModelDb.Encounter<ToadpolesWeak>(),
 			ModelDb.Encounter<TwoTailedRatsNormal>(),
 			ModelDb.Encounter<WaterfallGiantBoss>()
@@ -102,16 +104,15 @@ public sealed class Underdocks : ActModel
 	{
 	}
 
+	public override bool IsUnlocked(UnlockState unlockState)
+	{
+		return unlockState.IsEpochRevealed<UnderdocksEpoch>();
+	}
+
 	public override MapPointTypeCounts GetMapPointTypes(Rng mapRng)
 	{
-		int num = mapRng.NextGaussianInt(7, 1, 6, 7);
-		if (AscensionHelper.HasAscension(AscensionLevel.Gloom))
-		{
-			num--;
-		}
-		return new MapPointTypeCounts(mapRng)
-		{
-			NumOfRests = num
-		};
+		int restCount = mapRng.NextGaussianInt(7, 1, 6, 7);
+		int unknownCount = MapPointTypeCounts.StandardRandomUnknownCount(mapRng);
+		return new MapPointTypeCounts(unknownCount, restCount);
 	}
 }

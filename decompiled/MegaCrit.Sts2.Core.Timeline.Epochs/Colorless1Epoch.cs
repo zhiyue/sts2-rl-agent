@@ -7,6 +7,10 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Preon: A void of nothingness.
+/// But then, the world comes into existence!
+/// </summary>
 public class Colorless1Epoch : EpochModel
 {
 	public override string Id => "COLORLESS1_EPOCH";

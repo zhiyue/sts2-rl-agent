@@ -16,6 +16,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Entities.Merchant;
 
+/// <summary>
+/// Manages a buy-able card in the merchant shop.
+/// </summary>
 public sealed class MerchantCardEntry : MerchantEntry
 {
 	private readonly MerchantInventory? _inventory;

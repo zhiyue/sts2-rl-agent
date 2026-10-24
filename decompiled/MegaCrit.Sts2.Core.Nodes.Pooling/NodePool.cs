@@ -67,6 +67,10 @@ public class NodePool<T> : INodePool where T : Node, IPoolable
 
 	private readonly HashSet<T> _usedObjects = new HashSet<T>();
 
+	/// <summary>
+	/// WARNING: ONLY USE THIS PROPERTY FOR DEBUGGING!
+	/// All of this pool's free objects.
+	/// </summary>
 	public IReadOnlyList<T> DebugFreeObjects => _freeObjects;
 
 	public NodePool(string scenePath, int prewarmCount = 0)
@@ -117,8 +121,8 @@ public class NodePool<T> : INodePool where T : Node, IPoolable
 			else
 			{
 				Log.Error($"Tried to free object {obj} ({obj.GetType()}) back to pool {typeof(NodePool<T>)} but it's not part of the pool!");
+				obj.QueueFreeSafelyNoPool();
 			}
-			obj.QueueFreeSafelyNoPool();
 		}
 		else
 		{
@@ -163,15 +167,19 @@ public class NodePool<T> : INodePool where T : Node, IPoolable
 	private void DisconnectSignal(Callable callable, Signal signal)
 	{
 		GodotObject target = callable.Target;
-		if (target == null && callable.Method == null)
+		if ((target == null && callable.Method == null) || (target != null && !GodotObject.IsInstanceValid(target)))
 		{
 			return;
 		}
 		StringName name = signal.Name;
 		Node node = target as Node;
-		if (node == null || node.IsInsideTree())
+		if (node != null && !node.IsInsideTree())
 		{
-			GodotObject owner = signal.Owner;
+			return;
+		}
+		GodotObject owner = signal.Owner;
+		if (GodotObject.IsInstanceValid(owner))
+		{
 			Node node2 = owner as Node;
 			if (node != null && node.HasSignal(name) && node.IsConnected(name, callable))
 			{

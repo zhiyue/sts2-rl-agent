@@ -21,6 +21,17 @@ public static class PileTypeExtensions
 		return cardPile;
 	}
 
+	/// <summary>
+	/// Is this pile a combat pile? Combat piles are:
+	///
+	/// Hand
+	/// Draw
+	/// Discard
+	/// Exhaust
+	/// Play
+	/// </summary>
+	/// <param name="pileType">Pile to check.</param>
+	/// <returns>Whether or not it's a combat pile.</returns>
 	public static bool IsCombatPile(this PileType pileType)
 	{
 		if ((uint)(pileType - 1) <= 4u)

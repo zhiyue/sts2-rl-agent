@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
 
@@ -22,7 +23,12 @@ public static class PacketWriterExtensions
 		{
 			throw new InvalidOperationException("Tried to serialize an empty ModelId!");
 		}
-		writer.WriteInt(ModelIdSerializationCache.GetNetIdForEntry(id.Entry), ModelIdSerializationCache.EntryIdBitSize);
+		if (!ModelIdSerializationCache.TryGetNetIdForEntry(id.Entry, out var netId))
+		{
+			Log.Warn($"Unknown ModelId entry '{id}' during serialization, writing NONE");
+			netId = ModelIdSerializationCache.GetNetIdForEntry(ModelId.none.Entry);
+		}
+		writer.WriteInt(netId, ModelIdSerializationCache.EntryIdBitSize);
 	}
 
 	public static void WriteEpoch<T>(this PacketWriter writer) where T : EpochModel
@@ -42,8 +48,18 @@ public static class PacketWriterExtensions
 
 	public static void WriteFullModelId(this PacketWriter writer, ModelId id)
 	{
-		writer.WriteInt(ModelIdSerializationCache.GetNetIdForCategory(id.Category), ModelIdSerializationCache.CategoryIdBitSize);
-		writer.WriteInt(ModelIdSerializationCache.GetNetIdForEntry(id.Entry), ModelIdSerializationCache.EntryIdBitSize);
+		int netId;
+		bool flag = ModelIdSerializationCache.TryGetNetIdForCategory(id.Category, out netId);
+		int netId2;
+		bool flag2 = ModelIdSerializationCache.TryGetNetIdForEntry(id.Entry, out netId2);
+		if (!flag || !flag2)
+		{
+			Log.Warn($"Unknown ModelId '{id}' during serialization, writing NONE");
+			netId = ModelIdSerializationCache.GetNetIdForCategory(ModelId.none.Category);
+			netId2 = ModelIdSerializationCache.GetNetIdForEntry(ModelId.none.Entry);
+		}
+		writer.WriteInt(netId, ModelIdSerializationCache.CategoryIdBitSize);
+		writer.WriteInt(netId2, ModelIdSerializationCache.EntryIdBitSize);
 	}
 
 	public static void WriteFullModelIdList(this PacketWriter writer, IReadOnlyCollection<ModelId> models)

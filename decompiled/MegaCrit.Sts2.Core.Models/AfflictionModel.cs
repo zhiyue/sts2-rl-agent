@@ -29,9 +29,9 @@ public abstract class AfflictionModel : AbstractModel
 
 	public LocString Title => new LocString("afflictions", base.Id.Entry + ".title");
 
-	public LocString Description => new LocString("afflictions", base.Id.Entry + ".description");
+	private LocString Description => new LocString("afflictions", base.Id.Entry + ".description");
 
-	public LocString ExtraCardText => new LocString("afflictions", base.Id.Entry + ".extraCardText");
+	private LocString ExtraCardText => new LocString("afflictions", base.Id.Entry + ".extraCardText");
 
 	public virtual bool HasExtraCardText => false;
 
@@ -63,6 +63,11 @@ public abstract class AfflictionModel : AbstractModel
 
 	public bool HasOverlay => ResourceLoader.Exists(OverlayPath);
 
+	/// <summary>
+	/// Get the card that this is afflicting.
+	/// This is almost never null, so we leave it as non-nullable to make it easier to use. If you really need to check
+	/// for null, use <see cref="P:MegaCrit.Sts2.Core.Models.AfflictionModel.HasCard" />.
+	/// </summary>
 	public CardModel Card
 	{
 		get
@@ -106,8 +111,17 @@ public abstract class AfflictionModel : AbstractModel
 		}
 	}
 
-	public CombatState CombatState => Card.CombatState;
+	/// <summary>
+	/// Get the CombatState of the card that this is afflicting.
+	/// Will never be null, since Afflictions are combat-only.
+	/// </summary>
+	public ICombatState CombatState => Card.CombatState;
 
+	/// <summary>
+	/// Can this afflict Unplayable cards?
+	/// Usually true, because Unplayable cards sometimes have Sly and we might want the affliction's effect to still
+	/// trigger. Some exceptions for when it doesn't make sense (like one that makes the card cost more energy).
+	/// </summary>
 	public virtual bool CanAfflictUnplayableCards => true;
 
 	public virtual bool IsStackable => false;
@@ -163,6 +177,16 @@ public abstract class AfflictionModel : AbstractModel
 		return true;
 	}
 
+	/// <summary>
+	/// Checks whether the specified card can be afflicted with this affliction. For example, Ringing can only
+	/// afflict attacks, so this will return true if an Attack is passed, but false if a Skill is passed.
+	///
+	/// Note: Do not override this method to REMOVE restrictions, just to ADD them. When you override it, make sure to
+	/// call `base.CanAfflict`, and then add your own restrictions afterwards. You can also override some other methods
+	/// to add specific types of restrictions (check AfflictionModel.cs for details).
+	/// </summary>
+	/// <param name="card">Card to check validity of.</param>
+	/// <returns>Whether or not the specified card is valid to afflict with this.</returns>
 	public virtual bool CanAfflict(CardModel card)
 	{
 		if (!CanAfflictCardType(card.Type))
@@ -208,6 +232,13 @@ public abstract class AfflictionModel : AbstractModel
 		_card = null;
 	}
 
+	/// <summary>
+	/// Chooses random targets out of a set of cards to afflict.
+	/// </summary>
+	/// <param name="rngSet">The RNG set to use. Does not use Card.Owner because we may be the canonical version.</param>
+	/// <param name="cards">The possible cards to afflict.</param>
+	/// <param name="count">Number of cards to afflict.</param>
+	/// <returns>The cards to afflict.</returns>
 	public IReadOnlyList<CardModel> PickRandomTargets(RunRngSet rngSet, IEnumerable<CardModel> cards, int count)
 	{
 		List<CardModel> list = cards.Where(CanAfflict).ToList().UnstableShuffle(rngSet.CombatCardGeneration);
@@ -215,6 +246,10 @@ public abstract class AfflictionModel : AbstractModel
 		return list;
 	}
 
+	/// <summary>
+	/// Remove this affliction from its card.
+	/// Should only be called by <see cref="M:MegaCrit.Sts2.Core.Models.CardModel.ClearAfflictionInternal" /> and in tests.
+	/// </summary>
 	public void ClearInternal()
 	{
 		BeforeRemoved();

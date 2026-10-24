@@ -40,7 +40,7 @@ public sealed class Glam : EnchantmentModel
 		return originalPlayCount + base.DynamicVars["Times"].IntValue;
 	}
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (UsedThisCombat)
 		{

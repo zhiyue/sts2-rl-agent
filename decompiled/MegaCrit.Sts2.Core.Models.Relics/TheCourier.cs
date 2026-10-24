@@ -12,6 +12,8 @@ public sealed class TheCourier : RelicModel
 
 	public override RelicRarity Rarity => RelicRarity.Rare;
 
+	public override bool IsAllowedInShops => false;
+
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DynamicVar("Discount", 20m));
 
 	public override decimal ModifyMerchantPrice(Player player, MerchantEntry entry, decimal originalPrice)

@@ -42,20 +42,23 @@ public static class HoverTipFactory
 		return _keywordHoverTips[keyword];
 	}
 
-	public static IHoverTip FromPower<T>() where T : PowerModel
+	public static IHoverTip FromPower<T>(int? amount = null) where T : PowerModel
 	{
 		PowerModel model = ModelDb.Power<T>();
-		return FromPower(model);
+		return FromPower(model, amount);
 	}
 
-	public static IHoverTip FromPower(PowerModel model)
+	public static IHoverTip FromPower(PowerModel model, int? amount = null)
 	{
-		return model.DumbHoverTip;
+		return model.GetDumbHoverTip(amount);
 	}
 
-	public static IEnumerable<IHoverTip> FromPowerWithPowerHoverTips<T>() where T : PowerModel
+	/// <summary>
+	/// Generate a HoverTip-sized preview of the specified power along with the power's hovertips.
+	/// </summary>
+	public static IEnumerable<IHoverTip> FromPowerWithPowerHoverTips<T>(int? amount = null) where T : PowerModel
 	{
-		return new IHoverTip[1] { FromPower<T>() }.Concat(ModelDb.Power<T>().HoverTips);
+		return new IHoverTip[1] { FromPower<T>(amount) }.Concat(ModelDb.Power<T>().HoverTips);
 	}
 
 	public static IHoverTip FromPotion<T>() where T : PotionModel
@@ -97,16 +100,35 @@ public static class HoverTipFactory
 		return relic.HoverTipsExcludingRelic;
 	}
 
-	public static IEnumerable<IHoverTip> FromCardWithCardHoverTips<T>(bool inheritsUpgrades = false) where T : CardModel
+	/// <summary>
+	/// Generate a HoverTip-sized preview of the specified card along with the card's hovertips.
+	/// </summary>
+	/// <typeparam name="T">CardModel subclass</typeparam>
+	/// <returns>HoverTip card preview</returns>
+	public static IEnumerable<IHoverTip> FromCardWithCardHoverTips<T>(bool upgrade = false) where T : CardModel
 	{
-		return new IHoverTip[1] { FromCard<T>() }.Concat(ModelDb.Card<T>().HoverTips);
+		return new IHoverTip[1] { FromCard<T>(upgrade) }.Concat(ModelDb.Card<T>().HoverTips);
 	}
 
+	/// <summary>
+	/// Generate a HoverTip-sized preview of the specified card.
+	/// </summary>
+	/// <param name="upgrade">Whether the card should appear upgraded.</param>
+	/// <typeparam name="T">CardModel subclass</typeparam>
+	/// <returns>HoverTip card preview</returns>
 	public static IHoverTip FromCard<T>(bool upgrade = false) where T : CardModel
 	{
 		return FromCard(ModelDb.Card<T>(), upgrade);
 	}
 
+	/// <summary>
+	/// Generate a HoverTip-sized preview of the specified card.
+	/// Note: You should usually use the generic version of this method. Only use this version if you need to modify
+	/// the base version of the card (like to show an upgrade or something).
+	/// </summary>
+	/// <param name="card">CardModel to preview</param>
+	/// <param name="upgrade">Whether the card should appear upgraded.</param>
+	/// <returns>HoverTip card preview</returns>
 	public static IHoverTip FromCard(CardModel card, bool upgrade = false)
 	{
 		if (upgrade)

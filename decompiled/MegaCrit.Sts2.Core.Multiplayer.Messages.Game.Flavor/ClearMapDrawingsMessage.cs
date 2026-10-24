@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Multiplayer.Transport;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Flavor;
 
+/// <summary>
+/// Sent when a player clears their drawings at the map screen.
+/// </summary>
 [StructLayout(LayoutKind.Sequential, Size = 1)]
 public struct ClearMapDrawingsMessage : INetMessage, IPacketSerializable
 {
@@ -13,6 +16,8 @@ public struct ClearMapDrawingsMessage : INetMessage, IPacketSerializable
 	public NetTransferMode Mode => NetTransferMode.Reliable;
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
+
+	public bool ShouldBuffer => true;
 
 	public void Serialize(PacketWriter writer)
 	{

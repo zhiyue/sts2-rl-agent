@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
-using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Models.Enchantments;
 
@@ -28,7 +27,7 @@ public sealed class Goopy : EnchantmentModel
 		base.Card.AddKeyword(CardKeyword.Exhaust);
 	}
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card != base.Card)
 		{
@@ -42,12 +41,8 @@ public sealed class Goopy : EnchantmentModel
 		return Task.CompletedTask;
 	}
 
-	public override decimal EnchantBlockAdditive(decimal originalBlock, ValueProp props)
+	public override decimal EnchantBlockAdditive(decimal originalBlock)
 	{
-		if (!props.IsPoweredCardOrMonsterMoveBlock())
-		{
-			return 0m;
-		}
 		return base.Amount - 1;
 	}
 }

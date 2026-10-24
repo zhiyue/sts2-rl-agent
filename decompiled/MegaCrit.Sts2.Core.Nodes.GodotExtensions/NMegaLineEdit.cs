@@ -10,29 +10,51 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
+/// <summary>
+/// A base LineEdit class that is used to access the virtual keyboard
+/// for various devices/apis (ie Steam Deck)
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/GodotExtensions/NMegaLineEdit.cs")]
 public class NMegaLineEdit : LineEdit
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : LineEdit.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'OpenKeyboard' method.
+		/// </summary>
 		public static readonly StringName OpenKeyboard = "OpenKeyboard";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : LineEdit.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : LineEdit.SignalName
 	{
 	}
 
 	public override void _Ready()
 	{
-		this.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.LineEdit.font);
+		this.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.LineEdit.Font);
 	}
 
 	public override void _GuiInput(InputEvent inputEvent)
@@ -60,6 +82,11 @@ public class NMegaLineEdit : LineEdit
 		PlatformUtil.OpenVirtualKeyboard();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -73,6 +100,7 @@ public class NMegaLineEdit : LineEdit
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -97,6 +125,7 @@ public class NMegaLineEdit : LineEdit
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -115,12 +144,14 @@ public class NMegaLineEdit : LineEdit
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

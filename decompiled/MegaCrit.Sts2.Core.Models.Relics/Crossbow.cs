@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Factories;
 
@@ -13,9 +14,9 @@ public sealed class Crossbow : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Ancient;
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side != base.Owner.Creature.Side)
+		if (!participants.Contains(base.Owner.Creature))
 		{
 			return;
 		}
@@ -30,8 +31,8 @@ public sealed class Crossbow : RelicModel
 		List<CardModel> list = CardFactory.GetDistinctForCombat(base.Owner, readOnlyList, 1, base.Owner.RunState.Rng.CombatCardGeneration).ToList();
 		foreach (CardModel item in list)
 		{
-			item.EnergyCost.SetThisTurnOrUntilPlayed(0);
+			item.SetToFreeThisTurn();
 		}
-		await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Hand, addedByPlayer: true);
+		await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Hand, base.Owner);
 	}
 }

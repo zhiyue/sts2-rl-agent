@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -19,6 +20,7 @@ using MegaCrit.Sts2.Core.Extensions;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Leaderboard;
 using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Localization.Fonts;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
@@ -29,6 +31,7 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Debug;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Multiplayer;
 using MegaCrit.Sts2.Core.Nodes.Reaction;
 using MegaCrit.Sts2.Core.Nodes.Screens;
@@ -47,138 +50,354 @@ using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using MegaCrit.Sts2.Core.Settings;
 using MegaCrit.Sts2.Core.Unlocks;
+using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes;
 
 [ScriptPath("res://src/Core/Nodes/NGame.cs")]
 public class NGame : Control
 {
+	/// <summary>
+	/// Signal used to force other Scenes to refresh their UI when the
+	/// application Window is updated via updated Settings or ctrl-F or something.
+	/// </summary>
 	[Signal]
 	public delegate void WindowChangeEventHandler();
 
+	[Signal]
+	public delegate void PhobiaModeToggledEventHandler();
+
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnWindowChange' method.
+		/// </summary>
 		public static readonly StringName OnWindowChange = "OnWindowChange";
 
+		/// <summary>
+		/// Cached name for the 'IsMainThread' method.
+		/// </summary>
 		public static readonly StringName IsMainThread = "IsMainThread";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'IsReleaseGame' method.
+		/// </summary>
 		public static readonly StringName IsReleaseGame = "IsReleaseGame";
 
+		/// <summary>
+		/// Cached name for the 'InitializeGraphicsPreferences' method.
+		/// </summary>
 		public static readonly StringName InitializeGraphicsPreferences = "InitializeGraphicsPreferences";
 
+		/// <summary>
+		/// Cached name for the 'ApplyDisplaySettings' method.
+		/// </summary>
 		public static readonly StringName ApplyDisplaySettings = "ApplyDisplaySettings";
 
+		/// <summary>
+		/// Cached name for the 'GetInspectRelicScreen' method.
+		/// </summary>
 		public static readonly StringName GetInspectRelicScreen = "GetInspectRelicScreen";
 
+		/// <summary>
+		/// Cached name for the 'GetInspectCardScreen' method.
+		/// </summary>
 		public static readonly StringName GetInspectCardScreen = "GetInspectCardScreen";
 
+		/// <summary>
+		/// Cached name for the 'ApplySyncSetting' method.
+		/// </summary>
 		public static readonly StringName ApplySyncSetting = "ApplySyncSetting";
 
+		/// <summary>
+		/// Cached name for the 'Reset' method.
+		/// </summary>
 		public static readonly StringName Reset = "Reset";
 
+		/// <summary>
+		/// Cached name for the '_Notification' method.
+		/// </summary>
 		public new static readonly StringName _Notification = "_Notification";
 
+		/// <summary>
+		/// Cached name for the 'Quit' method.
+		/// </summary>
 		public static readonly StringName Quit = "Quit";
 
+		/// <summary>
+		/// Cached name for the 'Relocalize' method.
+		/// </summary>
 		public static readonly StringName Relocalize = "Relocalize";
 
+		/// <summary>
+		/// Cached name for the 'ReloadMainMenu' method.
+		/// </summary>
 		public static readonly StringName ReloadMainMenu = "ReloadMainMenu";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'ToggleFullscreen' method.
+		/// </summary>
 		public static readonly StringName ToggleFullscreen = "ToggleFullscreen";
 
+		/// <summary>
+		/// Cached name for the 'DebugModifyTimescale' method.
+		/// </summary>
 		public static readonly StringName DebugModifyTimescale = "DebugModifyTimescale";
 
+		/// <summary>
+		/// Cached name for the 'ActivateWorldEnvironment' method.
+		/// </summary>
 		public static readonly StringName ActivateWorldEnvironment = "ActivateWorldEnvironment";
 
+		/// <summary>
+		/// Cached name for the 'DeactivateWorldEnvironment' method.
+		/// </summary>
 		public static readonly StringName DeactivateWorldEnvironment = "DeactivateWorldEnvironment";
 
+		/// <summary>
+		/// Cached name for the 'SetScreenShakeTarget' method.
+		/// </summary>
 		public static readonly StringName SetScreenShakeTarget = "SetScreenShakeTarget";
 
+		/// <summary>
+		/// Cached name for the 'ClearScreenShakeTarget' method.
+		/// </summary>
 		public static readonly StringName ClearScreenShakeTarget = "ClearScreenShakeTarget";
 
+		/// <summary>
+		/// Cached name for the 'ScreenShake' method.
+		/// </summary>
 		public static readonly StringName ScreenShake = "ScreenShake";
 
+		/// <summary>
+		/// Cached name for the 'ScreenRumble' method.
+		/// </summary>
 		public static readonly StringName ScreenRumble = "ScreenRumble";
 
+		/// <summary>
+		/// Cached name for the 'ScreenShakeTrauma' method.
+		/// </summary>
 		public static readonly StringName ScreenShakeTrauma = "ScreenShakeTrauma";
 
+		/// <summary>
+		/// Cached name for the 'DoHitStop' method.
+		/// </summary>
 		public static readonly StringName DoHitStop = "DoHitStop";
 
+		/// <summary>
+		/// Cached name for the 'ToggleTrailerMode' method.
+		/// </summary>
 		public static readonly StringName ToggleTrailerMode = "ToggleTrailerMode";
 
+		/// <summary>
+		/// Cached name for the 'SetScreenshakeMultiplier' method.
+		/// </summary>
 		public static readonly StringName SetScreenshakeMultiplier = "SetScreenshakeMultiplier";
 
+		/// <summary>
+		/// Cached name for the 'InitPools' method.
+		/// </summary>
 		public static readonly StringName InitPools = "InitPools";
 
+		/// <summary>
+		/// Cached name for the 'CheckShowLocalizationOverrideErrors' method.
+		/// </summary>
 		public static readonly StringName CheckShowLocalizationOverrideErrors = "CheckShowLocalizationOverrideErrors";
 
+		/// <summary>
+		/// Cached name for the 'OnSteamNoLongerRunning' method.
+		/// </summary>
+		public static readonly StringName OnSteamNoLongerRunning = "OnSteamNoLongerRunning";
+
+		/// <summary>
+		/// Cached name for the 'LogResourceStats' method.
+		/// </summary>
 		public static readonly StringName LogResourceStats = "LogResourceStats";
 
+		/// <summary>
+		/// Cached name for the 'FormatBytes' method.
+		/// </summary>
 		public static readonly StringName FormatBytes = "FormatBytes";
+
+		/// <summary>
+		/// Cached name for the 'IsGameFocusedWindow' method.
+		/// </summary>
+		public static readonly StringName IsGameFocusedWindow = "IsGameFocusedWindow";
+
+		/// <summary>
+		/// Cached name for the 'GetOrCreateFeedbackScreen' method.
+		/// </summary>
+		public static readonly StringName GetOrCreateFeedbackScreen = "GetOrCreateFeedbackScreen";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'RootSceneContainer' property.
+		/// </summary>
 		public static readonly StringName RootSceneContainer = "RootSceneContainer";
 
+		/// <summary>
+		/// Cached name for the 'HoverTipsContainer' property.
+		/// </summary>
 		public static readonly StringName HoverTipsContainer = "HoverTipsContainer";
 
+		/// <summary>
+		/// Cached name for the 'MainMenu' property.
+		/// </summary>
 		public static readonly StringName MainMenu = "MainMenu";
 
+		/// <summary>
+		/// Cached name for the 'CurrentRunNode' property.
+		/// </summary>
 		public static readonly StringName CurrentRunNode = "CurrentRunNode";
 
+		/// <summary>
+		/// Cached name for the 'LogoAnimation' property.
+		/// </summary>
 		public static readonly StringName LogoAnimation = "LogoAnimation";
 
+		/// <summary>
+		/// Cached name for the 'Transition' property.
+		/// </summary>
 		public static readonly StringName Transition = "Transition";
 
+		/// <summary>
+		/// Cached name for the 'TimeoutOverlay' property.
+		/// </summary>
 		public static readonly StringName TimeoutOverlay = "TimeoutOverlay";
 
+		/// <summary>
+		/// Cached name for the 'AudioManager' property.
+		/// </summary>
 		public static readonly StringName AudioManager = "AudioManager";
 
+		/// <summary>
+		/// Cached name for the 'RemoteCursorContainer' property.
+		/// </summary>
 		public static readonly StringName RemoteCursorContainer = "RemoteCursorContainer";
 
+		/// <summary>
+		/// Cached name for the 'InputManager' property.
+		/// </summary>
 		public static readonly StringName InputManager = "InputManager";
 
+		/// <summary>
+		/// Cached name for the 'HotkeyManager' property.
+		/// </summary>
 		public static readonly StringName HotkeyManager = "HotkeyManager";
 
-		public static readonly StringName ReactionWheel = "ReactionWheel";
-
-		public static readonly StringName ReactionContainer = "ReactionContainer";
-
-		public static readonly StringName CursorManager = "CursorManager";
-
-		public static readonly StringName DebugAudio = "DebugAudio";
-
-		public static readonly StringName DebugSeedOverride = "DebugSeedOverride";
-
-		public static readonly StringName StartOnMainMenu = "StartOnMainMenu";
-
-		public static readonly StringName InspectRelicScreen = "InspectRelicScreen";
-
-		public static readonly StringName InspectCardScreen = "InspectCardScreen";
-
+		/// <summary>
+		/// Cached name for the 'FeedbackScreen' property.
+		/// </summary>
 		public static readonly StringName FeedbackScreen = "FeedbackScreen";
 
+		/// <summary>
+		/// Cached name for the 'ReactionWheel' property.
+		/// </summary>
+		public static readonly StringName ReactionWheel = "ReactionWheel";
+
+		/// <summary>
+		/// Cached name for the 'ReactionContainer' property.
+		/// </summary>
+		public static readonly StringName ReactionContainer = "ReactionContainer";
+
+		/// <summary>
+		/// Cached name for the 'CursorManager' property.
+		/// </summary>
+		public static readonly StringName CursorManager = "CursorManager";
+
+		/// <summary>
+		/// Cached name for the 'DebugAudio' property.
+		/// </summary>
+		public static readonly StringName DebugAudio = "DebugAudio";
+
+		/// <summary>
+		/// Cached name for the 'DebugSeedOverride' property.
+		/// </summary>
+		public static readonly StringName DebugSeedOverride = "DebugSeedOverride";
+
+		/// <summary>
+		/// Cached name for the 'StartOnMainMenu' property.
+		/// </summary>
+		public static readonly StringName StartOnMainMenu = "StartOnMainMenu";
+
+		/// <summary>
+		/// Cached name for the 'InspectRelicScreen' property.
+		/// </summary>
+		public static readonly StringName InspectRelicScreen = "InspectRelicScreen";
+
+		/// <summary>
+		/// Cached name for the 'InspectCardScreen' property.
+		/// </summary>
+		public static readonly StringName InspectCardScreen = "InspectCardScreen";
+
+		/// <summary>
+		/// Cached name for the 'ScreenshakeTarget' property.
+		/// </summary>
+		public static readonly StringName ScreenshakeTarget = "ScreenshakeTarget";
+
+		/// <summary>
+		/// Cached name for the 'WorldEnvironment' property.
+		/// </summary>
 		public static readonly StringName WorldEnvironment = "WorldEnvironment";
 
+		/// <summary>
+		/// Cached name for the 'HitStop' property.
+		/// </summary>
 		public static readonly StringName HitStop = "HitStop";
 
+		/// <summary>
+		/// Cached name for the '_inspectionContainer' field.
+		/// </summary>
 		public static readonly StringName _inspectionContainer = "_inspectionContainer";
 
+		/// <summary>
+		/// Cached name for the '_screenShake' field.
+		/// </summary>
 		public static readonly StringName _screenShake = "_screenShake";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'WindowChange' signal.
+		/// </summary>
 		public static readonly StringName WindowChange = "WindowChange";
+
+		/// <summary>
+		/// Cached name for the 'PhobiaModeToggled' signal.
+		/// </summary>
+		public static readonly StringName PhobiaModeToggled = "PhobiaModeToggled";
 	}
 
 	public static readonly Vector2 devResolution = new Vector2(1920f, 1080f);
@@ -196,6 +415,8 @@ public class NGame : Control
 	private SteamJoinCallbackHandler? _joinCallbackHandler;
 
 	private WindowChangeEventHandler backing_WindowChange;
+
+	private PhobiaModeToggledEventHandler backing_PhobiaModeToggled;
 
 	public static NGame? Instance { get; private set; }
 
@@ -221,6 +442,8 @@ public class NGame : Control
 
 	public NHotkeyManager HotkeyManager { get; private set; }
 
+	public NSendFeedbackScreen? FeedbackScreen { get; private set; }
+
 	public NReactionWheel ReactionWheel { get; private set; }
 
 	public NReactionContainer ReactionContainer { get; private set; }
@@ -243,7 +466,7 @@ public class NGame : Control
 
 	public NInspectCardScreen? InspectCardScreen { get; set; }
 
-	public NSendFeedbackScreen FeedbackScreen { get; set; }
+	public Control? ScreenshakeTarget => _screenShake.ShakeTarget;
 
 	private WorldEnvironment WorldEnvironment { get; set; }
 
@@ -251,6 +474,7 @@ public class NGame : Control
 
 	public event Action? DebugToggleProceedButton;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.NGame.WindowChangeEventHandler" />
 	public event WindowChangeEventHandler WindowChange
 	{
 		add
@@ -263,8 +487,23 @@ public class NGame : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.NGame.PhobiaModeToggledEventHandler" />
+	public event PhobiaModeToggledEventHandler PhobiaModeToggled
+	{
+		add
+		{
+			backing_PhobiaModeToggled = (PhobiaModeToggledEventHandler)Delegate.Combine(backing_PhobiaModeToggled, value);
+		}
+		remove
+		{
+			backing_PhobiaModeToggled = (PhobiaModeToggledEventHandler)Delegate.Remove(backing_PhobiaModeToggled, value);
+		}
+	}
+
 	public override void _EnterTree()
 	{
+		CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+		CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 		if (Instance != null)
 		{
 			Log.Error("NGame already exists.");
@@ -289,8 +528,8 @@ public class NGame : Control
 		_screenShake = GetNode<NScreenShake>("ScreenShake");
 		HitStop = GetNode<NHitStop>("HitStop");
 		Transition = GetNode<NTransition>("%GameTransitionRect");
-		FeedbackScreen = GetNode<NSendFeedbackScreen>("%FeedbackScreen");
 		_mainThreadId = System.Environment.CurrentManagedThreadId;
+		GetWindow().Connect(Window.SignalName.FilesDropped, Callable.From<string[]>(FileDropHandler.OnFilesDropped));
 		TaskHelper.RunSafely(GameStartupWrapper());
 	}
 
@@ -301,6 +540,9 @@ public class NGame : Control
 		this.RemoveChildSafely(WorldEnvironment);
 	}
 
+	/// <summary>
+	/// Wraps game startup and shows an error if there is a problem.
+	/// </summary>
 	private async Task GameStartupWrapper()
 	{
 		if (!(await InitializePlatform()))
@@ -320,6 +562,9 @@ public class NGame : Control
 		}
 	}
 
+	/// <summary>
+	/// Initializes only the components of the game we need to display an error.
+	/// </summary>
 	private async Task TryErrorInit()
 	{
 		try
@@ -351,23 +596,36 @@ public class NGame : Control
 		Log.Error("Encountered error on game startup! Attempting to show error dialog");
 		await TryErrorInit();
 		NGenericPopup nGenericPopup = NGenericPopup.Create();
-		NModalContainer.Instance.Add(nGenericPopup);
-		await nGenericPopup.WaitForConfirmation(new LocString("main_menu_ui", "STARTUP_ERROR.description"), new LocString("main_menu_ui", "STARTUP_ERROR.title"), null, new LocString("main_menu_ui", "QUIT"));
-		GetTree().Quit();
+		if (nGenericPopup == null || NModalContainer.Instance == null)
+		{
+			Log.Error("Cannot show error dialog: UI not initialized. Quitting immediately.");
+			GetTree().Quit();
+		}
+		else
+		{
+			NModalContainer.Instance.Add(nGenericPopup);
+			await nGenericPopup.WaitForConfirmation(new LocString("main_menu_ui", "STARTUP_ERROR.description"), new LocString("main_menu_ui", "STARTUP_ERROR.title"), null, new LocString("main_menu_ui", "QUIT"));
+			GetTree().Quit();
+		}
 	}
 
+	/// <summary>
+	/// Does all the game-level initialization tasks asynchronously.
+	/// Stuff that should happen as early as possible should go in _EnterTree.
+	/// Beware of changing the order of operations in this method. There are dependencies that are non-obvious, and you
+	/// should read and understand the methods you change.
+	/// </summary>
 	private async Task GameStartup()
 	{
+		await OneTimeInitialization.ExecuteVeryEarly();
+		Node child = NDevConsole.Create();
+		this.AddChildSafely(child);
+		this.MoveChildSafely(child, GetChildCount() - 1);
 		AccountScopeUserDataMigrator.MigrateToUserScopedDirectories();
 		AccountScopeUserDataMigrator.ArchiveLegacyData();
 		ProfileAccountScopeMigrator.MigrateToProfileScopedDirectories();
 		ProfileAccountScopeMigrator.ArchiveLegacyData();
-		bool flag = await SaveManager.Instance.TryFirstTimeCloudSync();
-		Task cloudSavesTask = null;
-		if (!flag)
-		{
-			cloudSavesTask = Task.Run((Func<Task?>)SaveManager.Instance.SyncCloudToLocal);
-		}
+		Task cloudSavesTask = DoCloudSync();
 		InitPools();
 		OneTimeInitialization.ExecuteEssential();
 		if (!IsNodeReady())
@@ -383,19 +641,20 @@ public class NGame : Control
 		DebugAudio.SetSfxAudioVolume(SaveManager.Instance.SettingsSave.VolumeSfx);
 		LeaderboardManager.Initialize();
 		SteamStatsManager.Initialize();
-		if (cloudSavesTask != null)
+		TimeoutOverlay.Relocalize();
+		while (!cloudSavesTask.IsCompleted)
 		{
-			await cloudSavesTask;
+			if (!SteamInitializer.Initialized)
+			{
+				Log.Error("Steam became uninitialized while the cloud sync was in-progress! This might result in unpredictable behavior");
+				break;
+			}
+			await this.AwaitProcessFrame();
 		}
 		SaveManager.Instance.InitProfileId();
 		ReadSaveResult<SerializableProgress> progressReadResult = SaveManager.Instance.InitProgressData();
 		ReadSaveResult<PrefsSave> prefsReadResult = SaveManager.Instance.InitPrefsData();
-		SentryService.SetUserContext(SaveManager.Instance.Progress.UniqueId);
-		string platformBranch = PlatformUtil.GetPlatformBranch();
-		if (platformBranch != null)
-		{
-			SentryService.SetTag("platform.branch", platformBranch);
-		}
+		SentryService.AfterGameInit(PlatformUtil.GetPlatformBranch().ToName(), SaveManager.Instance.Progress.UniqueId, GetTree().Root);
 		_screenShake.SetMultiplier(NScreenshakePaginator.GetShakeMultiplier(SaveManager.Instance.PrefsSave.ScreenShakeOptionIndex));
 		if (!OS.HasFeature("editor") && SaveManager.Instance.PrefsSave.FastMode == FastModeType.Instant)
 		{
@@ -411,8 +670,8 @@ public class NGame : Control
 		}
 		else if (CommandLineHelper.HasArg("bootstrap"))
 		{
-			NSceneBootstrapper child = SceneHelper.Instantiate<NSceneBootstrapper>("debug/scene_bootstrapper");
-			this.AddChildSafely(child);
+			NSceneBootstrapper child2 = SceneHelper.Instantiate<NSceneBootstrapper>("debug/scene_bootstrapper");
+			this.AddChildSafely(child2);
 		}
 		else if (StartOnMainMenu)
 		{
@@ -424,6 +683,21 @@ public class NGame : Control
 		ModManager.OnModDetected += OnNewModDetected;
 	}
 
+	private async Task DoCloudSync()
+	{
+		if (SaveManager.Instance.ShouldOverwriteCloudWithLocal())
+		{
+			await SaveManager.Instance.OverwriteCloudWithLocal();
+		}
+		else
+		{
+			await SaveManager.Instance.SyncCloudToLocal();
+		}
+	}
+
+	/// <summary>
+	/// Called when we set our Aspect Ratio to Auto mode OR when the size of the window is changed while Aspect Ratio is Auto.
+	/// </summary>
 	private void OnWindowChange()
 	{
 		Log.Info($"Window changed! New size: {DisplayServer.WindowGetSize()}");
@@ -449,11 +723,17 @@ public class NGame : Control
 		SentryService.Shutdown();
 	}
 
+	/// <summary>
+	/// If the game is a release build. i.e. Steam build
+	/// </summary>
 	public static bool IsReleaseGame()
 	{
 		return true;
 	}
 
+	/// <summary>
+	/// Called when the game starts to apply the player's graphics settings.
+	/// </summary>
 	private void InitializeGraphicsPreferences()
 	{
 		if (!DisplayServer.GetName().Equals("headless", StringComparison.OrdinalIgnoreCase))
@@ -464,6 +744,10 @@ public class NGame : Control
 		Engine.MaxFps = SaveManager.Instance.SettingsSave.FpsLimit;
 	}
 
+	/// <summary>
+	/// Used to update graphics settings when we change the resolution or display mode from the options screen.
+	/// </summary>
+	/// <exception cref="T:System.ArgumentOutOfRangeException"></exception>
 	public void ApplyDisplaySettings()
 	{
 		bool flag = false;
@@ -613,6 +897,10 @@ public class NGame : Control
 		return InspectCardScreen;
 	}
 
+	/// <summary>
+	/// Used to update VSync settings when changed from the options screen.
+	/// </summary>
+	/// <exception cref="T:System.ArgumentOutOfRangeException"></exception>
 	public static void ApplySyncSetting()
 	{
 		switch (SaveManager.Instance.SettingsSave.VSync)
@@ -635,12 +923,18 @@ public class NGame : Control
 		}
 	}
 
+	/// <summary>
+	/// Reset the game instance. Only meant to be called from tests.
+	/// </summary>
 	public static void Reset()
 	{
 		Instance?.QueueFreeSafely();
 		Instance = null;
 	}
 
+	/// <summary>
+	/// Listens for game close request
+	/// </summary>
 	public override void _Notification(int what)
 	{
 		if ((long)what == 1006)
@@ -661,12 +955,22 @@ public class NGame : Control
 			Log.Info($"[Display] On exit, saving window size: {settingsSave.WindowSize} display: {settingsSave.TargetDisplay} position: {settingsSave.WindowPosition}");
 		}
 		SaveManager.Instance.SaveSettings();
-		SaveManager.Instance.SavePrefsFile();
-		SaveManager.Instance.SaveProgressFile();
-		SaveManager.Instance.SaveProfile();
+		if (SaveManager.Instance.IsProfileInitialized)
+		{
+			SaveManager.Instance.SavePrefsFile();
+			SaveManager.Instance.SaveProgressFile();
+			SaveManager.Instance.SaveProfile();
+		}
+		SteamInitializer.SteamNoLongerRunning -= OnSteamNoLongerRunning;
+		MegaLabel.DisposeCachedParagraph();
+		MegaRichTextLabel.DisposeCachedParagraph();
+		FontManager.ClearCache();
 		GetTree().Quit();
 	}
 
+	/// <summary>
+	/// Called when the Main Menu is launched for the first time
+	/// </summary>
 	private async Task LaunchMainMenu(bool skipLogo)
 	{
 		NLogoAnimation logoAnimation = null;
@@ -695,6 +999,10 @@ public class NGame : Control
 		_joinCallbackHandler?.CheckForCommandLineJoin();
 	}
 
+	/// <summary>
+	/// Loads remaining atlases, runs ModelDb.Preload, and loads all common/menu assets in background.
+	/// Called after main menu is displayed to not block the user.
+	/// </summary>
 	private async Task LoadDeferredStartupAssetsAsync()
 	{
 		OneTimeInitialization.ExecuteDeferred();
@@ -710,6 +1018,18 @@ public class NGame : Control
 	public async Task ReturnToMainMenuAfterRun()
 	{
 		await ReturnToMainMenu();
+	}
+
+	public async Task ReturnToMainMenuWithInternalError(Exception e)
+	{
+		if (MainMenu == null)
+		{
+			await ReturnToMainMenu();
+		}
+		LocString locString = new LocString("main_menu_ui", "INTERNAL_ERROR.description");
+		locString.Add("info", e.GetType().Name + ": " + e.Message);
+		NErrorPopup modalToCreate = NErrorPopup.Create(new LocString("main_menu_ui", "INTERNAL_ERROR.title"), locString, null, showReportBugButton: true);
+		NModalContainer.Instance.Add(modalToCreate);
 	}
 
 	public async Task GoToTimeline()
@@ -728,10 +1048,17 @@ public class NGame : Control
 		await LoadMainMenu();
 	}
 
+	/// <summary>
+	/// Almost nothing changes text when the language is changed. This is called when the language is changed to
+	/// reload all text.
+	/// </summary>
 	public void Relocalize()
 	{
-		ReloadMainMenu();
-		FeedbackScreen.Relocalize();
+		if (RootSceneContainer.CurrentScene is NMainMenu)
+		{
+			ReloadMainMenu();
+		}
+		FeedbackScreen?.Relocalize();
 		TimeoutOverlay.Relocalize();
 	}
 
@@ -763,19 +1090,40 @@ public class NGame : Control
 		RootSceneContainer.SetCurrentScene(currentScene);
 	}
 
-	public async Task<RunState> StartNewSingleplayerRun(CharacterModel character, bool shouldSave, IReadOnlyList<ActModel> acts, IReadOnlyList<ModifierModel> modifiers, string seed, int ascensionLevel = 0, DateTimeOffset? dailyTime = null)
+	/// <summary>
+	/// Start a new singleplayer run on both the front and back ends.
+	/// </summary>
+	/// <param name="character">The character that the player is playing as.</param>
+	/// <param name="shouldSave">Whether a save file should be created for the run.</param>
+	/// <param name="acts">The canonical acts that should be in the run.</param>
+	/// <param name="modifiers">The modifiers that are applied to the run.</param>
+	/// <param name="seed">The seed that the run's RNG should use.</param>
+	/// <param name="gameMode">The type of game mode that we're starting.</param>
+	/// <param name="ascensionLevel">The ascension level that the run should be played at.</param>
+	/// <param name="dailyTime">Time used to determine the daily run info. Null if not a daily run.</param>
+	public async Task<RunState> StartNewSingleplayerRun(CharacterModel character, bool shouldSave, IReadOnlyList<ActModel> acts, IReadOnlyList<ModifierModel> modifiers, string seed, GameMode gameMode, int ascensionLevel = 0, DateTimeOffset? dailyTime = null)
 	{
 		UnlockState unlockState = SaveManager.Instance.GenerateUnlockStateFromProgress();
-		RunState runState = RunState.CreateForNewRun(new global::_003C_003Ez__ReadOnlySingleElementList<Player>(Player.CreateForNewRun(character, unlockState, 1uL)), acts.Select((ActModel a) => a.ToMutable()).ToList(), modifiers, ascensionLevel, seed);
-		RunManager.Instance.SetUpNewSinglePlayer(runState, shouldSave, dailyTime);
+		RunState runState = RunState.CreateForNewRun(new global::_003C_003Ez__ReadOnlySingleElementList<Player>(Player.CreateForNewRun(character, unlockState, 1uL)), acts.Select((ActModel a) => a.ToMutable()).ToList(), modifiers, gameMode, ascensionLevel, seed);
+		RunManager.Instance.SetUpNewSingleplayer(runState, shouldSave, dailyTime);
 		await StartRun(runState);
 		return runState;
 	}
 
+	/// <summary>
+	/// Start a new multiplayer run on both the front and back ends.
+	/// </summary>
+	/// <param name="lobby">The lobby containing the multiplayer info.</param>
+	/// <param name="shouldSave">Whether a save file should be created for the run.</param>
+	/// <param name="acts">The canonical acts that should be in the run.</param>
+	/// <param name="modifiers">The modifiers that are applied to the run.</param>
+	/// <param name="seed">The seed that the run's RNG should use.</param>
+	/// <param name="ascensionLevel">The ascension level that the run should be played at.</param>
+	/// <param name="dailyTime">Time used to determine the daily run info. Null if not a daily run.</param>
 	public async Task<RunState> StartNewMultiplayerRun(StartRunLobby lobby, bool shouldSave, IReadOnlyList<ActModel> acts, IReadOnlyList<ModifierModel> modifiers, string seed, int ascensionLevel, DateTimeOffset? dailyTime = null)
 	{
-		RunState runState = RunState.CreateForNewRun(lobby.Players.Select((LobbyPlayer p) => Player.CreateForNewRun(p.character, UnlockState.FromSerializable(p.unlockState), p.id)).ToList(), acts.Select((ActModel a) => a.ToMutable()).ToList(), modifiers, ascensionLevel, seed);
-		RunManager.Instance.SetUpNewMultiPlayer(runState, lobby, shouldSave, dailyTime);
+		RunState runState = RunState.CreateForNewRun(lobby.Players.Select((LobbyPlayer p) => Player.CreateForNewRun(p.character, UnlockState.FromSerializable(p.unlockState), p.id)).ToList(), acts.Select((ActModel a) => a.ToMutable()).ToList(), modifiers, lobby.GameMode, ascensionLevel, seed);
+		RunManager.Instance.SetUpNewMultiplayer(runState, lobby, shouldSave, dailyTime);
 		await StartRun(runState);
 		return runState;
 	}
@@ -925,6 +1273,10 @@ public class NGame : Control
 		NGridCardHolder.InitPool();
 	}
 
+	/// <summary>
+	/// Called when we detect that a mod is installed during runtime. Displays a warning telling the user that the mod
+	/// won't be loaded until after a restart.
+	/// </summary>
 	private void OnNewModDetected(Mod mod)
 	{
 		if (!NModalContainer.Instance.GetChildren().OfType<NErrorPopup>().Any())
@@ -934,6 +1286,10 @@ public class NGame : Control
 		}
 	}
 
+	/// <summary>
+	/// If either the settings or the progress save failed to load, then this displays an error popup notifying the player
+	/// and asking them to send logs. Does nothing otherwise.
+	/// </summary>
 	public void CheckShowSaveFileError(ReadSaveResult<SerializableProgress> progressReadResult, ReadSaveResult<PrefsSave> prefsReadResult, ReadSaveResult<SettingsSave>? settingsReadResult)
 	{
 		LocString locString = null;
@@ -956,6 +1312,10 @@ public class NGame : Control
 		}
 	}
 
+	/// <summary>
+	/// If localization validation errors were found in user override files, displays a popup notifying the user.
+	/// Shows summary of errors (count and file paths) and directs user to check console logs for details.
+	/// </summary>
 	private void CheckShowLocalizationOverrideErrors()
 	{
 		if (LocManager.Instance.ValidationErrors.Count != 0)
@@ -974,6 +1334,9 @@ public class NGame : Control
 		}
 	}
 
+	/// <summary>
+	/// Contains platform-specific initialization. This must complete before the game can be allowed to proceed.
+	/// </summary>
 	private async Task<bool> InitializePlatform()
 	{
 		bool flag = CommandLineHelper.HasArg("force-steam");
@@ -989,17 +1352,32 @@ public class NGame : Control
 			Log.Error("Failed to initialize Steam! Attempting to show error popup");
 			await TryErrorInit();
 			NGenericPopup nGenericPopup = NGenericPopup.Create();
+			if (nGenericPopup == null || NModalContainer.Instance == null)
+			{
+				Log.Error("Cannot show Steam error dialog: UI not initialized. Quitting immediately.");
+				GetTree().Quit();
+				return false;
+			}
 			NModalContainer.Instance.Add(nGenericPopup);
-			LocString locString = new LocString("main_menu_ui", "STEAM_INIT_ERROR.description");
-			locString.Add("details", $"{SteamInitializer.InitResult}: {SteamInitializer.InitErrorMessage}");
-			await nGenericPopup.WaitForConfirmation(locString, new LocString("main_menu_ui", "STEAM_INIT_ERROR.title"), null, new LocString("main_menu_ui", "QUIT"));
+			await nGenericPopup.WaitForConfirmation(new LocString("main_menu_ui", "STEAM_INIT_ERROR.description"), new LocString("main_menu_ui", "STEAM_INIT_ERROR.title"), null, new LocString("main_menu_ui", "QUIT"));
 			GetTree().Quit();
 		}
 		else
 		{
 			_joinCallbackHandler = new SteamJoinCallbackHandler();
+			SteamInitializer.SteamNoLongerRunning += OnSteamNoLongerRunning;
 		}
 		return steamInitialized;
+	}
+
+	private void OnSteamNoLongerRunning()
+	{
+		NGenericPopup nGenericPopup = NGenericPopup.Create();
+		NModalContainer.Instance?.Add(nGenericPopup);
+		LocString locString = new LocString("main_menu_ui", "STEAM_STOPPED_ERROR.description");
+		locString.Add("details", $"{SteamInitializer.InitResult}: {SteamInitializer.InitErrorMessage}");
+		TaskHelper.RunSafely(nGenericPopup.WaitForConfirmation(locString, new LocString("main_menu_ui", "STEAM_STOPPED_ERROR.title"), null, new LocString("main_menu_ui", "GENERIC_POPUP.ok")));
+		SteamInitializer.SteamNoLongerRunning -= OnSteamNoLongerRunning;
 	}
 
 	public static void LogResourceStats(string context)
@@ -1013,7 +1391,7 @@ public class NGame : Control
 		Log.Info($"[Startup] Resource stats ({context}): StaticMem={FormatBytes(staticMemoryUsage)}, VRAM={FormatBytes(renderingInfo)}, Objects={value:N0}, Resources={value2:N0}, Nodes={value3:N0}, CachedAssets={value4:N0}");
 	}
 
-	private static string FormatBytes(ulong bytes)
+	internal static string FormatBytes(ulong bytes)
 	{
 		string[] array = new string[4] { "B", "KB", "MB", "GB" };
 		int num = 0;
@@ -1026,10 +1404,35 @@ public class NGame : Control
 		return $"{num2:0.#}{array[num]}";
 	}
 
+	public static bool IsGameFocusedWindow()
+	{
+		if (!PlatformUtil.IsPlatformOverlayOpen())
+		{
+			return DisplayServer.WindowIsFocused();
+		}
+		return false;
+	}
+
+	public NSendFeedbackScreen GetOrCreateFeedbackScreen()
+	{
+		if (FeedbackScreen == null)
+		{
+			FeedbackScreen = NSendFeedbackScreen.Create();
+			this.AddChildSafely(FeedbackScreen);
+			this.MoveChildSafely(FeedbackScreen, Transition.GetIndex() - 1);
+		}
+		return FeedbackScreen;
+	}
+
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(33);
+		List<MethodInfo> list = new List<MethodInfo>(36);
 		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnWindowChange, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -1093,6 +1496,7 @@ public class NGame : Control
 		}, null));
 		list.Add(new MethodInfo(MethodName.InitPools, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.CheckShowLocalizationOverrideErrors, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.OnSteamNoLongerRunning, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.LogResourceStats, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.String, "context", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
@@ -1101,9 +1505,12 @@ public class NGame : Control
 		{
 			new PropertyInfo(Variant.Type.Int, "bytes", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.IsGameFocusedWindow, new PropertyInfo(Variant.Type.Bool, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal | MethodFlags.Static, null, null));
+		list.Add(new MethodInfo(MethodName.GetOrCreateFeedbackScreen, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -1288,6 +1695,12 @@ public class NGame : Control
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.OnSteamNoLongerRunning && args.Count == 0)
+		{
+			OnSteamNoLongerRunning();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName.LogResourceStats && args.Count == 1)
 		{
 			LogResourceStats(VariantUtils.ConvertTo<string>(in args[0]));
@@ -1297,6 +1710,16 @@ public class NGame : Control
 		if (method == MethodName.FormatBytes && args.Count == 1)
 		{
 			ret = VariantUtils.CreateFrom<string>(FormatBytes(VariantUtils.ConvertTo<ulong>(in args[0])));
+			return true;
+		}
+		if (method == MethodName.IsGameFocusedWindow && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<bool>(IsGameFocusedWindow());
+			return true;
+		}
+		if (method == MethodName.GetOrCreateFeedbackScreen && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<NSendFeedbackScreen>(GetOrCreateFeedbackScreen());
 			return true;
 		}
 		return base.InvokeGodotClassMethod(in method, args, out ret);
@@ -1344,10 +1767,16 @@ public class NGame : Control
 			ret = VariantUtils.CreateFrom<string>(FormatBytes(VariantUtils.ConvertTo<ulong>(in args[0])));
 			return true;
 		}
+		if (method == MethodName.IsGameFocusedWindow && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<bool>(IsGameFocusedWindow());
+			return true;
+		}
 		ret = default(godot_variant);
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -1475,6 +1904,10 @@ public class NGame : Control
 		{
 			return true;
 		}
+		if (method == MethodName.OnSteamNoLongerRunning)
+		{
+			return true;
+		}
 		if (method == MethodName.LogResourceStats)
 		{
 			return true;
@@ -1483,9 +1916,18 @@ public class NGame : Control
 		{
 			return true;
 		}
+		if (method == MethodName.IsGameFocusedWindow)
+		{
+			return true;
+		}
+		if (method == MethodName.GetOrCreateFeedbackScreen)
+		{
+			return true;
+		}
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1529,6 +1971,11 @@ public class NGame : Control
 			HotkeyManager = VariantUtils.ConvertTo<NHotkeyManager>(in value);
 			return true;
 		}
+		if (name == PropertyName.FeedbackScreen)
+		{
+			FeedbackScreen = VariantUtils.ConvertTo<NSendFeedbackScreen>(in value);
+			return true;
+		}
 		if (name == PropertyName.ReactionWheel)
 		{
 			ReactionWheel = VariantUtils.ConvertTo<NReactionWheel>(in value);
@@ -1569,11 +2016,6 @@ public class NGame : Control
 			InspectCardScreen = VariantUtils.ConvertTo<NInspectCardScreen>(in value);
 			return true;
 		}
-		if (name == PropertyName.FeedbackScreen)
-		{
-			FeedbackScreen = VariantUtils.ConvertTo<NSendFeedbackScreen>(in value);
-			return true;
-		}
 		if (name == PropertyName.WorldEnvironment)
 		{
 			WorldEnvironment = VariantUtils.ConvertTo<WorldEnvironment>(in value);
@@ -1597,6 +2039,7 @@ public class NGame : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1655,6 +2098,11 @@ public class NGame : Control
 			value = VariantUtils.CreateFrom<NHotkeyManager>(HotkeyManager);
 			return true;
 		}
+		if (name == PropertyName.FeedbackScreen)
+		{
+			value = VariantUtils.CreateFrom<NSendFeedbackScreen>(FeedbackScreen);
+			return true;
+		}
 		if (name == PropertyName.ReactionWheel)
 		{
 			value = VariantUtils.CreateFrom<NReactionWheel>(ReactionWheel);
@@ -1695,9 +2143,9 @@ public class NGame : Control
 			value = VariantUtils.CreateFrom<NInspectCardScreen>(InspectCardScreen);
 			return true;
 		}
-		if (name == PropertyName.FeedbackScreen)
+		if (name == PropertyName.ScreenshakeTarget)
 		{
-			value = VariantUtils.CreateFrom<NSendFeedbackScreen>(FeedbackScreen);
+			value = VariantUtils.CreateFrom<Control>(ScreenshakeTarget);
 			return true;
 		}
 		if (name == PropertyName.WorldEnvironment)
@@ -1723,6 +2171,11 @@ public class NGame : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1738,6 +2191,7 @@ public class NGame : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.RemoteCursorContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.InputManager, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.HotkeyManager, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.FeedbackScreen, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.ReactionWheel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.ReactionContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.CursorManager, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -1746,7 +2200,7 @@ public class NGame : Control
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.StartOnMainMenu, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.InspectRelicScreen, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.InspectCardScreen, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.FeedbackScreen, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.ScreenshakeTarget, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.WorldEnvironment, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.HitStop, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._inspectionContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -1754,6 +2208,7 @@ public class NGame : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1766,6 +2221,7 @@ public class NGame : Control
 		info.AddProperty(PropertyName.RemoteCursorContainer, Variant.From<NRemoteMouseCursorContainer>(RemoteCursorContainer));
 		info.AddProperty(PropertyName.InputManager, Variant.From<NInputManager>(InputManager));
 		info.AddProperty(PropertyName.HotkeyManager, Variant.From<NHotkeyManager>(HotkeyManager));
+		info.AddProperty(PropertyName.FeedbackScreen, Variant.From<NSendFeedbackScreen>(FeedbackScreen));
 		info.AddProperty(PropertyName.ReactionWheel, Variant.From<NReactionWheel>(ReactionWheel));
 		info.AddProperty(PropertyName.ReactionContainer, Variant.From<NReactionContainer>(ReactionContainer));
 		info.AddProperty(PropertyName.CursorManager, Variant.From<NCursorManager>(CursorManager));
@@ -1774,14 +2230,15 @@ public class NGame : Control
 		info.AddProperty(PropertyName.StartOnMainMenu, Variant.From<bool>(StartOnMainMenu));
 		info.AddProperty(PropertyName.InspectRelicScreen, Variant.From<NInspectRelicScreen>(InspectRelicScreen));
 		info.AddProperty(PropertyName.InspectCardScreen, Variant.From<NInspectCardScreen>(InspectCardScreen));
-		info.AddProperty(PropertyName.FeedbackScreen, Variant.From<NSendFeedbackScreen>(FeedbackScreen));
 		info.AddProperty(PropertyName.WorldEnvironment, Variant.From<WorldEnvironment>(WorldEnvironment));
 		info.AddProperty(PropertyName.HitStop, Variant.From<NHitStop>(HitStop));
 		info.AddProperty(PropertyName._inspectionContainer, Variant.From(in _inspectionContainer));
 		info.AddProperty(PropertyName._screenShake, Variant.From(in _screenShake));
 		info.AddSignalEventDelegate(SignalName.WindowChange, backing_WindowChange);
+		info.AddSignalEventDelegate(SignalName.PhobiaModeToggled, backing_PhobiaModeToggled);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1818,41 +2275,41 @@ public class NGame : Control
 		{
 			HotkeyManager = value8.As<NHotkeyManager>();
 		}
-		if (info.TryGetProperty(PropertyName.ReactionWheel, out var value9))
+		if (info.TryGetProperty(PropertyName.FeedbackScreen, out var value9))
 		{
-			ReactionWheel = value9.As<NReactionWheel>();
+			FeedbackScreen = value9.As<NSendFeedbackScreen>();
 		}
-		if (info.TryGetProperty(PropertyName.ReactionContainer, out var value10))
+		if (info.TryGetProperty(PropertyName.ReactionWheel, out var value10))
 		{
-			ReactionContainer = value10.As<NReactionContainer>();
+			ReactionWheel = value10.As<NReactionWheel>();
 		}
-		if (info.TryGetProperty(PropertyName.CursorManager, out var value11))
+		if (info.TryGetProperty(PropertyName.ReactionContainer, out var value11))
 		{
-			CursorManager = value11.As<NCursorManager>();
+			ReactionContainer = value11.As<NReactionContainer>();
 		}
-		if (info.TryGetProperty(PropertyName.DebugAudio, out var value12))
+		if (info.TryGetProperty(PropertyName.CursorManager, out var value12))
 		{
-			DebugAudio = value12.As<NDebugAudioManager>();
+			CursorManager = value12.As<NCursorManager>();
 		}
-		if (info.TryGetProperty(PropertyName.DebugSeedOverride, out var value13))
+		if (info.TryGetProperty(PropertyName.DebugAudio, out var value13))
 		{
-			DebugSeedOverride = value13.As<string>();
+			DebugAudio = value13.As<NDebugAudioManager>();
 		}
-		if (info.TryGetProperty(PropertyName.StartOnMainMenu, out var value14))
+		if (info.TryGetProperty(PropertyName.DebugSeedOverride, out var value14))
 		{
-			StartOnMainMenu = value14.As<bool>();
+			DebugSeedOverride = value14.As<string>();
 		}
-		if (info.TryGetProperty(PropertyName.InspectRelicScreen, out var value15))
+		if (info.TryGetProperty(PropertyName.StartOnMainMenu, out var value15))
 		{
-			InspectRelicScreen = value15.As<NInspectRelicScreen>();
+			StartOnMainMenu = value15.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName.InspectCardScreen, out var value16))
+		if (info.TryGetProperty(PropertyName.InspectRelicScreen, out var value16))
 		{
-			InspectCardScreen = value16.As<NInspectCardScreen>();
+			InspectRelicScreen = value16.As<NInspectRelicScreen>();
 		}
-		if (info.TryGetProperty(PropertyName.FeedbackScreen, out var value17))
+		if (info.TryGetProperty(PropertyName.InspectCardScreen, out var value17))
 		{
-			FeedbackScreen = value17.As<NSendFeedbackScreen>();
+			InspectCardScreen = value17.As<NInspectCardScreen>();
 		}
 		if (info.TryGetProperty(PropertyName.WorldEnvironment, out var value18))
 		{
@@ -1874,13 +2331,23 @@ public class NGame : Control
 		{
 			backing_WindowChange = value22;
 		}
+		if (info.TryGetSignalEventDelegate<PhobiaModeToggledEventHandler>(SignalName.PhobiaModeToggled, out var value23))
+		{
+			backing_PhobiaModeToggled = value23;
+		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(1);
+		List<MethodInfo> list = new List<MethodInfo>(2);
 		list.Add(new MethodInfo(SignalName.WindowChange, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(SignalName.PhobiaModeToggled, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
@@ -1889,6 +2356,12 @@ public class NGame : Control
 		EmitSignal(SignalName.WindowChange);
 	}
 
+	protected void EmitSignalPhobiaModeToggled()
+	{
+		EmitSignal(SignalName.PhobiaModeToggled);
+	}
+
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -1896,16 +2369,25 @@ public class NGame : Control
 		{
 			backing_WindowChange?.Invoke();
 		}
+		else if (signal == SignalName.PhobiaModeToggled && args.Count == 0)
+		{
+			backing_PhobiaModeToggled?.Invoke();
+		}
 		else
 		{
 			base.RaiseGodotClassSignalCallbacks(in signal, args);
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{
 		if (signal == SignalName.WindowChange)
+		{
+			return true;
+		}
+		if (signal == SignalName.PhobiaModeToggled)
 		{
 			return true;
 		}

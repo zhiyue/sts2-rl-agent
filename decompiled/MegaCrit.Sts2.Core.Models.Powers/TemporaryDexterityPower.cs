@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -11,8 +12,17 @@ using MegaCrit.Sts2.Core.Localization;
 
 namespace MegaCrit.Sts2.Core.Models.Powers;
 
+/// <summary>
+/// This class represents a buff/debuff that gives/takes dexterity.
+/// We never instantiate this directly. See <see cref="T:MegaCrit.Sts2.Core.Models.Powers.TemporaryStrengthPower" /> for context around how this is used.
+/// </summary>
 public abstract class TemporaryDexterityPower : PowerModel, ITemporaryPower
 {
+	/// <summary>
+	/// If this is true, the next application of this power will not be applied.
+	/// This is used when debuffs are copied by Misery. The negative <see cref="T:MegaCrit.Sts2.Core.Models.Powers.DexterityPower" /> gets copied along with this
+	/// power, and upon copying, it should not apply negative <see cref="T:MegaCrit.Sts2.Core.Models.Powers.DexterityPower" /> down again.
+	/// </summary>
 	private bool _shouldIgnoreNextInstance;
 
 	public override PowerType Type
@@ -29,12 +39,21 @@ public abstract class TemporaryDexterityPower : PowerModel, ITemporaryPower
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
+	/// <summary>
+	/// The canonical model that applies this power. For example, <see cref="T:MegaCrit.Sts2.Core.Models.Cards.Anticipate" />.
+	/// </summary>
 	public abstract AbstractModel OriginModel { get; }
 
 	public PowerModel InternallyAppliedPower => ModelDb.Power<DexterityPower>();
 
+	/// <summary>
+	/// If this power is supposed to apply negative dexterity, make this false
+	/// </summary>
 	protected virtual bool IsPositive => true;
 
+	/// <summary>
+	/// Shorthand indicating the sign of the amount to apply
+	/// </summary>
 	private int Sign
 	{
 		get
@@ -128,11 +147,11 @@ public abstract class TemporaryDexterityPower : PowerModel, ITemporaryPower
 		}
 		else
 		{
-			await PowerCmd.Apply<DexterityPower>(target, (decimal)Sign * amount, applier, cardSource, silent: true);
+			await PowerCmd.Apply<DexterityPower>(new ThrowingPlayerChoiceContext(), target, (decimal)Sign * amount, applier, cardSource, silent: true);
 		}
 	}
 
-	public override async Task AfterPowerAmountChanged(PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
+	public override async Task AfterPowerAmountChanged(PlayerChoiceContext choiceContext, PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
 	{
 		if (!(amount == (decimal)base.Amount) && power == this)
 		{
@@ -142,18 +161,18 @@ public abstract class TemporaryDexterityPower : PowerModel, ITemporaryPower
 			}
 			else
 			{
-				await PowerCmd.Apply<DexterityPower>(base.Owner, (decimal)Sign * amount, applier, cardSource, silent: true);
+				await PowerCmd.Apply<DexterityPower>(choiceContext, base.Owner, (decimal)Sign * amount, applier, cardSource, silent: true);
 			}
 		}
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side == base.Owner.Side)
+		if (participants.Contains(base.Owner))
 		{
 			Flash();
 			await PowerCmd.Remove(this);
-			await PowerCmd.Apply<DexterityPower>(base.Owner, -Sign * base.Amount, base.Owner, null);
+			await PowerCmd.Apply<DexterityPower>(choiceContext, base.Owner, -Sign * base.Amount, base.Owner, null);
 		}
 	}
 }

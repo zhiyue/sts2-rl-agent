@@ -13,6 +13,9 @@ using MegaCrit.Sts2.Core.Rooms;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
 
+/// <summary>
+/// Handles treasure rooms by opening the chest, picking relics, and proceeding.
+/// </summary>
 public class TreasureRoomHandler : IRoomHandler, IHandler
 {
 	private const string _roomPath = "/root/Game/RootSceneContainer/Run/RoomContainer/TreasureRoom";

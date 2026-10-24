@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Achievements;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Platform;
 
@@ -12,7 +14,7 @@ public class Play20CardsSingleTurnAchievement : AchievementModel
 {
 	private int _cardsPlayedThisTurn;
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (!LocalContext.IsMine(cardPlay.Card))
 		{
@@ -26,7 +28,7 @@ public class Play20CardsSingleTurnAchievement : AchievementModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
 		if (side != CombatSide.Player)
 		{

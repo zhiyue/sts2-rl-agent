@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Entities.Characters;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Unlocks;
 
@@ -25,14 +26,39 @@ public abstract class CharacterModel : AbstractModel
 
 	public const string relaxedAnim = "relaxed_loop";
 
+	/// <summary>
+	/// Is this a playable character?
+	/// True for the characters that can be played in the game.
+	/// False for test characters (<see cref="T:MegaCrit.Sts2.Core.Models.Characters.Deprived" />), meta-characters (<see cref="T:MegaCrit.Sts2.Core.Models.Characters.RandomCharacter" />), etc.
+	/// </summary>
+	public virtual bool IsPlayable => true;
+
+	/// <summary>
+	/// The name of the character. e.g. Ironclad, Silent, etc.
+	/// </summary>
 	public LocString Title => new LocString("characters", base.Id.Entry + ".title");
 
+	/// <summary>
+	/// The name of the character in object form.
+	/// This is the same as Title in english, but may be different in other languages.
+	/// For example,
+	/// </summary>
 	public LocString TitleObject => new LocString("characters", base.Id.Entry + ".titleObject");
 
+	/// <summary>
+	/// Color used when rendering this character's name in the Statistics screen.
+	/// </summary>
 	public abstract Color NameColor { get; }
 
+	/// <summary>
+	/// The gender of the character for grammatical purposes.
+	/// </summary>
 	public abstract CharacterGender Gender { get; }
 
+	/// <summary>
+	/// What character do you need to do a run with to unlock this one?
+	/// Returns null if there is no pre-requisite character.
+	/// </summary>
 	protected abstract CharacterModel? UnlocksAfterRunAs { get; }
 
 	public LocString PronounObject => new LocString("characters", base.Id.Entry + ".pronounObject");
@@ -85,7 +111,7 @@ public abstract class CharacterModel : AbstractModel
 
 	public Texture2D IconOutlineTexture => PreloadManager.Cache.GetTexture2D(IconOutlineTexturePath);
 
-	private string IconPath => SceneHelper.GetScenePath("ui/character_icons/" + base.Id.Entry.ToLowerInvariant() + "_icon");
+	protected virtual string IconPath => SceneHelper.GetScenePath("ui/character_icons/" + base.Id.Entry.ToLowerInvariant() + "_icon");
 
 	public Control Icon => PreloadManager.Cache.GetScene(IconPath).Instantiate<Control>(PackedScene.GenEditState.Disabled);
 
@@ -135,7 +161,15 @@ public abstract class CharacterModel : AbstractModel
 
 	public CompressedTexture2D MapMarker => PreloadManager.Cache.GetCompressedTexture2D(MapMarkerPath);
 
+	/// <summary>
+	/// The color of the speech bubble during Ancient dialogues.
+	/// </summary>
 	public virtual Color DialogueColor { get; } = new Color("28454f");
+
+	/// <summary>
+	/// Color of speech bubbles when the character talks (e.g. to the Architect)
+	/// </summary>
+	public virtual VfxColor SpeechBubbleColor { get; } = VfxColor.Cyan;
 
 	public virtual Color MapDrawingColor => Colors.Black;
 
@@ -143,19 +177,29 @@ public abstract class CharacterModel : AbstractModel
 
 	public virtual Color RemoteTargetingLineOutline => Colors.Black;
 
+	/// <summary>
+	/// Assets required for the character select screen
+	/// </summary>
 	public IEnumerable<string> AssetPathsCharacterSelect => new global::_003C_003Ez__ReadOnlyArray<string>(new string[5] { CharacterSelectBg, CharacterSelectIconPath, IconTexturePath, CharacterSelectLockedIconPath, CharacterSelectTransitionPath });
 
+	/// <summary>
+	/// Assets required for the run.
+	/// </summary>
 	public IEnumerable<string> AssetPaths => new string[9] { VisualsPath, IconTexturePath, IconPath, EnergyCounterPath, RestSiteAnimPath, MerchantAnimPath, CharacterSelectTransitionPath, MapMarkerPath, TrailPath }.Concat(ExtraAssetPaths);
 
 	public abstract float AttackAnimDelay { get; }
 
 	public abstract float CastAnimDelay { get; }
 
+	public virtual float PowerUpAnimDelay => CastAnimDelay;
+
 	public virtual string CharacterSelectSfx => $"event:/sfx/characters/{base.Id.Entry.ToLowerInvariant()}/{base.Id.Entry.ToLowerInvariant()}_select";
 
 	public string AttackSfx => $"event:/sfx/characters/{base.Id.Entry.ToLowerInvariant()}/{base.Id.Entry.ToLowerInvariant()}_attack";
 
 	public string CastSfx => $"event:/sfx/characters/{base.Id.Entry.ToLowerInvariant()}/{base.Id.Entry.ToLowerInvariant()}_cast";
+
+	public string PowerUpSfx => CastSfx;
 
 	public string DeathSfx => $"event:/sfx/characters/{base.Id.Entry.ToLowerInvariant()}/{base.Id.Entry.ToLowerInvariant()}_die";
 
@@ -168,6 +212,9 @@ public abstract class CharacterModel : AbstractModel
 		return PreloadManager.Cache.GetScene(VisualsPath).Instantiate<NCreatureVisuals>(PackedScene.GenEditState.Disabled);
 	}
 
+	/// <summary>
+	/// Get the VFX paths to use when this character is attacking <see cref="T:MegaCrit.Sts2.Core.Models.Events.TheArchitect" />.
+	/// </summary>
 	public abstract List<string> GetArchitectAttackVfx();
 
 	public virtual CreatureAnimator GenerateAnimator(MegaSprite controller)
@@ -188,10 +235,14 @@ public abstract class CharacterModel : AbstractModel
 		creatureAnimator.AddAnyState("Hit", animState4);
 		creatureAnimator.AddAnyState("Attack", animState3);
 		creatureAnimator.AddAnyState("Cast", animState2);
+		creatureAnimator.AddAnyState("PowerUp", animState2);
 		creatureAnimator.AddAnyState("Relaxed", animState5);
 		return creatureAnimator;
 	}
 
+	/// <summary>
+	/// Add details about this character to the given LocString.
+	/// </summary>
 	public void AddDetailsTo(LocString str)
 	{
 		str.Add("character", Title);
@@ -203,6 +254,9 @@ public abstract class CharacterModel : AbstractModel
 		str.Add("pronounSubject", PronounSubject);
 	}
 
+	/// <summary>
+	/// Get the text to show on the character selection screen that explains how to unlock this character.
+	/// </summary>
 	public LocString GetUnlockText()
 	{
 		LocString locString = new LocString("characters", base.Id.Entry + ".unlockText");

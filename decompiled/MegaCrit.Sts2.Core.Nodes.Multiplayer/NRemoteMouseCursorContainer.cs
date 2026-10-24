@@ -15,50 +15,113 @@ using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 
+/// <summary>
+/// Displays mouse cursors for remote players and syncs the local mouse cursor with remote players.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NRemoteMouseCursorContainer.cs")]
 public class NRemoteMouseCursorContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Deinitialize' method.
+		/// </summary>
 		public static readonly StringName Deinitialize = "Deinitialize";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'ForceUpdateAllCursors' method.
+		/// </summary>
 		public static readonly StringName ForceUpdateAllCursors = "ForceUpdateAllCursors";
 
+		/// <summary>
+		/// Cached name for the 'GetCursorPosition' method.
+		/// </summary>
 		public static readonly StringName GetCursorPosition = "GetCursorPosition";
 
+		/// <summary>
+		/// Cached name for the 'OnInputStateAdded' method.
+		/// </summary>
 		public static readonly StringName OnInputStateAdded = "OnInputStateAdded";
 
+		/// <summary>
+		/// Cached name for the 'OnInputStateRemoved' method.
+		/// </summary>
 		public static readonly StringName OnInputStateRemoved = "OnInputStateRemoved";
 
+		/// <summary>
+		/// Cached name for the 'AddCursor' method.
+		/// </summary>
 		public static readonly StringName AddCursor = "AddCursor";
 
+		/// <summary>
+		/// Cached name for the 'OnInputStateChanged' method.
+		/// </summary>
 		public static readonly StringName OnInputStateChanged = "OnInputStateChanged";
 
+		/// <summary>
+		/// Cached name for the 'DrawingCursorStateChanged' method.
+		/// </summary>
 		public static readonly StringName DrawingCursorStateChanged = "DrawingCursorStateChanged";
 
+		/// <summary>
+		/// Cached name for the 'GetDrawingMode' method.
+		/// </summary>
 		public static readonly StringName GetDrawingMode = "GetDrawingMode";
 
+		/// <summary>
+		/// Cached name for the 'GetCursor' method.
+		/// </summary>
 		public static readonly StringName GetCursor = "GetCursor";
 
+		/// <summary>
+		/// Cached name for the 'RemoveCursor' method.
+		/// </summary>
 		public static readonly StringName RemoveCursor = "RemoveCursor";
 
+		/// <summary>
+		/// Cached name for the 'UpdateCursorVisibility' method.
+		/// </summary>
 		public static readonly StringName UpdateCursorVisibility = "UpdateCursorVisibility";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'OnGuiFocusChanged' method.
+		/// </summary>
 		public static readonly StringName OnGuiFocusChanged = "OnGuiFocusChanged";
 
+		/// <summary>
+		/// Cached name for the 'ApplyDebugUiVisibility' method.
+		/// </summary>
 		public static readonly StringName ApplyDebugUiVisibility = "ApplyDebugUiVisibility";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -115,6 +178,12 @@ public class NRemoteMouseCursorContainer : Control
 		Deinitialize();
 	}
 
+	/// <summary>
+	/// Forces all cursors to update their positions, even if they haven't moved.
+	/// When cursor positioning is overridden using Synchronizer.StartOverridingCursorPositioning, call this method if
+	/// the cursor's screen-space position has been affected, even though the cursor has not moved. For instance, in a
+	/// scrollable screen like the map screen, this should be called when the map is scrolled by the local player.
+	/// </summary>
 	public void ForceUpdateAllCursors()
 	{
 		foreach (NRemoteMouseCursor cursor in _cursors)
@@ -260,6 +329,11 @@ public class NRemoteMouseCursorContainer : Control
 		base.Visible = _isDebugUiVisible;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -317,6 +391,7 @@ public class NRemoteMouseCursorContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -434,6 +509,7 @@ public class NRemoteMouseCursorContainer : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -508,12 +584,14 @@ public class NRemoteMouseCursorContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

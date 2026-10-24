@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
@@ -82,9 +84,20 @@ public sealed class LetterOpener : RelicModel
 		InvokeDisplayAmountChanged();
 	}
 
-	public override Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override Task BeforeCombatStart()
 	{
-		if (side != base.Owner.Creature.Side)
+		SkillsPlayedThisTurn = 0;
+		base.Status = RelicStatus.Normal;
+		return Task.CompletedTask;
+	}
+
+	public override Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
+	{
+		if (!participants.Contains(base.Owner.Creature))
+		{
+			return Task.CompletedTask;
+		}
+		if (base.Owner.PlayerCombatState.TurnNumber == 1)
 		{
 			return Task.CompletedTask;
 		}
@@ -93,7 +106,7 @@ public sealed class LetterOpener : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner && CombatManager.Instance.IsInProgress && cardPlay.Card.Type == CardType.Skill)
 		{
@@ -102,7 +115,7 @@ public sealed class LetterOpener : RelicModel
 			if (SkillsPlayedThisTurn % intValue == 0)
 			{
 				TaskHelper.RunSafely(DoActivateVisuals());
-				await CreatureCmd.Damage(context, base.Owner.Creature.CombatState.HittableEnemies, base.DynamicVars.Damage, base.Owner.Creature);
+				await CreatureCmd.Damage(choiceContext, base.Owner.Creature.CombatState.HittableEnemies, base.DynamicVars.Damage, base.Owner.Creature);
 			}
 		}
 	}
@@ -120,5 +133,10 @@ public sealed class LetterOpener : RelicModel
 		base.Status = RelicStatus.Normal;
 		IsActivating = false;
 		return Task.CompletedTask;
+	}
+
+	public int GetSkillsPlayedForTest()
+	{
+		return SkillsPlayedThisTurn;
 	}
 }

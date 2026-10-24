@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 namespace System.Text.RegularExpressions.Generated;
 
 [GeneratedCode("System.Text.RegularExpressions.Generator", "9.0.12.31616")]
+[SkipLocalsInit]
 internal sealed class _003CRegexGenerator_g_003EFACC081AAF3D765EFF87A82C4FBB77F6FD3EA759AA2D03D993988F88E97CC0B5B__SnakeCaseRegex_1 : Regex
 {
 	private sealed class RunnerFactory : RegexRunnerFactory

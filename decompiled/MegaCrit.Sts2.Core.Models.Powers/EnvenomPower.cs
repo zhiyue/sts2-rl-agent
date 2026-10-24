@@ -21,7 +21,7 @@ public sealed class EnvenomPower : PowerModel
 	{
 		if (dealer == base.Owner && props.IsPoweredAttack() && result.UnblockedDamage > 0)
 		{
-			await PowerCmd.Apply<PoisonPower>(target, base.Amount, base.Owner, null);
+			await PowerCmd.Apply<PoisonPower>(choiceContext, target, base.Amount, base.Owner, null);
 		}
 	}
 }

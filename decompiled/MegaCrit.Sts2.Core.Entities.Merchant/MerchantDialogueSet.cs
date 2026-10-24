@@ -22,12 +22,25 @@ public class MerchantDialogueSet
 
 	private readonly List<LocString> _purchaseFailureForbiddenLines = new List<LocString>();
 
+	/// <summary>
+	/// Lines for when the player enters the merchant room.
+	/// </summary>
 	public IReadOnlyList<LocString> WelcomeLines => _welcomeLines;
 
+	/// <summary>
+	/// Lines for when the player throws a <see cref="T:MegaCrit.Sts2.Core.Models.Potions.FoulPotion" /> at the merchant.
+	/// </summary>
 	public IReadOnlyList<LocString> FoulPotionLines => _foulPotionLines;
 
+	/// <summary>
+	/// Lines for when the player is dead.
+	/// Rare, but can happen in multiplayer if one player is dead and the others go to the merchant.
+	/// </summary>
 	public IReadOnlyList<LocString> PlayerDeadLines => _playerDeadLines;
 
+	/// <summary>
+	/// Lines for when the player opens the merchant's inventory.
+	/// </summary>
 	public IReadOnlyList<LocString> OpenInventoryLines => _openInventoryLines;
 
 	public static MerchantDialogueSet CreateFromLocStrings(IEnumerable<LocString> locStrings)
@@ -52,6 +65,9 @@ public class MerchantDialogueSet
 		return merchantDialogueSet;
 	}
 
+	/// <summary>
+	/// Get all the valid lines for a given purchase status.
+	/// </summary>
 	public IReadOnlyList<LocString> GetPurchaseSuccessLines(PurchaseStatus status)
 	{
 		return status switch

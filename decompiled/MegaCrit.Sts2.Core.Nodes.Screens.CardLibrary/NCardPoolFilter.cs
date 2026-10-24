@@ -13,44 +13,98 @@ using MegaCrit.Sts2.Core.Nodes.HoverTips;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 
+/// <summary>
+/// The current pool the player is viewing in the Card Library.
+/// Unlike the other tickboxes, this one is a radio-buttion style.
+/// Clicking on a pool filter will deselect the others. If this filter
+/// is already active, then you can't click on it.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/CardLibrary/NCardPoolFilter.cs")]
 public class NCardPoolFilter : NButton
 {
 	[Signal]
 	public delegate void ToggledEventHandler(NCardPoolFilter filter);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnToggle' method.
+		/// </summary>
 		public static readonly StringName OnToggle = "OnToggle";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsSelected' property.
+		/// </summary>
 		public static readonly StringName IsSelected = "IsSelected";
 
+		/// <summary>
+		/// Cached name for the '_isSelected' field.
+		/// </summary>
 		public static readonly StringName _isSelected = "_isSelected";
 
+		/// <summary>
+		/// Cached name for the '_image' field.
+		/// </summary>
 		public static readonly StringName _image = "_image";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_controllerSelectionReticle' field.
+		/// </summary>
 		public static readonly StringName _controllerSelectionReticle = "_controllerSelectionReticle";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Toggled' signal.
+		/// </summary>
 		public static readonly StringName Toggled = "Toggled";
 	}
 
@@ -93,6 +147,7 @@ public class NCardPoolFilter : NButton
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary.NCardPoolFilter.ToggledEventHandler" />
 	public event ToggledEventHandler Toggled
 	{
 		add
@@ -149,8 +204,7 @@ public class NCardPoolFilter : NButton
 		}
 		if (Loc != null)
 		{
-			NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, new HoverTip(Loc));
-			nHoverTipSet.GlobalPosition = new Vector2(310f, base.GlobalPosition.Y);
+			NHoverTipSet.CreateAndShow(this, new HoverTip(Loc))?.SetGlobalPosition(new Vector2(310f, base.GlobalPosition.Y));
 		}
 	}
 
@@ -178,6 +232,11 @@ public class NCardPoolFilter : NButton
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -191,6 +250,7 @@ public class NCardPoolFilter : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -233,6 +293,7 @@ public class NCardPoolFilter : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -263,6 +324,7 @@ public class NCardPoolFilter : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -299,6 +361,7 @@ public class NCardPoolFilter : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -335,6 +398,11 @@ public class NCardPoolFilter : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -348,6 +416,7 @@ public class NCardPoolFilter : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -361,6 +430,7 @@ public class NCardPoolFilter : NButton
 		info.AddSignalEventDelegate(SignalName.Toggled, backing_Toggled);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -395,6 +465,11 @@ public class NCardPoolFilter : NButton
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotSignalList()
 	{
@@ -411,6 +486,7 @@ public class NCardPoolFilter : NButton
 		EmitSignal(SignalName.Toggled, filter);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -424,6 +500,7 @@ public class NCardPoolFilter : NButton
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

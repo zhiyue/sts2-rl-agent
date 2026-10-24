@@ -39,74 +39,181 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.DailyRun;
 [ScriptPath("res://src/Core/Nodes/Screens/DailyRun/NDailyRunScreen.cs")]
 public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'InitializeSingleplayer' method.
+		/// </summary>
 		public static readonly StringName InitializeSingleplayer = "InitializeSingleplayer";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuClosed' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuClosed = "OnSubmenuClosed";
 
+		/// <summary>
+		/// Cached name for the 'InitializeLeaderboard' method.
+		/// </summary>
 		public static readonly StringName InitializeLeaderboard = "InitializeLeaderboard";
 
+		/// <summary>
+		/// Cached name for the 'InitializeDisplay' method.
+		/// </summary>
 		public static readonly StringName InitializeDisplay = "InitializeDisplay";
 
+		/// <summary>
+		/// Cached name for the 'SetIsLoading' method.
+		/// </summary>
 		public static readonly StringName SetIsLoading = "SetIsLoading";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'MaxAscensionChanged' method.
+		/// </summary>
 		public static readonly StringName MaxAscensionChanged = "MaxAscensionChanged";
 
+		/// <summary>
+		/// Cached name for the 'AscensionChanged' method.
+		/// </summary>
 		public static readonly StringName AscensionChanged = "AscensionChanged";
 
+		/// <summary>
+		/// Cached name for the 'SeedChanged' method.
+		/// </summary>
 		public static readonly StringName SeedChanged = "SeedChanged";
 
+		/// <summary>
+		/// Cached name for the 'ModifiersChanged' method.
+		/// </summary>
 		public static readonly StringName ModifiersChanged = "ModifiersChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnEmbarkPressed' method.
+		/// </summary>
 		public static readonly StringName OnEmbarkPressed = "OnEmbarkPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnUnreadyPressed' method.
+		/// </summary>
 		public static readonly StringName OnUnreadyPressed = "OnUnreadyPressed";
 
+		/// <summary>
+		/// Cached name for the 'UpdateRichPresence' method.
+		/// </summary>
 		public static readonly StringName UpdateRichPresence = "UpdateRichPresence";
 
+		/// <summary>
+		/// Cached name for the 'CleanUpLobby' method.
+		/// </summary>
 		public static readonly StringName CleanUpLobby = "CleanUpLobby";
 
+		/// <summary>
+		/// Cached name for the 'AfterLobbyInitialized' method.
+		/// </summary>
 		public static readonly StringName AfterLobbyInitialized = "AfterLobbyInitialized";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_titleLabel' field.
+		/// </summary>
 		public static readonly StringName _titleLabel = "_titleLabel";
 
+		/// <summary>
+		/// Cached name for the '_disclaimer' field.
+		/// </summary>
+		public static readonly StringName _disclaimer = "_disclaimer";
+
+		/// <summary>
+		/// Cached name for the '_dateLabel' field.
+		/// </summary>
 		public static readonly StringName _dateLabel = "_dateLabel";
 
+		/// <summary>
+		/// Cached name for the '_timeLeftLabel' field.
+		/// </summary>
 		public static readonly StringName _timeLeftLabel = "_timeLeftLabel";
 
+		/// <summary>
+		/// Cached name for the '_characterContainer' field.
+		/// </summary>
 		public static readonly StringName _characterContainer = "_characterContainer";
 
+		/// <summary>
+		/// Cached name for the '_embarkButton' field.
+		/// </summary>
 		public static readonly StringName _embarkButton = "_embarkButton";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public new static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_unreadyButton' field.
+		/// </summary>
 		public static readonly StringName _unreadyButton = "_unreadyButton";
 
+		/// <summary>
+		/// Cached name for the '_leaderboard' field.
+		/// </summary>
 		public static readonly StringName _leaderboard = "_leaderboard";
 
+		/// <summary>
+		/// Cached name for the '_modifiersTitleLabel' field.
+		/// </summary>
 		public static readonly StringName _modifiersTitleLabel = "_modifiersTitleLabel";
 
+		/// <summary>
+		/// Cached name for the '_modifiersContainer' field.
+		/// </summary>
 		public static readonly StringName _modifiersContainer = "_modifiersContainer";
 
+		/// <summary>
+		/// Cached name for the '_remotePlayerContainer' field.
+		/// </summary>
 		public static readonly StringName _remotePlayerContainer = "_remotePlayerContainer";
 
+		/// <summary>
+		/// Cached name for the '_readyAndWaitingContainer' field.
+		/// </summary>
 		public static readonly StringName _readyAndWaitingContainer = "_readyAndWaitingContainer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
 	}
@@ -120,6 +227,8 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 	private static readonly string _timeLeftFormat = LocManager.Instance.GetTable("main_menu_ui").GetRawText("DAILY_RUN_MENU.TIME_FORMAT");
 
 	private MegaLabel _titleLabel;
+
+	private MegaLabel _disclaimer;
 
 	private MegaRichTextLabel _dateLabel;
 
@@ -170,6 +279,7 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 	{
 		ConnectSignals();
 		_titleLabel = GetNode<MegaLabel>("%Title");
+		_disclaimer = GetNode<MegaLabel>("%Disclaimer");
 		_dateLabel = GetNode<MegaRichTextLabel>("%Date");
 		_embarkButton = GetNode<NConfirmButton>("%ConfirmButton");
 		_backButton = GetNode<NBackButton>("%BackButton");
@@ -182,6 +292,7 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		_remotePlayerContainer = GetNode<NRemoteLobbyPlayerContainer>("%RemotePlayerContainer");
 		_readyAndWaitingContainer = GetNode<Control>("%ReadyAndWaitingPanel");
 		_titleLabel.SetTextAutoSize(new LocString("main_menu_ui", "DAILY_RUN_MENU.DAILY_TITLE").GetFormattedText());
+		_disclaimer.SetTextAutoSize(new LocString("main_menu_ui", "DAILY_RUN_MENU.disclaimer").GetFormattedText());
 		_modifiersTitleLabel.SetTextAutoSize(new LocString("main_menu_ui", "DAILY_RUN_MENU.MODIFIERS").GetFormattedText());
 		_dateLabel.SetTextAutoSize(new LocString("main_menu_ui", "DAILY_RUN_MENU.FETCHING_TIME").GetFormattedText());
 		foreach (NDailyRunScreenModifier item in _modifiersContainer.GetChildren().OfType<NDailyRunScreenModifier>())
@@ -251,11 +362,21 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		CleanUpLobby(disconnectSession: true);
 	}
 
+	/// <summary>
+	/// This is called:
+	/// - Once when the screen is shown
+	/// - Anytime when the player count changes
+	/// </summary>
 	private void InitializeLeaderboard()
 	{
 		_leaderboard.Initialize(_lobby.DailyTime.Value.serverTime, _lobby.Players.Select((LobbyPlayer p) => p.id), allowPagination: false);
 	}
 
+	/// <summary>
+	/// Fetches the time from the time server and initializes the lobby for multiplayer or singleplayer.
+	/// After this completes, _lobby will be initialized. Its time will be set with the time fetched from the time server,
+	/// or with the local time, if we couldn't fetch the time from the server.
+	/// </summary>
 	private async Task SetupLobbyForHostOrSingleplayer()
 	{
 		if (_netService.Type != NetGameType.Host && _netService.Type != NetGameType.Singleplayer)
@@ -264,14 +385,22 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		}
 		SetIsLoading(isLoading: true);
 		TimeServerResult timeServerResult = await GetTimeServerTime();
-		_lobby = new StartRunLobby(GameMode.Daily, _netService, this, timeServerResult, 4);
-		_lobby.AddLocalHostPlayer(new UnlockState(SaveManager.Instance.Progress), SaveManager.Instance.Progress.MaxMultiplayerAscension);
-		SetupLobbyParams(_lobby);
-		AfterLobbyInitialized();
-		SetIsLoading(isLoading: false);
-		Log.Info($"Daily initialized with seed: {_lobby.Seed} time: {GetServerRelativeTime()}");
+		if (GodotObject.IsInstanceValid(this))
+		{
+			_lobby = new StartRunLobby(GameMode.Daily, _netService, this, timeServerResult, 4);
+			_lobby.AddLocalHostPlayer(new UnlockState(SaveManager.Instance.Progress), SaveManager.Instance.Progress.MaxMultiplayerAscension);
+			SetupLobbyParams(_lobby);
+			AfterLobbyInitialized();
+			SetIsLoading(isLoading: false);
+			Log.Info($"Daily initialized with seed: {_lobby.Seed} time: {GetServerRelativeTime()}");
+		}
 	}
 
+	/// <summary>
+	/// Attempt to get the time from the time server.
+	/// If any time server request succeeded in the past, this uses the cached time server time. Otherwise, it requests
+	/// a new time. Falls back to local time if the server is unreachable.
+	/// </summary>
 	private async Task<TimeServerResult> GetTimeServerTime()
 	{
 		TimeServerResult? result = null;
@@ -287,7 +416,7 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 				{
 					result = await TimeServer.FetchDailyTime();
 				}
-				catch (HttpRequestException ex)
+				catch (Exception ex) when (((ex is HttpRequestException || ex is TaskCanceledException) ? 1 : 0) != 0)
 				{
 					Log.Error(ex.ToString());
 				}
@@ -299,7 +428,7 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 			{
 				result = await TimeServer.FetchDailyTime();
 			}
-			catch (HttpRequestException ex2)
+			catch (Exception ex2) when (((ex2 is HttpRequestException || ex2 is TaskCanceledException) ? 1 : 0) != 0)
 			{
 				Log.Error(ex2.ToString());
 			}
@@ -316,11 +445,19 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		return result.Value;
 	}
 
+	/// <summary>
+	/// Returns the time on the Mega Crit time server.
+	/// </summary>
 	private DateTimeOffset GetServerRelativeTime()
 	{
 		return _lobby.DailyTime.Value.serverTime + (DateTimeOffset.UtcNow - _lobby.DailyTime.Value.localReceivedTime);
 	}
 
+	/// <summary>
+	/// This is called on both host and client after the lobby is setup to sync the state of the lobby.
+	/// It is also called when any player leaves or rejoins the game to reroll modifiers so that CharacterCards can
+	/// properly avoid hitting any characters that have been rolled.
+	/// </summary>
 	private void SetupLobbyParams(StartRunLobby lobby)
 	{
 		DateTimeOffset serverRelativeTime = GetServerRelativeTime();
@@ -469,8 +606,12 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		UpdateRichPresence();
 	}
 
-	public void PlayerChanged(LobbyPlayer player)
+	public void PlayerChanged(LobbyPlayer player, bool isRandomCharacterResolution)
 	{
+		if (isRandomCharacterResolution)
+		{
+			throw new InvalidOperationException("Random character is not currently allowed in daily!");
+		}
 		_remotePlayerContainer.OnPlayerChanged(player);
 		if (player.id == _netService.NetId && _netService.Type.IsMultiplayer())
 		{
@@ -507,6 +648,8 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 	public void BeginRun(string seed, List<ActModel> acts, IReadOnlyList<ModifierModel> modifiers)
 	{
 		NAudioManager.Instance?.StopMusic();
+		_embarkButton.Disable();
+		_unreadyButton.Disable();
 		if (_lobby.NetService.Type == NetGameType.Singleplayer)
 		{
 			TaskHelper.RunSafely(StartNewSingleplayerRun(seed, acts, modifiers));
@@ -519,11 +662,14 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 
 	public void LocalPlayerDisconnected(NetErrorInfo info)
 	{
-		if (info.SelfInitiated && info.GetReason() == NetError.Quit)
+		if ((info.SelfInitiated && info.GetReason() == NetError.Quit) || !this.IsValid() || _stack == null)
 		{
 			return;
 		}
-		_stack.Pop();
+		if (_stack.Peek() == this)
+		{
+			_stack.Pop();
+		}
 		if (TestMode.IsOff)
 		{
 			NErrorPopup nErrorPopup = NErrorPopup.Create(info);
@@ -566,25 +712,45 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 
 	public async Task StartNewSingleplayerRun(string seed, List<ActModel> acts, IReadOnlyList<ModifierModel> modifiers)
 	{
-		Log.Info($"Embarking on a DAILY {_lobby.LocalPlayer.character.Id.Entry} run with {_lobby.Players.Count} players. Ascension: {_lobby.Ascension} Seed: {seed}");
-		SfxCmd.Play(_lobby.LocalPlayer.character.CharacterTransitionSfx);
-		await NGame.Instance.Transition.FadeOut(0.8f, _lobby.LocalPlayer.character.CharacterSelectTransitionPath);
-		await NGame.Instance.StartNewSingleplayerRun(_lobby.LocalPlayer.character, shouldSave: true, acts, modifiers, seed, _lobby.Ascension, _lobby.DailyTime.Value.serverTime);
+		try
+		{
+			Log.Info($"Embarking on a DAILY {_lobby.LocalPlayer.character.Id.Entry} run with {_lobby.Players.Count} players. Ascension: {_lobby.Ascension} Seed: {seed}");
+			SfxCmd.Play(_lobby.LocalPlayer.character.CharacterTransitionSfx);
+			await NGame.Instance.Transition.FadeOut(0.8f, _lobby.LocalPlayer.character.CharacterSelectTransitionPath);
+			await NGame.Instance.StartNewSingleplayerRun(_lobby.LocalPlayer.character, shouldSave: true, acts, modifiers, seed, GameMode.Daily, _lobby.Ascension, _lobby.DailyTime.Value.serverTime);
+		}
+		catch (Exception ex)
+		{
+			Log.Error($"Exception starting daily singleplayer run : {ex}");
+			CleanUpLobby(disconnectSession: true, NetError.InternalError);
+			await NGame.Instance.ReturnToMainMenuWithInternalError(ex);
+			return;
+		}
 		CleanUpLobby(disconnectSession: false);
 	}
 
 	public async Task StartNewMultiplayerRun(string seed, List<ActModel> acts, IReadOnlyList<ModifierModel> modifiers)
 	{
-		Log.Info($"Embarking on a DAILY multiplayer run. Players: {string.Join(",", _lobby.Players)}. Ascension: {_lobby.Ascension} Seed: {seed}");
-		SfxCmd.Play(_lobby.LocalPlayer.character.CharacterTransitionSfx);
-		await NGame.Instance.Transition.FadeOut(0.8f, _lobby.LocalPlayer.character.CharacterSelectTransitionPath);
-		await NGame.Instance.StartNewMultiplayerRun(_lobby, shouldSave: true, acts, modifiers, seed, _lobby.Ascension, _lobby.DailyTime.Value.serverTime);
+		try
+		{
+			Log.Info($"Embarking on a DAILY multiplayer run. Players: {string.Join(",", _lobby.Players)}. Ascension: {_lobby.Ascension} Seed: {seed}");
+			SfxCmd.Play(_lobby.LocalPlayer.character.CharacterTransitionSfx);
+			await NGame.Instance.Transition.FadeOut(0.8f, _lobby.LocalPlayer.character.CharacterSelectTransitionPath);
+			await NGame.Instance.StartNewMultiplayerRun(_lobby, shouldSave: true, acts, modifiers, seed, _lobby.Ascension, _lobby.DailyTime.Value.serverTime);
+		}
+		catch (Exception ex)
+		{
+			Log.Error($"Exception starting daily multiplayer run : {ex}");
+			CleanUpLobby(disconnectSession: true, NetError.InternalError);
+			await NGame.Instance.ReturnToMainMenuWithInternalError(ex);
+			return;
+		}
 		CleanUpLobby(disconnectSession: false);
 	}
 
-	private void CleanUpLobby(bool disconnectSession)
+	private void CleanUpLobby(bool disconnectSession, NetError error = NetError.Quit)
 	{
-		_lobby?.CleanUp(disconnectSession);
+		_lobby?.CleanUp(disconnectSession, error);
 		_lobby = null;
 	}
 
@@ -602,6 +768,11 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		_embarkButton.Enable();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -636,12 +807,14 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		list.Add(new MethodInfo(MethodName.UpdateRichPresence, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.CleanUpLobby, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
-			new PropertyInfo(Variant.Type.Bool, "disconnectSession", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			new PropertyInfo(Variant.Type.Bool, "disconnectSession", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+			new PropertyInfo(Variant.Type.Int, "error", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.AfterLobbyInitialized, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -740,9 +913,9 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.CleanUpLobby && args.Count == 1)
+		if (method == MethodName.CleanUpLobby && args.Count == 2)
 		{
-			CleanUpLobby(VariantUtils.ConvertTo<bool>(in args[0]));
+			CleanUpLobby(VariantUtils.ConvertTo<bool>(in args[0]), VariantUtils.ConvertTo<NetError>(in args[1]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -767,6 +940,7 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -845,12 +1019,18 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
 		if (name == PropertyName._titleLabel)
 		{
 			_titleLabel = VariantUtils.ConvertTo<MegaLabel>(in value);
+			return true;
+		}
+		if (name == PropertyName._disclaimer)
+		{
+			_disclaimer = VariantUtils.ConvertTo<MegaLabel>(in value);
 			return true;
 		}
 		if (name == PropertyName._dateLabel)
@@ -911,6 +1091,7 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -922,6 +1103,11 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		if (name == PropertyName._titleLabel)
 		{
 			value = VariantUtils.CreateFrom(in _titleLabel);
+			return true;
+		}
+		if (name == PropertyName._disclaimer)
+		{
+			value = VariantUtils.CreateFrom(in _disclaimer);
 			return true;
 		}
 		if (name == PropertyName._dateLabel)
@@ -982,12 +1168,18 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.InitialFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._titleLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._disclaimer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._dateLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._timeLeftLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._characterContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -1002,11 +1194,13 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 		info.AddProperty(PropertyName._titleLabel, Variant.From(in _titleLabel));
+		info.AddProperty(PropertyName._disclaimer, Variant.From(in _disclaimer));
 		info.AddProperty(PropertyName._dateLabel, Variant.From(in _dateLabel));
 		info.AddProperty(PropertyName._timeLeftLabel, Variant.From(in _timeLeftLabel));
 		info.AddProperty(PropertyName._characterContainer, Variant.From(in _characterContainer));
@@ -1020,6 +1214,7 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		info.AddProperty(PropertyName._readyAndWaitingContainer, Variant.From(in _readyAndWaitingContainer));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1028,49 +1223,53 @@ public class NDailyRunScreen : NSubmenu, IStartRunLobbyListener
 		{
 			_titleLabel = value.As<MegaLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._dateLabel, out var value2))
+		if (info.TryGetProperty(PropertyName._disclaimer, out var value2))
 		{
-			_dateLabel = value2.As<MegaRichTextLabel>();
+			_disclaimer = value2.As<MegaLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._timeLeftLabel, out var value3))
+		if (info.TryGetProperty(PropertyName._dateLabel, out var value3))
 		{
-			_timeLeftLabel = value3.As<MegaRichTextLabel>();
+			_dateLabel = value3.As<MegaRichTextLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._characterContainer, out var value4))
+		if (info.TryGetProperty(PropertyName._timeLeftLabel, out var value4))
 		{
-			_characterContainer = value4.As<NDailyRunCharacterContainer>();
+			_timeLeftLabel = value4.As<MegaRichTextLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._embarkButton, out var value5))
+		if (info.TryGetProperty(PropertyName._characterContainer, out var value5))
 		{
-			_embarkButton = value5.As<NConfirmButton>();
+			_characterContainer = value5.As<NDailyRunCharacterContainer>();
 		}
-		if (info.TryGetProperty(PropertyName._backButton, out var value6))
+		if (info.TryGetProperty(PropertyName._embarkButton, out var value6))
 		{
-			_backButton = value6.As<NBackButton>();
+			_embarkButton = value6.As<NConfirmButton>();
 		}
-		if (info.TryGetProperty(PropertyName._unreadyButton, out var value7))
+		if (info.TryGetProperty(PropertyName._backButton, out var value7))
 		{
-			_unreadyButton = value7.As<NBackButton>();
+			_backButton = value7.As<NBackButton>();
 		}
-		if (info.TryGetProperty(PropertyName._leaderboard, out var value8))
+		if (info.TryGetProperty(PropertyName._unreadyButton, out var value8))
 		{
-			_leaderboard = value8.As<NDailyRunLeaderboard>();
+			_unreadyButton = value8.As<NBackButton>();
 		}
-		if (info.TryGetProperty(PropertyName._modifiersTitleLabel, out var value9))
+		if (info.TryGetProperty(PropertyName._leaderboard, out var value9))
 		{
-			_modifiersTitleLabel = value9.As<MegaLabel>();
+			_leaderboard = value9.As<NDailyRunLeaderboard>();
 		}
-		if (info.TryGetProperty(PropertyName._modifiersContainer, out var value10))
+		if (info.TryGetProperty(PropertyName._modifiersTitleLabel, out var value10))
 		{
-			_modifiersContainer = value10.As<Control>();
+			_modifiersTitleLabel = value10.As<MegaLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._remotePlayerContainer, out var value11))
+		if (info.TryGetProperty(PropertyName._modifiersContainer, out var value11))
 		{
-			_remotePlayerContainer = value11.As<NRemoteLobbyPlayerContainer>();
+			_modifiersContainer = value11.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._readyAndWaitingContainer, out var value12))
+		if (info.TryGetProperty(PropertyName._remotePlayerContainer, out var value12))
 		{
-			_readyAndWaitingContainer = value12.As<Control>();
+			_remotePlayerContainer = value12.As<NRemoteLobbyPlayerContainer>();
+		}
+		if (info.TryGetProperty(PropertyName._readyAndWaitingContainer, out var value13))
+		{
+			_readyAndWaitingContainer = value13.As<Control>();
 		}
 	}
 }

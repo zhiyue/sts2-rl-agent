@@ -11,6 +11,8 @@ public sealed class OldCoin : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Rare;
 
+	public override bool IsAllowedInShops => false;
+
 	public override bool HasUponPickupEffect => true;
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new GoldVar(300));

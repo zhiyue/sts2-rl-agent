@@ -29,6 +29,14 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Combat;
 
+/// <summary>
+/// End Turn button. Differs from other buttons as there are several flags which interact with each other and a pulsing vfx:
+///    State.Shown: Indicates that this button is press-able. Additionally, flies on screen from the bottom with different behavior from isHidden.
+///    State.Disabled: Grayed out and cannot be pressed.
+///    State.Hidden: Grayed out and cannot be pressed. Additionally, flies off screen downward with different behavior from isHidden.
+///    isShiny: Used when you have no valid cards to play so the button is visually more noticeable.
+///    !isShiny: The opposite behavior of above.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Combat/NEndTurnButton.cs")]
 public class NEndTurnButton : NButton
 {
@@ -39,102 +47,246 @@ public class NEndTurnButton : NButton
 		Hidden
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'StartOrStopPulseVfx' method.
+		/// </summary>
 		public static readonly StringName StartOrStopPulseVfx = "StartOrStopPulseVfx";
 
+		/// <summary>
+		/// Cached name for the 'GlowPulse' method.
+		/// </summary>
 		public static readonly StringName GlowPulse = "GlowPulse";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'CallReleaseLogic' method.
+		/// </summary>
 		public static readonly StringName CallReleaseLogic = "CallReleaseLogic";
 
+		/// <summary>
+		/// Cached name for the 'SecretEndTurnLogicViaFtue' method.
+		/// </summary>
 		public static readonly StringName SecretEndTurnLogicViaFtue = "SecretEndTurnLogicViaFtue";
 
+		/// <summary>
+		/// Cached name for the 'ShouldShowPlayableCardsFtue' method.
+		/// </summary>
 		public static readonly StringName ShouldShowPlayableCardsFtue = "ShouldShowPlayableCardsFtue";
 
+		/// <summary>
+		/// Cached name for the 'OnEnable' method.
+		/// </summary>
 		public new static readonly StringName OnEnable = "OnEnable";
 
+		/// <summary>
+		/// Cached name for the 'OnDisable' method.
+		/// </summary>
 		public new static readonly StringName OnDisable = "OnDisable";
 
+		/// <summary>
+		/// Cached name for the 'AnimOut' method.
+		/// </summary>
 		public static readonly StringName AnimOut = "AnimOut";
 
+		/// <summary>
+		/// Cached name for the 'AnimIn' method.
+		/// </summary>
 		public static readonly StringName AnimIn = "AnimIn";
 
+		/// <summary>
+		/// Cached name for the 'OnCombatEnded' method.
+		/// </summary>
 		public static readonly StringName OnCombatEnded = "OnCombatEnded";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'HasPlayableCard' method.
+		/// </summary>
 		public static readonly StringName HasPlayableCard = "HasPlayableCard";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderV' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderV = "UpdateShaderV";
 
+		/// <summary>
+		/// Cached name for the 'SetState' method.
+		/// </summary>
 		public static readonly StringName SetState = "SetState";
 
+		/// <summary>
+		/// Cached name for the 'RefreshEnabled' method.
+		/// </summary>
 		public static readonly StringName RefreshEnabled = "RefreshEnabled";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'CanTurnBeEnded' property.
+		/// </summary>
 		public static readonly StringName CanTurnBeEnded = "CanTurnBeEnded";
 
+		/// <summary>
+		/// Cached name for the 'ShowPos' property.
+		/// </summary>
 		public static readonly StringName ShowPos = "ShowPos";
 
+		/// <summary>
+		/// Cached name for the 'HidePos' property.
+		/// </summary>
 		public static readonly StringName HidePos = "HidePos";
 
+		/// <summary>
+		/// Cached name for the 'Hotkeys' property.
+		/// </summary>
 		public new static readonly StringName Hotkeys = "Hotkeys";
 
+		/// <summary>
+		/// Cached name for the '_state' field.
+		/// </summary>
 		public static readonly StringName _state = "_state";
 
+		/// <summary>
+		/// Cached name for the '_isShiny' field.
+		/// </summary>
 		public static readonly StringName _isShiny = "_isShiny";
 
+		/// <summary>
+		/// Cached name for the '_visuals' field.
+		/// </summary>
 		public static readonly StringName _visuals = "_visuals";
 
+		/// <summary>
+		/// Cached name for the '_glowTexture' field.
+		/// </summary>
 		public static readonly StringName _glowTexture = "_glowTexture";
 
+		/// <summary>
+		/// Cached name for the '_normalTexture' field.
+		/// </summary>
 		public static readonly StringName _normalTexture = "_normalTexture";
 
+		/// <summary>
+		/// Cached name for the '_image' field.
+		/// </summary>
 		public static readonly StringName _image = "_image";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_glow' field.
+		/// </summary>
 		public static readonly StringName _glow = "_glow";
 
+		/// <summary>
+		/// Cached name for the '_glowVfx' field.
+		/// </summary>
 		public static readonly StringName _glowVfx = "_glowVfx";
 
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_combatUi' field.
+		/// </summary>
 		public static readonly StringName _combatUi = "_combatUi";
 
+		/// <summary>
+		/// Cached name for the '_viewport' field.
+		/// </summary>
 		public static readonly StringName _viewport = "_viewport";
 
+		/// <summary>
+		/// Cached name for the '_playerIconContainer' field.
+		/// </summary>
 		public static readonly StringName _playerIconContainer = "_playerIconContainer";
 
+		/// <summary>
+		/// Cached name for the '_longPressBar' field.
+		/// </summary>
 		public static readonly StringName _longPressBar = "_longPressBar";
 
+		/// <summary>
+		/// Cached name for the '_pulseTimer' field.
+		/// </summary>
 		public static readonly StringName _pulseTimer = "_pulseTimer";
 
+		/// <summary>
+		/// Cached name for the '_positionTween' field.
+		/// </summary>
 		public static readonly StringName _positionTween = "_positionTween";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_glowVfxTween' field.
+		/// </summary>
 		public static readonly StringName _glowVfxTween = "_glowVfxTween";
 
+		/// <summary>
+		/// Cached name for the '_glowEnableTween' field.
+		/// </summary>
 		public static readonly StringName _glowEnableTween = "_glowEnableTween";
 
+		/// <summary>
+		/// Cached name for the '_endTurnWithNoPlayableCardsCount' field.
+		/// </summary>
 		public static readonly StringName _endTurnWithNoPlayableCardsCount = "_endTurnWithNoPlayableCardsCount";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -152,8 +304,6 @@ public class NEndTurnButton : NButton
 	private State _state = State.Hidden;
 
 	private bool _isShiny;
-
-	private HoverTip _hoverTip;
 
 	private Control _visuals;
 
@@ -245,10 +395,9 @@ public class NEndTurnButton : NButton
 		_playerIconContainer = GetNode<NMultiplayerVoteContainer>("PlayerIconContainer");
 		_longPressBar = GetNode<NEndTurnLongPressBar>("%Bar");
 		_longPressBar.Init(this);
-		_isEnabled = false;
+		Disable();
 		_combatUi = GetParent<NCombatUi>();
 		_viewport = GetViewport();
-		_hoverTip = new HoverTip(new LocString("static_hover_tips", "END_TURN.title"), new LocString("static_hover_tips", "END_TURN.description"));
 		_glowTexture = PreloadManager.Cache.GetCompressedTexture2D(EndTurnButtonGlowPath);
 		_normalTexture = PreloadManager.Cache.GetCompressedTexture2D(EndTurnButtonPath);
 	}
@@ -282,6 +431,10 @@ public class NEndTurnButton : NButton
 		_playerIconContainer.Initialize(ShouldDisplayPlayerIcon, _combatState.Players);
 	}
 
+	/// <summary>
+	/// Returns true when the player's icon should be displayed above the end turn button, indicating readiness.
+	/// The icons are only refreshed when _playerIconContainer.RefreshPlayerVotes is called.
+	/// </summary>
 	private bool ShouldDisplayPlayerIcon(Player player)
 	{
 		return CombatManager.Instance.IsPlayerReadyToEndTurn(player);
@@ -329,7 +482,7 @@ public class NEndTurnButton : NButton
 		if (LocalContext.IsMe(player) && PlayerCanTakeAction(player))
 		{
 			SetState(State.Enabled);
-			_endTurnLoc.Add("turnNumber", player.Creature.CombatState.RoundNumber);
+			_endTurnLoc.Add("turnNumber", player.PlayerCombatState.TurnNumber);
 			_label.SetTextAutoSize(_endTurnLoc.GetFormattedText());
 			StartOrStopPulseVfx();
 		}
@@ -346,7 +499,7 @@ public class NEndTurnButton : NButton
 		{
 			_playerIconContainer.RefreshPlayerVotes(animate: false);
 			Player me = LocalContext.GetMe(state);
-			_endTurnLoc.Add("turnNumber", state.RoundNumber);
+			_endTurnLoc.Add("turnNumber", me.PlayerCombatState.TurnNumber);
 			_label.SetTextAutoSize(_endTurnLoc.GetFormattedText());
 			if (PlayerCanTakeAction(me))
 			{
@@ -400,6 +553,9 @@ public class NEndTurnButton : NButton
 		_glowVfxTween.TweenProperty(_glowVfx, "modulate:a", 0f, 1.5).From(0.4f);
 	}
 
+	/// <summary>
+	/// Things which occur when the EndTurn button is pressed
+	/// </summary>
 	protected override void OnRelease()
 	{
 		if (!ShouldShowPlayableCardsFtue())
@@ -415,6 +571,9 @@ public class NEndTurnButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// Helper because we can call the End Turn button in numerous ways (controller, mouse, long press mouse, etc)
+	/// </summary>
 	public void CallReleaseLogic()
 	{
 		if (CanTurnBeEnded)
@@ -423,27 +582,30 @@ public class NEndTurnButton : NButton
 			_glowEnableTween = CreateTween().SetParallel();
 			_glowEnableTween.TweenProperty(_glow, "modulate:a", 0f, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 			Player me = LocalContext.GetMe(_combatState);
-			int roundNumber = me.Creature.CombatState.RoundNumber;
+			int turnNumber = me.PlayerCombatState.TurnNumber;
 			if (!CombatManager.Instance.IsPlayerReadyToEndTurn(me))
 			{
 				SetState(State.Disabled);
-				RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new EndPlayerTurnAction(me, roundNumber));
+				RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new EndPlayerTurnAction(me, turnNumber));
 			}
 			else
 			{
 				SetState(State.Disabled);
-				RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new UndoEndPlayerTurnAction(me, roundNumber));
+				RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new UndoEndPlayerTurnAction(me, turnNumber));
 			}
 		}
 	}
 
+	/// <summary>
+	/// Don't call me &gt;:(
+	/// </summary>
 	public void SecretEndTurnLogicViaFtue()
 	{
 		_glowEnableTween?.Kill();
 		_glowEnableTween = CreateTween().SetParallel();
 		_glowEnableTween.TweenProperty(_glow, "modulate:a", 0f, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 		Player me = LocalContext.GetMe(_combatState);
-		RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new EndPlayerTurnAction(me, me.Creature.CombatState.RoundNumber));
+		RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new EndPlayerTurnAction(me, me.PlayerCombatState.TurnNumber));
 	}
 
 	private bool ShouldShowPlayableCardsFtue()
@@ -470,25 +632,34 @@ public class NEndTurnButton : NButton
 		return flag;
 	}
 
+	/// <summary>
+	/// Called at the start of player turn, and when the button re-enables itself if not everyone in multiplayer is ready.
+	/// </summary>
 	protected override void OnEnable()
 	{
 		base.OnEnable();
-		_hoverTween?.CustomStep(999.0);
+		_hoverTween?.FastForwardToCompletion();
 		_image.Texture = _normalTexture;
 		_image.Modulate = Colors.White;
 		_label.Modulate = StsColors.cream;
 	}
 
+	/// <summary>
+	/// Called when the player presses End Turn or combat ends.
+	/// </summary>
 	protected override void OnDisable()
 	{
 		base.OnDisable();
 		NHoverTipSet.Remove(this);
-		_hoverTween?.CustomStep(999.0);
+		_hoverTween?.FastForwardToCompletion();
 		_image.Modulate = StsColors.gray;
 		_label.Modulate = StsColors.gray;
 		StartOrStopPulseVfx();
 	}
 
+	/// <summary>
+	/// Animates the button out off the screen and disables the button if it is currently enabled.
+	/// </summary>
 	private void AnimOut()
 	{
 		_hoverTween?.Kill();
@@ -497,6 +668,9 @@ public class NEndTurnButton : NButton
 		_positionTween.TweenProperty(this, "position", HidePos, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 	}
 
+	/// <summary>
+	/// Animates the button in from off the screen.
+	/// </summary>
 	private void AnimIn()
 	{
 		_positionTween?.Kill();
@@ -520,7 +694,10 @@ public class NEndTurnButton : NButton
 		{
 			_label.Modulate = (me.PlayerCombatState.HasCardsToPlay() ? StsColors.red : Colors.Cyan);
 			_combatUi.Hand.FlashPlayableHolders();
-			NHoverTipSet.CreateAndShow(this, _hoverTip).GlobalPosition = base.GlobalPosition + _hoverTipOffset;
+			LocString locString = new LocString("static_hover_tips", "END_TURN.title");
+			locString.Add("Hotkey", NInputManager.Instance.GetShortcutKey(MegaInput.accept).ToString());
+			HoverTip hoverTip = new HoverTip(locString, new LocString("static_hover_tips", "END_TURN.description"));
+			NHoverTipSet.CreateAndShow(this, hoverTip)?.SetGlobalPosition(base.GlobalPosition + _hoverTipOffset);
 		}
 		else
 		{
@@ -579,6 +756,11 @@ public class NEndTurnButton : NButton
 		_hsv.SetShaderParameter(_v, value);
 	}
 
+	/// <summary>
+	/// Set the state of the button.
+	/// Use this instead of calling Enable or Disable directly, as the enabled/disabled state of the button can also be
+	/// controlled by the state of the UI above the button (see RefreshEnabled).
+	/// </summary>
 	private void SetState(State newState)
 	{
 		if (_state != newState)
@@ -596,6 +778,11 @@ public class NEndTurnButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// Refreshes whether the button is enabled or not. Should be called when a screen appears/disappears.
+	/// Use this instead of calling Enable or Disable directly! The enabled/disabled state of the button should be
+	/// controlled by the button itself.
+	/// </summary>
 	public void RefreshEnabled()
 	{
 		bool flag = NCombatRoom.Instance == null || NCombatRoom.Instance.Mode != CombatRoomMode.ActiveCombat || !ActiveScreenContext.Instance.IsCurrent(NCombatRoom.Instance) || NCombatRoom.Instance.Ui.Hand.IsInCardSelection;
@@ -609,6 +796,11 @@ public class NEndTurnButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -643,6 +835,7 @@ public class NEndTurnButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -773,6 +966,7 @@ public class NEndTurnButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -863,6 +1057,7 @@ public class NEndTurnButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -969,6 +1164,7 @@ public class NEndTurnButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1098,6 +1294,11 @@ public class NEndTurnButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1129,6 +1330,7 @@ public class NEndTurnButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1155,6 +1357,7 @@ public class NEndTurnButton : NButton
 		info.AddProperty(PropertyName._endTurnWithNoPlayableCardsCount, Variant.From(in _endTurnWithNoPlayableCardsCount));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

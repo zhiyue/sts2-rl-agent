@@ -5,6 +5,10 @@ using System.Text.Json.Serialization;
 
 namespace MegaCrit.Sts2.Core.Saves.Runs;
 
+/// <summary>
+/// JSON converter for List&lt;string&gt; of epoch IDs that provides backward compatibility
+/// with the old List&lt;ModelId&gt; format ("epoch.xxx") while writing the new format ("xxx").
+/// </summary>
 public class EpochIdListConverter : JsonConverter<List<string>>
 {
 	public override List<string> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

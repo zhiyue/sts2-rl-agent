@@ -7,6 +7,13 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game;
 
+/// <summary>
+/// Responsible for holding messages that are not destined for the current map point, and waiting until that map point
+/// is entered before processing those messages.
+/// We may be slow to transition to a new map point (e.g. because of loading delays), and messages from other peers may
+/// come in before we're ready to receive them.
+/// Note that it is important that queued messages are sent out in the order that they were received.
+/// </summary>
 public class RunLocationTargetedMessageBuffer
 {
 	private delegate void AnonymizedMessageHandlerDelegate(INetMessage message, ulong senderId);
@@ -56,7 +63,11 @@ public class RunLocationTargetedMessageBuffer
 		_visitedLocations.Add(CurrentLocation);
 	}
 
-	public void OnRunLocationChanged(RunLocation location)
+	/// <summary>
+	/// This should be called whenever the run location changes. If messages are blocked waiting for a location change,
+	/// then they will be sent to registered message handlers in the order that they were received.
+	/// </summary>
+	public void OnLocationChanged(RunLocation location)
 	{
 		_logger.Debug($"Run location changed to {location} (previously at: {CurrentLocation}), checking if we have enqueued messages");
 		CurrentLocation = location;
@@ -93,6 +104,15 @@ public class RunLocationTargetedMessageBuffer
 		}
 	}
 
+	/// <summary>
+	/// Registers a message handler for map targeted messages.
+	/// <see cref="T:MegaCrit.Sts2.Core.Multiplayer.Messages.Game.IRunLocationTargetedMessage" />s should be registered here instead of directly to the INetGameHandler; otherwise,
+	/// they may be received at the wrong time.
+	/// </summary>
+	/// <param name="handler">
+	/// The delegate to call when the message type is received or when we enter a new location and a message for that
+	/// location is enqueued.
+	/// </param>
 	public void RegisterMessageHandler<T>(MessageHandlerDelegate<T> handler) where T : INetMessage, IRunLocationTargetedMessage
 	{
 		_logger.VeryDebug($"Register message handler {handler} for {typeof(T)}");
@@ -127,6 +147,9 @@ public class RunLocationTargetedMessageBuffer
 		}
 	}
 
+	/// <summary>
+	/// Unregisters a message handler for map targeted messages.
+	/// </summary>
 	public void UnregisterMessageHandler<T>(MessageHandlerDelegate<T> handler) where T : INetMessage, IRunLocationTargetedMessage
 	{
 		for (int i = 0; i < _messageHandlers.Count; i++)
@@ -153,6 +176,10 @@ public class RunLocationTargetedMessageBuffer
 		}
 	}
 
+	/// <summary>
+	/// Internal method which either sends the message to the handler, or enqueues it if the message is not destined
+	/// for a location we have already visited.
+	/// </summary>
 	private void HandleMessage<T>(T message, ulong senderId) where T : INetMessage, IRunLocationTargetedMessage
 	{
 		_logger.VeryDebug($"Handling map-targeted message {message} from {senderId} for location {message.Location}");

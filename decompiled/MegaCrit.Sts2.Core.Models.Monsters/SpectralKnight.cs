@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -63,7 +64,7 @@ public sealed class SpectralKnight : MonsterModel
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/spectral_knight/spectral_knight_hex");
 		foreach (Creature target in targets)
 		{
-			await PowerCmd.Apply<HexPower>(target, 2m, base.Creature, null);
+			await PowerCmd.Apply<HexPower>(new ThrowingPlayerChoiceContext(), target, 2m, base.Creature, null);
 		}
 	}
 

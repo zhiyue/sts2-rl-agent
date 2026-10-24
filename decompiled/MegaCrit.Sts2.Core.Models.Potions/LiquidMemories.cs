@@ -22,10 +22,10 @@ public sealed class LiquidMemories : PotionModel
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		NCombatRoom.Instance?.PlaySplashVfx(base.Owner.Creature, new Color(Colors.Blue));
-		CardModel cardModel = (await CardSelectCmd.FromSimpleGrid(choiceContext, PileType.Discard.GetPile(base.Owner).Cards, base.Owner, new CardSelectorPrefs(base.SelectionScreenPrompt, 1))).FirstOrDefault();
+		CardModel cardModel = (await CardSelectCmd.FromCombatPile(choiceContext, PileType.Discard.GetPile(base.Owner), base.Owner, new CardSelectorPrefs(base.SelectionScreenPrompt, 1))).FirstOrDefault();
 		if (cardModel != null)
 		{
-			cardModel.EnergyCost.SetThisTurnOrUntilPlayed(0);
+			cardModel.SetToFreeThisTurn();
 			await CardPileCmd.Add(cardModel, PileType.Hand);
 		}
 	}

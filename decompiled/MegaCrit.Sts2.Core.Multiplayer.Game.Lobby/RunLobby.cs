@@ -8,6 +8,13 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 
+/// <summary>
+/// Class which handles disconnection and reconnection while a run is in progress.
+/// <see cref="T:MegaCrit.Sts2.Core.Multiplayer.Game.Lobby.StartRunLobby" /> or <see cref="T:MegaCrit.Sts2.Core.Multiplayer.Game.Lobby.LoadRunLobby" /> are used to initialize the run. Once the run is in
+/// progress, those instances go away and this class takes over their responsibilities.
+/// Connections from players that are not currently in the run will be denied. Only players that existed in the run
+/// may reconnect to the RunLobby.
+/// </summary>
 public class RunLobby
 {
 	private readonly Logger _logger;
@@ -30,6 +37,17 @@ public class RunLobby
 
 	public event Action? LocalPlayerDisconnected;
 
+	/// <summary>
+	/// Creates the RunLobby.
+	/// </summary>
+	/// <param name="gameMode">The type of run that was started.</param>
+	/// <param name="netService">Net service used to send/receive messages.</param>
+	/// <param name="lobbyListener">The lobby listener which receives callbacks from this lobby.</param>
+	/// <param name="playerCollection">Queryable collection of players.</param>
+	/// <param name="connectedPlayerIds">
+	/// The connected player IDs. Note that this may be different than the IDs contained
+	/// in the player collection if we launched a saved game, but not everyone in the save rejoined.
+	/// </param>
 	public RunLobby(GameMode gameMode, INetGameService netService, IRunLobbyListener lobbyListener, IPlayerCollection playerCollection, IEnumerable<ulong> connectedPlayerIds)
 	{
 		GameMode = gameMode;
@@ -55,6 +73,9 @@ public class RunLobby
 		}
 	}
 
+	/// <summary>
+	/// This should be called to cleanup the lobby before exiting the run.
+	/// </summary>
 	public void Dispose()
 	{
 		_netService.UnregisterMessageHandler<ClientLobbyJoinRequestMessage>(HandleClientLobbyJoinRequestMessage);

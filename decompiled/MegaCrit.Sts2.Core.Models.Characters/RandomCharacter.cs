@@ -12,9 +12,11 @@ namespace MegaCrit.Sts2.Core.Models.Characters;
 
 public sealed class RandomCharacter : CharacterModel
 {
+	public override bool IsPlayable => false;
+
 	public override CharacterGender Gender => CharacterGender.Neutral;
 
-	protected override CharacterModel? UnlocksAfterRunAs { get; }
+	protected override CharacterModel? UnlocksAfterRunAs => null;
 
 	public override Color NameColor => StsColors.gold;
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -16,6 +17,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Badges;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -43,114 +45,296 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen;
 [ScriptPath("res://src/Core/Nodes/Screens/GameOverScreen/NGameOverScreen.cs")]
 public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NClickableControl.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'DiscoveredAnyEpochs' method.
+		/// </summary>
 		public static readonly StringName DiscoveredAnyEpochs = "DiscoveredAnyEpochs";
 
+		/// <summary>
+		/// Cached name for the 'InitializeBannerAndQuote' method.
+		/// </summary>
 		public static readonly StringName InitializeBannerAndQuote = "InitializeBannerAndQuote";
 
+		/// <summary>
+		/// Cached name for the 'OpenSummaryScreen' method.
+		/// </summary>
 		public static readonly StringName OpenSummaryScreen = "OpenSummaryScreen";
 
-		public static readonly StringName AddBadge = "AddBadge";
+		/// <summary>
+		/// Cached name for the 'AddScoreLine' method.
+		/// </summary>
+		public static readonly StringName AddScoreLine = "AddScoreLine";
 
+		/// <summary>
+		/// Cached name for the 'PlayUnlockSfx' method.
+		/// </summary>
 		public static readonly StringName PlayUnlockSfx = "PlayUnlockSfx";
 
+		/// <summary>
+		/// Cached name for the 'TweenScore' method.
+		/// </summary>
 		public static readonly StringName TweenScore = "TweenScore";
 
+		/// <summary>
+		/// Cached name for the 'GetScoreThreshold' method.
+		/// </summary>
 		public static readonly StringName GetScoreThreshold = "GetScoreThreshold";
 
+		/// <summary>
+		/// Cached name for the 'ShowLeaderboard' method.
+		/// </summary>
 		public static readonly StringName ShowLeaderboard = "ShowLeaderboard";
 
+		/// <summary>
+		/// Cached name for the 'HideSummary' method.
+		/// </summary>
 		public static readonly StringName HideSummary = "HideSummary";
 
+		/// <summary>
+		/// Cached name for the 'OpenRunHistoryScreen' method.
+		/// </summary>
 		public static readonly StringName OpenRunHistoryScreen = "OpenRunHistoryScreen";
 
+		/// <summary>
+		/// Cached name for the 'OnMainMenuButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnMainMenuButtonPressed = "OnMainMenuButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OpenTimeline' method.
+		/// </summary>
 		public static readonly StringName OpenTimeline = "OpenTimeline";
 
+		/// <summary>
+		/// Cached name for the 'ReturnToMainMenu' method.
+		/// </summary>
 		public static readonly StringName ReturnToMainMenu = "ReturnToMainMenu";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayOpened' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayOpened = "AfterOverlayOpened";
 
+		/// <summary>
+		/// Cached name for the 'MoveCreaturesToDifferentLayerAndDisableUi' method.
+		/// </summary>
 		public static readonly StringName MoveCreaturesToDifferentLayerAndDisableUi = "MoveCreaturesToDifferentLayerAndDisableUi";
 
+		/// <summary>
+		/// Cached name for the 'UpdateBackstopMaterial' method.
+		/// </summary>
 		public static readonly StringName UpdateBackstopMaterial = "UpdateBackstopMaterial";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayClosed' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayClosed = "AfterOverlayClosed";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayShown' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayShown = "AfterOverlayShown";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayHidden' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayHidden = "AfterOverlayHidden";
+
+		/// <summary>
+		/// Cached name for the 'GetAscensionMulti' method.
+		/// </summary>
+		public static readonly StringName GetAscensionMulti = "GetAscensionMulti";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NClickableControl.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ScreenType' property.
+		/// </summary>
 		public static readonly StringName ScreenType = "ScreenType";
 
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the 'FocusedControlFromTopBar' property.
+		/// </summary>
+		public static readonly StringName FocusedControlFromTopBar = "FocusedControlFromTopBar";
+
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_continueButton' field.
+		/// </summary>
 		public static readonly StringName _continueButton = "_continueButton";
 
+		/// <summary>
+		/// Cached name for the '_viewRunButton' field.
+		/// </summary>
 		public static readonly StringName _viewRunButton = "_viewRunButton";
 
+		/// <summary>
+		/// Cached name for the '_mainMenuButton' field.
+		/// </summary>
 		public static readonly StringName _mainMenuButton = "_mainMenuButton";
 
+		/// <summary>
+		/// Cached name for the '_leaderboardButton' field.
+		/// </summary>
 		public static readonly StringName _leaderboardButton = "_leaderboardButton";
 
+		/// <summary>
+		/// Cached name for the '_badgeContainer' field.
+		/// </summary>
 		public static readonly StringName _badgeContainer = "_badgeContainer";
 
+		/// <summary>
+		/// Cached name for the '_scoreLineContainer' field.
+		/// </summary>
+		public static readonly StringName _scoreLineContainer = "_scoreLineContainer";
+
+		/// <summary>
+		/// Cached name for the '_scoreBar' field.
+		/// </summary>
 		public static readonly StringName _scoreBar = "_scoreBar";
 
+		/// <summary>
+		/// Cached name for the '_scoreFg' field.
+		/// </summary>
 		public static readonly StringName _scoreFg = "_scoreFg";
 
+		/// <summary>
+		/// Cached name for the '_scoreProgress' field.
+		/// </summary>
 		public static readonly StringName _scoreProgress = "_scoreProgress";
 
+		/// <summary>
+		/// Cached name for the '_unlocksRemaining' field.
+		/// </summary>
 		public static readonly StringName _unlocksRemaining = "_unlocksRemaining";
 
+		/// <summary>
+		/// Cached name for the '_score' field.
+		/// </summary>
 		public static readonly StringName _score = "_score";
 
+		/// <summary>
+		/// Cached name for the '_scoreThreshold' field.
+		/// </summary>
 		public static readonly StringName _scoreThreshold = "_scoreThreshold";
 
+		/// <summary>
+		/// Cached name for the '_scoreUnlockedEpochId' field.
+		/// </summary>
 		public static readonly StringName _scoreUnlockedEpochId = "_scoreUnlockedEpochId";
 
+		/// <summary>
+		/// Cached name for the '_leaderboard' field.
+		/// </summary>
 		public static readonly StringName _leaderboard = "_leaderboard";
 
+		/// <summary>
+		/// Cached name for the '_creatureContainer' field.
+		/// </summary>
 		public static readonly StringName _creatureContainer = "_creatureContainer";
 
+		/// <summary>
+		/// Cached name for the '_summaryContainer' field.
+		/// </summary>
 		public static readonly StringName _summaryContainer = "_summaryContainer";
 
+		/// <summary>
+		/// Cached name for the '_fullBlackBackstop' field.
+		/// </summary>
 		public static readonly StringName _fullBlackBackstop = "_fullBlackBackstop";
 
+		/// <summary>
+		/// Cached name for the '_summaryBackstop' field.
+		/// </summary>
 		public static readonly StringName _summaryBackstop = "_summaryBackstop";
 
+		/// <summary>
+		/// Cached name for the '_backstop' field.
+		/// </summary>
 		public static readonly StringName _backstop = "_backstop";
 
+		/// <summary>
+		/// Cached name for the '_banner' field.
+		/// </summary>
 		public static readonly StringName _banner = "_banner";
 
+		/// <summary>
+		/// Cached name for the '_deathQuote' field.
+		/// </summary>
 		public static readonly StringName _deathQuote = "_deathQuote";
 
+		/// <summary>
+		/// Cached name for the '_victoryDamageLabel' field.
+		/// </summary>
 		public static readonly StringName _victoryDamageLabel = "_victoryDamageLabel";
 
+		/// <summary>
+		/// Cached name for the '_uiNode' field.
+		/// </summary>
 		public static readonly StringName _uiNode = "_uiNode";
 
+		/// <summary>
+		/// Cached name for the '_screenshakeContainer' field.
+		/// </summary>
 		public static readonly StringName _screenshakeContainer = "_screenshakeContainer";
 
+		/// <summary>
+		/// Cached name for the '_discoveryLabel' field.
+		/// </summary>
 		public static readonly StringName _discoveryLabel = "_discoveryLabel";
 
+		/// <summary>
+		/// Cached name for the '_encounterQuote' field.
+		/// </summary>
 		public static readonly StringName _encounterQuote = "_encounterQuote";
 
+		/// <summary>
+		/// Cached name for the '_isAnimatingSummary' field.
+		/// </summary>
 		public static readonly StringName _isAnimatingSummary = "_isAnimatingSummary";
 
+		/// <summary>
+		/// Cached name for the '_backstopMaterial' field.
+		/// </summary>
 		public static readonly StringName _backstopMaterial = "_backstopMaterial";
 
+		/// <summary>
+		/// Cached name for the '_quoteTween' field.
+		/// </summary>
 		public static readonly StringName _quoteTween = "_quoteTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NClickableControl.SignalName
 	{
 	}
@@ -163,7 +347,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 
 	private RunHistory _history;
 
-	private Player? _localPlayer;
+	private Player _localPlayer;
 
 	private NGameOverContinueButton _continueButton;
 
@@ -173,9 +357,11 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 
 	private NGameOverContinueButton _leaderboardButton;
 
-	private GridContainer _badgeContainer;
+	private Control _badgeContainer;
 
-	private readonly List<NBadge> _badges = new List<NBadge>();
+	private GridContainer _scoreLineContainer;
+
+	private readonly List<NScoreLine> _scoreLines = new List<NScoreLine>();
 
 	private Control _scoreBar;
 
@@ -223,6 +409,8 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 
 	private Tween? _quoteTween;
 
+	private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+
 	private static string ScenePath => SceneHelper.GetScenePath("screens/game_over_screen");
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ScenePath);
@@ -230,6 +418,22 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 	public NetScreenType ScreenType => NetScreenType.GameOver;
 
 	public bool UseSharedBackstop => false;
+
+	public Control? FocusedControlFromTopBar
+	{
+		get
+		{
+			if (_badgeContainer.GetChildCount() > 0)
+			{
+				return _badgeContainer.GetChild<NBadge>(0);
+			}
+			if (_summaryContainer.DefaultFocusedControl != null)
+			{
+				return _summaryContainer.DefaultFocusedControl;
+			}
+			return this;
+		}
+	}
 
 	public Control DefaultFocusedControl => this;
 
@@ -249,7 +453,8 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		_viewRunButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OpenRunHistoryScreen));
 		_mainMenuButton = GetNode<NReturnToMainMenuButton>("%MainMenuButton");
 		_mainMenuButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OnMainMenuButtonPressed));
-		_badgeContainer = GetNode<GridContainer>("%BadgeContainer");
+		_scoreLineContainer = GetNode<GridContainer>("%ScoreLineContainer");
+		_badgeContainer = GetNode<Control>("%BadgeContainer");
 		_scoreBar = GetNode<Control>("%ScoreBar");
 		_scoreFg = GetNode<Control>("%ScoreFg");
 		_scoreProgress = GetNode<MegaLabel>("%ScoreProgress");
@@ -270,11 +475,15 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		_discoveryLabel.SetTextAutoSize(new LocString("game_over_screen", "DISCOVERY_HEADER").GetFormattedText());
 		_deathQuote = GetNode<MegaRichTextLabel>("%DeathQuoteLabel");
 		InitializeBannerAndQuote();
-		ActiveScreenContext.Instance.Update();
 		_leaderboardButton.Disable();
 		_viewRunButton.Disable();
 		_mainMenuButton.Disable();
 		_leaderboard.Visible = false;
+	}
+
+	public override void _ExitTree()
+	{
+		_cts.Cancel();
 	}
 
 	private bool DiscoveredAnyEpochs()
@@ -287,33 +496,31 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		ModelId id = _localPlayer.Character.Id;
 		if (_history.Win)
 		{
-			_banner.label.SetTextAutoSize(new LocString("game_over_screen", "BANNER.falseWin").GetFormattedText());
+			_banner.label.SetTextAutoSize(new LocString("game_over_screen", "BANNER.falseWin").GetRawText());
 			_deathQuote.Text = string.Empty;
 			long personalArchitectDamage = StatsManager.GetPersonalArchitectDamage();
 			long? globalArchitectDamage = StatsManager.GetGlobalArchitectDamage();
 			StringBuilder stringBuilder = new StringBuilder();
+			LocString locString;
 			if (globalArchitectDamage.HasValue)
 			{
-				LocString locString = new LocString("game_over_screen", "VICTORY_DAMAGE");
-				locString.Add("PlayerDamage", _score);
-				locString.Add("PersonalDamage", personalArchitectDamage.ToString("N0"));
-				locString.Add("TotalDamage", globalArchitectDamage.Value.ToString("N0"));
-				stringBuilder.Append(locString.GetFormattedText());
+				locString = new LocString("game_over_screen", "VICTORY_DAMAGE");
+				locString.Add("TotalDamage", globalArchitectDamage.Value);
 			}
 			else
 			{
-				LocString locString2 = new LocString("game_over_screen", "VICTORY_DAMAGE_LOCAL");
-				locString2.Add("PlayerDamage", _score);
-				locString2.Add("PersonalDamage", personalArchitectDamage.ToString("N0"));
-				stringBuilder.Append(locString2.GetFormattedText());
+				locString = new LocString("game_over_screen", "VICTORY_DAMAGE_LOCAL");
 			}
+			locString.Add("PlayerDamage", _score);
+			locString.Add("PersonalDamage", personalArchitectDamage);
+			stringBuilder.Append(locString.GetFormattedText());
 			int ascensionLevel = _runState.AscensionLevel;
-			if (ascensionLevel < 10 && ascensionLevel > 0 && _runState.AscensionLevel >= _localPlayer.MaxAscensionWhenRunStarted)
+			if (ascensionLevel < 10 && ascensionLevel > 0 && _runState.AscensionLevel >= _localPlayer.MaxAscensionWhenRunStarted && _runState.GameMode == GameMode.Standard)
 			{
 				stringBuilder.Append("\n\n");
-				LocString locString3 = new LocString("game_over_screen", "VICTORY_UNLOCKED_ASCENSION");
-				locString3.Add("AscensionLevel", _runState.AscensionLevel + 1);
-				stringBuilder.Append(locString3.GetFormattedText());
+				LocString locString2 = new LocString("game_over_screen", "VICTORY_UNLOCKED_ASCENSION");
+				locString2.Add("AscensionLevel", _runState.AscensionLevel + 1);
+				stringBuilder.Append(locString2.GetFormattedText());
 			}
 			_victoryDamageLabel.Text = stringBuilder.ToString();
 		}
@@ -321,7 +528,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		{
 			LocTable table = LocManager.Instance.GetTable("game_over_screen");
 			IReadOnlyList<LocString> locStringsWithPrefix = table.GetLocStringsWithPrefix("BANNER.lose");
-			_banner.label.SetTextAutoSize(Rng.Chaotic.NextItem(locStringsWithPrefix).GetFormattedText());
+			_banner.label.SetTextAutoSize(Rng.Chaotic.NextItem(locStringsWithPrefix).GetRawText());
 			IReadOnlyList<LocString> locStringsWithPrefix2 = table.GetLocStringsWithPrefix("QUOTES");
 			_deathQuote.Text = Rng.Chaotic.NextItem(locStringsWithPrefix2).GetFormattedText();
 		}
@@ -335,14 +542,13 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 			_quoteTween?.Kill();
 			_quoteTween = CreateTween();
 			_quoteTween.TweenProperty(_deathQuote, "modulate:a", 0f, 0.25);
-			await ToSignal(_quoteTween, Tween.SignalName.Finished);
-			if (!this.IsValid())
+			if (!(await _quoteTween.AwaitFinished(this)))
 			{
 				return;
 			}
 			_deathQuote.Text = _encounterQuote;
 			_quoteTween.Kill();
-			await Cmd.Wait(1f);
+			await Cmd.Wait(1f, _cts.Token);
 		}
 		if (this.IsValid())
 		{
@@ -352,7 +558,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 			{
 				_quoteTween.TweenProperty(_victoryDamageLabel, "visible_ratio", 1f, 2.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
 				_quoteTween.TweenProperty(_victoryDamageLabel, "modulate:a", 1f, 2.0);
-				await ToSignal(_quoteTween, Tween.SignalName.Finished);
+				await _quoteTween.AwaitFinished(this);
 			}
 			else
 			{
@@ -363,6 +569,10 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		}
 	}
 
+	/// <summary>
+	/// Create an instance of this screen.
+	/// Null if we're in test mode.
+	/// </summary>
 	public static NGameOverScreen? Create(RunState runState, SerializableRun serializableRun)
 	{
 		if (TestMode.IsOn)
@@ -376,6 +586,10 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		return nGameOverScreen;
 	}
 
+	/// <summary>
+	/// Called when the player continues to the score/badge breakdown.
+	/// </summary>
+	/// <param name="_"></param>
 	private void OpenSummaryScreen(NButton _)
 	{
 		_isAnimatingSummary = true;
@@ -387,14 +601,41 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		TaskHelper.RunSafely(AnimateRunSummary());
 	}
 
+	/// <summary>
+	/// Animates the second page of our Game Over screen
+	/// </summary>
+	/// <exception cref="T:System.InvalidOperationException"></exception>
 	private async Task AnimateRunSummary()
 	{
 		Tween tween = CreateTween();
 		tween.TweenProperty(_banner, "position:y", _banner.Position.Y - 32f, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 		_summaryContainer.Visible = true;
+		await AnimateScoreLines();
 		await AnimateBadges();
 		await AnimateScoreBar();
 		await AnimateDiscoveries();
+		for (int i = 0; i < _badgeContainer.GetChildCount(); i++)
+		{
+			_badgeContainer.GetChild<NBadge>(i).FocusNeighborLeft = ((i > 0) ? _badgeContainer.GetChild<NBadge>(i - 1).GetPath() : _badgeContainer.GetChild<NBadge>(_badgeContainer.GetChildCount() - 1).GetPath());
+			_badgeContainer.GetChild<NBadge>(i).FocusNeighborRight = ((i < _badgeContainer.GetChildCount() - 1) ? _badgeContainer.GetChild<NBadge>(i + 1).GetPath() : _badgeContainer.GetChild<NBadge>(0).GetPath());
+			_badgeContainer.GetChild<NBadge>(i).FocusNeighborTop = _badgeContainer.GetChild<NBadge>(i).GetPath();
+			_badgeContainer.GetChild<NBadge>(i).FocusNeighborBottom = ((_summaryContainer.DefaultFocusedControl != null) ? _summaryContainer.DefaultFocusedControl.GetPath() : _badgeContainer.GetChild<NBadge>(i).GetPath());
+		}
+		_summaryContainer.SetControllerNav((_badgeContainer.GetChildCount() > 0) ? _badgeContainer.GetChild<Control>(0) : null);
+		if (_badgeContainer.GetChildCount() > 0)
+		{
+			base.FocusNeighborBottom = _badgeContainer.GetChild<NBadge>(0).GetPath();
+			base.FocusNeighborTop = _badgeContainer.GetChild<NBadge>(0).GetPath();
+			base.FocusNeighborLeft = _badgeContainer.GetChild<NBadge>(0).GetPath();
+			base.FocusNeighborRight = _badgeContainer.GetChild<NBadge>(0).GetPath();
+		}
+		else if (_summaryContainer.DefaultFocusedControl != null)
+		{
+			base.FocusNeighborBottom = _summaryContainer.DefaultFocusedControl.GetPath();
+			base.FocusNeighborTop = _summaryContainer.DefaultFocusedControl.GetPath();
+			base.FocusNeighborLeft = _summaryContainer.DefaultFocusedControl.GetPath();
+			base.FocusNeighborRight = _summaryContainer.DefaultFocusedControl.GetPath();
+		}
 		if (_history.GameMode == GameMode.Daily)
 		{
 			_leaderboard.Initialize(RunManager.Instance.DailyTime.Value, _runState.Players.Select((Player p) => p.NetId), allowPagination: false);
@@ -410,84 +651,85 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		_mainMenuButton.Enable();
 	}
 
+	private async Task AnimateScoreLines()
+	{
+		_scoreLines.Clear();
+		AddScoreLine("SCORE_LINE.floorsClimbed", "FloorCount", _runState.TotalFloor, $"+{ScoreUtility.GetScoreForFloor(_serializableRun.MapPointHistory)}", "res://images/ui/game_over_screen/score_floor.png");
+		int amount = _serializableRun.MapPointHistory.SelectMany((List<MapPointHistoryEntry> actEntries) => actEntries).Sum((MapPointHistoryEntry e) => e.GetEntry(_localPlayer.NetId).GoldGained);
+		AddScoreLine("SCORE_LINE.goldGained", "GoldAmount", amount, $"+{ScoreUtility.GetScoreForGoldGained(_serializableRun.MapPointHistory, _serializableRun.Players.Count)}", "res://images/ui/game_over_screen/score_gold.png");
+		int elitesKilledCount = ScoreUtility.GetElitesKilledCount(_serializableRun.MapPointHistory);
+		if (elitesKilledCount > 0)
+		{
+			AddScoreLine("SCORE_LINE.elitesKilled", "EliteCount", elitesKilledCount, $"+{ScoreUtility.GetScoreForElitesKilled(elitesKilledCount)}", "res://images/ui/game_over_screen/score_elite.png");
+		}
+		int bossesSlainCount = ScoreUtility.GetBossesSlainCount(_serializableRun.MapPointHistory, _history.Win);
+		if (bossesSlainCount > 0)
+		{
+			AddScoreLine("SCORE_LINE.bossesSlain", "BossCount", bossesSlainCount, $"+{ScoreUtility.GetScoreForBossesSlain(bossesSlainCount)}", "res://images/ui/game_over_screen/score_boss.png");
+		}
+		int ascension = _history.Ascension;
+		if (ascension > 0)
+		{
+			AddScoreLine("SCORE_LINE.ascension", "AscensionLevel", ascension, "x" + GetAscensionMulti(ascension), "res://images/ui/game_over_screen/score_ascension.png");
+		}
+		foreach (NScoreLine scoreLine in _scoreLines)
+		{
+			await scoreLine.AnimateIn();
+		}
+		await Cmd.Wait(0.5f, _cts.Token);
+	}
+
 	private async Task AnimateBadges()
 	{
-		_badges.Clear();
-		AddBadge("BADGE.floorsClimbed", "FloorCount", _runState.TotalFloor, "res://images/atlases/ui_atlas.sprites/top_bar/top_bar_floor.tres");
-		List<MapPointRoomHistoryEntry> list = _serializableRun.MapPointHistory.SelectMany((List<MapPointHistoryEntry> actEntries) => actEntries).SelectMany((MapPointHistoryEntry e) => e.Rooms).ToList();
-		int num = list.Count((MapPointRoomHistoryEntry r) => r.RoomType == RoomType.Elite);
-		if (list.Count > 0 && list.Last().RoomType == RoomType.Elite)
+		List<Badge> badges = ScoreUtility.GetBadges(_serializableRun, _localPlayer.NetId, _history.Win);
+		foreach (Badge item in badges)
 		{
-			num--;
+			_badgeContainer.AddChildSafely(NBadge.Create(item));
 		}
-		AddBadge("BADGE.elitesKilled", "EliteCount", num);
-		int amount = _serializableRun.MapPointHistory.SelectMany((List<MapPointHistoryEntry> actEntries) => actEntries).Sum((MapPointHistoryEntry e) => e.GetEntry(_localPlayer.NetId).GoldGained);
-		AddBadge("BADGE.goldGained", "GoldAmount", amount);
-		if (_localPlayer.Relics.Count >= 25)
+		if (!_serializableRun.GameMode.AreAchievementsAndEpochsLocked())
 		{
-			AddBadge("BADGE.iLikeShiny", "RelicCount", _localPlayer.Relics.Count);
+			SaveBadgesToProgress(badges);
 		}
-		int gold = _localPlayer.Gold;
-		if (gold >= 3000)
+		await Cmd.Wait(0.25f, _cts.Token);
+		foreach (NBadge item2 in _badgeContainer.GetChildren().OfType<NBadge>())
 		{
-			AddBadge("BADGE.goldenGod", "GoldAmount", gold);
+			await item2.AnimateIn();
 		}
-		else if (gold >= 2000)
+		await Cmd.Wait(0.5f, _cts.Token);
+	}
+
+	/// <summary>
+	/// Based on the badges you get, save them to the progress file.
+	/// </summary>
+	private void SaveBadgesToProgress(List<Badge> badgesToSave)
+	{
+		CharacterStats characterStats = SaveManager.Instance.Progress.CharacterStats[_localPlayer.Character.Id];
+		foreach (Badge badge in badgesToSave)
 		{
-			AddBadge("BADGE.scrooge", "GoldAmount", gold);
-		}
-		else if (gold >= 1000)
-		{
-			AddBadge("BADGE.miser", "GoldAmount", gold);
-		}
-		if (_history.Win)
-		{
-			int count = _localPlayer.Deck.Cards.Count;
-			if (count <= 10)
+			BadgeStats badgeStats = characterStats.Badges.FirstOrDefault((BadgeStats b) => b.Id.Equals(badge.Id) && b.Rarity == badge.Rarity);
+			if (badgeStats == null)
 			{
-				AddBadge("BADGE.tinyDeck", "DeckSize", count);
+				BadgeStats item = new BadgeStats
+				{
+					Id = badge.Id,
+					Count = 1,
+					Rarity = badge.Rarity
+				};
+				characterStats.Badges.Add(item);
+				Log.Info("You got a new badge: " + badge.Id);
 			}
-			else if (count <= 20)
+			else
 			{
-				AddBadge("BADGE.smallDeck", "DeckSize", count);
+				badgeStats.Count++;
+				Log.Info($"You got badge: {badge.Id} again. Now you have {badgeStats.Count}!");
 			}
-			else if (count >= 60)
-			{
-				AddBadge("BADGE.hugeDeck", "DeckSize", count);
-			}
-			else if (count >= 40)
-			{
-				AddBadge("BADGE.bigDeck", "DeckSize", count);
-			}
-			int startingHp = _localPlayer.Character.StartingHp;
-			int maxHp = _localPlayer.Creature.MaxHp;
-			int num2 = maxHp - startingHp;
-			if ((float)maxHp / (float)startingHp < 0.50001f)
-			{
-				AddBadge("BADGE.famished", "HpDiff", num2);
-			}
-			else if (num2 >= 50)
-			{
-				AddBadge("BADGE.glutton", "HpDiff", num2);
-			}
-			else if (num2 >= 30)
-			{
-				AddBadge("BADGE.stuffed", "HpDiff", num2);
-			}
-			else if (num2 >= 15)
-			{
-				AddBadge("BADGE.wellFed", "HpDiff", num2);
-			}
-		}
-		_badgeContainer.Columns = ((_badges.Count < 6) ? 1 : 2);
-		await Cmd.Wait(0.5f);
-		foreach (NBadge badge in _badges)
-		{
-			await badge.AnimateIn();
 		}
 	}
 
-	private void AddBadge(string locEntryKey, string? locAmountKey = null, int amount = 0, string? iconPath = null)
+	/// <summary>
+	/// Helper function to create score lines, add child, and place it in a list to bulk animate later.
+	/// </summary>
+	private void AddScoreLine(string locEntryKey, string? locAmountKey = null, int amount = 0, string scoreLabel = "ERROR", string? iconPath = null)
 	{
 		LocString locString = new LocString("game_over_screen", locEntryKey);
 		if (locAmountKey != null)
@@ -495,9 +737,9 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 			locString.Add(locAmountKey, amount);
 		}
 		Texture2D icon = ((iconPath == null) ? null : PreloadManager.Cache.GetTexture2D(iconPath));
-		NBadge nBadge = NBadge.Create(locString.GetFormattedText(), icon);
-		_badgeContainer.AddChildSafely(nBadge);
-		_badges.Add(nBadge);
+		NScoreLine nScoreLine = NScoreLine.Create(locString.GetFormattedText(), scoreLabel, icon);
+		_scoreLineContainer.AddChildSafely(nScoreLine);
+		_scoreLines.Add(nScoreLine);
 	}
 
 	private async Task AnimateScoreBar()
@@ -514,7 +756,10 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 			_scoreFg.Scale = new Vector2((float)currentScore / (float)_scoreThreshold, 1f);
 			Tween scoreTween = CreateTween();
 			scoreTween.TweenProperty(_scoreBar, "modulate:a", 1f, 0.3);
-			await scoreTween.ToSignal(scoreTween, Tween.SignalName.Finished);
+			if (!(await scoreTween.AwaitFinished(this)))
+			{
+				return;
+			}
 			if (currentScore + _score >= _scoreThreshold)
 			{
 				Log.Info("New Unlock, yay!");
@@ -533,7 +778,10 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 				scoreTween.TweenCallback(Callable.From(PlayUnlockSfx));
 				scoreTween.TweenProperty(node, "modulate:a", 1f, 0.25);
 				scoreTween.TweenProperty(node, "position:y", -60f, 0.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Spring);
-				await scoreTween.ToSignal(scoreTween, Tween.SignalName.Finished);
+				if (!(await scoreTween.AwaitFinished(this)))
+				{
+					return;
+				}
 				if (_scoreUnlockedEpochId != null && !SaveManager.Instance.IsEpochRevealed(_scoreUnlockedEpochId))
 				{
 					EpochModel epochModel = EpochModel.Get(_scoreUnlockedEpochId);
@@ -562,7 +810,10 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 					scoreTween.TweenMethod(Callable.From<int>(TweenScore), 0, newThreshold * 99 / 100, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 					scoreTween.TweenProperty(_scoreFg, "scale:x", 1f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic)
 						.From(0f);
-					await scoreTween.ToSignal(scoreTween, Tween.SignalName.Finished);
+					if (!(await scoreTween.AwaitFinished(this)))
+					{
+						return;
+					}
 					SaveManager.Instance.Progress.CurrentScore = newThreshold - 1;
 				}
 				else
@@ -576,7 +827,10 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 					scoreTween.TweenMethod(Callable.From<int>(TweenScore), 0, currentScore, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 					scoreTween.TweenProperty(_scoreFg, "scale:x", (float)currentScore / (float)newThreshold, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic)
 						.From(0f);
-					await scoreTween.ToSignal(scoreTween, Tween.SignalName.Finished);
+					if (!(await scoreTween.AwaitFinished(this)))
+					{
+						return;
+					}
 					SaveManager.Instance.Progress.CurrentScore = currentScore;
 				}
 			}
@@ -607,6 +861,12 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		_scoreProgress.SetTextAutoSize($"[{value}/{_scoreThreshold}]");
 	}
 
+	/// <summary>
+	/// Lookup table of score thresholds based on the total number of unlocks the player has completed.
+	/// Must match: <see cref="M:MegaCrit.Sts2.Core.Saves.SaveManager.GetEpochIdForUnlock" />.
+	/// </summary>
+	/// <param name="unlocksRemaining"></param>
+	/// <returns></returns>
 	private int GetScoreThreshold(int unlocksRemaining)
 	{
 		return (18 - unlocksRemaining) switch
@@ -635,6 +895,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 
 	private void ShowLeaderboard(NButton _)
 	{
+		_banner.ChangeText(new LocString("main_menu_ui", "DAILY_RUN_MENU.LEADERBOARDS.title").GetRawText());
 		Tween tween = CreateTween().SetParallel();
 		NDailyRunLeaderboard leaderboard = _leaderboard;
 		Color modulate = _leaderboard.Modulate;
@@ -662,7 +923,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 
 	private async Task AnimateDiscoveries()
 	{
-		await _summaryContainer.AnimateInDiscoveries(_runState);
+		await _summaryContainer.AnimateInDiscoveries(_runState, _cts.Token);
 		_isAnimatingSummary = false;
 	}
 
@@ -715,6 +976,10 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		TaskHelper.RunSafely(AnimateIn());
 	}
 
+	/// <summary>
+	/// We move the Creature nodes so they render above the game over screen backstop!
+	/// Drama!
+	/// </summary>
 	private void MoveCreaturesToDifferentLayerAndDisableUi()
 	{
 		List<NCreatureVisuals> list = new List<NCreatureVisuals>();
@@ -723,7 +988,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		{
 			if (NCombatRoom.Instance.Mode == CombatRoomMode.ActiveCombat)
 			{
-				NCombatRoom.Instance.Ui.AnimOut((CombatRoom)_runState.CurrentRoom);
+				NCombatRoom.Instance.Ui.AnimOut();
 			}
 			list2 = NCombatRoom.Instance.CreatureNodes.ToList();
 			list = list2.Select((NCreature c) => c.Visuals).ToList();
@@ -746,7 +1011,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 				NCreatureVisuals nCreatureVisuals = player.Creature.CreateVisuals();
 				list.Add(nCreatureVisuals);
 				_creatureContainer.AddChildSafely(nCreatureVisuals);
-				nCreatureVisuals.SpineBody.GetAnimationState().SetAnimation("die", loop: false);
+				nCreatureVisuals.SpineAnimation.SetAnimation("die", loop: false);
 				NRestSiteCharacter characterForPlayer = NRestSiteRoom.Instance.GetCharacterForPlayer(player);
 				nCreatureVisuals.GlobalPosition = characterForPlayer.GlobalPosition;
 				nCreatureVisuals.Scale = characterForPlayer.Scale;
@@ -764,7 +1029,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 				NCreatureVisuals nCreatureVisuals2 = player2.Creature.CreateVisuals();
 				list.Add(nCreatureVisuals2);
 				_creatureContainer.AddChildSafely(nCreatureVisuals2);
-				nCreatureVisuals2.SpineBody.GetAnimationState().SetAnimation("die", loop: false);
+				nCreatureVisuals2.SpineAnimation.SetAnimation("die", loop: false);
 			}
 			float num = Math.Min(250f, (base.Size.X - 200f) / (float)(list.Count - 1));
 			float num2 = (float)(list.Count - 1) * (0f - num) * 0.5f;
@@ -786,6 +1051,9 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		}
 	}
 
+	/// <summary>
+	/// Called when the Game Over screen appears (immediately upon Death/Victory)
+	/// </summary>
 	private async Task AnimateIn()
 	{
 		Tween backstopTween = CreateTween();
@@ -808,14 +1076,18 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		}
 		Variant shaderParameter = _backstopMaterial.GetShaderParameter(_threshold);
 		backstopTween.TweenMethod(Callable.From<float>(UpdateBackstopMaterial), shaderParameter, 1f, 1.5).SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
-		await ToSignal(backstopTween, Tween.SignalName.Finished);
-		_banner.AnimateIn();
-		backstopTween.Kill();
-		Tween tween = CreateTween();
-		tween.TweenProperty(_uiNode, "modulate:a", 1f, 0.25);
-		await ToSignal(tween, Tween.SignalName.Finished);
-		TaskHelper.RunSafely(AnimateInQuote());
-		_continueButton.Enable();
+		if (await backstopTween.AwaitFinished(this))
+		{
+			_banner.AnimateIn();
+			backstopTween.Kill();
+			Tween tween = CreateTween();
+			tween.TweenProperty(_uiNode, "modulate:a", 1f, 0.25);
+			if (await tween.AwaitFinished(this))
+			{
+				TaskHelper.RunSafely(AnimateInQuote());
+				_continueButton.Enable();
+			}
+		}
 	}
 
 	private void UpdateBackstopMaterial(float value)
@@ -839,22 +1111,45 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		base.Visible = false;
 	}
 
+	/// <summary>
+	/// Little helper function that creates the x1.1 sort of string for the Score Line.
+	/// </summary>
+	/// <param name="ascension"></param>
+	/// <returns></returns>
+	private string GetAscensionMulti(int ascension)
+	{
+		int value = ascension / 10 + 1;
+		int num = ascension % 10;
+		if (num != 0)
+		{
+			return $"{value}.{num}";
+		}
+		return value.ToString();
+	}
+
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(20);
+		List<MethodInfo> list = new List<MethodInfo>(22);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.DiscoveredAnyEpochs, new PropertyInfo(Variant.Type.Bool, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.InitializeBannerAndQuote, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OpenSummaryScreen, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "_", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
 		}, null));
-		list.Add(new MethodInfo(MethodName.AddBadge, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		list.Add(new MethodInfo(MethodName.AddScoreLine, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.String, "locEntryKey", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
 			new PropertyInfo(Variant.Type.String, "locAmountKey", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
 			new PropertyInfo(Variant.Type.Int, "amount", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+			new PropertyInfo(Variant.Type.String, "scoreLabel", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
 			new PropertyInfo(Variant.Type.String, "iconPath", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.PlayUnlockSfx, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -890,15 +1185,26 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		list.Add(new MethodInfo(MethodName.AfterOverlayClosed, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.AfterOverlayShown, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.AfterOverlayHidden, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.GetAscensionMulti, new PropertyInfo(Variant.Type.String, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Int, "ascension", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+		}, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -919,9 +1225,9 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.AddBadge && args.Count == 4)
+		if (method == MethodName.AddScoreLine && args.Count == 5)
 		{
-			AddBadge(VariantUtils.ConvertTo<string>(in args[0]), VariantUtils.ConvertTo<string>(in args[1]), VariantUtils.ConvertTo<int>(in args[2]), VariantUtils.ConvertTo<string>(in args[3]));
+			AddScoreLine(VariantUtils.ConvertTo<string>(in args[0]), VariantUtils.ConvertTo<string>(in args[1]), VariantUtils.ConvertTo<int>(in args[2]), VariantUtils.ConvertTo<string>(in args[3]), VariantUtils.ConvertTo<string>(in args[4]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -1014,13 +1320,23 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.GetAscensionMulti && args.Count == 1)
+		{
+			ret = VariantUtils.CreateFrom<string>(GetAscensionMulti(VariantUtils.ConvertTo<int>(in args[0])));
+			return true;
+		}
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
 		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName._ExitTree)
 		{
 			return true;
 		}
@@ -1036,7 +1352,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		{
 			return true;
 		}
-		if (method == MethodName.AddBadge)
+		if (method == MethodName.AddScoreLine)
 		{
 			return true;
 		}
@@ -1100,9 +1416,14 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		{
 			return true;
 		}
+		if (method == MethodName.GetAscensionMulti)
+		{
+			return true;
+		}
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1128,7 +1449,12 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		}
 		if (name == PropertyName._badgeContainer)
 		{
-			_badgeContainer = VariantUtils.ConvertTo<GridContainer>(in value);
+			_badgeContainer = VariantUtils.ConvertTo<Control>(in value);
+			return true;
+		}
+		if (name == PropertyName._scoreLineContainer)
+		{
+			_scoreLineContainer = VariantUtils.ConvertTo<GridContainer>(in value);
 			return true;
 		}
 		if (name == PropertyName._scoreBar)
@@ -1249,6 +1575,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1262,9 +1589,17 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 			value = VariantUtils.CreateFrom<bool>(UseSharedBackstop);
 			return true;
 		}
+		Control from;
+		if (name == PropertyName.FocusedControlFromTopBar)
+		{
+			from = FocusedControlFromTopBar;
+			value = VariantUtils.CreateFrom(in from);
+			return true;
+		}
 		if (name == PropertyName.DefaultFocusedControl)
 		{
-			value = VariantUtils.CreateFrom<Control>(DefaultFocusedControl);
+			from = DefaultFocusedControl;
+			value = VariantUtils.CreateFrom(in from);
 			return true;
 		}
 		if (name == PropertyName._continueButton)
@@ -1290,6 +1625,11 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		if (name == PropertyName._badgeContainer)
 		{
 			value = VariantUtils.CreateFrom(in _badgeContainer);
+			return true;
+		}
+		if (name == PropertyName._scoreLineContainer)
+		{
+			value = VariantUtils.CreateFrom(in _scoreLineContainer);
 			return true;
 		}
 		if (name == PropertyName._scoreBar)
@@ -1410,6 +1750,11 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1419,6 +1764,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._mainMenuButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._leaderboardButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._badgeContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._scoreLineContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._scoreBar, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._scoreFg, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._scoreProgress, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -1444,10 +1790,12 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._quoteTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Int, PropertyName.ScreenType, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.UseSharedBackstop, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.FocusedControlFromTopBar, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.DefaultFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1457,6 +1805,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		info.AddProperty(PropertyName._mainMenuButton, Variant.From(in _mainMenuButton));
 		info.AddProperty(PropertyName._leaderboardButton, Variant.From(in _leaderboardButton));
 		info.AddProperty(PropertyName._badgeContainer, Variant.From(in _badgeContainer));
+		info.AddProperty(PropertyName._scoreLineContainer, Variant.From(in _scoreLineContainer));
 		info.AddProperty(PropertyName._scoreBar, Variant.From(in _scoreBar));
 		info.AddProperty(PropertyName._scoreFg, Variant.From(in _scoreFg));
 		info.AddProperty(PropertyName._scoreProgress, Variant.From(in _scoreProgress));
@@ -1482,6 +1831,7 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		info.AddProperty(PropertyName._quoteTween, Variant.From(in _quoteTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1504,99 +1854,103 @@ public class NGameOverScreen : NClickableControl, IOverlayScreen, IScreenContext
 		}
 		if (info.TryGetProperty(PropertyName._badgeContainer, out var value5))
 		{
-			_badgeContainer = value5.As<GridContainer>();
+			_badgeContainer = value5.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._scoreBar, out var value6))
+		if (info.TryGetProperty(PropertyName._scoreLineContainer, out var value6))
 		{
-			_scoreBar = value6.As<Control>();
+			_scoreLineContainer = value6.As<GridContainer>();
 		}
-		if (info.TryGetProperty(PropertyName._scoreFg, out var value7))
+		if (info.TryGetProperty(PropertyName._scoreBar, out var value7))
 		{
-			_scoreFg = value7.As<Control>();
+			_scoreBar = value7.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._scoreProgress, out var value8))
+		if (info.TryGetProperty(PropertyName._scoreFg, out var value8))
 		{
-			_scoreProgress = value8.As<MegaLabel>();
+			_scoreFg = value8.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._unlocksRemaining, out var value9))
+		if (info.TryGetProperty(PropertyName._scoreProgress, out var value9))
 		{
-			_unlocksRemaining = value9.As<MegaLabel>();
+			_scoreProgress = value9.As<MegaLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._score, out var value10))
+		if (info.TryGetProperty(PropertyName._unlocksRemaining, out var value10))
 		{
-			_score = value10.As<int>();
+			_unlocksRemaining = value10.As<MegaLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._scoreThreshold, out var value11))
+		if (info.TryGetProperty(PropertyName._score, out var value11))
 		{
-			_scoreThreshold = value11.As<int>();
+			_score = value11.As<int>();
 		}
-		if (info.TryGetProperty(PropertyName._scoreUnlockedEpochId, out var value12))
+		if (info.TryGetProperty(PropertyName._scoreThreshold, out var value12))
 		{
-			_scoreUnlockedEpochId = value12.As<string>();
+			_scoreThreshold = value12.As<int>();
 		}
-		if (info.TryGetProperty(PropertyName._leaderboard, out var value13))
+		if (info.TryGetProperty(PropertyName._scoreUnlockedEpochId, out var value13))
 		{
-			_leaderboard = value13.As<NDailyRunLeaderboard>();
+			_scoreUnlockedEpochId = value13.As<string>();
 		}
-		if (info.TryGetProperty(PropertyName._creatureContainer, out var value14))
+		if (info.TryGetProperty(PropertyName._leaderboard, out var value14))
 		{
-			_creatureContainer = value14.As<Control>();
+			_leaderboard = value14.As<NDailyRunLeaderboard>();
 		}
-		if (info.TryGetProperty(PropertyName._summaryContainer, out var value15))
+		if (info.TryGetProperty(PropertyName._creatureContainer, out var value15))
 		{
-			_summaryContainer = value15.As<NRunSummary>();
+			_creatureContainer = value15.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._fullBlackBackstop, out var value16))
+		if (info.TryGetProperty(PropertyName._summaryContainer, out var value16))
 		{
-			_fullBlackBackstop = value16.As<ColorRect>();
+			_summaryContainer = value16.As<NRunSummary>();
 		}
-		if (info.TryGetProperty(PropertyName._summaryBackstop, out var value17))
+		if (info.TryGetProperty(PropertyName._fullBlackBackstop, out var value17))
 		{
-			_summaryBackstop = value17.As<ColorRect>();
+			_fullBlackBackstop = value17.As<ColorRect>();
 		}
-		if (info.TryGetProperty(PropertyName._backstop, out var value18))
+		if (info.TryGetProperty(PropertyName._summaryBackstop, out var value18))
 		{
-			_backstop = value18.As<ColorRect>();
+			_summaryBackstop = value18.As<ColorRect>();
 		}
-		if (info.TryGetProperty(PropertyName._banner, out var value19))
+		if (info.TryGetProperty(PropertyName._backstop, out var value19))
 		{
-			_banner = value19.As<NCommonBanner>();
+			_backstop = value19.As<ColorRect>();
 		}
-		if (info.TryGetProperty(PropertyName._deathQuote, out var value20))
+		if (info.TryGetProperty(PropertyName._banner, out var value20))
 		{
-			_deathQuote = value20.As<MegaRichTextLabel>();
+			_banner = value20.As<NCommonBanner>();
 		}
-		if (info.TryGetProperty(PropertyName._victoryDamageLabel, out var value21))
+		if (info.TryGetProperty(PropertyName._deathQuote, out var value21))
 		{
-			_victoryDamageLabel = value21.As<MegaRichTextLabel>();
+			_deathQuote = value21.As<MegaRichTextLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._uiNode, out var value22))
+		if (info.TryGetProperty(PropertyName._victoryDamageLabel, out var value22))
 		{
-			_uiNode = value22.As<Control>();
+			_victoryDamageLabel = value22.As<MegaRichTextLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._screenshakeContainer, out var value23))
+		if (info.TryGetProperty(PropertyName._uiNode, out var value23))
 		{
-			_screenshakeContainer = value23.As<Control>();
+			_uiNode = value23.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._discoveryLabel, out var value24))
+		if (info.TryGetProperty(PropertyName._screenshakeContainer, out var value24))
 		{
-			_discoveryLabel = value24.As<MegaLabel>();
+			_screenshakeContainer = value24.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._encounterQuote, out var value25))
+		if (info.TryGetProperty(PropertyName._discoveryLabel, out var value25))
 		{
-			_encounterQuote = value25.As<string>();
+			_discoveryLabel = value25.As<MegaLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._isAnimatingSummary, out var value26))
+		if (info.TryGetProperty(PropertyName._encounterQuote, out var value26))
 		{
-			_isAnimatingSummary = value26.As<bool>();
+			_encounterQuote = value26.As<string>();
 		}
-		if (info.TryGetProperty(PropertyName._backstopMaterial, out var value27))
+		if (info.TryGetProperty(PropertyName._isAnimatingSummary, out var value27))
 		{
-			_backstopMaterial = value27.As<ShaderMaterial>();
+			_isAnimatingSummary = value27.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._quoteTween, out var value28))
+		if (info.TryGetProperty(PropertyName._backstopMaterial, out var value28))
 		{
-			_quoteTween = value28.As<Tween>();
+			_backstopMaterial = value28.As<ShaderMaterial>();
+		}
+		if (info.TryGetProperty(PropertyName._quoteTween, out var value29))
+		{
+			_quoteTween = value29.As<Tween>();
 		}
 	}
 }

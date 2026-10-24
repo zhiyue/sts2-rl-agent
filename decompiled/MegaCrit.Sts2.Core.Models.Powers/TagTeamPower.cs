@@ -1,34 +1,20 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
-using MegaCrit.Sts2.Core.Localization.DynamicVars;
-using MegaCrit.Sts2.Core.Platform;
-using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Models.Powers;
 
 public sealed class TagTeamPower : PowerModel
 {
-	private const string _applierTag = "Applier";
-
 	public override PowerType Type => PowerType.Debuff;
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override bool IsInstanced => true;
+	public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
 
 	public override int DisplayAmount => 1;
-
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new StringVar("Applier"));
-
-	public override Task AfterApplied(Creature? applier, CardModel? cardSource)
-	{
-		((StringVar)base.DynamicVars["Applier"]).StringValue = PlatformUtil.GetPlayerName(RunManager.Instance.NetService.Platform, base.Applier.Player.NetId);
-		return Task.CompletedTask;
-	}
 
 	public override int ModifyCardPlayCount(CardModel card, Creature? target, int playCount)
 	{
@@ -40,7 +26,12 @@ public sealed class TagTeamPower : PowerModel
 		{
 			return playCount;
 		}
-		if (target != base.Owner)
+		if (card.TargetType == TargetType.AnyEnemy && target != base.Owner)
+		{
+			return playCount;
+		}
+		TargetType targetType = card.TargetType;
+		if ((uint)(targetType - 2) > 1u)
 		{
 			return playCount;
 		}

@@ -10,33 +10,72 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 
+/// <summary>
+/// A script specifically used to make the Settings panels (General Settings, Graphics Settings, Audio Settings) fade in nicely
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NSettingsPanel.cs")]
 public class NSettingsPanel : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RefreshSize' method.
+		/// </summary>
 		public static readonly StringName RefreshSize = "RefreshSize";
 
+		/// <summary>
+		/// Cached name for the 'OnVisibilityChange' method.
+		/// </summary>
 		public static readonly StringName OnVisibilityChange = "OnVisibilityChange";
 
+		/// <summary>
+		/// Cached name for the 'IsSettingsOption' method.
+		/// </summary>
 		public static readonly StringName IsSettingsOption = "IsSettingsOption";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Content' property.
+		/// </summary>
 		public static readonly StringName Content = "Content";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_minPadding' field.
+		/// </summary>
 		public static readonly StringName _minPadding = "_minPadding";
 
+		/// <summary>
+		/// Cached name for the '_firstControl' field.
+		/// </summary>
 		public static readonly StringName _firstControl = "_firstControl";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -122,6 +161,11 @@ public class NSettingsPanel : Control
 		return false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -136,6 +180,7 @@ public class NSettingsPanel : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -165,6 +210,7 @@ public class NSettingsPanel : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -187,6 +233,7 @@ public class NSettingsPanel : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -213,6 +260,7 @@ public class NSettingsPanel : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -244,6 +292,11 @@ public class NSettingsPanel : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -256,6 +309,7 @@ public class NSettingsPanel : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -266,6 +320,7 @@ public class NSettingsPanel : Control
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -9,6 +9,13 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Game;
 
+/// <summary>
+/// Sent from the host to clients to indicate that a GameAction has been enqueued.
+/// This is one of the most important messages in the game. The game assumes that:
+/// - These messages are sent and received reliably
+/// - These messages are received in the order that they are sent
+/// - These messages are ordered correctly with ResumeActionAfterPlayerChoiceMessages
+/// </summary>
 public struct ActionEnqueuedMessage : INetMessage, IPacketSerializable, IRunLocationTargetedMessage
 {
 	public ulong playerId;
@@ -22,6 +29,8 @@ public struct ActionEnqueuedMessage : INetMessage, IPacketSerializable, IRunLoca
 	public NetTransferMode Mode => NetTransferMode.Reliable;
 
 	public LogLevel LogLevel => LogLevel.Debug;
+
+	public bool ShouldBuffer => true;
 
 	public RunLocation Location => location;
 

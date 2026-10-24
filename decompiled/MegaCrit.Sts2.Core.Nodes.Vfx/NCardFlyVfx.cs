@@ -7,57 +7,123 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
+/// <summary>
+/// This vfx is called when cards fly from one spot to another, leaving a pretty trail.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Vfx/NCardFlyVfx.cs")]
 public class NCardFlyVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnCardExitedTree' method.
+		/// </summary>
 		public static readonly StringName OnCardExitedTree = "OnCardExitedTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_card' field.
+		/// </summary>
 		public static readonly StringName _card = "_card";
 
+		/// <summary>
+		/// Cached name for the '_trailPath' field.
+		/// </summary>
 		public static readonly StringName _trailPath = "_trailPath";
 
+		/// <summary>
+		/// Cached name for the '_vfx' field.
+		/// </summary>
 		public static readonly StringName _vfx = "_vfx";
 
+		/// <summary>
+		/// Cached name for the '_fadeOutTween' field.
+		/// </summary>
 		public static readonly StringName _fadeOutTween = "_fadeOutTween";
 
+		/// <summary>
+		/// Cached name for the '_vfxFading' field.
+		/// </summary>
 		public static readonly StringName _vfxFading = "_vfxFading";
 
+		/// <summary>
+		/// Cached name for the '_isAddingToPile' field.
+		/// </summary>
 		public static readonly StringName _isAddingToPile = "_isAddingToPile";
 
+		/// <summary>
+		/// Cached name for the '_startPos' field.
+		/// </summary>
 		public static readonly StringName _startPos = "_startPos";
 
+		/// <summary>
+		/// Cached name for the '_endPos' field.
+		/// </summary>
 		public static readonly StringName _endPos = "_endPos";
 
+		/// <summary>
+		/// Cached name for the '_controlPointOffset' field.
+		/// </summary>
 		public static readonly StringName _controlPointOffset = "_controlPointOffset";
 
+		/// <summary>
+		/// Cached name for the '_duration' field.
+		/// </summary>
 		public static readonly StringName _duration = "_duration";
 
+		/// <summary>
+		/// Cached name for the '_speed' field.
+		/// </summary>
 		public static readonly StringName _speed = "_speed";
 
+		/// <summary>
+		/// Cached name for the '_accel' field.
+		/// </summary>
 		public static readonly StringName _accel = "_accel";
 
+		/// <summary>
+		/// Cached name for the '_arcDir' field.
+		/// </summary>
 		public static readonly StringName _arcDir = "_arcDir";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -96,7 +162,7 @@ public class NCardFlyVfx : Node2D
 
 	public TaskCompletionSource? SwooshAwayCompletion { get; private set; }
 
-	public static NCardFlyVfx? Create(NCard card, Vector2 end, bool isAddingToPile, string trailPath)
+	public static NCardFlyVfx? Create(NCard card, PileType pileType, bool isAddingToPile, string trailPath)
 	{
 		if (TestMode.IsOn)
 		{
@@ -104,7 +170,7 @@ public class NCardFlyVfx : Node2D
 		}
 		NCardFlyVfx nCardFlyVfx = PreloadManager.Cache.GetScene(_scenePath).Instantiate<NCardFlyVfx>(PackedScene.GenEditState.Disabled);
 		nCardFlyVfx._startPos = card.GlobalPosition;
-		nCardFlyVfx._endPos = end;
+		nCardFlyVfx._endPos = pileType.GetTargetPosition(card);
 		nCardFlyVfx._card = card;
 		nCardFlyVfx._isAddingToPile = isAddingToPile;
 		nCardFlyVfx._trailPath = trailPath;
@@ -137,7 +203,6 @@ public class NCardFlyVfx : Node2D
 	{
 		_fadeOutTween?.Kill();
 		_cancelToken.Cancel();
-		_cancelToken.Dispose();
 	}
 
 	private void OnCardExitedTree()
@@ -155,11 +220,16 @@ public class NCardFlyVfx : Node2D
 
 	private async Task PlayAnim()
 	{
+		CardPile pile = _card.Model.Pile;
+		if (pile != null)
+		{
+			SfxCmd.PlayCardSwooshSfx(pile);
+		}
 		SwooshAwayCompletion = new TaskCompletionSource();
 		float time = 0f;
 		while (time / _duration <= 1f)
 		{
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrame();
 			if (_cancelToken.IsCancellationRequested)
 			{
 				SwooshAwayCompletion?.SetResult();
@@ -194,7 +264,7 @@ public class NCardFlyVfx : Node2D
 		time = 0f;
 		while (time / _duration <= 1f)
 		{
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrame();
 			if (_cancelToken.IsCancellationRequested)
 			{
 				SwooshAwayCompletion?.SetResult();
@@ -216,6 +286,11 @@ public class NCardFlyVfx : Node2D
 		_card.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -223,7 +298,7 @@ public class NCardFlyVfx : Node2D
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Node2D"), exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "card", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false),
-			new PropertyInfo(Variant.Type.Vector2, "end", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+			new PropertyInfo(Variant.Type.Int, "pileType", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
 			new PropertyInfo(Variant.Type.Bool, "isAddingToPile", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
 			new PropertyInfo(Variant.Type.String, "trailPath", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
@@ -233,12 +308,13 @@ public class NCardFlyVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
 		if (method == MethodName.Create && args.Count == 4)
 		{
-			ret = VariantUtils.CreateFrom<NCardFlyVfx>(Create(VariantUtils.ConvertTo<NCard>(in args[0]), VariantUtils.ConvertTo<Vector2>(in args[1]), VariantUtils.ConvertTo<bool>(in args[2]), VariantUtils.ConvertTo<string>(in args[3])));
+			ret = VariantUtils.CreateFrom<NCardFlyVfx>(Create(VariantUtils.ConvertTo<NCard>(in args[0]), VariantUtils.ConvertTo<PileType>(in args[1]), VariantUtils.ConvertTo<bool>(in args[2]), VariantUtils.ConvertTo<string>(in args[3])));
 			return true;
 		}
 		if (method == MethodName._Ready && args.Count == 0)
@@ -267,13 +343,14 @@ public class NCardFlyVfx : Node2D
 	{
 		if (method == MethodName.Create && args.Count == 4)
 		{
-			ret = VariantUtils.CreateFrom<NCardFlyVfx>(Create(VariantUtils.ConvertTo<NCard>(in args[0]), VariantUtils.ConvertTo<Vector2>(in args[1]), VariantUtils.ConvertTo<bool>(in args[2]), VariantUtils.ConvertTo<string>(in args[3])));
+			ret = VariantUtils.CreateFrom<NCardFlyVfx>(Create(VariantUtils.ConvertTo<NCard>(in args[0]), VariantUtils.ConvertTo<PileType>(in args[1]), VariantUtils.ConvertTo<bool>(in args[2]), VariantUtils.ConvertTo<string>(in args[3])));
 			return true;
 		}
 		ret = default(godot_variant);
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -296,6 +373,7 @@ public class NCardFlyVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -367,6 +445,7 @@ public class NCardFlyVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -438,6 +517,11 @@ public class NCardFlyVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -458,6 +542,7 @@ public class NCardFlyVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -477,6 +562,7 @@ public class NCardFlyVfx : Node2D
 		info.AddProperty(PropertyName._arcDir, Variant.From(in _arcDir));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

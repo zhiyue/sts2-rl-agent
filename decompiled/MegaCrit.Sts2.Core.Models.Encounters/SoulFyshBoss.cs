@@ -9,6 +9,10 @@ public sealed class SoulFyshBoss : EncounterModel
 {
 	public override string BossNodePath => "res://images/map/placeholder/" + base.Id.Entry.ToLowerInvariant() + "_icon";
 
+	public override string CustomBgm => "event:/music/act1_b_boss_soul_fysh";
+
+	protected override bool HasCustomBackground => true;
+
 	public override MegaSkeletonDataResource? BossNodeSpineResource => null;
 
 	public override RoomType RoomType => RoomType.Boss;

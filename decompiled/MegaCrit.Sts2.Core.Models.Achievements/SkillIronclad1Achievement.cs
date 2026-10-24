@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Rooms;
 
 namespace MegaCrit.Sts2.Core.Models.Achievements;
 
+/// <summary>
+/// Grants an achievement when the player exhausts a large number of cards in a single turn.
+/// </summary>
 public class SkillIronclad1Achievement : AchievementModel
 {
 	private const int _exhaustRequirement = 20;

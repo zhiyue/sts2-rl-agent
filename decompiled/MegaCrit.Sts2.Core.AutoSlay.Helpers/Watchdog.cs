@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Helpers;
 
+/// <summary>
+/// Watchdog that detects when AutoSlay gets stuck and dumps diagnostic state.
+/// </summary>
 public class Watchdog
 {
 	private DateTime _lastProgressTime;
@@ -20,12 +23,19 @@ public class Watchdog
 		Reset("Initialized");
 	}
 
+	/// <summary>
+	/// Resets the watchdog timer. Call this whenever meaningful progress is made.
+	/// </summary>
 	public void Reset(string activity)
 	{
 		_lastProgressTime = DateTime.UtcNow;
 		_lastActivity = activity;
 	}
 
+	/// <summary>
+	/// Checks if the watchdog has timed out. Call this periodically (e.g., in WaitHelper).
+	/// Throws TimeoutException if no progress for too long.
+	/// </summary>
 	public void Check()
 	{
 		TimeSpan timeSpan = DateTime.UtcNow - _lastProgressTime;
@@ -42,6 +52,9 @@ public class Watchdog
 		}
 	}
 
+	/// <summary>
+	/// Dumps the current game state for debugging.
+	/// </summary>
 	public static string DumpState()
 	{
 		StringBuilder stringBuilder = new StringBuilder();

@@ -11,64 +11,146 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// Base class for tickboxes. Override me!
+/// Note that the hitbox for this Tickbox is its PARENT node, not this node.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NTickbox.cs")]
 public class NTickbox : NButton
 {
 	[Signal]
 	public delegate void ToggledEventHandler(NTickbox tickbox);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public new static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnUntick' method.
+		/// </summary>
 		public static readonly StringName OnUntick = "OnUntick";
 
+		/// <summary>
+		/// Cached name for the 'OnTick' method.
+		/// </summary>
 		public static readonly StringName OnTick = "OnTick";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'OnDisable' method.
+		/// </summary>
 		public new static readonly StringName OnDisable = "OnDisable";
 
+		/// <summary>
+		/// Cached name for the 'OnEnable' method.
+		/// </summary>
 		public new static readonly StringName OnEnable = "OnEnable";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderV' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderV = "UpdateShaderV";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsTicked' property.
+		/// </summary>
 		public static readonly StringName IsTicked = "IsTicked";
 
+		/// <summary>
+		/// Cached name for the '_isTicked' field.
+		/// </summary>
 		public static readonly StringName _isTicked = "_isTicked";
 
+		/// <summary>
+		/// Cached name for the '_imageContainer' field.
+		/// </summary>
 		public static readonly StringName _imageContainer = "_imageContainer";
 
+		/// <summary>
+		/// Cached name for the '_tickedImage' field.
+		/// </summary>
 		public static readonly StringName _tickedImage = "_tickedImage";
 
+		/// <summary>
+		/// Cached name for the '_notTickedImage' field.
+		/// </summary>
 		public static readonly StringName _notTickedImage = "_notTickedImage";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_baseScale' field.
+		/// </summary>
 		public static readonly StringName _baseScale = "_baseScale";
 
+		/// <summary>
+		/// Cached name for the '_hoverScale' field.
+		/// </summary>
 		public static readonly StringName _hoverScale = "_hoverScale";
 
+		/// <summary>
+		/// Cached name for the '_pressDownScale' field.
+		/// </summary>
 		public static readonly StringName _pressDownScale = "_pressDownScale";
 
+		/// <summary>
+		/// Cached name for the '_hoverV' field.
+		/// </summary>
 		public static readonly StringName _hoverV = "_hoverV";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Toggled' signal.
+		/// </summary>
 		public static readonly StringName Toggled = "Toggled";
 	}
 
@@ -110,6 +192,7 @@ public class NTickbox : NButton
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.CommonUi.NTickbox.ToggledEventHandler" />
 	public event ToggledEventHandler Toggled
 	{
 		add
@@ -212,6 +295,11 @@ public class NTickbox : NButton
 		_hsv.SetShaderParameter(_v, value);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -233,6 +321,7 @@ public class NTickbox : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -305,6 +394,7 @@ public class NTickbox : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -355,6 +445,7 @@ public class NTickbox : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -416,6 +507,7 @@ public class NTickbox : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -477,6 +569,11 @@ public class NTickbox : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -495,6 +592,7 @@ public class NTickbox : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -513,6 +611,7 @@ public class NTickbox : NButton
 		info.AddSignalEventDelegate(SignalName.Toggled, backing_Toggled);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -567,6 +666,11 @@ public class NTickbox : NButton
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotSignalList()
 	{
@@ -583,6 +687,7 @@ public class NTickbox : NButton
 		EmitSignal(SignalName.Toggled, tickbox);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -596,6 +701,7 @@ public class NTickbox : NButton
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

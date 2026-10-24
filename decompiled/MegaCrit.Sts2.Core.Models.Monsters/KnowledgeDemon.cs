@@ -15,11 +15,16 @@ using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Audio;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class KnowledgeDemon : MonsterModel
 {
+	/// <summary>
+	/// For cards that specifically come from Knowledge Demon's Curse of Knowledge move.
+	/// Unlike normal cards, these have an immediate effect when chosen by the player.
+	/// </summary>
 	public interface IChoosable
 	{
 		Task OnChosen();
@@ -114,6 +119,11 @@ public sealed class KnowledgeDemon : MonsterModel
 		}
 	}
 
+	public override void BeforeRemovedFromRoom()
+	{
+		NRunMusicController.Instance?.UpdateMusicParameter("knowledge_demon_progress", 5f);
+	}
+
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
@@ -142,7 +152,7 @@ public sealed class KnowledgeDemon : MonsterModel
 		{
 			throw new InvalidOperationException($"There are no valid sets at this index {CurseOfKnowledgeCounter}");
 		}
-		TalkCmd.Play(_curseOfKnowledgeStartLine, base.Creature, 1.0);
+		TalkCmd.Play(_curseOfKnowledgeStartLine, base.Creature, VfxColor.Gold, VfxDuration.Standard);
 		await CreatureCmd.TriggerAnim(base.Creature, "MindRotTrigger", 1f);
 		List<Task> list = new List<Task>();
 		foreach (Creature target in targets)
@@ -150,7 +160,7 @@ public sealed class KnowledgeDemon : MonsterModel
 			list.Add(ChooseCurse(target));
 		}
 		await Task.WhenAll(list);
-		TalkCmd.Play(_curseOfKnowledgeDoneLine, base.Creature, 1.0);
+		TalkCmd.Play(_curseOfKnowledgeDoneLine, base.Creature, VfxColor.Gold, VfxDuration.Standard);
 		CurseOfKnowledgeCounter++;
 	}
 
@@ -163,14 +173,18 @@ public sealed class KnowledgeDemon : MonsterModel
 		int disintegrationDamage = _disintegrationDamageValues[CurseOfKnowledgeCounter];
 		List<CardModel> cards = _curseOfKnowledgeSets[CurseOfKnowledgeCounter].Select(delegate(IChoosable c)
 		{
-			CardModel cardModel = base.CombatState.CreateCard((CardModel)c, target.Player);
-			if (cardModel is Disintegration)
+			CardModel cardModel2 = base.CombatState.CreateCard((CardModel)c, target.Player);
+			if (cardModel2 is Disintegration)
 			{
-				cardModel.DynamicVars["DisintegrationPower"].BaseValue = disintegrationDamage;
+				cardModel2.DynamicVars["DisintegrationPower"].BaseValue = disintegrationDamage;
 			}
-			return cardModel;
+			return cardModel2;
 		}).ToList();
-		await ((IChoosable)(await CardSelectCmd.FromChooseACardScreen(new BlockingPlayerChoiceContext(), cards, target.Player))).OnChosen();
+		CardModel cardModel = await CardSelectCmd.FromChooseACardScreen(new BlockingPlayerChoiceContext(), cards, target.Player);
+		if (cardModel != null)
+		{
+			await ((IChoosable)cardModel).OnChosen();
+		}
 	}
 
 	private async Task SlapMove(IReadOnlyList<Creature> targets)
@@ -184,7 +198,7 @@ public sealed class KnowledgeDemon : MonsterModel
 	private async Task KnowledgeOverwhelmingMove(IReadOnlyList<Creature> targets)
 	{
 		IsBurnt = true;
-		NRunMusicController.Instance?.UpdateMusicParameter("knowledge_demon_progress", 2f);
+		NRunMusicController.Instance?.UpdateMusicParameter("knowledge_demon_progress", 1f);
 		await DamageCmd.Attack(KnowledgeOverwhelmingDamage).WithHitCount(3).FromMonster(this)
 			.WithAttackerAnim("HeavyAttackTrigger", 0.85f)
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/knowledge_demon/knowledge_demon_clap")
@@ -196,12 +210,12 @@ public sealed class KnowledgeDemon : MonsterModel
 	private async Task PonderMove(IReadOnlyList<Creature> targets)
 	{
 		await CreatureCmd.TriggerAnim(base.Creature, "HealTrigger", 1.8f);
-		NRunMusicController.Instance?.UpdateMusicParameter("knowledge_demon_progress", 1f);
+		NRunMusicController.Instance?.UpdateMusicParameter("knowledge_demon_progress", 2f);
 		IsBurnt = false;
 		await DamageCmd.Attack(PonderDamage).FromMonster(this).WithHitFx("vfx/vfx_attack_blunt", null, "blunt_attack.mp3")
 			.Execute(null);
 		await CreatureCmd.Heal(base.Creature, 30 * base.Creature.CombatState.Players.Count);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, PonderStrength, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, PonderStrength, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

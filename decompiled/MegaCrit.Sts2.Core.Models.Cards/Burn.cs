@@ -28,7 +28,7 @@ public sealed class Burn : CardModel
 	{
 	}
 
-	public override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
+	protected override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
 	{
 		NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(NGroundFireVfx.Create(base.Owner.Creature));
 		SfxCmd.Play("event:/sfx/characters/attack_fire");

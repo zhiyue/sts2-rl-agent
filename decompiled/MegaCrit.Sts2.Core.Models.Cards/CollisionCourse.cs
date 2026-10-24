@@ -14,7 +14,7 @@ public sealed class CollisionCourse : CardModel
 {
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Debris>());
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(9m, ValueProp.Move));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(11m, ValueProp.Move));
 
 	public CollisionCourse()
 		: base(0, CardType.Attack, CardRarity.Common, TargetType.AnyEnemy)
@@ -27,12 +27,12 @@ public sealed class CollisionCourse : CardModel
 		await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
 			.WithHitFx("vfx/vfx_attack_blunt", null, "blunt_attack.mp3")
 			.Execute(choiceContext);
-		await CardPileCmd.AddGeneratedCardToCombat(base.CombatState.CreateCard<Debris>(base.Owner), PileType.Hand, addedByPlayer: true);
+		await CardPileCmd.AddGeneratedCardToCombat(base.CombatState.CreateCard<Debris>(base.Owner), PileType.Hand, base.Owner);
 		await Cmd.Wait(0.5f);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars.Damage.UpgradeValueBy(3m);
+		base.DynamicVars.Damage.UpgradeValueBy(4m);
 	}
 }

@@ -17,56 +17,129 @@ namespace MegaCrit.Sts2.Core.Nodes.HoverTips;
 [ScriptPath("res://src/Core/Nodes/HoverTips/NHoverTipSet.cs")]
 public class NHoverTipSet : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'SetFollowOwner' method.
+		/// </summary>
 		public static readonly StringName SetFollowOwner = "SetFollowOwner";
 
+		/// <summary>
+		/// Cached name for the 'CreateAndShowMapPointHistory' method.
+		/// </summary>
 		public static readonly StringName CreateAndShowMapPointHistory = "CreateAndShowMapPointHistory";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'SetAlignment' method.
+		/// </summary>
 		public static readonly StringName SetAlignment = "SetAlignment";
 
+		/// <summary>
+		/// Cached name for the 'SetAlignmentForRelic' method.
+		/// </summary>
 		public static readonly StringName SetAlignmentForRelic = "SetAlignmentForRelic";
 
+		/// <summary>
+		/// Cached name for the 'SetAlignmentForCardHolder' method.
+		/// </summary>
 		public static readonly StringName SetAlignmentForCardHolder = "SetAlignmentForCardHolder";
 
+		/// <summary>
+		/// Cached name for the 'CorrectVerticalOverflow' method.
+		/// </summary>
 		public static readonly StringName CorrectVerticalOverflow = "CorrectVerticalOverflow";
 
+		/// <summary>
+		/// Cached name for the 'CorrectHorizontalOverflow' method.
+		/// </summary>
 		public static readonly StringName CorrectHorizontalOverflow = "CorrectHorizontalOverflow";
 
+		/// <summary>
+		/// Cached name for the 'Clear' method.
+		/// </summary>
 		public static readonly StringName Clear = "Clear";
 
+		/// <summary>
+		/// Cached name for the 'Remove' method.
+		/// </summary>
 		public static readonly StringName Remove = "Remove";
 
+		/// <summary>
+		/// Cached name for the 'SetExtraFollowOffset' method.
+		/// </summary>
 		public static readonly StringName SetExtraFollowOffset = "SetExtraFollowOffset";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'TextHoverTipDimensions' property.
+		/// </summary>
 		public static readonly StringName TextHoverTipDimensions = "TextHoverTipDimensions";
 
+		/// <summary>
+		/// Cached name for the 'CardHoverTipDimensions' property.
+		/// </summary>
 		public static readonly StringName CardHoverTipDimensions = "CardHoverTipDimensions";
 
+		/// <summary>
+		/// Cached name for the '_textHoverTipContainer' field.
+		/// </summary>
 		public static readonly StringName _textHoverTipContainer = "_textHoverTipContainer";
 
+		/// <summary>
+		/// Cached name for the '_cardHoverTipContainer' field.
+		/// </summary>
 		public static readonly StringName _cardHoverTipContainer = "_cardHoverTipContainer";
 
+		/// <summary>
+		/// Cached name for the '_owner' field.
+		/// </summary>
 		public static readonly StringName _owner = "_owner";
 
+		/// <summary>
+		/// Cached name for the '_followOwner' field.
+		/// </summary>
 		public static readonly StringName _followOwner = "_followOwner";
 
+		/// <summary>
+		/// Cached name for the '_followOffset' field.
+		/// </summary>
 		public static readonly StringName _followOffset = "_followOffset";
 
+		/// <summary>
+		/// Cached name for the '_extraOffset' field.
+		/// </summary>
 		public static readonly StringName _extraOffset = "_extraOffset";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
 
+	/// <summary>
+	/// Blocks hover tips from displaying. Useful for situations such as while you are using card/potion targeting
+	/// WARNING: Be very careful when modifying this!!! Make sure that if you set it to true, that you set it back to false!
+	/// </summary>
 	public static bool shouldBlockHoverTips = false;
 
 	private static readonly StringName _cardHoverTipContainerStr = new StringName("cardHoverTipContainer");
@@ -105,25 +178,28 @@ public class NHoverTipSet : Control
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlyArray<string>(new string[3] { "res://scenes/ui/hover_tip.tscn", "res://scenes/ui/hover_tip_set.tscn", "res://materials/ui/hover_tip_debuff.tres" });
 
+	/// <summary>
+	/// Allows the HoverTip to follow the node it's tied to.
+	/// </summary>
 	public void SetFollowOwner()
 	{
 		_followOwner = true;
 		_followOffset = _owner.GlobalPosition - base.GlobalPosition;
 	}
 
-	public static NHoverTipSet CreateAndShow(Control owner, IHoverTip hoverTip, HoverTipAlignment alignment = HoverTipAlignment.None)
+	public static NHoverTipSet? CreateAndShow(Control owner, IHoverTip hoverTip, HoverTipAlignment alignment = HoverTipAlignment.None)
 	{
 		return CreateAndShow(owner, new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(hoverTip), alignment);
 	}
 
-	public static NHoverTipSet CreateAndShow(Control owner, IEnumerable<IHoverTip> hoverTips, HoverTipAlignment alignment = HoverTipAlignment.None)
+	public static NHoverTipSet? CreateAndShow(Control owner, IEnumerable<IHoverTip> hoverTips, HoverTipAlignment alignment = HoverTipAlignment.None)
 	{
-		NHoverTipSet nHoverTipSet = PreloadManager.Cache.GetScene("res://scenes/ui/hover_tip_set.tscn").Instantiate<NHoverTipSet>(PackedScene.GenEditState.Disabled);
-		HoverTipsContainer.AddChildSafely(nHoverTipSet);
 		if (shouldBlockHoverTips)
 		{
-			return nHoverTipSet;
+			return null;
 		}
+		NHoverTipSet nHoverTipSet = PreloadManager.Cache.GetScene("res://scenes/ui/hover_tip_set.tscn").Instantiate<NHoverTipSet>(PackedScene.GenEditState.Disabled);
+		HoverTipsContainer.AddChildSafely(nHoverTipSet);
 		_activeHoverTips.Add(owner, nHoverTipSet);
 		nHoverTipSet.Init(owner, hoverTips);
 		if (NGame.IsDebugHidingHoverTips)
@@ -237,6 +313,12 @@ public class NHoverTipSet : Control
 		}
 	}
 
+	/// <summary>
+	/// Sets the position of the hover tip relative to the given node based on the alignment set.
+	/// </summary>
+	/// <param name="node">The control node that we are aligning the hover tip to</param>.
+	/// <param name="alignment">Dictates the position of the hover tip relative to the given node.
+	/// ie: top left side of the node, Top right side of the node</param>
 	public void SetAlignment(Control node, HoverTipAlignment alignment)
 	{
 		if (alignment != HoverTipAlignment.None)
@@ -265,6 +347,11 @@ public class NHoverTipSet : Control
 		CorrectHorizontalOverflow();
 	}
 
+	/// <summary>
+	/// Align the hover tip for the given relic. We separate it because there are special positioning
+	/// rules for relics.
+	/// </summary>
+	/// <param name="relic">The relic we are aligning too</param>
 	public void SetAlignmentForRelic(NRelic relic)
 	{
 		HoverTipAlignment hoverTipAlignment = HoverTip.GetHoverTipAlignment(relic);
@@ -300,6 +387,11 @@ public class NHoverTipSet : Control
 		}
 	}
 
+	/// <summary>
+	/// Positions the hovertips given a Card. We separate it because there are special positioning
+	/// rules for cards.
+	/// </summary>
+	/// <param name="holder">The holder that we are aligning to</param>
 	public void SetAlignmentForCardHolder(NCardHolder holder)
 	{
 		HoverTipAlignment hoverTipAlignment = HoverTip.GetHoverTipAlignment(holder);
@@ -383,11 +475,21 @@ public class NHoverTipSet : Control
 		}
 	}
 
+	/// <summary>
+	/// Adds a static offset to a HoverTip when it's following a node.
+	/// Used when the default offset doesn't have enough padding.
+	/// See NLabPotionHolder for example.
+	/// </summary>
 	public void SetExtraFollowOffset(Vector2 offset)
 	{
 		_extraOffset = offset;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -430,6 +532,7 @@ public class NHoverTipSet : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -531,6 +634,7 @@ public class NHoverTipSet : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -585,6 +689,7 @@ public class NHoverTipSet : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -621,6 +726,7 @@ public class NHoverTipSet : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -670,6 +776,11 @@ public class NHoverTipSet : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -685,6 +796,7 @@ public class NHoverTipSet : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -697,6 +809,7 @@ public class NHoverTipSet : Control
 		info.AddProperty(PropertyName._extraOffset, Variant.From(in _extraOffset));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

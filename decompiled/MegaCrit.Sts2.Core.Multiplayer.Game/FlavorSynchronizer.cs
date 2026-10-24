@@ -13,6 +13,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game;
 
+/// <summary>
+/// Handles miscellaneous multiplayer messages that are for game feel and fun.
+/// </summary>
 public class FlavorSynchronizer : IDisposable
 {
 	private const ulong _pingDebounceMsec = 1000uL;
@@ -88,7 +91,7 @@ public class FlavorSynchronizer : IDisposable
 			}
 			string text = (player.Creature.IsDead ? "dead" : "alive");
 			LocString locString = new LocString("characters", player.Character.Id.Entry + ".banter." + text + ".endTurnPing");
-			value = NSpeechBubbleVfx.Create(locString.GetFormattedText(), player.Creature, 1.5);
+			value = NSpeechBubbleVfx.Create(locString.GetFormattedText(), player.Creature, 1.5, player.Character.SpeechBubbleColor);
 			NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(value);
 			_endTurnPingDialogues[player] = value;
 		}

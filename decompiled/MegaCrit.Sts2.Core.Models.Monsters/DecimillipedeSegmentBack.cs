@@ -1,12 +1,15 @@
 using MegaCrit.Sts2.Core.Nodes.Animation;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
+/// <summary>
+/// Monster class exists to connect this to the correct monster visual scene.
+/// All logic lives in the <see cref="T:MegaCrit.Sts2.Core.Models.Monsters.DecimillipedeSegment" />.
+/// </summary>
 public sealed class DecimillipedeSegmentBack : DecimillipedeSegment
 {
-	protected override void SegmentAttack()
+	public override void SegmentAttack()
 	{
-		(NCombatRoom.Instance?.GetCreatureNode(base.Creature))?.GetSpecialNode<NDecimillipedeSegmentDriver>("%Visuals/SegmentDriver")?.AttackShake();
+		base.Creature.GetCreatureNode()?.GetSpecialNode<NDecimillipedeSegmentDriver>("%Visuals/SegmentDriver")?.AttackShake();
 	}
 }

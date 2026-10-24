@@ -14,32 +14,76 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NSnappingJaxfruitVfx.cs")]
 public class NSnappingJaxfruitVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationStart' method.
+		/// </summary>
+		public static readonly StringName OnAnimationStart = "OnAnimationStart";
+
+		/// <summary>
+		/// Cached name for the 'StartCast' method.
+		/// </summary>
 		public static readonly StringName StartCast = "StartCast";
 
+		/// <summary>
+		/// Cached name for the 'ResetCast' method.
+		/// </summary>
 		public static readonly StringName ResetCast = "ResetCast";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_projectileBone' field.
+		/// </summary>
 		public static readonly StringName _projectileBone = "_projectileBone";
 
+		/// <summary>
+		/// Cached name for the '_targetBone' field.
+		/// </summary>
 		public static readonly StringName _targetBone = "_targetBone";
 
+		/// <summary>
+		/// Cached name for the '_glowParticles' field.
+		/// </summary>
 		public static readonly StringName _glowParticles = "_glowParticles";
 
+		/// <summary>
+		/// Cached name for the '_blobParticles' field.
+		/// </summary>
 		public static readonly StringName _blobParticles = "_blobParticles";
 
+		/// <summary>
+		/// Cached name for the '_trail' field.
+		/// </summary>
 		public static readonly StringName _trail = "_trail";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -67,13 +111,13 @@ public class NSnappingJaxfruitVfx : Node
 		_parent = GetParent<Node2D>();
 		_animController = new MegaSprite(_parent);
 		_animController.ConnectAnimationEvent(Callable.From<GodotObject, GodotObject, GodotObject, GodotObject>(OnAnimationEvent));
+		_animController.ConnectAnimationStarted(Callable.From<GodotObject, GodotObject, GodotObject>(OnAnimationStart));
 		_projectileBone = _parent.GetNode<Node2D>("ProjectileAttachBone");
 		_targetBone = _parent.GetNode<Node2D>("TargetBone");
 		_glowParticles = _parent.GetNode<GpuParticles2D>("ProjectileAttachBone/GlowParticles");
 		_blobParticles = _parent.GetNode<GpuParticles2D>("ProjectileAttachBone/BlobParticles");
 		_trail = _parent.GetNode<NBasicTrail>("ProjectileAttachBone/Trail");
 		ResetCast();
-		_animController.GetAnimationState().SetAnimation("charged_loop");
 	}
 
 	public void SetTarget(Creature? target)
@@ -97,6 +141,14 @@ public class NSnappingJaxfruitVfx : Node
 		}
 	}
 
+	private void OnAnimationStart(GodotObject spineSprite, GodotObject animationState, GodotObject trackEntry)
+	{
+		if (new MegaAnimationState(animationState).GetCurrentAnimationName() != "attack")
+		{
+			ResetCast();
+		}
+	}
+
 	private void StartCast()
 	{
 		NCreature nCreature = NCombatRoom.Instance?.GetCreatureNode(_target);
@@ -117,10 +169,15 @@ public class NSnappingJaxfruitVfx : Node
 		_projectileBone.Visible = false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(4);
+		List<MethodInfo> list = new List<MethodInfo>(5);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnAnimationEvent, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -129,11 +186,18 @@ public class NSnappingJaxfruitVfx : Node
 			new PropertyInfo(Variant.Type.Object, "___", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
 			new PropertyInfo(Variant.Type.Object, "spineEvent", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.OnAnimationStart, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Object, "spineSprite", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
+			new PropertyInfo(Variant.Type.Object, "animationState", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false),
+			new PropertyInfo(Variant.Type.Object, "trackEntry", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Object"), exported: false)
+		}, null));
 		list.Add(new MethodInfo(MethodName.StartCast, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ResetCast, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -146,6 +210,12 @@ public class NSnappingJaxfruitVfx : Node
 		if (method == MethodName.OnAnimationEvent && args.Count == 4)
 		{
 			OnAnimationEvent(VariantUtils.ConvertTo<GodotObject>(in args[0]), VariantUtils.ConvertTo<GodotObject>(in args[1]), VariantUtils.ConvertTo<GodotObject>(in args[2]), VariantUtils.ConvertTo<GodotObject>(in args[3]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.OnAnimationStart && args.Count == 3)
+		{
+			OnAnimationStart(VariantUtils.ConvertTo<GodotObject>(in args[0]), VariantUtils.ConvertTo<GodotObject>(in args[1]), VariantUtils.ConvertTo<GodotObject>(in args[2]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -164,6 +234,7 @@ public class NSnappingJaxfruitVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -172,6 +243,10 @@ public class NSnappingJaxfruitVfx : Node
 			return true;
 		}
 		if (method == MethodName.OnAnimationEvent)
+		{
+			return true;
+		}
+		if (method == MethodName.OnAnimationStart)
 		{
 			return true;
 		}
@@ -186,6 +261,7 @@ public class NSnappingJaxfruitVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -222,6 +298,7 @@ public class NSnappingJaxfruitVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -258,6 +335,11 @@ public class NSnappingJaxfruitVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -271,6 +353,7 @@ public class NSnappingJaxfruitVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -283,6 +366,7 @@ public class NSnappingJaxfruitVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

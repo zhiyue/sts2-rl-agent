@@ -10,12 +10,10 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.Events.Custom.CrystalSphereEvent.CrystalSphereItems;
-using MegaCrit.Sts2.Core.Factories;
 using MegaCrit.Sts2.Core.Helpers;
-using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Events.Custom.CrystalSphere;
 using MegaCrit.Sts2.Core.Random;
-using MegaCrit.Sts2.Core.Rewards;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Events.Custom.CrystalSphereEvent;
 
@@ -40,9 +38,16 @@ public class CrystalSphereMinigame
 
 	public CrystalSphereCell[,] cells;
 
+	/// <summary>
+	/// Set of items on the grid
+	/// </summary>
 	private readonly List<CrystalSphereItem> _items = new List<CrystalSphereItem>();
 
-	private readonly List<Reward> _rewards = new List<Reward>();
+	/// <summary>
+	/// Items revealed by the player.
+	/// Rewards for these items are given to the player once the minigame is completed
+	/// </summary>
+	private readonly List<CrystalSphereItem> _revealed = new List<CrystalSphereItem>();
 
 	public Rng Rng { get; private set; }
 
@@ -69,8 +74,15 @@ public class CrystalSphereMinigame
 
 	public IReadOnlyList<CrystalSphereItem> Items => _items;
 
+	/// <summary>
+	/// The cell that we are currently hovered over.
+	/// </summary>
 	private CrystalSphereCell? HoveredCell { get; set; }
 
+	/// <summary>
+	/// The cells that are highlighted on the board. This is separate from HoveredCell
+	/// because we can highlight multiple cells at once depending on the tool
+	/// </summary>
 	private List<CrystalSphereCell> HighlightedCells { get; set; } = new List<CrystalSphereCell>();
 
 	public event Action? DivinationCountChanged;
@@ -122,9 +134,12 @@ public class CrystalSphereMinigame
 		CrystalSphereTool = CrystalSphereToolType.Big;
 	}
 
+	/// <summary>
+	/// Ends the minigames early. Used if the event is force closed via save/quit or closing the application
+	/// </summary>
 	public void ForceMinigameEnd()
 	{
-		_rewards.Clear();
+		_revealed.Clear();
 		if (!_completionSource.Task.IsCompleted)
 		{
 			_completionSource.SetCanceled();
@@ -144,45 +159,52 @@ public class CrystalSphereMinigame
 	private bool PopulateItems()
 	{
 		bool flag = true;
-		CrystalSphereItem crystalSphereItem = new CrystalSphereRelic(this);
+		CrystalSphereItem crystalSphereItem = new CrystalSphereRelic();
 		flag = flag && crystalSphereItem.PlaceItem(this);
 		_items.Add(crystalSphereItem);
-		IEnumerable<PotionModel> potionOptions = PotionFactory.GetPotionOptions(_owner, ModelDb.AllPotions.Where((PotionModel p) => p.Rarity == PotionRarity.Common));
-		for (int num = 0; num < 2; num++)
+		for (int i = 0; i < 2; i++)
 		{
-			CrystalSphereItem crystalSphereItem2 = new CrystalSpherePotion(this, Rng.NextItem(potionOptions).ToMutable());
+			CrystalSphereItem crystalSphereItem2 = new CrystalSpherePotion(PotionRarity.Common);
 			flag = flag && crystalSphereItem2.PlaceItem(this);
 			_items.Add(crystalSphereItem2);
 		}
-		IEnumerable<PotionModel> potionOptions2 = PotionFactory.GetPotionOptions(_owner, ModelDb.AllPotions.Where((PotionModel p) => p.Rarity == PotionRarity.Rare));
-		CrystalSphereItem crystalSphereItem3 = new CrystalSpherePotion(this, Rng.NextItem(potionOptions2).ToMutable());
+		CrystalSphereItem crystalSphereItem3 = new CrystalSpherePotion(PotionRarity.Rare);
 		flag = flag && crystalSphereItem3.PlaceItem(this);
 		_items.Add(crystalSphereItem3);
-		CrystalSphereItem crystalSphereItem4 = new CrystalSphereCardReward(this, CardRarity.Common, _owner);
+		CrystalSphereItem crystalSphereItem4 = new CrystalSphereCardReward(CardRarity.Common, _owner);
 		flag = flag && crystalSphereItem4.PlaceItem(this);
 		_items.Add(crystalSphereItem4);
-		CrystalSphereItem crystalSphereItem5 = new CrystalSphereCardReward(this, CardRarity.Uncommon, _owner);
+		CrystalSphereItem crystalSphereItem5 = new CrystalSphereCardReward(CardRarity.Uncommon, _owner);
 		flag = flag && crystalSphereItem5.PlaceItem(this);
 		_items.Add(crystalSphereItem5);
-		CrystalSphereItem crystalSphereItem6 = new CrystalSphereCardReward(this, CardRarity.Rare, _owner);
+		CrystalSphereItem crystalSphereItem6 = new CrystalSphereCardReward(CardRarity.Rare, _owner);
 		flag = flag && crystalSphereItem6.PlaceItem(this);
 		_items.Add(crystalSphereItem6);
 		CrystalSphereItem crystalSphereItem7 = new CrystalSphereCurse();
 		flag = flag && crystalSphereItem7.PlaceItem(this);
 		_items.Add(crystalSphereItem7);
-		for (int num2 = 0; num2 < 5; num2++)
+		for (int j = 0; j < 5; j++)
 		{
-			CrystalSphereItem crystalSphereItem8 = new CrystalSphereGold(this, isBig: false);
+			CrystalSphereItem crystalSphereItem8 = new CrystalSphereGold(isBig: false);
 			flag = flag && crystalSphereItem8.PlaceItem(this);
 			_items.Add(crystalSphereItem8);
 		}
-		for (int num3 = 0; num3 < 2; num3++)
+		for (int k = 0; k < 2; k++)
 		{
-			CrystalSphereItem crystalSphereItem9 = new CrystalSphereGold(this, isBig: true);
+			CrystalSphereItem crystalSphereItem9 = new CrystalSphereGold(isBig: true);
 			flag = flag && crystalSphereItem9.PlaceItem(this);
 			_items.Add(crystalSphereItem9);
 		}
+		foreach (CrystalSphereItem item in _items)
+		{
+			item.Revealed += OnItemRevealed;
+		}
 		return flag;
+	}
+
+	private void OnItemRevealed(CrystalSphereItem item)
+	{
+		_revealed.Add(item);
 	}
 
 	public void SetHoveredCell(CrystalSphereCell cell)
@@ -255,6 +277,11 @@ public class CrystalSphereMinigame
 		}
 	}
 
+	/// <summary>
+	/// Decreases the FogValue of a CrystalSphereCell at the given x,y coordinate by amount
+	/// </summary>
+	/// <param name="x">X coordinate the cell we want to affect is at</param>
+	/// <param name="y">Y coordinate the cell we want to affect is at</param>
 	private async Task ClearCell(int x, int y)
 	{
 		if (x < 0 || x >= GridSize.X)
@@ -280,6 +307,11 @@ public class CrystalSphereMinigame
 		}
 	}
 
+	/// <summary>
+	/// Returns if all the cells an item occupies are visible
+	/// </summary>
+	/// <param name="item">The item we are checking is fully visible</param>
+	/// <returns></returns>
 	private bool AreAllOccupiedCellsClear(CrystalSphereItem item)
 	{
 		for (int i = 0; i < item.Size.X; i++)
@@ -297,15 +329,10 @@ public class CrystalSphereMinigame
 		return true;
 	}
 
-	public void AddReward(Reward reward)
-	{
-		_rewards.Add(reward);
-	}
-
 	private async Task CompleteMinigame()
 	{
 		await Cmd.Wait(0.75f);
-		await RewardsCmd.OfferCustom(_owner, _rewards);
+		await RunManager.Instance.OneOffSynchronizer.DoLocalCrystalSphereRewards(_owner, Rng, _revealed);
 		this.Finished?.Invoke();
 	}
 

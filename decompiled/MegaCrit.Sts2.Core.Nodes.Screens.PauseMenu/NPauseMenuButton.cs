@@ -13,40 +13,91 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.PauseMenu;
 [ScriptPath("res://src/Core/Nodes/Screens/PauseMenu/NPauseMenuButton.cs")]
 public class NPauseMenuButton : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnDisable' method.
+		/// </summary>
 		public new static readonly StringName OnDisable = "OnDisable";
 
+		/// <summary>
+		/// Cached name for the 'OnEnable' method.
+		/// </summary>
 		public new static readonly StringName OnEnable = "OnEnable";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderS' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderS = "UpdateShaderS";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderV' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderV = "UpdateShaderV";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_image' field.
+		/// </summary>
 		public static readonly StringName _image = "_image";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -85,6 +136,9 @@ public class NPauseMenuButton : NButton
 		_hsv = (ShaderMaterial)_image.Material;
 	}
 
+	/// <summary>
+	/// Hover. Brighten a lil.
+	/// </summary>
 	protected override void OnFocus()
 	{
 		base.OnFocus();
@@ -96,6 +150,9 @@ public class NPauseMenuButton : NButton
 		_tween.TweenProperty(_label, "theme_override_colors/font_color", StsColors.gold, 0.05000000074505806);
 	}
 
+	/// <summary>
+	/// Unhover
+	/// </summary>
 	protected override void OnUnfocus()
 	{
 		base.OnUnfocus();
@@ -143,6 +200,11 @@ public class NPauseMenuButton : NButton
 		_hsv.SetShaderParameter(_v, value);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -164,6 +226,7 @@ public class NPauseMenuButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -218,6 +281,7 @@ public class NPauseMenuButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -256,6 +320,7 @@ public class NPauseMenuButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -287,6 +352,7 @@ public class NPauseMenuButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -323,6 +389,11 @@ public class NPauseMenuButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -336,6 +407,7 @@ public class NPauseMenuButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -347,6 +419,7 @@ public class NPauseMenuButton : NButton
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

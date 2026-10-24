@@ -101,6 +101,11 @@ public class DynamicVarSet : IReadOnlyDictionary<string, DynamicVar>, IEnumerabl
 		}
 	}
 
+	/// <summary>
+	/// Initialize this DynamicVarSet with a model that "owns" the vars.
+	/// This must be called in a separate method, because some DynamicVars are dependent on the model's DynamicVarSet,
+	/// so we can't call this until the model's DynamicVarSet property has been set.
+	/// </summary>
 	public void InitializeWithOwner(AbstractModel model)
 	{
 		foreach (DynamicVar value in Values)
@@ -134,6 +139,9 @@ public class DynamicVarSet : IReadOnlyDictionary<string, DynamicVar>, IEnumerabl
 		}
 	}
 
+	/// <summary>
+	/// Recalculate all calculated vars to determine if any of the dependent values have been upgraded or enchanted.
+	/// </summary>
 	public void RecalculateForUpgradeOrEnchant()
 	{
 		foreach (CalculatedVar item in Values.OfType<CalculatedVar>())

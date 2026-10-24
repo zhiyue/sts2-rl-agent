@@ -14,45 +14,107 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
+/// <summary>
+/// A custom Dropdown component class.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/GodotExtensions/NDropdown.cs")]
 public class NDropdown : NClickableControl
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NClickableControl.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public new static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'OnVisibilityChange' method.
+		/// </summary>
+		public static readonly StringName OnVisibilityChange = "OnVisibilityChange";
+
+		/// <summary>
+		/// Cached name for the 'ClearDropdownItems' method.
+		/// </summary>
 		public static readonly StringName ClearDropdownItems = "ClearDropdownItems";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'OnDismisserClicked' method.
+		/// </summary>
 		public static readonly StringName OnDismisserClicked = "OnDismisserClicked";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OpenDropdown' method.
+		/// </summary>
 		public static readonly StringName OpenDropdown = "OpenDropdown";
 
+		/// <summary>
+		/// Cached name for the 'CloseDropdown' method.
+		/// </summary>
 		public static readonly StringName CloseDropdown = "CloseDropdown";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NClickableControl.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_dropdownContainer' field.
+		/// </summary>
 		public static readonly StringName _dropdownContainer = "_dropdownContainer";
 
+		/// <summary>
+		/// Cached name for the '_dropdownItems' field.
+		/// </summary>
 		public static readonly StringName _dropdownItems = "_dropdownItems";
 
+		/// <summary>
+		/// Cached name for the '_dismisser' field.
+		/// </summary>
 		public static readonly StringName _dismisser = "_dismisser";
 
+		/// <summary>
+		/// Cached name for the '_currentOptionLabel' field.
+		/// </summary>
 		public static readonly StringName _currentOptionLabel = "_currentOptionLabel";
 
+		/// <summary>
+		/// Cached name for the '_currentOptionHighlight' field.
+		/// </summary>
 		public static readonly StringName _currentOptionHighlight = "_currentOptionHighlight";
 
+		/// <summary>
+		/// Cached name for the '_isHovered' field.
+		/// </summary>
 		public new static readonly StringName _isHovered = "_isHovered";
 
+		/// <summary>
+		/// Cached name for the '_isOpen' field.
+		/// </summary>
 		public static readonly StringName _isOpen = "_isOpen";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NClickableControl.SignalName
 	{
 	}
@@ -89,8 +151,20 @@ public class NDropdown : NClickableControl
 		_dropdownItems = _dropdownContainer.GetNode<Control>("VBoxContainer");
 		_dismisser = GetNode<NButton>("%Dismisser");
 		_dismisser.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OnDismisserClicked));
+		Connect(CanvasItem.SignalName.VisibilityChanged, Callable.From(OnVisibilityChange));
 	}
 
+	private void OnVisibilityChange()
+	{
+		if (!IsVisibleInTree() && _isOpen)
+		{
+			CloseDropdown();
+		}
+	}
+
+	/// <summary>
+	/// Removes any junk that's already there
+	/// </summary>
 	protected void ClearDropdownItems()
 	{
 		foreach (Node child in _dropdownItems.GetChildren())
@@ -102,13 +176,19 @@ public class NDropdown : NClickableControl
 
 	public override void _Input(InputEvent inputEvent)
 	{
-		if (IsVisibleInTree() && _isEnabled && !NDevConsole.Instance.Visible)
+		if (!IsVisibleInTree() || !_isEnabled || NDevConsole.Instance.Visible)
 		{
-			Control control = GetViewport().GuiGetFocusOwner();
+			return;
+		}
+		Viewport viewport = GetViewport();
+		if (viewport != null)
+		{
+			Control control = viewport.GuiGetFocusOwner();
 			bool flag = ((control is TextEdit || control is LineEdit) ? true : false);
-			if (!flag && inputEvent.IsActionPressed(MegaInput.cancel))
+			if (!flag && inputEvent.IsActionPressed(MegaInput.cancel) && _isOpen)
 			{
 				CloseDropdown();
+				viewport.SetInputAsHandled();
 			}
 		}
 	}
@@ -137,7 +217,7 @@ public class NDropdown : NClickableControl
 		_dropdownContainer.Visible = true;
 		_dismisser.Visible = true;
 		_isOpen = true;
-		GetParent().MoveChild(this, GetParent().GetChildCount());
+		GetParent().MoveChildSafely(this, GetParent().GetChildCount());
 		List<NDropdownItem> list = _dropdownItems.GetChildren().OfType<NDropdownItem>().ToList();
 		for (int i = 0; i < list.Count; i++)
 		{
@@ -151,6 +231,10 @@ public class NDropdown : NClickableControl
 		list.FirstOrDefault()?.TryGrabFocus();
 	}
 
+	/// <summary>
+	/// Closes this dropdown. The name is verbose because it sounds generic without it.
+	/// Called when we select an option or click outside the bounds of the dropdown.
+	/// </summary>
 	protected void CloseDropdown()
 	{
 		_dismisser.Visible = false;
@@ -159,12 +243,18 @@ public class NDropdown : NClickableControl
 		this.TryGrabFocus();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(8);
+		List<MethodInfo> list = new List<MethodInfo>(9);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ConnectSignals, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.OnVisibilityChange, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ClearDropdownItems, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Input, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -180,6 +270,7 @@ public class NDropdown : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -192,6 +283,12 @@ public class NDropdown : NClickableControl
 		if (method == MethodName.ConnectSignals && args.Count == 0)
 		{
 			ConnectSignals();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.OnVisibilityChange && args.Count == 0)
+		{
+			OnVisibilityChange();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -234,6 +331,7 @@ public class NDropdown : NClickableControl
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -242,6 +340,10 @@ public class NDropdown : NClickableControl
 			return true;
 		}
 		if (method == MethodName.ConnectSignals)
+		{
+			return true;
+		}
+		if (method == MethodName.OnVisibilityChange)
 		{
 			return true;
 		}
@@ -272,6 +374,7 @@ public class NDropdown : NClickableControl
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -313,6 +416,7 @@ public class NDropdown : NClickableControl
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -354,6 +458,11 @@ public class NDropdown : NClickableControl
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -368,6 +477,7 @@ public class NDropdown : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -381,6 +491,7 @@ public class NDropdown : NClickableControl
 		info.AddProperty(PropertyName._isOpen, Variant.From(in _isOpen));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

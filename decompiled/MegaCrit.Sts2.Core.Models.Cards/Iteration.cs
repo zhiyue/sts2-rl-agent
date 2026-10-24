@@ -19,7 +19,8 @@ public sealed class Iteration : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<IterationPower>(base.Owner.Creature, base.DynamicVars["IterationPower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<IterationPower>(choiceContext, base.Owner.Creature, base.DynamicVars["IterationPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

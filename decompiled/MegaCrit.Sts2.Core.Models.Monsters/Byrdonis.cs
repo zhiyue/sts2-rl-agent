@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -16,15 +17,15 @@ public sealed class Byrdonis : MonsterModel
 {
 	private const string _angryTrigger = "Angry";
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 99, 91);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 90, 81);
 
-	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 99, 94);
+	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 90, 84);
 
 	private static int PeckDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 4, 3);
 
 	private static int PeckRepeat => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 3, 3);
 
-	private static int SwoopDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 18, 16);
+	private static int SwoopDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 19, 17);
 
 	public override string DeathSfx => "event:/sfx/enemy/enemy_attacks/byrdonis/byrdonis_die";
 
@@ -33,7 +34,7 @@ public sealed class Byrdonis : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<TerritorialPower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<TerritorialPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()

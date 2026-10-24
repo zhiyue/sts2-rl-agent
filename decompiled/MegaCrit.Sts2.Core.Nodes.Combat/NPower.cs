@@ -18,50 +18,116 @@ namespace MegaCrit.Sts2.Core.Nodes.Combat;
 [ScriptPath("res://src/Core/Nodes/Combat/NPower.cs")]
 public class NPower : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'Reload' method.
+		/// </summary>
 		public static readonly StringName Reload = "Reload";
 
+		/// <summary>
+		/// Cached name for the 'OnPulsingStarted' method.
+		/// </summary>
 		public static readonly StringName OnPulsingStarted = "OnPulsingStarted";
 
+		/// <summary>
+		/// Cached name for the 'OnPulsingStopped' method.
+		/// </summary>
 		public static readonly StringName OnPulsingStopped = "OnPulsingStopped";
 
+		/// <summary>
+		/// Cached name for the 'RefreshAmount' method.
+		/// </summary>
 		public static readonly StringName RefreshAmount = "RefreshAmount";
 
+		/// <summary>
+		/// Cached name for the 'OnDisplayAmountChanged' method.
+		/// </summary>
 		public static readonly StringName OnDisplayAmountChanged = "OnDisplayAmountChanged";
 
+		/// <summary>
+		/// Cached name for the 'FlashPower' method.
+		/// </summary>
 		public static readonly StringName FlashPower = "FlashPower";
 
+		/// <summary>
+		/// Cached name for the 'OnHovered' method.
+		/// </summary>
 		public static readonly StringName OnHovered = "OnHovered";
 
+		/// <summary>
+		/// Cached name for the 'OnUnhovered' method.
+		/// </summary>
 		public static readonly StringName OnUnhovered = "OnUnhovered";
 
+		/// <summary>
+		/// Cached name for the 'SubscribeToModelEvents' method.
+		/// </summary>
 		public static readonly StringName SubscribeToModelEvents = "SubscribeToModelEvents";
 
+		/// <summary>
+		/// Cached name for the 'UnsubscribeFromModelEvents' method.
+		/// </summary>
 		public static readonly StringName UnsubscribeFromModelEvents = "UnsubscribeFromModelEvents";
 
+		/// <summary>
+		/// Cached name for the 'OnPowerRemoved' method.
+		/// </summary>
 		public static readonly StringName OnPowerRemoved = "OnPowerRemoved";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Container' property.
+		/// </summary>
 		public static readonly StringName Container = "Container";
 
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 
+		/// <summary>
+		/// Cached name for the '_amountLabel' field.
+		/// </summary>
 		public static readonly StringName _amountLabel = "_amountLabel";
 
+		/// <summary>
+		/// Cached name for the '_powerFlash' field.
+		/// </summary>
 		public static readonly StringName _powerFlash = "_powerFlash";
 
+		/// <summary>
+		/// Cached name for the '_animInTween' field.
+		/// </summary>
 		public static readonly StringName _animInTween = "_animInTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -164,7 +230,7 @@ public class NPower : Control
 	{
 		if (_model != null)
 		{
-			_amountLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, Model.AmountLabelColor);
+			_amountLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, Model.AmountLabelColor);
 			_amountLabel.SetTextAutoSize((Model.StackType == PowerStackType.Counter) ? Model.DisplayAmount.ToString() : string.Empty);
 		}
 		else
@@ -254,6 +320,11 @@ public class NPower : Control
 		base.MouseFilter = MouseFilterEnum.Stop;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -275,6 +346,7 @@ public class NPower : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -365,6 +437,7 @@ public class NPower : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -427,6 +500,7 @@ public class NPower : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -458,6 +532,7 @@ public class NPower : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -489,6 +564,11 @@ public class NPower : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -501,6 +581,7 @@ public class NPower : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -512,6 +593,7 @@ public class NPower : Control
 		info.AddProperty(PropertyName._animInTween, Variant.From(in _animInTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -16,7 +16,7 @@ public sealed class CreativeAiPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
 		if (player != base.Owner.Player)
 		{
@@ -29,7 +29,7 @@ public sealed class CreativeAiPower : PowerModel
 				select c, 1, player.RunState.Rng.CombatCardGeneration).FirstOrDefault();
 			if (cardModel != null)
 			{
-				await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, addedByPlayer: true);
+				await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, base.Owner.Player);
 			}
 		}
 	}

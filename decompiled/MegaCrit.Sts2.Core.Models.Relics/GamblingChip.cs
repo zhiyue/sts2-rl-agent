@@ -15,7 +15,7 @@ public sealed class GamblingChip : RelicModel
 
 	public override async Task AfterPlayerTurnStart(PlayerChoiceContext choiceContext, Player player)
 	{
-		if (player == base.Owner && base.Owner.Creature.CombatState.RoundNumber <= 1)
+		if (player == base.Owner && base.Owner.PlayerCombatState.TurnNumber <= 1)
 		{
 			List<CardModel> list = (await CardSelectCmd.FromHandForDiscard(choiceContext, base.Owner, new CardSelectorPrefs(base.SelectionScreenPrompt, 0, 999999999), null, this)).ToList();
 			if (list.Count != 0)

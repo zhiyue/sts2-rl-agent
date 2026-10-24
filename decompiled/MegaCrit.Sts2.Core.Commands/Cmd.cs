@@ -12,11 +12,26 @@ namespace MegaCrit.Sts2.Core.Commands;
 
 public static class Cmd
 {
+	/// <summary>
+	/// Waits for a specified amount of time.
+	/// This should be used over Task.Delay for all gameplay-related waits because it uses a Godot timer.
+	/// That means, unlike Task.Delay, this will respect timescale (e.g. for hitpause) and lag.
+	/// </summary>
+	/// <param name="seconds">The amount of seconds to wait.</param>
+	/// <param name="ignoreCombatEnd">If combat is about to end and this is false, the wait will be skipped.</param>
 	public static Task Wait(float seconds, bool ignoreCombatEnd = false)
 	{
 		return Wait(seconds, default(CancellationToken), ignoreCombatEnd);
 	}
 
+	/// <summary>
+	/// Waits for a specified amount of time.
+	/// This should be used over Task.Delay for all gameplay-related waits because it uses a Godot timer.
+	/// That means, unlike Task.Delay, this will respect timescale (e.g. for hitpause) and lag.
+	/// </summary>
+	/// <param name="seconds">The amount of seconds to wait.</param>
+	/// <param name="cancelToken">If the cancel token requests cancellation, the wait will immediately end.</param>
+	/// <param name="ignoreCombatEnd">If combat is about to end and this is false, the wait will be skipped.</param>
 	public static async Task Wait(float seconds, CancellationToken cancelToken, bool ignoreCombatEnd = false)
 	{
 		if (!NonInteractiveMode.IsActive && !(seconds <= 0f) && (NGame.Instance == null || (SaveManager.Instance.PrefsSave.FastMode != FastModeType.Instant && (ignoreCombatEnd || !CombatManager.Instance.IsEnding))))
@@ -46,6 +61,9 @@ public static class Cmd
 		}
 	}
 
+	/// <summary>
+	/// Wait cmd which can specify the exact timings for each FastModeType.
+	/// </summary>
 	public static async Task CustomScaledWait(float fastSeconds, float standardSeconds, bool ignoreCombatEnd = false, CancellationToken cancellationToken = default(CancellationToken))
 	{
 		if (!NonInteractiveMode.IsActive && SaveManager.Instance.PrefsSave.FastMode != FastModeType.Instant && (ignoreCombatEnd || !CombatManager.Instance.IsEnding))

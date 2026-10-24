@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Factories;
 using MegaCrit.Sts2.Core.Helpers;
@@ -117,7 +118,7 @@ public sealed class Trial : EventModel
 		EventOption[] eventOptions = new EventOption[2]
 		{
 			new EventOption(this, Accept, "TRIAL.pages.REJECT.options.ACCEPT"),
-			new EventOption(this, DoubleDown, "TRIAL.pages.REJECT.options.DOUBLE_DOWN", false, true).ThatDoesDamage(9999m)
+			new EventOption(this, DoubleDown, "TRIAL.pages.REJECT.options.DOUBLE_DOWN", false, true).ThatWillKillPlayerIf((Player _) => true)
 		};
 		LocString description = L10NLookup("TRIAL.pages.REJECT.description");
 		SetEventState(description, eventOptions);
@@ -191,11 +192,15 @@ public sealed class Trial : EventModel
 		List<CardModel> list = (await CardSelectCmd.FromDeckForTransformation(prefs: new CardSelectorPrefs(CardSelectorPrefs.TransformSelectionPrompt, 2), player: base.Owner)).ToList();
 		foreach (CardModel item in list)
 		{
-			await CardCmd.TransformToRandom(item, base.Owner.RunState.Rng.Niche, CardPreviewStyle.EventLayout);
+			await CardCmd.TransformToRandom(item, base.Rng, CardPreviewStyle.EventLayout);
 		}
 		SetTrialFinished("TRIAL.pages.NONDESCRIPT_INNOCENT.description");
 	}
 
+	/// <summary>
+	/// Helper function because we create this event's descriptions dynamically
+	/// </summary>
+	/// <param name="trialResultLoc"></param>
 	private void SetTrialFinished(string trialResultLoc)
 	{
 		LocString locString = L10NLookup("TRIAL.trialResult");

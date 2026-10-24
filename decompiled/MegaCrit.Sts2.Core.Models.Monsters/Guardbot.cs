@@ -18,9 +18,9 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Guardbot : MonsterModel
 {
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 22, 21);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 17, 16);
 
-	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 26, 25);
+	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 21, 20);
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Armor;
 

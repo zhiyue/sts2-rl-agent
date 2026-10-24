@@ -8,6 +8,11 @@ using Steamworks;
 
 namespace MegaCrit.Sts2.Core.Entities.Multiplayer;
 
+/// <summary>
+/// Contains information about why a network operation failed, or why we disconnected from a multiplayer session.
+/// Prefer passing this instead of NetError, as this contains more information about the underlying error that might
+/// have been mapped to our NetError.
+/// </summary>
 public readonly struct NetErrorInfo
 {
 	private readonly NetError? _reason;
@@ -106,36 +111,44 @@ public readonly struct NetErrorInfo
 		SelfInitiated = true;
 	}
 
+	/// <summary>
+	/// Returns a disconnection reason mapped from the underlying transport disconnection reason.
+	/// </summary>
 	public NetError GetReason()
 	{
 		if (_reason.HasValue)
 		{
 			return _reason.Value;
 		}
+		NetError result = default(NetError);
 		if (_connectionReason.HasValue)
 		{
 			ConnectionFailureReason value = _connectionReason.Value;
 			switch (value)
 			{
 			case ConnectionFailureReason.None:
-				return NetError.None;
+				result = NetError.None;
+				break;
 			case ConnectionFailureReason.LobbyFull:
-				return NetError.LobbyFull;
+				result = NetError.LobbyFull;
+				break;
 			case ConnectionFailureReason.RunInProgress:
-				return NetError.RunInProgress;
+				result = NetError.RunInProgress;
+				break;
 			case ConnectionFailureReason.NotInSaveGame:
-				return NetError.NotInSaveGame;
+				result = NetError.NotInSaveGame;
+				break;
 			case ConnectionFailureReason.VersionMismatch:
-				return NetError.VersionMismatch;
+				result = NetError.VersionMismatch;
+				break;
 			case ConnectionFailureReason.ModMismatch:
-				return NetError.ModMismatch;
+				result = NetError.ModMismatch;
+				break;
 			default:
-			{
 				global::_003CPrivateImplementationDetails_003E.ThrowSwitchExpressionException(value);
-				NetError result = default(NetError);
-				return result;
+				break;
 			}
-			}
+			return result;
 		}
 		if (_steamReason.HasValue)
 		{
@@ -147,21 +160,50 @@ public readonly struct NetErrorInfo
 		}
 		if (_lobbyEnterResponse.HasValue)
 		{
-			return _lobbyEnterResponse.Value switch
+			EChatRoomEnterResponse value2 = _lobbyEnterResponse.Value;
+			switch (value2)
 			{
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseDoesntExist => NetError.InvalidJoin, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseNotAllowed => NetError.InternalError, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseFull => NetError.LobbyFull, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseError => NetError.UnknownNetworkError, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseBanned => NetError.JoinBlockedByUser, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited => NetError.UnknownNetworkError, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseClanDisabled => NetError.JoinBlockedByUser, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseCommunityBan => NetError.JoinBlockedByUser, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseMemberBlockedYou => NetError.JoinBlockedByUser, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseYouBlockedMember => NetError.JoinBlockedByUser, 
-				EChatRoomEnterResponse.k_EChatRoomEnterResponseRatelimitExceeded => NetError.TryAgainLater, 
-				_ => throw new ArgumentOutOfRangeException(), 
-			};
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseDoesntExist:
+				result = NetError.InvalidJoin;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseNotAllowed:
+				result = NetError.InternalError;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseFull:
+				result = NetError.LobbyFull;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseError:
+				result = NetError.UnknownNetworkError;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseBanned:
+				result = NetError.JoinBlockedByUser;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseLimited:
+				result = NetError.UnknownNetworkError;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseClanDisabled:
+				result = NetError.JoinBlockedByUser;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseCommunityBan:
+				result = NetError.JoinBlockedByUser;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseMemberBlockedYou:
+				result = NetError.JoinBlockedByUser;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseYouBlockedMember:
+				result = NetError.JoinBlockedByUser;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseRatelimitExceeded:
+				result = NetError.RateLimited;
+				break;
+			case EChatRoomEnterResponse.k_EChatRoomEnterResponseSuccess:
+				result = NetError.None;
+				break;
+			default:
+				global::_003CPrivateImplementationDetails_003E.ThrowSwitchExpressionException(value2);
+				break;
+			}
+			return result;
 		}
 		if (_godotError.HasValue)
 		{
@@ -170,6 +212,10 @@ public readonly struct NetErrorInfo
 		throw new InvalidOperationException("Tried to get DisconnectionReason from DisconnectionInfo without any assigned errors");
 	}
 
+	/// <summary>
+	/// Returns a string with more human-readable details about the underlying cause of the disconnection.
+	/// This is suitable for displaying to users as long as platform requirements allow plain error codes in messages.
+	/// </summary>
 	public string GetErrorString()
 	{
 		if (_reason.HasValue)
@@ -218,6 +264,9 @@ public readonly struct NetErrorInfo
 		return "<null>";
 	}
 
+	/// <summary>
+	/// Returns a string that should not be displayed to the user. Use this in debug logs.
+	/// </summary>
 	public override string ToString()
 	{
 		if (_reason.HasValue)

@@ -2,21 +2,34 @@ using System;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
-using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Models.Singleton;
 
+/// <summary>
+/// Scales block gained by enemies.
+/// </summary>
 public class MultiplayerScalingModel : SingletonModel
 {
+	/// <summary>
+	/// The <see cref="T:MegaCrit.Sts2.Core.Runs.RunState" /> that this model is scaling.
+	/// Should always be set when creating a run, so we mark it as non-nullable.
+	/// </summary>
 	private RunState _runState;
 
+	/// <summary>
+	/// The CombatState that this model is scaling.
+	/// Only set when we are in combat.
+	/// </summary>
 	private CombatState? _combatState;
 
 	public override bool ShouldReceiveCombatHooks => true;
 
+	/// <summary>
+	/// Initialize with the specified <see cref="T:MegaCrit.Sts2.Core.Runs.RunState" />.
+	/// </summary>
 	public void Initialize(RunState state)
 	{
 		if (_runState != null)
@@ -52,32 +65,6 @@ public class MultiplayerScalingModel : SingletonModel
 			return 1m;
 		}
 		return (decimal)count * GetMultiplayerScaling(_combatState.Encounter, _runState.CurrentActIndex);
-	}
-
-	public override decimal ModifyPowerAmountGiven(PowerModel power, Creature giver, decimal amount, Creature? target, CardModel? cardSource)
-	{
-		if (target == null)
-		{
-			return amount;
-		}
-		if (target != null && !target.IsPrimaryEnemy && !target.IsSecondaryEnemy)
-		{
-			return amount;
-		}
-		if (!power.ShouldScaleInMultiplayer)
-		{
-			return amount;
-		}
-		int count = _runState.Players.Count;
-		if (count == 1)
-		{
-			return amount;
-		}
-		if ((power is ArtifactPower || power is SlipperyPower || power is PlatingPower || power is BufferPower) ? true : false)
-		{
-			return (decimal)((count - 1) * 2 + 1) * amount;
-		}
-		return amount * (decimal)count * GetMultiplayerScaling(_combatState.Encounter, _runState.CurrentActIndex);
 	}
 
 	public static decimal GetMultiplayerScaling(EncounterModel? encounter, int actIndex)

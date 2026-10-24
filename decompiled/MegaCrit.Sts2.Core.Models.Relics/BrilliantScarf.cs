@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
@@ -52,7 +54,7 @@ public sealed class BrilliantScarf : RelicModel
 		InvokeDisplayAmountChanged();
 	}
 
-	public override bool TryModifyEnergyCostInCombat(CardModel card, decimal originalCost, out decimal modifiedCost)
+	public override bool TryModifyEnergyCostInCombatLate(CardModel card, decimal originalCost, out decimal modifiedCost)
 	{
 		modifiedCost = originalCost;
 		if (!ShouldModifyCost(card))
@@ -74,9 +76,9 @@ public sealed class BrilliantScarf : RelicModel
 		return true;
 	}
 
-	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, CombatState combatState)
+	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side != base.Owner.Creature.Side)
+		if (!participants.Contains(base.Owner.Creature))
 		{
 			return Task.CompletedTask;
 		}
@@ -84,7 +86,7 @@ public sealed class BrilliantScarf : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (!CombatManager.Instance.IsInProgress)
 		{

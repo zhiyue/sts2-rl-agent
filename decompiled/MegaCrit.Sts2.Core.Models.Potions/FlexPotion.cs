@@ -27,6 +27,6 @@ public sealed class FlexPotion : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		decimal baseValue = base.DynamicVars.Strength.BaseValue;
-		await PowerCmd.Apply<FlexPotionPower>(target, baseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<FlexPotionPower>(choiceContext, target, baseValue, base.Owner.Creature, null);
 	}
 }

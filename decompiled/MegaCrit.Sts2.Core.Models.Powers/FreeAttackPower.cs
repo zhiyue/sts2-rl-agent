@@ -11,7 +11,7 @@ public sealed class FreeAttackPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override bool TryModifyEnergyCostInCombat(CardModel card, decimal originalCost, out decimal modifiedCost)
+	public override bool TryModifyEnergyCostInCombatLate(CardModel card, decimal originalCost, out decimal modifiedCost)
 	{
 		modifiedCost = originalCost;
 		if (card.Owner.Creature != base.Owner)

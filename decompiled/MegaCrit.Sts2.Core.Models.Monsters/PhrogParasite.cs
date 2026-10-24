@@ -5,13 +5,13 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
@@ -33,7 +33,7 @@ public sealed class PhrogParasite : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<InfestedPower>(base.Creature, 4m, base.Creature, null);
+		await PowerCmd.Apply<InfestedPower>(new ThrowingPlayerChoiceContext(), base.Creature, 4m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -71,9 +71,9 @@ public sealed class PhrogParasite : MonsterModel
 			NWormyImpactVfx nWormyImpactVfx = NWormyImpactVfx.Create(target);
 			if (nWormyImpactVfx != null)
 			{
-				NCombatRoom.Instance.CombatVfxContainer.AddChildSafely(nWormyImpactVfx);
+				target.GetVfxContainer()?.AddChildSafely(nWormyImpactVfx);
 			}
 		}
-		await CardPileCmd.AddToCombatAndPreview<Infection>(targets, PileType.Discard, 3, addedByPlayer: false);
+		await CardPileCmd.AddToCombatAndPreview<Infection>(targets, PileType.Discard, 3, null);
 	}
 }

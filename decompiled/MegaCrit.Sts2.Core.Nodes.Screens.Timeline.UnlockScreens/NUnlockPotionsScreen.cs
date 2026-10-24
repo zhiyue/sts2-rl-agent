@@ -10,33 +10,74 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Potions;
+using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline.UnlockScreens;
 
+/// <summary>
+/// Unlock screen which reveals which potions you unlocked after slotting an Epoch.
+/// We want to let players know that these potions show up on future runs and
+/// allow them to inspect each potions.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/UnlockScreens/NUnlockPotionsScreen.cs")]
 public class NUnlockPotionsScreen : NUnlockScreen
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NUnlockScreen.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Open' method.
+		/// </summary>
 		public new static readonly StringName Open = "Open";
 
+		/// <summary>
+		/// Cached name for the 'OnScreenClose' method.
+		/// </summary>
 		public new static readonly StringName OnScreenClose = "OnScreenClose";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NUnlockScreen.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
+		public new static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
+
+		/// <summary>
+		/// Cached name for the '_potionRow' field.
+		/// </summary>
 		public static readonly StringName _potionRow = "_potionRow";
 
+		/// <summary>
+		/// Cached name for the '_banner' field.
+		/// </summary>
 		public static readonly StringName _banner = "_banner";
 
+		/// <summary>
+		/// Cached name for the '_potionTween' field.
+		/// </summary>
 		public static readonly StringName _potionTween = "_potionTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NUnlockScreen.SignalName
 	{
 	}
@@ -56,6 +97,18 @@ public class NUnlockPotionsScreen : NUnlockScreen
 	private static readonly Vector2 _potionScale = Vector2.One * 3f;
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(_scenePath);
+
+	public override Control? DefaultFocusedControl
+	{
+		get
+		{
+			if (_potionRow.GetChildCount() != 0)
+			{
+				return _potionRow.GetChild<Control>(_potionRow.GetChildCount() / 2);
+			}
+			return null;
+		}
+	}
 
 	public static NUnlockPotionsScreen Create()
 	{
@@ -93,6 +146,7 @@ public class NUnlockPotionsScreen : NUnlockScreen
 			_potionTween.TweenProperty(nPotionHolder, "modulate", Colors.White, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 			num++;
 		}
+		ActiveScreenContext.Instance.FocusOnDefaultControl();
 	}
 
 	public void SetPotions(IReadOnlyList<PotionModel> potions)
@@ -105,6 +159,11 @@ public class NUnlockPotionsScreen : NUnlockScreen
 		NTimelineScreen.Instance.EnableInput();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -116,6 +175,7 @@ public class NUnlockPotionsScreen : NUnlockScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -157,6 +217,7 @@ public class NUnlockPotionsScreen : NUnlockScreen
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -179,6 +240,7 @@ public class NUnlockPotionsScreen : NUnlockScreen
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -200,9 +262,15 @@ public class NUnlockPotionsScreen : NUnlockScreen
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
+		if (name == PropertyName.DefaultFocusedControl)
+		{
+			value = VariantUtils.CreateFrom<Control>(DefaultFocusedControl);
+			return true;
+		}
 		if (name == PropertyName._potionRow)
 		{
 			value = VariantUtils.CreateFrom(in _potionRow);
@@ -221,6 +289,11 @@ public class NUnlockPotionsScreen : NUnlockScreen
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -228,9 +301,11 @@ public class NUnlockPotionsScreen : NUnlockScreen
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._potionRow, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._banner, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._potionTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.DefaultFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -240,6 +315,7 @@ public class NUnlockPotionsScreen : NUnlockScreen
 		info.AddProperty(PropertyName._potionTween, Variant.From(in _potionTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

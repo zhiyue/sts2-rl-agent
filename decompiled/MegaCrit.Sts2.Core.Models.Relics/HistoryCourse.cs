@@ -14,15 +14,15 @@ public sealed class HistoryCourse : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Event;
 
-	public override async Task AfterPlayerTurnStartEarly(PlayerChoiceContext choiceContext, Player player)
+	public override async Task AfterAutoPrePlayPhaseEntered(PlayerChoiceContext choiceContext, Player player)
 	{
-		if (player != base.Owner || base.Owner.Creature.CombatState.RoundNumber == 1)
+		if (player != base.Owner || base.Owner.PlayerCombatState.TurnNumber == 1)
 		{
 			return;
 		}
 		CardModel cardModel = CombatManager.Instance.History.CardPlaysFinished.LastOrDefault(delegate(CardPlayFinishedEntry e)
 		{
-			bool flag = e.CardPlay.Card.Owner == base.Owner && e.RoundNumber == base.Owner.Creature.CombatState.RoundNumber - 1;
+			bool flag = e.CardPlay.Card.Owner == base.Owner && e.HappenedLastPlayerTurn(base.Owner);
 			bool flag2 = flag;
 			if (flag2)
 			{

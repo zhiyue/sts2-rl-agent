@@ -12,7 +12,7 @@ public sealed class HeistPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override bool IsInstanced => true;
+	public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
 
 	public override Task BeforeDeath(Creature target)
 	{
@@ -24,6 +24,7 @@ public sealed class HeistPower : PowerModel
 		{
 			combatRoom.AddExtraReward(base.Target.Player, new GoldReward(base.Amount, base.Target.Player, wasGoldStolenBack: true));
 		}
+		base.CombatState.RunState.CurrentMapPointHistoryEntry?.GetEntry(base.Target.Player.NetId).MarkLootReturned(base.Amount);
 		return Task.CompletedTask;
 	}
 }

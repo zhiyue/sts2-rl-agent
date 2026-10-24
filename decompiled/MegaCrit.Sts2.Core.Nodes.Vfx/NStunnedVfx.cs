@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.addons.mega_text;
@@ -18,20 +19,46 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NStunnedVfx.cs")]
 public class NStunnedVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_textTween' field.
+		/// </summary>
 		public static readonly StringName _textTween = "_textTween";
+
+		/// <summary>
+		/// Cached name for the '_positionTween' field.
+		/// </summary>
+		public static readonly StringName _positionTween = "_positionTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -45,6 +72,8 @@ public class NStunnedVfx : Node2D
 	private Creature _creature;
 
 	private Tween? _textTween;
+
+	private Tween? _positionTween;
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>("res://scenes/vfx/stunned_vfx.tscn");
 
@@ -64,6 +93,7 @@ public class NStunnedVfx : Node2D
 	public override void _ExitTree()
 	{
 		_textTween?.Kill();
+		_positionTween?.Kill();
 	}
 
 	private async Task StartVfx()
@@ -73,8 +103,9 @@ public class NStunnedVfx : Node2D
 		_textTween.TweenProperty(_label, "modulate:a", 1f, 0.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 		_textTween.TweenInterval(0.5);
 		_textTween.TweenProperty(_label, "modulate:a", 0f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Linear);
-		CreateTween().TweenProperty(_label, "position:y", _label.Position.Y - 100f, 2.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Quart);
-		await ToSignal(_textTween, Tween.SignalName.Finished);
+		_positionTween = CreateTween();
+		_positionTween.TweenProperty(_label, "position:y", _label.Position.Y - 100f, 2.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Quart);
+		await _textTween.AwaitFinished(this);
 		this.QueueFreeSafely();
 	}
 
@@ -93,6 +124,11 @@ public class NStunnedVfx : Node2D
 		return nStunnedVfx;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -102,6 +138,7 @@ public class NStunnedVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -120,6 +157,7 @@ public class NStunnedVfx : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -134,6 +172,7 @@ public class NStunnedVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -147,9 +186,15 @@ public class NStunnedVfx : Node2D
 			_textTween = VariantUtils.ConvertTo<Tween>(in value);
 			return true;
 		}
+		if (name == PropertyName._positionTween)
+		{
+			_positionTween = VariantUtils.ConvertTo<Tween>(in value);
+			return true;
+		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -163,26 +208,40 @@ public class NStunnedVfx : Node2D
 			value = VariantUtils.CreateFrom(in _textTween);
 			return true;
 		}
+		if (name == PropertyName._positionTween)
+		{
+			value = VariantUtils.CreateFrom(in _positionTween);
+			return true;
+		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._label, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._textTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._positionTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 		info.AddProperty(PropertyName._label, Variant.From(in _label));
 		info.AddProperty(PropertyName._textTween, Variant.From(in _textTween));
+		info.AddProperty(PropertyName._positionTween, Variant.From(in _positionTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -194,6 +253,10 @@ public class NStunnedVfx : Node2D
 		if (info.TryGetProperty(PropertyName._textTween, out var value2))
 		{
 			_textTween = value2.As<Tween>();
+		}
+		if (info.TryGetProperty(PropertyName._positionTween, out var value3))
+		{
+			_positionTween = value3.As<Tween>();
 		}
 	}
 }

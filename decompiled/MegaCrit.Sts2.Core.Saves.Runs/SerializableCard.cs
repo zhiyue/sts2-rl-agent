@@ -5,6 +5,11 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Saves.Runs;
 
+/// <summary>
+/// Represents a way to serialize the entire state of a card to save file or for sending to a multiplayer peer.
+/// This should only be used in multiplayer if you need to recreate a card from scratch. If you are referencing an
+/// already-existing card owned by a player, you should use NetCombatCard or NetDeckCard.
+/// </summary>
 public class SerializableCard : IPacketSerializable
 {
 	[JsonPropertyName("id")]

@@ -38,6 +38,9 @@ public sealed class AdaptablePower : PowerModel
 		}
 	}
 
+	/// <summary>
+	/// This is so the Test Subject doesn't receive powers while it is reviving
+	/// </summary>
 	public override bool ShouldAllowHitting(Creature creature)
 	{
 		if (creature != base.Owner)

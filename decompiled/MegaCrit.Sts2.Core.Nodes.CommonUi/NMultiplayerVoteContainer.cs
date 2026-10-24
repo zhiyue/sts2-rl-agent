@@ -40,17 +40,32 @@ public class NMultiplayerVoteContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'RefreshPlayerVotes' method.
+		/// </summary>
 		public static readonly StringName RefreshPlayerVotes = "RefreshPlayerVotes";
 
+		/// <summary>
+		/// Cached name for the 'BouncePlayers' method.
+		/// </summary>
 		public static readonly StringName BouncePlayers = "BouncePlayers";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -75,6 +90,11 @@ public class NMultiplayerVoteContainer : Control
 		_allPlayers.AddRange(players);
 	}
 
+	/// <summary>
+	/// Updates the player votes, animating them in or out based on their presence as reported by _playerVotedDelegate.
+	/// </summary>
+	/// <param name="animate">Pass false to this to immediately update the container, instead of animating. This is
+	/// useful when, for example, the turn begins and we don't want characters popping in or out.</param>
 	public void RefreshPlayerVotes(bool animate = true)
 	{
 		if (_allPlayers.Count == 1)
@@ -114,11 +134,18 @@ public class NMultiplayerVoteContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Returns the index at which player is shown in this map vote container.
+	/// </summary>
 	public int GetVoteIndex(Player player)
 	{
 		return _votes.FindIndex((VoteIcon v) => v.player == player);
 	}
 
+	/// <summary>
+	/// Highlights the player within the container.
+	/// Used during the map vote randomization animation to show which player is currently being picked.
+	/// </summary>
 	public void SetPlayerHighlighted(Player player, bool isHighlighted)
 	{
 		VoteIcon voteIcon = _votes.FirstOrDefault((VoteIcon v) => v.player == player);
@@ -137,6 +164,10 @@ public class NMultiplayerVoteContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Bounces all players within the container.
+	/// Used during the map vote randomization animation to show which map coordinate has been chosen.
+	/// </summary>
 	public void BouncePlayers()
 	{
 		foreach (VoteIcon vote in _votes)
@@ -196,6 +227,11 @@ public class NMultiplayerVoteContainer : Control
 		vote.node.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -208,6 +244,7 @@ public class NMultiplayerVoteContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -226,6 +263,7 @@ public class NMultiplayerVoteContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -240,12 +278,14 @@ public class NMultiplayerVoteContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

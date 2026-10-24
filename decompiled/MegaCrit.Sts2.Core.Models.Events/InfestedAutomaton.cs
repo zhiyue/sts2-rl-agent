@@ -42,7 +42,7 @@ public sealed class InfestedAutomaton : EventModel
 		{
 			CardEnergyCost energyCost = c.EnergyCost;
 			return energyCost != null && energyCost.Canonical == 0 && !energyCost.CostsX;
-		});
+		}).WithFlags(CardCreationFlags.NoCardPoolModifications);
 		CardModel cardModel = CardFactory.CreateForReward(base.Owner, 1, options).FirstOrDefault()?.Card;
 		if (cardModel != null)
 		{

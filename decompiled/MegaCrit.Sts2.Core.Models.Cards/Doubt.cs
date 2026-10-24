@@ -26,10 +26,10 @@ public sealed class Doubt : CardModel
 	{
 	}
 
-	public override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
+	protected override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
 	{
 		bool alreadyHasWeak = base.Owner.Creature.HasPower<WeakPower>();
-		PowerModel powerModel = await PowerCmd.Apply<WeakPower>(base.Owner.Creature, base.DynamicVars.Weak.BaseValue, null, this);
+		PowerModel powerModel = await PowerCmd.Apply<WeakPower>(choiceContext, base.Owner.Creature, base.DynamicVars.Weak.BaseValue, null, this);
 		if (powerModel != null && !alreadyHasWeak)
 		{
 			powerModel.SkipNextDurationTick = true;

@@ -46,7 +46,7 @@ public sealed class MockPowerCard : MockCardModel
 			await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
 		}
 		decimal baseValue = base.DynamicVars.Strength.BaseValue;
-		await PowerCmd.Apply<StrengthPower>(base.Owner.Creature, baseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner.Creature, baseValue, base.Owner.Creature, this);
 		if (_mockExtraLogic != null)
 		{
 			await _mockExtraLogic(this);

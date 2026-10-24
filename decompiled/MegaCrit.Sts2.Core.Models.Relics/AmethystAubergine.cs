@@ -13,7 +13,9 @@ public sealed class AmethystAubergine : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Common;
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new GoldVar(10));
+	public override bool IsAllowedInShops => false;
+
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new GoldVar(15));
 
 	public override bool IsAllowed(IRunState runState)
 	{

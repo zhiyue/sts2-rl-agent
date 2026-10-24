@@ -6,7 +6,6 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Orbs;
 using MegaCrit.Sts2.Core.Entities.Players;
-using MegaCrit.Sts2.Core.Extensions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
@@ -16,6 +15,11 @@ namespace MegaCrit.Sts2.Core.Commands;
 
 public static class OrbCmd
 {
+	/// <summary>
+	/// Add orb slots to a creature.
+	/// </summary>
+	/// <param name="player">Player to add orb slots to.</param>
+	/// <param name="amount">Number of orb slots to add.</param>
 	public static Task AddSlots(Player player, int amount)
 	{
 		if (CombatManager.Instance.IsOverOrEnding)
@@ -28,6 +32,12 @@ public static class OrbCmd
 		return Task.CompletedTask;
 	}
 
+	/// <summary>
+	/// Remove orb slots from the creature. Starts from the back of the list.
+	/// Orb slots with orbs already in them are also removed.
+	/// </summary>
+	/// <param name="player">Player to remove orb slots from.</param>
+	/// <param name="amount">Number of orb slots to remove.</param>
 	public static void RemoveSlots(Player player, int amount)
 	{
 		if (!CombatManager.Instance.IsOverOrEnding)
@@ -38,16 +48,28 @@ public static class OrbCmd
 		}
 	}
 
+	/// <summary>
+	/// Channel an orb of the specified type.
+	/// </summary>
+	/// <param name="choiceContext">The context with which to handle player choices.</param>
+	/// <param name="player">Player who is channeling the orb.</param>
+	/// <typeparam name="T">Type of orb to channel.</typeparam>
 	public static async Task Channel<T>(PlayerChoiceContext choiceContext, Player player) where T : OrbModel
 	{
 		await Channel(choiceContext, ModelDb.Orb<T>().ToMutable(), player);
 	}
 
+	/// <summary>
+	/// Channel an orb.
+	/// </summary>
+	/// <param name="choiceContext">The context with which to handle player choices.</param>
+	/// <param name="orb">Orb to channel.</param>
+	/// <param name="player">Player who is channeling the orb.</param>
 	public static async Task Channel(PlayerChoiceContext choiceContext, OrbModel orb, Player player)
 	{
 		if (!CombatManager.Instance.IsOverOrEnding)
 		{
-			CombatState combatState = player.Creature.CombatState;
+			ICombatState combatState = player.Creature.CombatState;
 			OrbQueue orbQueue = player.PlayerCombatState.OrbQueue;
 			if (player.Character.BaseOrbSlotCount == 0 && orbQueue.Capacity == 0)
 			{
@@ -93,6 +115,13 @@ public static class OrbCmd
 		}
 	}
 
+	/// <summary>
+	/// Evoke the orb.
+	/// </summary>
+	/// <param name="choiceContext">The context with which to handle player choices.</param>
+	/// <param name="player">Player whose next orb we're evoking.</param>
+	/// <param name="evokedOrb">orb being evoked.</param>
+	/// <param name="dequeue">Whether or not to dequeue the orb from the creature's orb queue after evoking (usually true).</param>
 	private static async Task Evoke(PlayerChoiceContext choiceContext, Player player, OrbModel evokedOrb, bool dequeue = true)
 	{
 		if (CombatManager.Instance.IsOverOrEnding)
@@ -100,17 +129,21 @@ public static class OrbCmd
 			return;
 		}
 		OrbQueue orbQueue = player.PlayerCombatState.OrbQueue;
-		if (orbQueue.Orbs.Count > 0)
+		if (orbQueue.Orbs.Count <= 0)
 		{
-			bool removed = false;
-			if (dequeue)
-			{
-				removed = orbQueue.Remove(evokedOrb);
-				NCombatRoom.Instance?.GetCreatureNode(player.Creature)?.OrbManager?.EvokeOrbAnim(evokedOrb);
-			}
-			choiceContext.PushModel(evokedOrb);
-			IEnumerable<Creature> targets = await evokedOrb.Evoke(choiceContext);
-			choiceContext.PopModel(evokedOrb);
+			return;
+		}
+		bool removed = false;
+		if (dequeue)
+		{
+			removed = orbQueue.Remove(evokedOrb);
+			NCombatRoom.Instance?.GetCreatureNode(player.Creature)?.OrbManager?.EvokeOrbAnim(evokedOrb);
+		}
+		choiceContext.PushModel(evokedOrb);
+		IEnumerable<Creature> targets = await evokedOrb.Evoke(choiceContext);
+		choiceContext.PopModel(evokedOrb);
+		if (player.Creature.CombatState != null)
+		{
 			await Hook.AfterOrbEvoked(choiceContext, player.Creature.CombatState, evokedOrb, targets);
 			if (removed)
 			{
@@ -127,29 +160,5 @@ public static class OrbCmd
 			await orb.Passive(choiceContext, target);
 			choiceContext.PopModel(orb);
 		}
-	}
-
-	public static Task Replace(OrbModel oldOrb, OrbModel newOrb, Player player)
-	{
-		if (CombatManager.Instance.IsOverOrEnding)
-		{
-			return Task.CompletedTask;
-		}
-		OrbQueue orbQueue = player.PlayerCombatState.OrbQueue;
-		int idx = orbQueue.Orbs.IndexOf(oldOrb);
-		newOrb.AssertMutable();
-		newOrb.Owner = player;
-		if (orbQueue.Remove(oldOrb))
-		{
-			oldOrb.RemoveInternal();
-		}
-		orbQueue.Insert(idx, newOrb);
-		NCombatRoom.Instance?.GetCreatureNode(player.Creature)?.OrbManager?.ReplaceOrb(oldOrb, newOrb);
-		return Task.CompletedTask;
-	}
-
-	public static void IncreaseBaseOrbCount(Player player, int amount)
-	{
-		player.BaseOrbSlotCount += amount;
 	}
 }

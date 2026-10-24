@@ -34,7 +34,7 @@ public sealed class NegativePulse : CardModel
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
 		foreach (Creature hittableEnemy in base.CombatState.HittableEnemies)
 		{
-			await PowerCmd.Apply<DoomPower>(hittableEnemy, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<DoomPower>(choiceContext, hittableEnemy, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, this);
 		}
 	}
 

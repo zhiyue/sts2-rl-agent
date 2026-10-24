@@ -13,14 +13,22 @@ public class BigGameHunter : ModifierModel
 {
 	public override ActMap ModifyGeneratedMap(IRunState runState, ActMap map, int actIndex)
 	{
-		Rng rng = new Rng(runState.Rng.Seed, $"act_{runState.CurrentActIndex + 1}_map");
-		MapPointTypeCounts mapPointTypeCountsOverride = new MapPointTypeCounts(rng)
+		Rng mapRng = new Rng(runState.Rng.Seed, $"act_{runState.CurrentActIndex + 1}_map");
+		MapPointTypeCounts mapPointTypeCountsOverride = new MapPointTypeCounts(map)
 		{
 			NumOfElites = (int)Math.Round((float)map.GetAllMapPoints().Count((MapPoint p) => p.PointType == MapPointType.Elite) * 2.5f),
 			PointTypesThatIgnoreRules = new HashSet<MapPointType> { MapPointType.Elite }
 		};
-		bool shouldReplaceTreasureWithElites = map is StandardActMap standardActMap && standardActMap.ShouldReplaceTreasureWithElites;
-		return new StandardActMap(rng, runState.Act, runState.Players.Count > 1, shouldReplaceTreasureWithElites, runState.Act.HasSecondBoss, mapPointTypeCountsOverride);
+		if (map is StandardActMap)
+		{
+			bool shouldReplaceTreasureWithElites = map is StandardActMap standardActMap && standardActMap.ShouldReplaceTreasureWithElites;
+			return new StandardActMap(mapRng, runState.Act, runState.Players.Count > 1, shouldReplaceTreasureWithElites, runState.Act.HasSecondBoss, mapPointTypeCountsOverride);
+		}
+		if (map is SpoilsActMap)
+		{
+			return new SpoilsActMap(runState, mapPointTypeCountsOverride);
+		}
+		return map;
 	}
 
 	public override CardCreationOptions ModifyCardRewardCreationOptions(Player player, CardCreationOptions options)

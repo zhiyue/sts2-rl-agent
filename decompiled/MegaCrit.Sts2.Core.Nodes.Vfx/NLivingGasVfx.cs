@@ -10,48 +10,111 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NLivingGasVfx.cs")]
 public class NLivingGasVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'OnAttackStart' method.
+		/// </summary>
 		public static readonly StringName OnAttackStart = "OnAttackStart";
 
+		/// <summary>
+		/// Cached name for the 'OnAttackEnd' method.
+		/// </summary>
 		public static readonly StringName OnAttackEnd = "OnAttackEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnHurtStart' method.
+		/// </summary>
 		public static readonly StringName OnHurtStart = "OnHurtStart";
 
+		/// <summary>
+		/// Cached name for the 'OnHurtEnd' method.
+		/// </summary>
 		public static readonly StringName OnHurtEnd = "OnHurtEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnDebuffStart' method.
+		/// </summary>
 		public static readonly StringName OnDebuffStart = "OnDebuffStart";
 
+		/// <summary>
+		/// Cached name for the 'OnDebuffEnd' method.
+		/// </summary>
 		public static readonly StringName OnDebuffEnd = "OnDebuffEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnDissipate' method.
+		/// </summary>
 		public static readonly StringName OnDissipate = "OnDissipate";
 
+		/// <summary>
+		/// Cached name for the 'DissipateFunction' method.
+		/// </summary>
 		public static readonly StringName DissipateFunction = "DissipateFunction";
 
+		/// <summary>
+		/// Cached name for the 'OnDeathBreathStart' method.
+		/// </summary>
 		public static readonly StringName OnDeathBreathStart = "OnDeathBreathStart";
 
+		/// <summary>
+		/// Cached name for the 'OnDeathBreathEnd' method.
+		/// </summary>
 		public static readonly StringName OnDeathBreathEnd = "OnDeathBreathEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnReconstitute' method.
+		/// </summary>
 		public static readonly StringName OnReconstitute = "OnReconstitute";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_attackPuffParticles' field.
+		/// </summary>
 		public static readonly StringName _attackPuffParticles = "_attackPuffParticles";
 
+		/// <summary>
+		/// Cached name for the '_attackSparkParticles' field.
+		/// </summary>
 		public static readonly StringName _attackSparkParticles = "_attackSparkParticles";
 
+		/// <summary>
+		/// Cached name for the '_debuffPuffParticles' field.
+		/// </summary>
 		public static readonly StringName _debuffPuffParticles = "_debuffPuffParticles";
 
+		/// <summary>
+		/// Cached name for the '_gasPuffParticles' field.
+		/// </summary>
 		public static readonly StringName _gasPuffParticles = "_gasPuffParticles";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -259,6 +322,11 @@ public class NLivingGasVfx : Node
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -288,6 +356,7 @@ public class NLivingGasVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -372,6 +441,7 @@ public class NLivingGasVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -430,6 +500,7 @@ public class NLivingGasVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -461,6 +532,7 @@ public class NLivingGasVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -492,6 +564,11 @@ public class NLivingGasVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -504,6 +581,7 @@ public class NLivingGasVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -515,6 +593,7 @@ public class NLivingGasVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

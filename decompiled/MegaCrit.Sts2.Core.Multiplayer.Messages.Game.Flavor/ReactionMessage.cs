@@ -6,6 +6,9 @@ using MegaCrit.Sts2.Core.Multiplayer.Transport;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Flavor;
 
+/// <summary>
+/// Sent when a player uses the reaction wheel to send a reaction.
+/// </summary>
 public struct ReactionMessage : INetMessage, IPacketSerializable
 {
 	private static readonly QuantizeParams _quantizeParams = new QuantizeParams(-3f, 3f, 16);
@@ -19,6 +22,8 @@ public struct ReactionMessage : INetMessage, IPacketSerializable
 	public NetTransferMode Mode => NetTransferMode.Unreliable;
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
+
+	public bool ShouldBuffer => true;
 
 	public void Serialize(PacketWriter writer)
 	{

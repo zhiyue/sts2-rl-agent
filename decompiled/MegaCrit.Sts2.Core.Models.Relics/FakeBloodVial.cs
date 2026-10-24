@@ -18,7 +18,7 @@ public sealed class FakeBloodVial : RelicModel
 
 	public override async Task AfterPlayerTurnStartLate(PlayerChoiceContext choiceContext, Player player)
 	{
-		if (player == base.Owner && player.Creature.CombatState.RoundNumber <= 1)
+		if (player == base.Owner && base.Owner.PlayerCombatState.TurnNumber <= 1)
 		{
 			await CreatureCmd.Heal(base.Owner.Creature, base.DynamicVars.Heal.IntValue);
 		}

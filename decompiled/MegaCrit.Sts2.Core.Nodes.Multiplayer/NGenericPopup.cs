@@ -14,29 +14,58 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 
+/// <summary>
+/// Vertical popup used in several places to get confirmation for actions.
+/// Renders above the capstone screens (above top bar).
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NGenericPopup.cs")]
 public class NGenericPopup : Control, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
-		public new static readonly StringName _Ready = "_Ready";
-
+		/// <summary>
+		/// Cached name for the 'OnYesButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnYesButtonPressed = "OnYesButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnNoButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnNoButtonPressed = "OnNoButtonPressed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_verticalPopup' field.
+		/// </summary>
 		public static readonly StringName _verticalPopup = "_verticalPopup";
 
+		/// <summary>
+		/// Cached name for the '_steamId' field.
+		/// </summary>
 		public static readonly StringName _steamId = "_steamId";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -62,14 +91,10 @@ public class NGenericPopup : Control, IScreenContext
 		return PreloadManager.Cache.GetScene(_scenePath).Instantiate<NGenericPopup>(PackedScene.GenEditState.Disabled);
 	}
 
-	public override void _Ready()
+	public Task<bool> WaitForConfirmation(LocString body, LocString header, LocString? noButton, LocString yesButton)
 	{
 		_verticalPopup = GetNode<NVerticalPopup>("VerticalPopup");
 		_confirmationCompletionSource = new TaskCompletionSource<bool>();
-	}
-
-	public Task<bool> WaitForConfirmation(LocString body, LocString header, LocString? noButton, LocString yesButton)
-	{
 		_verticalPopup.SetText(header, body);
 		_verticalPopup.InitYesButton(yesButton, OnYesButtonPressed);
 		if (noButton != null)
@@ -95,12 +120,16 @@ public class NGenericPopup : Control, IScreenContext
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(4);
+		List<MethodInfo> list = new List<MethodInfo>(3);
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal | MethodFlags.Static, null, null));
-		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnYesButtonPressed, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "_", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
@@ -112,18 +141,13 @@ public class NGenericPopup : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
 		if (method == MethodName.Create && args.Count == 0)
 		{
 			ret = VariantUtils.CreateFrom<NGenericPopup>(Create());
-			return true;
-		}
-		if (method == MethodName._Ready && args.Count == 0)
-		{
-			_Ready();
-			ret = default(godot_variant);
 			return true;
 		}
 		if (method == MethodName.OnYesButtonPressed && args.Count == 1)
@@ -153,14 +177,11 @@ public class NGenericPopup : Control, IScreenContext
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
 		if (method == MethodName.Create)
-		{
-			return true;
-		}
-		if (method == MethodName._Ready)
 		{
 			return true;
 		}
@@ -175,6 +196,7 @@ public class NGenericPopup : Control, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -191,6 +213,7 @@ public class NGenericPopup : Control, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -212,6 +235,11 @@ public class NGenericPopup : Control, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -222,6 +250,7 @@ public class NGenericPopup : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -230,6 +259,7 @@ public class NGenericPopup : Control, IScreenContext
 		info.AddProperty(PropertyName._steamId, Variant.From(in _steamId));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

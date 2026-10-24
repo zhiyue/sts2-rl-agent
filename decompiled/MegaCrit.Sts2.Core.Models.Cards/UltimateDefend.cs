@@ -12,6 +12,9 @@ public sealed class UltimateDefend : CardModel
 {
 	public override bool GainsBlock => true;
 
+	/// <summary>
+	/// Yes, Ultimate Defend counts as a Defend for the purposes of effects like <see cref="T:MegaCrit.Sts2.Core.Models.Cards.Fasten" />.
+	/// </summary>
 	protected override HashSet<CardTag> CanonicalTags => new HashSet<CardTag> { CardTag.Defend };
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new BlockVar(11m, ValueProp.Move));

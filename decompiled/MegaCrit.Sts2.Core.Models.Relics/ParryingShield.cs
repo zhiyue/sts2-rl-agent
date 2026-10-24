@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -20,9 +21,9 @@ public sealed class ParryingShield : RelicModel
 		new DamageVar(6m, ValueProp.Unpowered)
 	});
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side == CombatSide.Player && !((decimal)base.Owner.Creature.Block < base.DynamicVars.Block.BaseValue))
+		if (participants.Contains(base.Owner.Creature) && !((decimal)base.Owner.Creature.Block < base.DynamicVars.Block.BaseValue))
 		{
 			Creature creature = base.Owner.RunState.Rng.CombatTargets.NextItem(base.Owner.Creature.CombatState.HittableEnemies);
 			if (creature != null)

@@ -24,8 +24,8 @@ public sealed class CrimsonMantle : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		NPowerUpVfx.CreateNormal(base.Owner.Creature);
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		(await PowerCmd.Apply<CrimsonMantlePower>(base.Owner.Creature, base.DynamicVars["CrimsonMantlePower"].BaseValue, base.Owner.Creature, this))?.IncrementSelfDamage();
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		(await PowerCmd.Apply<CrimsonMantlePower>(choiceContext, base.Owner.Creature, base.DynamicVars["CrimsonMantlePower"].BaseValue, base.Owner.Creature, this))?.IncrementSelfDamage();
 	}
 
 	protected override void OnUpgrade()

@@ -39,7 +39,7 @@ public sealed class CalamityPower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (!GetInternalData<Data>().amountsForPlayedCards.Remove(cardPlay.Card, out var _))
 		{
@@ -50,7 +50,7 @@ public sealed class CalamityPower : PowerModel
 			select c, base.Amount, base.Owner.Player.RunState.Rng.CombatCardGeneration).ToList();
 		foreach (CardModel item in list)
 		{
-			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, base.Owner.Player);
 		}
 	}
 }

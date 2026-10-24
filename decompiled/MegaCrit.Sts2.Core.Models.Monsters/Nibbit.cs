@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -16,6 +17,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Nibbit : MonsterModel
 {
+	private const string _sliceMove = "SLICE_MOVE";
+
 	private bool _isFront;
 
 	private bool _isAlone;
@@ -26,9 +29,11 @@ public sealed class Nibbit : MonsterModel
 
 	private int ButtDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 13, 12);
 
-	private int SliceBlock => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 5, 5);
+	private int SliceBlock => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 6, 5);
 
-	private int SliceDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 6, 6);
+	private int SliceDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 7, 6);
+
+	private int HissStrengthGain => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 3, 2);
 
 	public override string DeathSfx => "event:/sfx/enemy/enemy_attacks/nibbit/nibbit_die";
 
@@ -106,7 +111,7 @@ public sealed class Nibbit : MonsterModel
 	private async Task HissMove(IReadOnlyList<Creature> targets)
 	{
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.6f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, HissStrengthGain, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
@@ -125,5 +130,10 @@ public sealed class Nibbit : MonsterModel
 		creatureAnimator.AddAnyState("Dead", state);
 		creatureAnimator.AddAnyState("Hit", animState4);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "SLICE_MOVE";
 	}
 }

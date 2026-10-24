@@ -16,7 +16,7 @@ public sealed class AssassinRubyRaider : MonsterModel
 
 	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 24, 23);
 
-	private static int KillshotDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 12, 11);
+	private static int KillshotDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 11, 10);
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Armor;
 

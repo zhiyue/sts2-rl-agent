@@ -29,7 +29,7 @@ public sealed class ZenWeaver : EventModel
 		new DynamicVar("ArachnidAcupunctureCost", 250m)
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		return runState.Players.All((Player p) => (decimal)p.Gold >= base.DynamicVars["EmotionalAwarenessCost"].BaseValue);
 	}

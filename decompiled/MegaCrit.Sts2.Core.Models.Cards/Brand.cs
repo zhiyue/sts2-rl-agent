@@ -46,7 +46,7 @@ public sealed class Brand : CardModel
 		}
 		NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(NGroundFireVfx.Create(base.Owner.Creature));
 		SfxCmd.Play("event:/sfx/characters/attack_fire");
-		await PowerCmd.Apply<StrengthPower>(base.Owner.Creature, base.DynamicVars.Strength.BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner.Creature, base.DynamicVars.Strength.BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

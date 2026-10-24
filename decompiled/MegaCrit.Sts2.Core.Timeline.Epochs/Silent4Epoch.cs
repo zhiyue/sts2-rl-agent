@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Trophies
+/// </summary>
 public class Silent4Epoch : EpochModel
 {
 	public override string Id => "SILENT4_EPOCH";
@@ -17,8 +20,6 @@ public class Silent4Epoch : EpochModel
 	public override int EraPosition => 3;
 
 	public override string StoryId => "Silent";
-
-	public override bool IsArtPlaceholder => false;
 
 	public static List<PotionModel> Potions
 	{

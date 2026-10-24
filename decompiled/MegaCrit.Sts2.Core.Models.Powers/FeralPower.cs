@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
@@ -62,9 +63,9 @@ public sealed class FeralPower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side != base.Owner.Side)
+		if (!participants.Contains(base.Owner))
 		{
 			return Task.CompletedTask;
 		}

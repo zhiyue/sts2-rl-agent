@@ -23,7 +23,7 @@ public sealed class BansheesCry : CardModel
 	});
 
 	public BansheesCry()
-		: base(6, CardType.Attack, CardRarity.Rare, TargetType.AllEnemies)
+		: base(9, CardType.Attack, CardRarity.Rare, TargetType.AllEnemies)
 	{
 	}
 
@@ -36,7 +36,7 @@ public sealed class BansheesCry : CardModel
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars.Damage.UpgradeValueBy(6m);
+		base.EnergyCost.UpgradeBy(-2);
 	}
 
 	public override Task AfterCardEnteredCombat(CardModel card)
@@ -54,7 +54,7 @@ public sealed class BansheesCry : CardModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner != base.Owner)
 		{

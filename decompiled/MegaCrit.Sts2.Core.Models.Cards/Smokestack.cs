@@ -19,8 +19,8 @@ public sealed class Smokestack : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<SmokestackPower>(base.Owner.Creature, base.DynamicVars["SmokestackPower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<SmokestackPower>(choiceContext, base.Owner.Creature, base.DynamicVars["SmokestackPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

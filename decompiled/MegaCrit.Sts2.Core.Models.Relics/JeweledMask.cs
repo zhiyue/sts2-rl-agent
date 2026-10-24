@@ -14,9 +14,9 @@ public sealed class JeweledMask : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Ancient;
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
-		if (player == base.Owner && combatState.RoundNumber <= 1)
+		if (player == base.Owner && base.Owner.PlayerCombatState.TurnNumber <= 1)
 		{
 			IReadOnlyList<CardModel> cards = PileType.Draw.GetPile(player).Cards;
 			List<CardModel> list = cards.Where((CardModel c) => c.Type == CardType.Power).ToList();

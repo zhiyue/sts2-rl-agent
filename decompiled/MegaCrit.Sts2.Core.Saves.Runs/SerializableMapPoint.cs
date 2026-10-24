@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Saves.Runs;
 
+/// <summary>
+/// Serializable representation of a single map point for save files.
+/// </summary>
 public class SerializableMapPoint : IPacketSerializable
 {
 	[JsonPropertyName("coord")]

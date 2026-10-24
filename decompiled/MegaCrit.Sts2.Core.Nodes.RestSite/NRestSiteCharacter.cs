@@ -15,6 +15,7 @@ using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.Random;
@@ -24,48 +25,121 @@ namespace MegaCrit.Sts2.Core.Nodes.RestSite;
 [ScriptPath("res://src/Core/Nodes/RestSite/NRestSiteCharacter.cs")]
 public class NRestSiteCharacter : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
+		public new static readonly StringName _EnterTree = "_EnterTree";
+
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RandomizeFire' method.
+		/// </summary>
 		public static readonly StringName RandomizeFire = "RandomizeFire";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'Deselect' method.
+		/// </summary>
 		public static readonly StringName Deselect = "Deselect";
 
+		/// <summary>
+		/// Cached name for the 'FlipX' method.
+		/// </summary>
 		public static readonly StringName FlipX = "FlipX";
 
+		/// <summary>
+		/// Cached name for the 'HideFlameGlow' method.
+		/// </summary>
 		public static readonly StringName HideFlameGlow = "HideFlameGlow";
 
+		/// <summary>
+		/// Cached name for the 'RefreshThoughtBubbleVfx' method.
+		/// </summary>
 		public static readonly StringName RefreshThoughtBubbleVfx = "RefreshThoughtBubbleVfx";
 
+		/// <summary>
+		/// Cached name for the 'Shake' method.
+		/// </summary>
 		public static readonly StringName Shake = "Shake";
 
+		/// <summary>
+		/// Cached name for the 'GetRestSiteOptionAnchor' method.
+		/// </summary>
 		public static readonly StringName GetRestSiteOptionAnchor = "GetRestSiteOptionAnchor";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Hitbox' property.
+		/// </summary>
 		public static readonly StringName Hitbox = "Hitbox";
 
+		/// <summary>
+		/// Cached name for the '_controlRoot' field.
+		/// </summary>
 		public static readonly StringName _controlRoot = "_controlRoot";
 
+		/// <summary>
+		/// Cached name for the '_selectionReticle' field.
+		/// </summary>
 		public static readonly StringName _selectionReticle = "_selectionReticle";
 
+		/// <summary>
+		/// Cached name for the '_leftThoughtAnchor' field.
+		/// </summary>
 		public static readonly StringName _leftThoughtAnchor = "_leftThoughtAnchor";
 
+		/// <summary>
+		/// Cached name for the '_rightThoughtAnchor' field.
+		/// </summary>
 		public static readonly StringName _rightThoughtAnchor = "_rightThoughtAnchor";
 
+		/// <summary>
+		/// Cached name for the '_characterIndex' field.
+		/// </summary>
 		public static readonly StringName _characterIndex = "_characterIndex";
 
+		/// <summary>
+		/// Cached name for the '_thoughtBubbleVfx' field.
+		/// </summary>
 		public static readonly StringName _thoughtBubbleVfx = "_thoughtBubbleVfx";
 
+		/// <summary>
+		/// Cached name for the '_selectedOptionConfirmation' field.
+		/// </summary>
 		public static readonly StringName _selectedOptionConfirmation = "_selectedOptionConfirmation";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -100,6 +174,8 @@ public class NRestSiteCharacter : Node2D
 
 	private CancellationTokenSource? _thoughtBubbleGoAwayCancellation;
 
+	private CancellationTokenSource _cts = new CancellationTokenSource();
+
 	private Control? _selectedOptionConfirmation;
 
 	private RestSiteOption? _hoveredRestSiteOption;
@@ -120,6 +196,17 @@ public class NRestSiteCharacter : Node2D
 		return nRestSiteCharacter;
 	}
 
+	public override void _EnterTree()
+	{
+		_cts = new CancellationTokenSource();
+	}
+
+	public override void _ExitTree()
+	{
+		_thoughtBubbleGoAwayCancellation?.Cancel();
+		_cts.Cancel();
+	}
+
 	public override void _Ready()
 	{
 		_controlRoot = GetNode<Control>("ControlRoot");
@@ -127,7 +214,7 @@ public class NRestSiteCharacter : Node2D
 		_selectionReticle = GetNode<NSelectionReticle>("%SelectionReticle");
 		_leftThoughtAnchor = GetNode<Control>("%ThoughtBubbleLeft");
 		_rightThoughtAnchor = GetNode<Control>("%ThoughtBubbleRight");
-		string animationName = Player.RunState.CurrentActIndex switch
+		string animName = Player.RunState.CurrentActIndex switch
 		{
 			0 => "overgrowth_loop", 
 			1 => "hive_loop", 
@@ -136,8 +223,12 @@ public class NRestSiteCharacter : Node2D
 		};
 		foreach (Node2D childSpineNode in GetChildSpineNodes())
 		{
-			MegaTrackEntry megaTrackEntry = new MegaSprite(childSpineNode).GetAnimationState().SetAnimation(animationName);
-			megaTrackEntry?.SetTrackTime(megaTrackEntry.GetAnimationEnd() * Rng.Chaotic.NextFloat());
+			MegaSprite sprite = new MegaSprite(childSpineNode);
+			this.RunWhenSpineReady(sprite, delegate(MegaAnimationState animState)
+			{
+				MegaTrackEntry megaTrackEntry = animState.SetAnimation(animName);
+				megaTrackEntry?.SetTrackTime(megaTrackEntry.GetAnimationEnd() * Rng.Chaotic.NextFloat());
+			});
 		}
 		if (Player.Character is Necrobinder)
 		{
@@ -150,7 +241,7 @@ public class NRestSiteCharacter : Node2D
 				Node2D node3 = GetNode<Node2D>("Osty");
 				Node2D node4 = GetNode<Node2D>("OstyRightAnchor");
 				node3.Position = node4.Position;
-				MoveChild(node3, 0);
+				this.MoveChildSafely(node3, 0);
 			}
 		}
 		Hitbox.Connect(Control.SignalName.FocusEntered, Callable.From(OnFocus));
@@ -297,8 +388,7 @@ public class NRestSiteCharacter : Node2D
 		Vector2 originalPosition = base.Position;
 		while (!shake.IsDone)
 		{
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-			Vector2 vector = shake.Update(GetProcessDeltaTime());
+			Vector2 vector = shake.Update(await this.AwaitProcessFrame(_cts.Token));
 			base.Position = originalPosition + vector;
 		}
 		base.Position = originalPosition;
@@ -335,10 +425,17 @@ public class NRestSiteCharacter : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(10);
+		List<MethodInfo> list = new List<MethodInfo>(12);
+		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.RandomizeFire, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -355,9 +452,22 @@ public class NRestSiteCharacter : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
+		if (method == MethodName._EnterTree && args.Count == 0)
+		{
+			_EnterTree();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
@@ -420,9 +530,18 @@ public class NRestSiteCharacter : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
+		if (method == MethodName._EnterTree)
+		{
+			return true;
+		}
+		if (method == MethodName._ExitTree)
+		{
+			return true;
+		}
 		if (method == MethodName._Ready)
 		{
 			return true;
@@ -466,6 +585,7 @@ public class NRestSiteCharacter : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -512,6 +632,7 @@ public class NRestSiteCharacter : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -558,6 +679,11 @@ public class NRestSiteCharacter : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -573,6 +699,7 @@ public class NRestSiteCharacter : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -587,6 +714,7 @@ public class NRestSiteCharacter : Node2D
 		info.AddProperty(PropertyName._selectedOptionConfirmation, Variant.From(in _selectedOptionConfirmation));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

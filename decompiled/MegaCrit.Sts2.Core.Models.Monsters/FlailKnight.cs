@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -19,8 +20,6 @@ public class FlailKnight : MonsterModel
 	private const string _flailAttackTrigger = "FlailAttack";
 
 	private const string _ramAttackTrigger = "RamAttack";
-
-	private const string _breakerAttackTrigger = "BreakerAttack";
 
 	private const string _flailSfx = "event:/sfx/enemy/enemy_attacks/flail_knight/flail_knight_flail";
 
@@ -60,8 +59,8 @@ public class FlailKnight : MonsterModel
 	private async Task WarChantMove(IReadOnlyList<Creature> targets)
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/flail_knight/flail_knight_war_chant");
-		await CreatureCmd.TriggerAnim(base.Creature, "BreakerAttack", 0.5f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 3m, base.Creature, null);
+		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.5f);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 	}
 
 	public async Task FlailMove(IReadOnlyList<Creature> targets)
@@ -85,24 +84,21 @@ public class FlailKnight : MonsterModel
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
 	{
 		AnimState animState = new AnimState("idle_loop", isLooping: true);
-		AnimState animState2 = new AnimState("cast");
+		AnimState animState2 = new AnimState("buff");
 		AnimState animState3 = new AnimState("attack_flail");
 		AnimState animState4 = new AnimState("attack_ram");
-		AnimState animState5 = new AnimState("attack_breaker");
-		AnimState animState6 = new AnimState("hurt");
+		AnimState animState5 = new AnimState("hurt");
 		AnimState state = new AnimState("die");
 		animState2.NextState = animState;
 		animState3.NextState = animState;
 		animState4.NextState = animState;
 		animState5.NextState = animState;
-		animState6.NextState = animState;
 		CreatureAnimator creatureAnimator = new CreatureAnimator(animState, controller);
 		creatureAnimator.AddAnyState("Dead", state);
-		creatureAnimator.AddAnyState("Hit", animState6);
+		creatureAnimator.AddAnyState("Hit", animState5);
 		creatureAnimator.AddAnyState("Cast", animState2);
 		creatureAnimator.AddAnyState("FlailAttack", animState3);
 		creatureAnimator.AddAnyState("RamAttack", animState4);
-		creatureAnimator.AddAnyState("BreakerAttack", animState5);
 		return creatureAnimator;
 	}
 }

@@ -4,6 +4,11 @@ using MegaCrit.Sts2.Core.Timeline;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
+/// <summary>
+/// Used for sorting Epochs chronologically on the Timeline.
+/// Sorted whenever we reveal an Epoch.
+/// Useful for navigating between Epochs in the Inspect screen.
+/// </summary>
 public class EpochComparer : IComparer<SerializableEpoch>
 {
 	public int Compare(SerializableEpoch? x, SerializableEpoch? y)

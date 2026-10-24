@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// The Pact
+/// </summary>
 public class Ironclad4Epoch : EpochModel
 {
 	public override string Id => "IRONCLAD4_EPOCH";

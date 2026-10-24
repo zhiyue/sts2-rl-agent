@@ -39,7 +39,7 @@ public sealed class Reave : CardModel
 				CardCmd.Upgrade(item);
 			}
 		}
-		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardsToCombat(enumerable, PileType.Draw, addedByPlayer: true));
+		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardsToCombat(enumerable, PileType.Draw, base.Owner, CardPilePosition.Random));
 	}
 
 	protected override void OnUpgrade()

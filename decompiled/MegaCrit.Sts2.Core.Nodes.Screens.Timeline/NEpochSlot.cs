@@ -24,88 +24,211 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/NEpochSlot.cs")]
 public class NEpochSlot : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'RevealEpoch' method.
+		/// </summary>
 		public static readonly StringName RevealEpoch = "RevealEpoch";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'DisableHighlight' method.
+		/// </summary>
 		public static readonly StringName DisableHighlight = "DisableHighlight";
 
+		/// <summary>
+		/// Cached name for the 'EnableHighlight' method.
+		/// </summary>
 		public static readonly StringName EnableHighlight = "EnableHighlight";
 
+		/// <summary>
+		/// Cached name for the 'SetState' method.
+		/// </summary>
 		public static readonly StringName SetState = "SetState";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderS' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderS = "UpdateShaderS";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderV' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderV = "UpdateShaderV";
 
+		/// <summary>
+		/// Cached name for the 'UpdateBlurLod' method.
+		/// </summary>
 		public static readonly StringName UpdateBlurLod = "UpdateBlurLod";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ClickedSfx' property.
+		/// </summary>
 		public new static readonly StringName ClickedSfx = "ClickedSfx";
 
+		/// <summary>
+		/// Cached name for the 'HoveredSfx' property.
+		/// </summary>
 		public new static readonly StringName HoveredSfx = "HoveredSfx";
 
+		/// <summary>
+		/// Cached name for the 'State' property.
+		/// </summary>
 		public static readonly StringName State = "State";
 
+		/// <summary>
+		/// Cached name for the 'HasSpawned' property.
+		/// </summary>
 		public static readonly StringName HasSpawned = "HasSpawned";
 
+		/// <summary>
+		/// Cached name for the '_slotImage' field.
+		/// </summary>
 		public static readonly StringName _slotImage = "_slotImage";
 
+		/// <summary>
+		/// Cached name for the '_portrait' field.
+		/// </summary>
 		public static readonly StringName _portrait = "_portrait";
 
+		/// <summary>
+		/// Cached name for the '_chains' field.
+		/// </summary>
 		public static readonly StringName _chains = "_chains";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_blurPortrait' field.
+		/// </summary>
 		public static readonly StringName _blurPortrait = "_blurPortrait";
 
+		/// <summary>
+		/// Cached name for the '_outline' field.
+		/// </summary>
 		public static readonly StringName _outline = "_outline";
 
+		/// <summary>
+		/// Cached name for the '_blur' field.
+		/// </summary>
 		public static readonly StringName _blur = "_blur";
 
+		/// <summary>
+		/// Cached name for the '_blurShader' field.
+		/// </summary>
 		public static readonly StringName _blurShader = "_blurShader";
 
+		/// <summary>
+		/// Cached name for the '_selectionReticle' field.
+		/// </summary>
 		public static readonly StringName _selectionReticle = "_selectionReticle";
 
+		/// <summary>
+		/// Cached name for the '_offscreenVfx' field.
+		/// </summary>
 		public static readonly StringName _offscreenVfx = "_offscreenVfx";
 
+		/// <summary>
+		/// Cached name for the '_highlightVfx' field.
+		/// </summary>
 		public static readonly StringName _highlightVfx = "_highlightVfx";
 
+		/// <summary>
+		/// Cached name for the '_subViewportContainer' field.
+		/// </summary>
 		public static readonly StringName _subViewportContainer = "_subViewportContainer";
 
+		/// <summary>
+		/// Cached name for the '_subViewport' field.
+		/// </summary>
 		public static readonly StringName _subViewport = "_subViewport";
 
+		/// <summary>
+		/// Cached name for the '_isGlowPulsing' field.
+		/// </summary>
 		public static readonly StringName _isGlowPulsing = "_isGlowPulsing";
 
+		/// <summary>
+		/// Cached name for the '_isComplete' field.
+		/// </summary>
 		public static readonly StringName _isComplete = "_isComplete";
 
+		/// <summary>
+		/// Cached name for the '_isHovered' field.
+		/// </summary>
 		public new static readonly StringName _isHovered = "_isHovered";
 
+		/// <summary>
+		/// Cached name for the '_era' field.
+		/// </summary>
 		public static readonly StringName _era = "_era";
 
+		/// <summary>
+		/// Cached name for the 'eraPosition' field.
+		/// </summary>
 		public static readonly StringName eraPosition = "eraPosition";
 
+		/// <summary>
+		/// Cached name for the '_glowTween' field.
+		/// </summary>
 		public static readonly StringName _glowTween = "_glowTween";
 
+		/// <summary>
+		/// Cached name for the '_spawnTween' field.
+		/// </summary>
 		public static readonly StringName _spawnTween = "_spawnTween";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -248,6 +371,9 @@ public class NEpochSlot : NButton
 		_hoverTween.TweenMethod(Callable.From<float>(UpdateShaderV), _hsv.GetShaderParameter(_s), 1f, 0.05);
 	}
 
+	/// <summary>
+	/// Called when the player clicks on a glowing + locked slot!
+	/// </summary>
 	private void RevealEpoch()
 	{
 		State = EpochSlotState.Complete;
@@ -305,13 +431,13 @@ public class NEpochSlot : NButton
 			float num2 = base.GlobalPosition.X + (base.Size.X * 0.5f + 6f) * GetGlobalTransform().Scale.X;
 			if (base.GlobalPosition.X > NGame.Instance.GetViewportRect().Size.X * 0.7f)
 			{
-				nHoverTipSet.GlobalPosition = new Vector2(num2 - num - 360f, base.GlobalPosition.Y);
+				nHoverTipSet?.SetGlobalPosition(new Vector2(num2 - num - 360f, base.GlobalPosition.Y));
 			}
 			else
 			{
-				nHoverTipSet.GlobalPosition = new Vector2(num2 + num, base.GlobalPosition.Y);
+				nHoverTipSet?.SetGlobalPosition(new Vector2(num2 + num, base.GlobalPosition.Y));
 			}
-			nHoverTipSet.SetFollowOwner();
+			nHoverTipSet?.SetFollowOwner();
 		}
 	}
 
@@ -363,6 +489,10 @@ public class NEpochSlot : NButton
 		}
 	}
 
+	/// <summary>
+	/// Called when this slot is spawned in via Timeline Expansion OR your very first time opening the Timeline.
+	/// Has a fun animation.
+	/// </summary>
 	public async Task SpawnSlot()
 	{
 		_spawnTween = CreateTween().SetParallel();
@@ -374,15 +504,17 @@ public class NEpochSlot : NButton
 		_spawnTween.TweenProperty(_outline, "position", Vector2.Zero, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back)
 			.From(new Vector2(0f, 64f));
 		_spawnTween.TweenProperty(_slotImage, "self_modulate:a", 1f, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
-		await ToSignal(_spawnTween, Tween.SignalName.Finished);
-		HasSpawned = true;
-		if (State == EpochSlotState.Obtained)
+		if (await _spawnTween.AwaitFinished(this))
 		{
-			EnableHighlight();
-		}
-		else
-		{
-			_outline.Modulate = _defaultSlotOutlineColor;
+			HasSpawned = true;
+			if (State == EpochSlotState.Obtained)
+			{
+				EnableHighlight();
+			}
+			else
+			{
+				_outline.Modulate = _defaultSlotOutlineColor;
+			}
 		}
 	}
 
@@ -414,7 +546,7 @@ public class NEpochSlot : NButton
 		_highlightVfx = NEpochHighlightVfx.Create();
 		this.AddChildSafely(_highlightVfx);
 		NTimelineScreen.Instance.GetReminderVfxHolder().AddChildSafely(_offscreenVfx);
-		MoveChild(_highlightVfx, 0);
+		this.MoveChildSafely(_highlightVfx, 0);
 	}
 
 	public void SetState(EpochSlotState setState)
@@ -469,6 +601,11 @@ public class NEpochSlot : NButton
 		_blurShader.SetShaderParameter(_lod, value);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -504,6 +641,7 @@ public class NEpochSlot : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -588,6 +726,7 @@ public class NEpochSlot : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -646,6 +785,7 @@ public class NEpochSlot : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -767,6 +907,7 @@ public class NEpochSlot : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -901,6 +1042,11 @@ public class NEpochSlot : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -933,6 +1079,7 @@ public class NEpochSlot : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -962,6 +1109,7 @@ public class NEpochSlot : NButton
 		info.AddProperty(PropertyName._hoverTween, Variant.From(in _hoverTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

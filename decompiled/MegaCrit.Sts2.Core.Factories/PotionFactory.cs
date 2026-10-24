@@ -19,16 +19,44 @@ public static class PotionFactory
 
 	private const float _uncommonThreshold = 0.35f;
 
+	/// <summary>
+	/// Create a random potion while out of combat.
+	/// This can get any potion from the valid potion pools, including potions that can do restricted things like heal
+	/// the player.
+	/// </summary>
+	/// <param name="player">Player to create a potion for.</param>
+	/// <param name="rng">RNG to use to determine what potion to create.</param>
+	/// <param name="blacklist">Canonical potions that should be blocked from being generated.</param>
+	/// <returns>Newly-created potion.</returns>
 	public static PotionModel CreateRandomPotionOutOfCombat(Player player, Rng rng, IEnumerable<PotionModel>? blacklist = null)
 	{
 		return CreateRandomPotion(GetPotionOptions(player, blacklist ?? Array.Empty<PotionModel>()), 1, rng).First();
 	}
 
+	/// <summary>
+	/// Create random potions while out of combat.
+	/// This can get any potion from the valid potion pools, including potions that can do restricted things like heal
+	/// the player.
+	/// </summary>
+	/// <param name="player">Player to create a potion for.</param>
+	/// <param name="count">How many potions you want to generate.</param>
+	/// <param name="rng">RNG to use to determine what potion to create.</param>
+	/// <param name="blacklist">Canonical potions that should be blocked from being generated.</param>
+	/// <returns>Newly-created potion.</returns>
 	public static List<PotionModel> CreateRandomPotionsOutOfCombat(Player player, int count, Rng rng, IEnumerable<PotionModel>? blacklist = null)
 	{
 		return CreateRandomPotion(GetPotionOptions(player, blacklist ?? Array.Empty<PotionModel>()), count, rng);
 	}
 
+	/// <summary>
+	/// Create a random potion while in combat.
+	/// This can get any potion from the valid potion pools, except potions that cannot be generated in combat (like
+	/// healing potions).
+	/// </summary>
+	/// <param name="player">Player to create a potion for.</param>
+	/// <param name="rng">RNG to use to determine what potion to create.</param>
+	/// <param name="blacklist">Canonical potions that should be blocked from being generated.</param>
+	/// <returns>Newly-created potion.</returns>
 	public static PotionModel CreateRandomPotionInCombat(Player player, Rng rng, IEnumerable<PotionModel>? blacklist = null)
 	{
 		return CreateRandomPotion(from p in GetPotionOptions(player, blacklist ?? Array.Empty<PotionModel>())

@@ -15,30 +15,66 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Map;
 [ScriptPath("res://src/Core/Nodes/Screens/Map/NMapEraseButton.cs")]
 public class NMapEraseButton : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetIsErasing' method.
+		/// </summary>
 		public static readonly StringName SetIsErasing = "SetIsErasing";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnControllerUpdated' method.
+		/// </summary>
 		public static readonly StringName OnControllerUpdated = "OnControllerUpdated";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_drawingToolHolder' field.
+		/// </summary>
 		public static readonly StringName _drawingToolHolder = "_drawingToolHolder";
 
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_isErasing' field.
+		/// </summary>
 		public static readonly StringName _isErasing = "_isErasing";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -68,8 +104,9 @@ public class NMapEraseButton : NButton
 		ConnectSignals();
 		_drawingToolHolder = (Control)GetParent();
 		_icon = GetNode<TextureRect>("Icon");
-		NControllerManager.Instance.Connect(NControllerManager.SignalName.ControllerDetected, Callable.From(OnControllerUpdated));
-		NControllerManager.Instance.Connect(NControllerManager.SignalName.MouseDetected, Callable.From(OnControllerUpdated));
+		NControllerManager instance = NControllerManager.Instance;
+		instance.Connect(NControllerManager.SignalName.ControllerDetected, Callable.From(OnControllerUpdated));
+		instance.Connect(NControllerManager.SignalName.MouseDetected, Callable.From(OnControllerUpdated));
 		OnControllerUpdated();
 	}
 
@@ -87,8 +124,7 @@ public class NMapEraseButton : NButton
 		_tween = CreateTween().SetParallel();
 		_tween.TweenProperty(_icon, "scale", Vector2.One * 1.2f, 0.05);
 		_tween.TweenProperty(_icon, "self_modulate", _activeColor, 0.05);
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(_drawingToolHolder, _hoverTip);
-		nHoverTipSet.GlobalPosition = _drawingToolHolder.GlobalPosition + new Vector2(10f, -132f);
+		NHoverTipSet.CreateAndShow(_drawingToolHolder, _hoverTip)?.SetGlobalPosition(_drawingToolHolder.GlobalPosition + new Vector2(10f, -132f));
 	}
 
 	protected override void OnUnfocus()
@@ -108,6 +144,11 @@ public class NMapEraseButton : NButton
 		_hoverTip = new HoverTip(title, description);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -123,6 +164,7 @@ public class NMapEraseButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -159,6 +201,7 @@ public class NMapEraseButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -185,6 +228,7 @@ public class NMapEraseButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -211,6 +255,7 @@ public class NMapEraseButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -237,6 +282,11 @@ public class NMapEraseButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -248,6 +298,7 @@ public class NMapEraseButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -258,6 +309,7 @@ public class NMapEraseButton : NButton
 		info.AddProperty(PropertyName._isErasing, Variant.From(in _isErasing));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

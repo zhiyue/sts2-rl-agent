@@ -5,6 +5,10 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Runs.History;
 
+/// <summary>
+/// Ancient choice logs are used exclusively to to make Ancient Metrics to send to our metrics site. This makes them a
+/// bit more flexible to use than the MapPointHistoryEntry.EventChoices which are required to be LocStrings.
+/// </summary>
 [Serializable]
 public class AncientChoiceHistoryEntry : IPacketSerializable
 {
@@ -17,6 +21,9 @@ public class AncientChoiceHistoryEntry : IPacketSerializable
 	[JsonPropertyName("TextKey")]
 	public string TextKey => Title.LocEntryKey.Split(".")[^2];
 
+	/// <summary>
+	/// For serialization only
+	/// </summary>
 	public AncientChoiceHistoryEntry()
 	{
 		Title = new LocString(string.Empty, string.Empty);

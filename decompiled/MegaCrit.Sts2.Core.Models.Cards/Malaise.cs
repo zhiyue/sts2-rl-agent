@@ -37,7 +37,7 @@ public sealed class Malaise : CardModel
 			powerAmount++;
 		}
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<StrengthPower>(cardPlay.Target, -powerAmount, base.Owner.Creature, this);
-		await PowerCmd.Apply<WeakPower>(cardPlay.Target, powerAmount, base.Owner.Creature, this);
+		await PowerCmd.Apply<StrengthPower>(choiceContext, cardPlay.Target, -powerAmount, base.Owner.Creature, this);
+		await PowerCmd.Apply<WeakPower>(choiceContext, cardPlay.Target, powerAmount, base.Owner.Creature, this);
 	}
 }

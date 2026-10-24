@@ -9,11 +9,12 @@ public sealed class Folly : CardModel
 
 	public override int MaxUpgradeLevel => 0;
 
-	public override IEnumerable<CardKeyword> CanonicalKeywords => new global::_003C_003Ez__ReadOnlyArray<CardKeyword>(new CardKeyword[3]
+	public override IEnumerable<CardKeyword> CanonicalKeywords => new global::_003C_003Ez__ReadOnlyArray<CardKeyword>(new CardKeyword[4]
 	{
 		CardKeyword.Unplayable,
 		CardKeyword.Eternal,
-		CardKeyword.Innate
+		CardKeyword.Innate,
+		CardKeyword.Ethereal
 	});
 
 	public Folly()

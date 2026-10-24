@@ -24,7 +24,7 @@ public sealed class FeedingFrenzy : CardModel
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		decimal baseValue = base.DynamicVars.Strength.BaseValue;
-		await PowerCmd.Apply<FeedingFrenzyPower>(base.Owner.Creature, baseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<FeedingFrenzyPower>(choiceContext, base.Owner.Creature, baseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

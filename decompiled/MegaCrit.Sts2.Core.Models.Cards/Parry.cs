@@ -17,7 +17,7 @@ public sealed class Parry : CardModel
 		HoverTipFactory.Static(StaticHoverTip.Block)
 	});
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new PowerVar<ParryPower>(6m));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new PowerVar<ParryPower>(10m));
 
 	public Parry()
 		: base(1, CardType.Power, CardRarity.Uncommon, TargetType.Self)
@@ -26,12 +26,12 @@ public sealed class Parry : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<ParryPower>(base.Owner.Creature, base.DynamicVars["ParryPower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<ParryPower>(choiceContext, base.Owner.Creature, base.DynamicVars["ParryPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars["ParryPower"].UpgradeValueBy(3m);
+		base.DynamicVars["ParryPower"].UpgradeValueBy(4m);
 	}
 }

@@ -6,6 +6,7 @@ using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
@@ -15,35 +16,66 @@ namespace MegaCrit.Sts2.Core.Nodes.TopBar;
 [ScriptPath("res://src/Core/Nodes/TopBar/NTopBarMapButton.cs")]
 public class NTopBarMapButton : NTopBarButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NTopBarButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'IsOpen' method.
+		/// </summary>
 		public new static readonly StringName IsOpen = "IsOpen";
 
+		/// <summary>
+		/// Cached name for the 'StartOscillation' method.
+		/// </summary>
 		public static readonly StringName StartOscillation = "StartOscillation";
 
+		/// <summary>
+		/// Cached name for the 'StopOscillation' method.
+		/// </summary>
 		public static readonly StringName StopOscillation = "StopOscillation";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NTopBarButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Hotkeys' property.
+		/// </summary>
 		public new static readonly StringName Hotkeys = "Hotkeys";
 
+		/// <summary>
+		/// Cached name for the '_oscillateTween' field.
+		/// </summary>
 		public static readonly StringName _oscillateTween = "_oscillateTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NTopBarButton.SignalName
 	{
 	}
 
 	private static readonly StringName _v = new StringName("v");
-
-	private static readonly HoverTip _hoverTip = new HoverTip(new LocString("static_hover_tips", "MAP.title"), new LocString("static_hover_tips", "MAP.description"));
 
 	private const float _defaultV = 0.9f;
 
@@ -98,8 +130,11 @@ public class NTopBarMapButton : NTopBarButton
 	protected override void OnFocus()
 	{
 		base.OnFocus();
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
-		nHoverTipSet.GlobalPosition = base.GlobalPosition + new Vector2(base.Size.X - nHoverTipSet.Size.X, base.Size.Y + 20f);
+		LocString locString = new LocString("static_hover_tips", "MAP.title");
+		locString.Add("Hotkey", NInputManager.Instance.GetShortcutKey(MegaInput.viewMap).ToString());
+		HoverTip hoverTip = new HoverTip(locString, new LocString("static_hover_tips", "MAP.description"));
+		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, hoverTip);
+		nHoverTipSet?.SetGlobalPosition(base.GlobalPosition + new Vector2(base.Size.X - nHoverTipSet.Size.X, base.Size.Y + 20f));
 	}
 
 	protected override void OnUnfocus()
@@ -108,6 +143,11 @@ public class NTopBarMapButton : NTopBarButton
 		NHoverTipSet.Remove(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -121,6 +161,7 @@ public class NTopBarMapButton : NTopBarButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -162,6 +203,7 @@ public class NTopBarMapButton : NTopBarButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -192,6 +234,7 @@ public class NTopBarMapButton : NTopBarButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -203,6 +246,7 @@ public class NTopBarMapButton : NTopBarButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -219,6 +263,11 @@ public class NTopBarMapButton : NTopBarButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -228,6 +277,7 @@ public class NTopBarMapButton : NTopBarButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -235,6 +285,7 @@ public class NTopBarMapButton : NTopBarButton
 		info.AddProperty(PropertyName._oscillateTween, Variant.From(in _oscillateTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

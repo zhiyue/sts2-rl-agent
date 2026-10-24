@@ -7,10 +7,12 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.TestSupport;
@@ -20,30 +22,76 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NCardFlyPowerVfx.cs")]
 public class NCardFlyPowerVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'GetDuration' method.
+		/// </summary>
 		public static readonly StringName GetDuration = "GetDuration";
 
+		/// <summary>
+		/// Cached name for the 'GetDurationInternal' method.
+		/// </summary>
 		public static readonly StringName GetDurationInternal = "GetDurationInternal";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'CardNode' property.
+		/// </summary>
 		public static readonly StringName CardNode = "CardNode";
 
+		/// <summary>
+		/// Cached name for the '_cardOwnerNode' field.
+		/// </summary>
 		public static readonly StringName _cardOwnerNode = "_cardOwnerNode";
 
+		/// <summary>
+		/// Cached name for the '_vfx' field.
+		/// </summary>
 		public static readonly StringName _vfx = "_vfx";
 
+		/// <summary>
+		/// Cached name for the '_swooshPath' field.
+		/// </summary>
 		public static readonly StringName _swooshPath = "_swooshPath";
+
+		/// <summary>
+		/// Cached name for the '_scaleTween' field.
+		/// </summary>
+		public static readonly StringName _scaleTween = "_scaleTween";
+
+		/// <summary>
+		/// Cached name for the '_scalingOut' field.
+		/// </summary>
+		public static readonly StringName _scalingOut = "_scalingOut";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -61,6 +109,10 @@ public class NCardFlyPowerVfx : Node2D
 	private NCardTrailVfx? _vfx;
 
 	private Path2D _swooshPath;
+
+	private Tween? _scaleTween;
+
+	private bool _scalingOut;
 
 	private readonly CancellationTokenSource _cancelToken = new CancellationTokenSource();
 
@@ -100,8 +152,8 @@ public class NCardFlyPowerVfx : Node2D
 	public override void _ExitTree()
 	{
 		base._ExitTree();
+		_scaleTween?.Kill();
 		_cancelToken.Cancel();
-		_cancelToken.Dispose();
 	}
 
 	public float GetDuration()
@@ -116,13 +168,15 @@ public class NCardFlyPowerVfx : Node2D
 
 	public async Task PlayAnim()
 	{
-		CreateTween().TweenProperty(CardNode, "scale", Vector2.One * 0.1f, 0.30000001192092896);
+		SfxCmd.Play("event:/sfx/ui/cards/card_movement_B_power");
+		_scaleTween = CreateTween();
+		_scaleTween.TweenProperty(CardNode, "scale", Vector2.One * 0.1f, 0.30000001192092896);
 		float length = _swooshPath.Curve.GetBakedLength();
 		double timeAccumulator = 0.0;
 		float duration = GetDurationInternal();
 		while (timeAccumulator < (double)duration)
 		{
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrame();
 			if (_cancelToken.IsCancellationRequested)
 			{
 				break;
@@ -136,9 +190,12 @@ public class NCardFlyPowerVfx : Node2D
 			float s = transform2D.Rotation - CardNode.Rotation;
 			float num3 = Mathf.Lerp((float)Math.PI, (float)Math.PI * 50f, num);
 			CardNode.Rotation += (float)Mathf.Sign(s) * Mathf.Min(Mathf.Abs(s), (float)((double)num3 * processDeltaTime));
-			if (num >= 0.9f)
+			if (num >= 0.9f && !_scalingOut)
 			{
-				CreateTween().TweenProperty(CardNode, "scale", Vector2.Zero, (double)duration - timeAccumulator);
+				_scalingOut = true;
+				_scaleTween?.Kill();
+				_scaleTween = CreateTween();
+				_scaleTween.TweenProperty(CardNode, "scale", Vector2.Zero, (float)((double)duration - timeAccumulator));
 			}
 		}
 		NGame.Instance.ScreenShake(ShakeStrength.Medium, ShakeDuration.Short);
@@ -150,6 +207,11 @@ public class NCardFlyPowerVfx : Node2D
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -165,6 +227,7 @@ public class NCardFlyPowerVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -210,6 +273,7 @@ public class NCardFlyPowerVfx : Node2D
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -236,6 +300,7 @@ public class NCardFlyPowerVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -259,9 +324,20 @@ public class NCardFlyPowerVfx : Node2D
 			_swooshPath = VariantUtils.ConvertTo<Path2D>(in value);
 			return true;
 		}
+		if (name == PropertyName._scaleTween)
+		{
+			_scaleTween = VariantUtils.ConvertTo<Tween>(in value);
+			return true;
+		}
+		if (name == PropertyName._scalingOut)
+		{
+			_scalingOut = VariantUtils.ConvertTo<bool>(in value);
+			return true;
+		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -285,9 +361,24 @@ public class NCardFlyPowerVfx : Node2D
 			value = VariantUtils.CreateFrom(in _swooshPath);
 			return true;
 		}
+		if (name == PropertyName._scaleTween)
+		{
+			value = VariantUtils.CreateFrom(in _scaleTween);
+			return true;
+		}
+		if (name == PropertyName._scalingOut)
+		{
+			value = VariantUtils.CreateFrom(in _scalingOut);
+			return true;
+		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -296,9 +387,12 @@ public class NCardFlyPowerVfx : Node2D
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._cardOwnerNode, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._vfx, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._swooshPath, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._scaleTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._scalingOut, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -307,8 +401,11 @@ public class NCardFlyPowerVfx : Node2D
 		info.AddProperty(PropertyName._cardOwnerNode, Variant.From(in _cardOwnerNode));
 		info.AddProperty(PropertyName._vfx, Variant.From(in _vfx));
 		info.AddProperty(PropertyName._swooshPath, Variant.From(in _swooshPath));
+		info.AddProperty(PropertyName._scaleTween, Variant.From(in _scaleTween));
+		info.AddProperty(PropertyName._scalingOut, Variant.From(in _scalingOut));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -328,6 +425,14 @@ public class NCardFlyPowerVfx : Node2D
 		if (info.TryGetProperty(PropertyName._swooshPath, out var value4))
 		{
 			_swooshPath = value4.As<Path2D>();
+		}
+		if (info.TryGetProperty(PropertyName._scaleTween, out var value5))
+		{
+			_scaleTween = value5.As<Tween>();
+		}
+		if (info.TryGetProperty(PropertyName._scalingOut, out var value6))
+		{
+			_scalingOut = value6.As<bool>();
 		}
 	}
 }

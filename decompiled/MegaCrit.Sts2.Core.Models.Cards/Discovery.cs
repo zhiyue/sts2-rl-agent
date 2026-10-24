@@ -33,8 +33,8 @@ public sealed class Discovery : CardModel
 		}
 		if (cardModel != null)
 		{
-			cardModel.EnergyCost.SetThisTurnOrUntilPlayed(0);
-			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, addedByPlayer: true);
+			cardModel.SetToFreeThisTurn();
+			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, base.Owner);
 		}
 	}
 
@@ -43,6 +43,9 @@ public sealed class Discovery : CardModel
 		RemoveKeyword(CardKeyword.Exhaust);
 	}
 
+	/// <summary>
+	/// ONLY USE THIS IN TESTS!
+	/// </summary>
 	public void MockSelectedCard(CardModel card)
 	{
 		AssertMutable();

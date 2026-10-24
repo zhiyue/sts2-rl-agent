@@ -17,6 +17,9 @@ using MegaCrit.Sts2.Core.Unlocks;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 
+/// <summary>
+/// Inherits from NCardGrid, with functionality to help perf for the card library.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/CardLibrary/NCardLibraryGrid.cs")]
 public class NCardLibraryGrid : NCardGrid
 {
@@ -57,28 +60,61 @@ public class NCardLibraryGrid : NCardGrid
 		}
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NCardGrid.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RefreshVisibility' method.
+		/// </summary>
 		public static readonly StringName RefreshVisibility = "RefreshVisibility";
 
+		/// <summary>
+		/// Cached name for the 'InitGrid' method.
+		/// </summary>
 		public new static readonly StringName InitGrid = "InitGrid";
 
+		/// <summary>
+		/// Cached name for the 'UpdateGridNavigation' method.
+		/// </summary>
 		public new static readonly StringName UpdateGridNavigation = "UpdateGridNavigation";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NCardGrid.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsCardLibrary' property.
+		/// </summary>
 		public new static readonly StringName IsCardLibrary = "IsCardLibrary";
 
+		/// <summary>
+		/// Cached name for the 'CenterGrid' property.
+		/// </summary>
 		public new static readonly StringName CenterGrid = "CenterGrid";
 
+		/// <summary>
+		/// Cached name for the 'ShowStats' property.
+		/// </summary>
 		public static readonly StringName ShowStats = "ShowStats";
 
+		/// <summary>
+		/// Cached name for the '_showStats' field.
+		/// </summary>
 		public static readonly StringName _showStats = "_showStats";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NCardGrid.SignalName
 	{
 	}
@@ -132,6 +168,10 @@ public class NCardLibraryGrid : NCardGrid
 		RefreshVisibility();
 	}
 
+	/// <summary>
+	/// Refreshes the seen/unlocked card sets. Call when opening the card library
+	/// to pick up any cards discovered since the last visit.
+	/// </summary>
 	public void RefreshVisibility()
 	{
 		_seenCards = SaveManager.Instance.Progress.DiscoveredCards.ToHashSet();
@@ -222,6 +262,11 @@ public class NCardLibraryGrid : NCardGrid
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -233,6 +278,7 @@ public class NCardLibraryGrid : NCardGrid
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -263,6 +309,7 @@ public class NCardLibraryGrid : NCardGrid
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -285,6 +332,7 @@ public class NCardLibraryGrid : NCardGrid
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -301,6 +349,7 @@ public class NCardLibraryGrid : NCardGrid
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -331,6 +380,11 @@ public class NCardLibraryGrid : NCardGrid
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -342,6 +396,7 @@ public class NCardLibraryGrid : NCardGrid
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -350,6 +405,7 @@ public class NCardLibraryGrid : NCardGrid
 		info.AddProperty(PropertyName._showStats, Variant.From(in _showStats));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

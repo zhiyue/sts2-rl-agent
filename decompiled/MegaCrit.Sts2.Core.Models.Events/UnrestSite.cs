@@ -23,7 +23,7 @@ public sealed class UnrestSite : EventModel
 		new DynamicVar("MaxHpLoss", 8m)
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		return runState.Players.All((Player p) => (decimal)p.Creature.CurrentHp <= (decimal)p.Creature.MaxHp * 0.70m);
 	}
@@ -33,7 +33,7 @@ public sealed class UnrestSite : EventModel
 		return new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[2]
 		{
 			new EventOption(this, Rest, "UNREST_SITE.pages.INITIAL.options.REST", HoverTipFactory.FromCardWithCardHoverTips<PoorSleep>()),
-			new EventOption(this, Kill, "UNREST_SITE.pages.INITIAL.options.KILL")
+			new EventOption(this, Kill, "UNREST_SITE.pages.INITIAL.options.KILL").ThatDecreasesMaxHp(base.DynamicVars["MaxHpLoss"].BaseValue)
 		});
 	}
 

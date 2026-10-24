@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Audio;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -30,7 +31,7 @@ public sealed class TheAdversaryMkThree : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<ArtifactPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<ArtifactPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -71,6 +72,6 @@ public sealed class TheAdversaryMkThree : MonsterModel
 			.WithAttackerFx(null, AttackSfx)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 4m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 4m, base.Creature, null);
 	}
 }

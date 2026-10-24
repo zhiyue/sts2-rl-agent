@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -50,7 +52,7 @@ public sealed class ArtOfWar : RelicModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.ForEnergy(this));
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (base.Owner != cardPlay.Card.Owner)
 		{
@@ -73,9 +75,9 @@ public sealed class ArtOfWar : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side != base.Owner.Creature.Side)
+		if (!participants.Contains(base.Owner.Creature))
 		{
 			return Task.CompletedTask;
 		}
@@ -91,7 +93,7 @@ public sealed class ArtOfWar : RelicModel
 			return;
 		}
 		base.Status = RelicStatus.Active;
-		if (base.Owner.Creature.CombatState.RoundNumber > 1)
+		if (base.Owner.PlayerCombatState.TurnNumber > 1)
 		{
 			if (!AnyAttacksPlayedLastTurn)
 			{

@@ -32,12 +32,12 @@ public sealed class ConsumingShadow : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
 		for (int i = 0; i < base.DynamicVars.Repeat.IntValue; i++)
 		{
 			await OrbCmd.Channel<DarkOrb>(choiceContext, base.Owner);
 		}
-		await PowerCmd.Apply<ConsumingShadowPower>(base.Owner.Creature, base.DynamicVars["ConsumingShadowPower"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<ConsumingShadowPower>(choiceContext, base.Owner.Creature, base.DynamicVars["ConsumingShadowPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

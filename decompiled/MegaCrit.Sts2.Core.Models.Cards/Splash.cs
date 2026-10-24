@@ -51,10 +51,13 @@ public sealed class Splash : CardModel
 		if (cardModel != null)
 		{
 			cardModel.SetToFreeThisTurn();
-			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, base.Owner);
 		}
 	}
 
+	/// <summary>
+	/// ONLY USE THIS IN TESTS!
+	/// </summary>
 	public void MockGeneratedCard(CardModel card)
 	{
 		AssertMutable();

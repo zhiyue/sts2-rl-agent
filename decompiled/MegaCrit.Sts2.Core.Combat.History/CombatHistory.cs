@@ -11,6 +11,12 @@ using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Combat.History;
 
+/// <summary>
+/// A history of most events that have happened in combat.
+/// Each entry should be logged immediately after the event occurs, but before its AfterX hook is executed.
+/// For example, a CardPlayedEntry is logged immediately after the card is played, but before AfterCardPlayed is
+/// executed.
+/// </summary>
 public class CombatHistory
 {
 	private readonly List<CombatHistoryEntry> _entries = new List<CombatHistoryEntry>();
@@ -29,94 +35,97 @@ public class CombatHistory
 		this.Changed?.Invoke();
 	}
 
-	public void CardPlayStarted(CombatState combatState, CardPlay cardPlay)
+	public void CardPlayStarted(ICombatState combatState, CardPlay cardPlay)
 	{
-		Add(new CardPlayStartedEntry(cardPlay, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new CardPlayStartedEntry(cardPlay, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void CardPlayFinished(CombatState combatState, CardPlay cardPlay)
+	public void CardPlayFinished(ICombatState combatState, CardPlay cardPlay)
 	{
-		Add(new CardPlayFinishedEntry(cardPlay, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new CardPlayFinishedEntry(cardPlay, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void CardAfflicted(CombatState combatState, CardModel card, AfflictionModel affliction)
+	public void CardAfflicted(ICombatState combatState, CardModel card, AfflictionModel affliction)
 	{
-		Add(new CardAfflictedEntry(card, affliction, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new CardAfflictedEntry(card, affliction, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void CardDiscarded(CombatState combatState, CardModel card)
+	public void CardDiscarded(ICombatState combatState, CardModel card)
 	{
-		Add(new CardDiscardedEntry(card, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new CardDiscardedEntry(card, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void CardDrawn(CombatState combatState, CardModel card, bool fromHandDraw)
+	public void CardDrawn(ICombatState combatState, CardModel card, bool fromHandDraw)
 	{
-		Add(new CardDrawnEntry(card, combatState.RoundNumber, combatState.CurrentSide, fromHandDraw, this));
+		Add(combatState, new CardDrawnEntry(card, combatState.RoundNumber, combatState.CurrentSide, fromHandDraw, this, combatState.Players));
 	}
 
-	public void CardExhausted(CombatState combatState, CardModel card)
+	public void CardExhausted(ICombatState combatState, CardModel card)
 	{
-		Add(new CardExhaustedEntry(card, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new CardExhaustedEntry(card, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void CardGenerated(CombatState combatState, CardModel card, bool generatedByPlayer)
+	public void CardGenerated(ICombatState combatState, CardModel card, Player? creator)
 	{
-		Add(new CardGeneratedEntry(card, generatedByPlayer, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new CardGeneratedEntry(card, creator, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void CreatureAttacked(CombatState combatState, Creature attacker, IReadOnlyList<DamageResult> damageResults)
+	public void CreatureAttacked(ICombatState combatState, Creature attacker, IReadOnlyList<DamageResult> damageResults)
 	{
-		Add(new CreatureAttackedEntry(attacker, damageResults, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new CreatureAttackedEntry(attacker, damageResults, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void DamageReceived(CombatState combatState, Creature receiver, Creature? dealer, DamageResult result, CardModel? cardSource)
+	public void DamageReceived(ICombatState combatState, Creature receiver, Creature? dealer, DamageResult result, CardModel? cardSource)
 	{
-		Add(new DamageReceivedEntry(result, receiver, dealer, cardSource, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new DamageReceivedEntry(result, receiver, dealer, cardSource, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void BlockGained(CombatState combatState, Creature receiver, int amount, ValueProp props, CardPlay? cardPlay)
+	public void BlockGained(ICombatState combatState, Creature receiver, int amount, ValueProp props, CardPlay? cardPlay)
 	{
-		Add(new BlockGainedEntry(amount, props, cardPlay, receiver, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new BlockGainedEntry(amount, props, cardPlay, receiver, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void EnergySpent(CombatState combatState, int amount, Player player)
+	public void EnergySpent(ICombatState combatState, int amount, Player player)
 	{
-		Add(new EnergySpentEntry(amount, player, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new EnergySpentEntry(amount, player, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void MonsterPerformedMove(CombatState combatState, MonsterModel monster, MoveState move, IEnumerable<Creature>? targets)
+	public void MonsterPerformedMove(ICombatState combatState, MonsterModel monster, MoveState move, IEnumerable<Creature>? targets)
 	{
-		Add(new MonsterPerformedMoveEntry(monster, move, targets, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new MonsterPerformedMoveEntry(monster, move, targets, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void OrbChanneled(CombatState combatState, OrbModel orb)
+	public void OrbChanneled(ICombatState combatState, OrbModel orb)
 	{
-		Add(new OrbChanneledEntry(orb, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new OrbChanneledEntry(orb, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void PotionUsed(CombatState combatState, PotionModel potion, Creature? target)
+	public void PotionUsed(ICombatState combatState, PotionModel potion, Creature? target)
 	{
-		Add(new PotionUsedEntry(potion, target, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new PotionUsedEntry(potion, target, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void PowerReceived(CombatState combatState, PowerModel power, decimal amount, Creature? applier)
+	public void PowerReceived(ICombatState combatState, PowerModel power, decimal amount, Creature? applier)
 	{
-		Add(new PowerReceivedEntry(power, amount, applier, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new PowerReceivedEntry(power, amount, applier, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void StarsModified(CombatState combatState, int amount, Player player)
+	public void StarsModified(ICombatState combatState, int amount, Player player)
 	{
-		Add(new StarsModifiedEntry(amount, player, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new StarsModifiedEntry(amount, player, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	public void Summoned(CombatState combatState, int amount, Player player)
+	public void Summoned(ICombatState combatState, int amount, Player player)
 	{
-		Add(new SummonedEntry(amount, player, combatState.RoundNumber, combatState.CurrentSide, this));
+		Add(combatState, new SummonedEntry(amount, player, combatState.RoundNumber, combatState.CurrentSide, this, combatState.Players));
 	}
 
-	private void Add(CombatHistoryEntry entry)
+	private void Add(ICombatState combatState, CombatHistoryEntry entry)
 	{
-		_entries.Add(entry);
-		this.Changed?.Invoke();
+		if (combatState.IsLiveCombat())
+		{
+			_entries.Add(entry);
+			this.Changed?.Invoke();
+		}
 	}
 }

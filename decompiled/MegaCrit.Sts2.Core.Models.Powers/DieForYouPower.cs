@@ -29,6 +29,9 @@ public sealed class DieForYouPower : PowerModel
 		return base.Owner;
 	}
 
+	/// <summary>
+	/// This is so Osty won't receive powers while it is dead
+	/// </summary>
 	public override bool ShouldAllowHitting(Creature creature)
 	{
 		return creature.IsAlive;

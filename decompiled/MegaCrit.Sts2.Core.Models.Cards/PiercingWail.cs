@@ -30,7 +30,7 @@ public sealed class PiercingWail : CardModel
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		foreach (Creature hittableEnemy in base.CombatState.HittableEnemies)
 		{
-			await PowerCmd.Apply<PiercingWailPower>(hittableEnemy, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<PiercingWailPower>(choiceContext, hittableEnemy, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
 		}
 	}
 

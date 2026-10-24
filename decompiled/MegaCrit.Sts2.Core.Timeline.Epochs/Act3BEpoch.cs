@@ -3,6 +3,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Elsewhere: Placeholder
+/// </summary>
 public class Act3BEpoch : EpochModel
 {
 	public override string Id => "ACT3_B_EPOCH";

@@ -21,6 +21,13 @@ public sealed class LightningRodPower : PowerModel
 		HoverTipFactory.FromOrb<LightningOrb>()
 	});
 
+	/// <remarks>
+	/// We do this in AfterEnergyReset instead of BeforeSideTurnStart so the player will still get benefits from orbs
+	/// that might be evoked to make room for the new Lightning Orb. Specifically:
+	///
+	/// - <see cref="T:MegaCrit.Sts2.Core.Models.Orbs.PlasmaOrb" />'s energy gain could be lost to energy reset if this triggered earlier.
+	/// - <see cref="T:MegaCrit.Sts2.Core.Models.Orbs.FrostOrb" />'s block gain could be lost to block clear if this triggered earlier.
+	/// </remarks>
 	public override async Task AfterEnergyReset(Player player)
 	{
 		if (player == base.Owner.Player)

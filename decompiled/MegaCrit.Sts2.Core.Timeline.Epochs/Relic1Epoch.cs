@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Scribbles: On this quiet planet, Beasts of Imagination begin to dot the world.
+/// </summary>
 public class Relic1Epoch : EpochModel
 {
 	public override string Id => "RELIC1_EPOCH";

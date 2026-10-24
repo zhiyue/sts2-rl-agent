@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -14,9 +15,19 @@ public sealed class Ectoplasm : RelicModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.ForEnergy(this));
 
-	public override bool ShouldGainGold(decimal amount, Player player)
+	public override decimal ModifyGoldGained(Player player, decimal amount)
 	{
-		return player != base.Owner;
+		if (player != base.Owner)
+		{
+			return amount;
+		}
+		return 0m;
+	}
+
+	public override Task AfterModifyingGoldGained(Player player, decimal amount)
+	{
+		Flash();
+		return Task.CompletedTask;
 	}
 
 	public override decimal ModifyMaxEnergy(Player player, decimal amount)

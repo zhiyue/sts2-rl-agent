@@ -17,6 +17,11 @@ using MegaCrit.Sts2.Core.Nodes.HoverTips;
 
 namespace MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 
+/// <summary>
+/// CardHolder is meant to control the animation visuals for cards when they are presented in the PlayerHand,
+/// grid screens, card reward screens and so on. Examples include hovering/un-hovering and fancy fanning logic in hand.
+/// Clicked/buttonReleased behavior is handled by its parent: CardHolderContainer (ie PlayerHand).
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Cards/Holders/NCardHolder.cs")]
 public abstract class NCardHolder : Control
 {
@@ -26,72 +31,181 @@ public abstract class NCardHolder : Control
 	[Signal]
 	public delegate void AltPressedEventHandler(NCardHolder cardHolder);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetClickable' method.
+		/// </summary>
 		public static readonly StringName SetClickable = "SetClickable";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'EmitPressed' method.
+		/// </summary>
+		public static readonly StringName EmitPressed = "EmitPressed";
+
+		/// <summary>
+		/// Cached name for the 'EmitAltPressed' method.
+		/// </summary>
+		public static readonly StringName EmitAltPressed = "EmitAltPressed";
+
+		/// <summary>
+		/// Cached name for the 'SetCard' method.
+		/// </summary>
 		public static readonly StringName SetCard = "SetCard";
 
+		/// <summary>
+		/// Cached name for the 'OnCardReassigned' method.
+		/// </summary>
 		public static readonly StringName OnCardReassigned = "OnCardReassigned";
 
+		/// <summary>
+		/// Cached name for the 'OnMousePressed' method.
+		/// </summary>
 		public static readonly StringName OnMousePressed = "OnMousePressed";
 
+		/// <summary>
+		/// Cached name for the 'OnMouseReleased' method.
+		/// </summary>
 		public static readonly StringName OnMouseReleased = "OnMouseReleased";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'CreateHoverTips' method.
+		/// </summary>
 		public static readonly StringName CreateHoverTips = "CreateHoverTips";
 
+		/// <summary>
+		/// Cached name for the 'ClearHoverTips' method.
+		/// </summary>
 		public static readonly StringName ClearHoverTips = "ClearHoverTips";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'RefreshFocusState' method.
+		/// </summary>
 		public static readonly StringName RefreshFocusState = "RefreshFocusState";
 
+		/// <summary>
+		/// Cached name for the 'DoCardHoverEffects' method.
+		/// </summary>
 		public static readonly StringName DoCardHoverEffects = "DoCardHoverEffects";
 
+		/// <summary>
+		/// Cached name for the 'OnChildExitingTree' method.
+		/// </summary>
 		public static readonly StringName OnChildExitingTree = "OnChildExitingTree";
 
+		/// <summary>
+		/// Cached name for the 'Clear' method.
+		/// </summary>
 		public static readonly StringName Clear = "Clear";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'HoverScale' property.
+		/// </summary>
 		public static readonly StringName HoverScale = "HoverScale";
 
+		/// <summary>
+		/// Cached name for the 'SmallScale' property.
+		/// </summary>
 		public static readonly StringName SmallScale = "SmallScale";
 
+		/// <summary>
+		/// Cached name for the 'Hitbox' property.
+		/// </summary>
 		public static readonly StringName Hitbox = "Hitbox";
 
+		/// <summary>
+		/// Cached name for the 'CardNode' property.
+		/// </summary>
 		public static readonly StringName CardNode = "CardNode";
 
+		/// <summary>
+		/// Cached name for the 'IsShowingUpgradedCard' property.
+		/// </summary>
 		public static readonly StringName IsShowingUpgradedCard = "IsShowingUpgradedCard";
 
+		/// <summary>
+		/// Cached name for the 'CanBeFocused' property.
+		/// </summary>
 		public static readonly StringName CanBeFocused = "CanBeFocused";
 
+		/// <summary>
+		/// Cached name for the '_hitbox' field.
+		/// </summary>
 		public static readonly StringName _hitbox = "_hitbox";
 
+		/// <summary>
+		/// Cached name for the '_isHovered' field.
+		/// </summary>
 		public static readonly StringName _isHovered = "_isHovered";
 
+		/// <summary>
+		/// Cached name for the '_isFocused' field.
+		/// </summary>
 		public static readonly StringName _isFocused = "_isFocused";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_currentPressedAction' field.
+		/// </summary>
 		public static readonly StringName _currentPressedAction = "_currentPressedAction";
 
+		/// <summary>
+		/// Cached name for the '_isClickable' field.
+		/// </summary>
 		public static readonly StringName _isClickable = "_isClickable";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Pressed' signal.
+		/// </summary>
 		public static readonly StringName Pressed = "Pressed";
 
+		/// <summary>
+		/// Cached name for the 'AltPressed' signal.
+		/// </summary>
 		public static readonly StringName AltPressed = "AltPressed";
 	}
 
@@ -121,12 +235,17 @@ public abstract class NCardHolder : Control
 
 	public NCard? CardNode { get; protected set; }
 
+	/// <summary>
+	/// The CardModel that this holder's CardNode is displaying.
+	/// Null if the holder is empty.
+	/// </summary>
 	public virtual CardModel? CardModel => CardNode?.Model;
 
 	public virtual bool IsShowingUpgradedCard => CardModel?.IsUpgraded ?? false;
 
 	protected bool CanBeFocused => _isHovered;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Cards.Holders.NCardHolder.PressedEventHandler" />
 	public event PressedEventHandler Pressed
 	{
 		add
@@ -139,6 +258,7 @@ public abstract class NCardHolder : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Cards.Holders.NCardHolder.AltPressedEventHandler" />
 	public event AltPressedEventHandler AltPressed
 	{
 		add
@@ -161,6 +281,10 @@ public abstract class NCardHolder : Control
 		ConnectSignals();
 	}
 
+	/// <summary>
+	/// Set whether the card holder may be selected (e.g. clicked by mouse or confirmed by controller).
+	/// Different than calling _hitbox.Disable, as the card holder can still be focused.
+	/// </summary>
 	public void SetClickable(bool isClickable)
 	{
 		_isClickable = isClickable;
@@ -196,14 +320,24 @@ public abstract class NCardHolder : Control
 			if (inputEvent.IsActionPressed(MegaInput.select))
 			{
 				SfxCmd.Play("event:/sfx/ui/clicks/ui_click");
-				EmitSignal(SignalName.Pressed, this);
+				CallDeferred(MethodName.EmitPressed);
 			}
 			else if (inputEvent.IsActionPressed(MegaInput.accept))
 			{
 				SfxCmd.Play("event:/sfx/ui/clicks/ui_click");
-				EmitSignal(SignalName.AltPressed, this);
+				CallDeferred(MethodName.EmitAltPressed);
 			}
 		}
+	}
+
+	private void EmitPressed()
+	{
+		EmitSignal(SignalName.Pressed, this);
+	}
+
+	private void EmitAltPressed()
+	{
+		EmitSignal(SignalName.AltPressed, this);
 	}
 
 	protected virtual void SetCard(NCard node)
@@ -223,6 +357,9 @@ public abstract class NCardHolder : Control
 		}
 	}
 
+	/// <summary>
+	/// This is used for reducing the number of unnecessary costly instancing and godot tree operations.
+	/// </summary>
 	public void ReassignToCard(CardModel cardModel, PileType pileType, Creature? target, ModelVisibility visibility)
 	{
 		CardNode.Visibility = visibility;
@@ -283,8 +420,7 @@ public abstract class NCardHolder : Control
 	{
 		if (CardNode != null)
 		{
-			NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, CardNode.Model.HoverTips);
-			nHoverTipSet.SetAlignmentForCardHolder(this);
+			NHoverTipSet.CreateAndShow(this, CardNode.Model.HoverTips)?.SetAlignmentForCardHolder(this);
 		}
 	}
 
@@ -329,6 +465,10 @@ public abstract class NCardHolder : Control
 		}
 	}
 
+	/// <summary>
+	/// Clean up the CardHolder if its NCard is removed.
+	/// We can get rid of this if we start wanting to reuse CardHolders.
+	/// </summary>
 	private void OnChildExitingTree(Node node)
 	{
 		if (node == CardNode && node.GetParent() != this)
@@ -350,10 +490,15 @@ public abstract class NCardHolder : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(16);
+		List<MethodInfo> list = new List<MethodInfo>(18);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.SetClickable, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -364,6 +509,8 @@ public abstract class NCardHolder : Control
 		{
 			new PropertyInfo(Variant.Type.Object, "inputEvent", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("InputEvent"), exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.EmitPressed, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.EmitAltPressed, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.SetCard, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "node", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
@@ -394,6 +541,7 @@ public abstract class NCardHolder : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -418,6 +566,18 @@ public abstract class NCardHolder : Control
 		if (method == MethodName._GuiInput && args.Count == 1)
 		{
 			_GuiInput(VariantUtils.ConvertTo<InputEvent>(in args[0]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.EmitPressed && args.Count == 0)
+		{
+			EmitPressed();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.EmitAltPressed && args.Count == 0)
+		{
+			EmitAltPressed();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -496,6 +656,7 @@ public abstract class NCardHolder : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -512,6 +673,14 @@ public abstract class NCardHolder : Control
 			return true;
 		}
 		if (method == MethodName._GuiInput)
+		{
+			return true;
+		}
+		if (method == MethodName.EmitPressed)
+		{
+			return true;
+		}
+		if (method == MethodName.EmitAltPressed)
 		{
 			return true;
 		}
@@ -566,6 +735,7 @@ public abstract class NCardHolder : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -607,6 +777,7 @@ public abstract class NCardHolder : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -679,6 +850,11 @@ public abstract class NCardHolder : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -698,6 +874,7 @@ public abstract class NCardHolder : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -713,6 +890,7 @@ public abstract class NCardHolder : Control
 		info.AddSignalEventDelegate(SignalName.AltPressed, backing_AltPressed);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -755,6 +933,11 @@ public abstract class NCardHolder : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -780,6 +963,7 @@ public abstract class NCardHolder : Control
 		EmitSignal(SignalName.AltPressed, cardHolder);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -797,6 +981,7 @@ public abstract class NCardHolder : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

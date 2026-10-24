@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -18,6 +19,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 public sealed class CorpseSlug : MonsterModel
 {
 	private const string _heavyAttackTrigger = "HeavyAttackTrigger";
+
+	private const string _doubleAttackTrigger = "DoubleAttackTrigger";
 
 	public const string devourStartTrigger = "DevourStartTrigger";
 
@@ -82,7 +85,7 @@ public sealed class CorpseSlug : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<RavenousPower>(base.Creature, RavenousStr, base.Creature, null);
+		await PowerCmd.Apply<RavenousPower>(new ThrowingPlayerChoiceContext(), base.Creature, RavenousStr, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -108,7 +111,8 @@ public sealed class CorpseSlug : MonsterModel
 	private async Task WhipSlapMove(IReadOnlyList<Creature> targets)
 	{
 		await DamageCmd.Attack(WhipSlapDamage).WithHitCount(WhipSlapRepeat).FromMonster(this)
-			.WithAttackerAnim("Attack", 0.5f)
+			.WithAttackerAnim("DoubleAttackTrigger", 0.3f)
+			.OnlyPlayAnimOnce()
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/corpse_slugs/corpse_slugs_attack_light")
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
@@ -125,7 +129,7 @@ public sealed class CorpseSlug : MonsterModel
 	private async Task GoopMove(IReadOnlyList<Creature> targets)
 	{
 		await CreatureCmd.TriggerAnim(base.Creature, "Attack", 0.2f);
-		await PowerCmd.Apply<FrailPower>(targets, GoopFrailAmt, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, GoopFrailAmt, base.Creature, null);
 	}
 
 	public static void EnsureCorpseSlugsStartWithDifferentMoves(IEnumerable<MonsterModel> monsters, Rng rng)
@@ -144,28 +148,31 @@ public sealed class CorpseSlug : MonsterModel
 		AnimState animState = new AnimState("idle_loop", isLooping: true);
 		AnimState animState2 = new AnimState("attack");
 		AnimState animState3 = new AnimState("attack_heavy");
-		AnimState animState4 = new AnimState("hurt");
+		AnimState animState4 = new AnimState("attack_double");
+		AnimState animState5 = new AnimState("hurt");
 		AnimState state = new AnimState("die");
 		AnimState nextState = new AnimState("devour_loop", isLooping: true);
-		AnimState animState5 = new AnimState("devour_start");
-		AnimState animState6 = new AnimState("devour_end");
-		AnimState animState7 = new AnimState("hurt_devouring");
+		AnimState animState6 = new AnimState("devour_start");
+		AnimState animState7 = new AnimState("devour_end");
+		AnimState animState8 = new AnimState("hurt_devouring");
 		AnimState state2 = new AnimState("die_devouring");
 		animState3.NextState = animState;
 		animState2.NextState = animState;
 		animState4.NextState = animState;
-		animState5.NextState = nextState;
-		animState6.NextState = animState;
-		animState7.NextState = nextState;
+		animState5.NextState = animState;
+		animState6.NextState = nextState;
+		animState7.NextState = animState;
+		animState8.NextState = nextState;
 		CreatureAnimator creatureAnimator = new CreatureAnimator(animState, controller);
 		creatureAnimator.AddAnyState("HeavyAttackTrigger", animState3);
-		creatureAnimator.AddAnyState("DevourStartTrigger", animState5, () => !_isRavenous);
-		creatureAnimator.AddAnyState("DevourEndkTrigger", animState6);
+		creatureAnimator.AddAnyState("DoubleAttackTrigger", animState4);
+		creatureAnimator.AddAnyState("DevourStartTrigger", animState6, () => !_isRavenous);
+		creatureAnimator.AddAnyState("DevourEndkTrigger", animState7);
 		creatureAnimator.AddAnyState("Attack", animState2);
 		creatureAnimator.AddAnyState("Dead", state, () => !_isRavenous);
-		creatureAnimator.AddAnyState("Hit", animState4, () => !_isRavenous);
+		creatureAnimator.AddAnyState("Hit", animState5, () => !_isRavenous);
 		creatureAnimator.AddAnyState("Dead", state2, () => _isRavenous);
-		creatureAnimator.AddAnyState("Hit", animState7, () => _isRavenous);
+		creatureAnimator.AddAnyState("Hit", animState8, () => _isRavenous);
 		return creatureAnimator;
 	}
 }

@@ -9,6 +9,9 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 
+/// <summary>
+/// Console commands which causes the player to win the combat
+/// </summary>
 public class WinConsoleCmd : AbstractConsoleCmd
 {
 	public override string CmdName => "win";

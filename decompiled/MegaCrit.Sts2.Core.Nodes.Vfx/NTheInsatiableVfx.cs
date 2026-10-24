@@ -11,44 +11,101 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NTheInsatiableVfx.cs")]
 public class NTheInsatiableVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'TurnOnSaliva' method.
+		/// </summary>
 		public static readonly StringName TurnOnSaliva = "TurnOnSaliva";
 
+		/// <summary>
+		/// Cached name for the 'TurnOffSaliva' method.
+		/// </summary>
 		public static readonly StringName TurnOffSaliva = "TurnOffSaliva";
 
+		/// <summary>
+		/// Cached name for the 'TurnOnDrool' method.
+		/// </summary>
 		public static readonly StringName TurnOnDrool = "TurnOnDrool";
 
+		/// <summary>
+		/// Cached name for the 'TurnOffDrool' method.
+		/// </summary>
 		public static readonly StringName TurnOffDrool = "TurnOffDrool";
 
+		/// <summary>
+		/// Cached name for the 'TurnOnBaseBlast' method.
+		/// </summary>
 		public static readonly StringName TurnOnBaseBlast = "TurnOnBaseBlast";
 
+		/// <summary>
+		/// Cached name for the 'TurnOffBaseBlast' method.
+		/// </summary>
 		public static readonly StringName TurnOffBaseBlast = "TurnOffBaseBlast";
 
+		/// <summary>
+		/// Cached name for the 'TurnOffContinuousParticles' method.
+		/// </summary>
 		public static readonly StringName TurnOffContinuousParticles = "TurnOffContinuousParticles";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationStart' method.
+		/// </summary>
 		public static readonly StringName OnAnimationStart = "OnAnimationStart";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_continuousParticles' field.
+		/// </summary>
 		public static readonly StringName _continuousParticles = "_continuousParticles";
 
+		/// <summary>
+		/// Cached name for the '_salivaFountainParticles' field.
+		/// </summary>
 		public static readonly StringName _salivaFountainParticles = "_salivaFountainParticles";
 
+		/// <summary>
+		/// Cached name for the '_salivaDroolParticles' field.
+		/// </summary>
 		public static readonly StringName _salivaDroolParticles = "_salivaDroolParticles";
 
+		/// <summary>
+		/// Cached name for the '_salivaCloudParticles' field.
+		/// </summary>
 		public static readonly StringName _salivaCloudParticles = "_salivaCloudParticles";
 
+		/// <summary>
+		/// Cached name for the '_baseBlastParticles' field.
+		/// </summary>
 		public static readonly StringName _baseBlastParticles = "_baseBlastParticles";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -189,16 +246,22 @@ public class NTheInsatiableVfx : Node
 
 	private void OnAnimationStart(GodotObject spineSprite, GodotObject animationState, GodotObject trackEntry)
 	{
-		if (new MegaAnimationState(animationState).GetCurrent(0).GetAnimation().GetName() != "attack_thrash")
+		string currentAnimationName = new MegaAnimationState(animationState).GetCurrentAnimationName();
+		if (currentAnimationName != "attack_thrash")
 		{
 			TurnOffBaseBlast();
 		}
-		if (new MegaAnimationState(animationState).GetCurrent(0).GetAnimation().GetName() != "salivate")
+		if (currentAnimationName != "salivate")
 		{
 			TurnOffSaliva();
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -227,6 +290,7 @@ public class NTheInsatiableVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -293,6 +357,7 @@ public class NTheInsatiableVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -339,6 +404,7 @@ public class NTheInsatiableVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -375,6 +441,7 @@ public class NTheInsatiableVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -412,6 +479,11 @@ public class NTheInsatiableVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -425,6 +497,7 @@ public class NTheInsatiableVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -439,6 +512,7 @@ public class NTheInsatiableVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

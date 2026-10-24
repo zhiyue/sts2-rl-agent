@@ -23,100 +23,237 @@ using MegaCrit.Sts2.Core.Unlocks;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 
+/// <summary>
+/// The button you click to select a character before starting a run.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/CharacterSelect/NCharacterSelectButton.cs")]
 public class NCharacterSelectButton : NButton
 {
 	private enum State
 	{
+		/// <summary> This button is not selected by anyone. </summary>
 		NotSelected,
+		/// <summary> This button is selected by the local player (and maybe also remote players). </summary>
 		SelectedLocally,
+		/// <summary> This button is not selected locally, but is selected by at least one remote player. </summary>
 		SelectedRemotely
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'LockForAnimation' method.
+		/// </summary>
 		public static readonly StringName LockForAnimation = "LockForAnimation";
 
+		/// <summary>
+		/// Cached name for the 'Reset' method.
+		/// </summary>
 		public static readonly StringName Reset = "Reset";
 
+		/// <summary>
+		/// Cached name for the 'OnRemotePlayerSelected' method.
+		/// </summary>
 		public static readonly StringName OnRemotePlayerSelected = "OnRemotePlayerSelected";
 
+		/// <summary>
+		/// Cached name for the 'OnRemotePlayerDeselected' method.
+		/// </summary>
 		public static readonly StringName OnRemotePlayerDeselected = "OnRemotePlayerDeselected";
 
+		/// <summary>
+		/// Cached name for the 'Select' method.
+		/// </summary>
 		public static readonly StringName Select = "Select";
 
+		/// <summary>
+		/// Cached name for the 'Deselect' method.
+		/// </summary>
 		public static readonly StringName Deselect = "Deselect";
 
+		/// <summary>
+		/// Cached name for the 'RefreshState' method.
+		/// </summary>
 		public static readonly StringName RefreshState = "RefreshState";
 
+		/// <summary>
+		/// Cached name for the 'GetSaturationForCurrentState' method.
+		/// </summary>
 		public static readonly StringName GetSaturationForCurrentState = "GetSaturationForCurrentState";
 
+		/// <summary>
+		/// Cached name for the 'GetValueForCurrentState' method.
+		/// </summary>
 		public static readonly StringName GetValueForCurrentState = "GetValueForCurrentState";
 
+		/// <summary>
+		/// Cached name for the 'AnimateSaturationToCurrentState' method.
+		/// </summary>
 		public static readonly StringName AnimateSaturationToCurrentState = "AnimateSaturationToCurrentState";
 
+		/// <summary>
+		/// Cached name for the 'RefreshOutline' method.
+		/// </summary>
 		public static readonly StringName RefreshOutline = "RefreshOutline";
 
+		/// <summary>
+		/// Cached name for the 'RefreshPlayerIcons' method.
+		/// </summary>
 		public static readonly StringName RefreshPlayerIcons = "RefreshPlayerIcons";
 
+		/// <summary>
+		/// Cached name for the 'DebugUnlock' method.
+		/// </summary>
 		public static readonly StringName DebugUnlock = "DebugUnlock";
 
+		/// <summary>
+		/// Cached name for the 'UnlockIfPossible' method.
+		/// </summary>
 		public static readonly StringName UnlockIfPossible = "UnlockIfPossible";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderH' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderH = "UpdateShaderH";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderS' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderS = "UpdateShaderS";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderV' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderV = "UpdateShaderV";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsRandom' property.
+		/// </summary>
 		public static readonly StringName IsRandom = "IsRandom";
 
+		/// <summary>
+		/// Cached name for the 'IsLocked' property.
+		/// </summary>
 		public static readonly StringName IsLocked = "IsLocked";
 
+		/// <summary>
+		/// Cached name for the 'IsSelected' property.
+		/// </summary>
+		public static readonly StringName IsSelected = "IsSelected";
+
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 
+		/// <summary>
+		/// Cached name for the '_iconAdd' field.
+		/// </summary>
 		public static readonly StringName _iconAdd = "_iconAdd";
 
+		/// <summary>
+		/// Cached name for the '_lock' field.
+		/// </summary>
 		public static readonly StringName _lock = "_lock";
 
+		/// <summary>
+		/// Cached name for the '_outlineLocal' field.
+		/// </summary>
 		public static readonly StringName _outlineLocal = "_outlineLocal";
 
+		/// <summary>
+		/// Cached name for the '_outlineRemote' field.
+		/// </summary>
 		public static readonly StringName _outlineRemote = "_outlineRemote";
 
+		/// <summary>
+		/// Cached name for the '_outlineMixed' field.
+		/// </summary>
 		public static readonly StringName _outlineMixed = "_outlineMixed";
 
+		/// <summary>
+		/// Cached name for the '_shadow' field.
+		/// </summary>
 		public static readonly StringName _shadow = "_shadow";
 
+		/// <summary>
+		/// Cached name for the '_playerIconContainer' field.
+		/// </summary>
 		public static readonly StringName _playerIconContainer = "_playerIconContainer";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_isLocked' field.
+		/// </summary>
 		public static readonly StringName _isLocked = "_isLocked";
 
+		/// <summary>
+		/// Cached name for the '_currentOutline' field.
+		/// </summary>
 		public static readonly StringName _currentOutline = "_currentOutline";
 
+		/// <summary>
+		/// Cached name for the '_isSelected' field.
+		/// </summary>
 		public static readonly StringName _isSelected = "_isSelected";
 
+		/// <summary>
+		/// Cached name for the '_state' field.
+		/// </summary>
 		public static readonly StringName _state = "_state";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_hsvTween' field.
+		/// </summary>
 		public static readonly StringName _hsvTween = "_hsvTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -197,6 +334,8 @@ public class NCharacterSelectButton : NButton
 
 	public bool IsLocked => _isLocked;
 
+	public bool IsSelected => _isSelected;
+
 	public override void _Ready()
 	{
 		ConnectSignals();
@@ -250,7 +389,7 @@ public class NCharacterSelectButton : NButton
 			if (_isLocked)
 			{
 				HoverTip hoverTip = new HoverTip(new LocString("main_menu_ui", "CHARACTER_SELECT.locked.title"), _character.GetUnlockText());
-				NHoverTipSet.CreateAndShow(this, hoverTip).GlobalPosition = base.GlobalPosition + _hoverTipOffset;
+				NHoverTipSet.CreateAndShow(this, hoverTip)?.SetGlobalPosition(base.GlobalPosition + _hoverTipOffset);
 			}
 			SfxCmd.Play("event:/sfx/ui/clicks/ui_hover");
 		}
@@ -291,6 +430,10 @@ public class NCharacterSelectButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// There's a small delay before the unlock animation starts, and in that time, we want the button to look locked
+	/// even though it's not.
+	/// </summary>
 	public void LockForAnimation()
 	{
 		_icon.Texture = _character.CharacterSelectLockedIcon;
@@ -300,21 +443,24 @@ public class NCharacterSelectButton : NButton
 		Disable();
 	}
 
+	/// <summary>
+	/// Plays the unlock animation.
+	/// </summary>
 	public async Task AnimateUnlock()
 	{
 		GpuParticles2D chargeParticles = GetNode<GpuParticles2D>("%UnlockChargeParticles");
 		chargeParticles.Emitting = true;
 		float num = 1f;
 		Vector2 originalLockPosition = _lock.Position;
-		float timer = 0f;
+		float num2 = 0f;
 		NDebugAudioManager.Instance.Play("character_unlock_charge.mp3");
-		while (timer < 1f)
+		while (num2 < 1f)
 		{
 			Vector2 vector = Vector2.Right.Rotated(Rng.Chaotic.NextFloat((float)Math.PI * 2f)) * num;
 			_lock.Position = originalLockPosition + vector;
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-			timer += (float)GetProcessDeltaTime();
-			num = Mathf.Lerp(1f, 5f, Ease.QuadOut(timer));
+			float num3 = num2;
+			num2 = num3 + await this.AwaitProcessFrame();
+			num = Mathf.Lerp(1f, 5f, Ease.QuadOut(num2));
 		}
 		NDebugAudioManager.Instance.Play("character_unlock.mp3");
 		_lock.Position = originalLockPosition;
@@ -356,6 +502,9 @@ public class NCharacterSelectButton : NButton
 		RefreshState();
 	}
 
+	/// <summary>
+	/// When this button is clicked on (or navigated to via controller), this button is considered Selected!
+	/// </summary>
 	public void Select()
 	{
 		if (!_isSelected)
@@ -367,6 +516,9 @@ public class NCharacterSelectButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// When a player selects a button that's NOT this one, selected buttons become deselected, and this is called.
+	/// </summary>
 	public void Deselect()
 	{
 		_isSelected = false;
@@ -511,6 +663,11 @@ public class NCharacterSelectButton : NButton
 		_hsv.SetShaderParameter(_v, value);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -561,6 +718,7 @@ public class NCharacterSelectButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -697,6 +855,7 @@ public class NCharacterSelectButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -791,6 +950,7 @@ public class NCharacterSelectButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -877,6 +1037,7 @@ public class NCharacterSelectButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -890,6 +1051,12 @@ public class NCharacterSelectButton : NButton
 		if (name == PropertyName.IsLocked)
 		{
 			from = IsLocked;
+			value = VariantUtils.CreateFrom(in from);
+			return true;
+		}
+		if (name == PropertyName.IsSelected)
+		{
+			from = IsSelected;
 			value = VariantUtils.CreateFrom(in from);
 			return true;
 		}
@@ -971,6 +1138,11 @@ public class NCharacterSelectButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -992,9 +1164,11 @@ public class NCharacterSelectButton : NButton
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._hoverTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._hsvTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.IsLocked, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.IsSelected, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1017,6 +1191,7 @@ public class NCharacterSelectButton : NButton
 		info.AddProperty(PropertyName._hsvTween, Variant.From(in _hsvTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

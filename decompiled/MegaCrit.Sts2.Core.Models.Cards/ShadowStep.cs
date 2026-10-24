@@ -20,7 +20,7 @@ public sealed class ShadowStep : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		await CardCmd.Discard(choiceContext, PileType.Hand.GetPile(base.Owner).Cards);
-		await PowerCmd.Apply<ShadowStepPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		await PowerCmd.Apply<ShadowStepPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

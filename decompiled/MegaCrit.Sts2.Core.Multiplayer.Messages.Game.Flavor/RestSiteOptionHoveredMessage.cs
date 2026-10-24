@@ -15,6 +15,8 @@ public struct RestSiteOptionHoveredMessage : INetMessage, IPacketSerializable, I
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
 
+	public bool ShouldBuffer => true;
+
 	public RunLocation Location { get; set; }
 
 	public void Serialize(PacketWriter writer)

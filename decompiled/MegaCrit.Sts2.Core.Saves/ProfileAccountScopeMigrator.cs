@@ -4,6 +4,18 @@ using MegaCrit.Sts2.Core.Logging;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// TEMPORARY: This class handles the one-time migration of user data from before profiles existed.
+///
+/// This migrator is designed to help existing playtesters transition their save data, replays,
+/// and console history to the new platform-specific, user-scoped directory structure without
+/// losing their progress.
+///
+/// This class should be removed a few months after the user profile feature has been
+/// released to playtesters, once we're confident that all active users have migrated their data.
+///
+/// The migration moves all data from user://{platform}/{userId}/saves/ -&gt; user://{platform}/{userId}/profile1/saves/
+/// </summary>
 public static class ProfileAccountScopeMigrator
 {
 	private static bool _migrationPerformed;

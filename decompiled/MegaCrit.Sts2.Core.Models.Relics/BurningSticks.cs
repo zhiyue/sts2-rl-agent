@@ -47,7 +47,7 @@ public sealed class BurningSticks : RelicModel
 		{
 			Flash();
 			CardModel card2 = card.CreateClone();
-			await CardPileCmd.AddGeneratedCardToCombat(card2, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(card2, PileType.Hand, base.Owner);
 			base.Status = RelicStatus.Normal;
 			WasUsedThisCombat = true;
 		}

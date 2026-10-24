@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -28,7 +29,7 @@ public sealed class Seapunk : MonsterModel
 
 	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 49, 46);
 
-	private int SeaKickDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 12, 11);
+	private int SeaKickDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 13, 11);
 
 	private int SpinningKickDamage => 2;
 
@@ -85,7 +86,7 @@ public sealed class Seapunk : MonsterModel
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/seapunk/seapunk_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.75f);
 		await CreatureCmd.GainBlock(base.Creature, BubbleBlock, ValueProp.Move, null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, BubbleStr, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, BubbleStr, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

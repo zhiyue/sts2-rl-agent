@@ -11,40 +11,95 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// A popup ui/modal which has a Yes and No button.
+/// Used for important popups like Abandon Run confirmation and the "Enable Tutorials?" popup.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NVerticalPopup.cs")]
 public class NVerticalPopup : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'EnsureNodesAreSet' method.
+		/// </summary>
+		public static readonly StringName EnsureNodesAreSet = "EnsureNodesAreSet";
+
+		/// <summary>
+		/// Cached name for the 'SetText' method.
+		/// </summary>
 		public static readonly StringName SetText = "SetText";
 
+		/// <summary>
+		/// Cached name for the 'Close' method.
+		/// </summary>
 		public static readonly StringName Close = "Close";
 
+		/// <summary>
+		/// Cached name for the 'HideNoButton' method.
+		/// </summary>
 		public static readonly StringName HideNoButton = "HideNoButton";
 
+		/// <summary>
+		/// Cached name for the 'DisconnectSignals' method.
+		/// </summary>
 		public static readonly StringName DisconnectSignals = "DisconnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'DisconnectHotkeys' method.
+		/// </summary>
 		public static readonly StringName DisconnectHotkeys = "DisconnectHotkeys";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'TitleLabel' property.
+		/// </summary>
 		public static readonly StringName TitleLabel = "TitleLabel";
 
+		/// <summary>
+		/// Cached name for the 'BodyLabel' property.
+		/// </summary>
 		public static readonly StringName BodyLabel = "BodyLabel";
 
+		/// <summary>
+		/// Cached name for the 'YesButton' property.
+		/// </summary>
 		public static readonly StringName YesButton = "YesButton";
 
+		/// <summary>
+		/// Cached name for the 'NoButton' property.
+		/// </summary>
 		public static readonly StringName NoButton = "NoButton";
+
+		/// <summary>
+		/// Cached name for the '_nodesAreSet' field.
+		/// </summary>
+		public static readonly StringName _nodesAreSet = "_nodesAreSet";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
 
 	private static readonly string _scenePath = SceneHelper.GetScenePath("ui/vertical_popup");
+
+	private bool _nodesAreSet;
 
 	private Callable? _yesCallable;
 
@@ -52,9 +107,9 @@ public class NVerticalPopup : Control
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(_scenePath);
 
-	public MegaLabel TitleLabel { get; private set; }
+	private MegaLabel TitleLabel { get; set; }
 
-	public MegaRichTextLabel BodyLabel { get; private set; }
+	private MegaRichTextLabel BodyLabel { get; set; }
 
 	public NPopupYesNoButton YesButton { get; private set; }
 
@@ -62,26 +117,55 @@ public class NVerticalPopup : Control
 
 	public override void _Ready()
 	{
-		TitleLabel = GetNode<MegaLabel>("Header");
-		BodyLabel = GetNode<MegaRichTextLabel>("Description");
-		YesButton = GetNode<NPopupYesNoButton>("YesButton");
-		NoButton = GetNode<NPopupYesNoButton>("NoButton");
+		EnsureNodesAreSet();
+	}
+
+	/// <summary>
+	/// This is to ensure that the node parameters are set. We have to do this because
+	/// AddChildSafely may defer the call to add child (and thus defer the _Ready), and
+	/// can lead to timing issues in NGenericPopup where we try to SetText before the label
+	/// parameters have been set. While this is a vulnerability that can techinically happen
+	/// for any node added via AddChildSafely, I think we are seeing a particularly high
+	/// number of errors here because the vertical popup is bieng created at the start of the game
+	/// for a startup errors.
+	/// </summary>
+	private void EnsureNodesAreSet()
+	{
+		if (!_nodesAreSet)
+		{
+			TitleLabel = GetNode<MegaLabel>("Header");
+			BodyLabel = GetNode<MegaRichTextLabel>("Description");
+			YesButton = GetNode<NPopupYesNoButton>("YesButton");
+			NoButton = GetNode<NPopupYesNoButton>("NoButton");
+			_nodesAreSet = true;
+		}
 	}
 
 	public void SetText(LocString title, LocString body)
 	{
+		EnsureNodesAreSet();
 		TitleLabel.SetTextAutoSize(title.GetFormattedText());
-		BodyLabel.Text = "[center]" + body.GetFormattedText() + "[/center]";
+		BodyLabel.SetTextAutoSize(body.GetFormattedText());
 	}
 
+	/// <summary>
+	/// Sets the popup text using raw strings instead of localization.
+	/// Use this when localization may be broken (e.g., showing localization errors).
+	/// </summary>
 	public void SetText(string title, string body)
 	{
+		EnsureNodesAreSet();
 		TitleLabel.SetTextAutoSize(title);
-		BodyLabel.Text = "[center]" + body + "[/center]";
+		BodyLabel.SetTextAutoSize(body);
 	}
 
+	/// <summary>
+	/// Initializes the yes button.
+	/// If this is not called, then the yes button is hidden.
+	/// </summary>
 	public void InitYesButton(LocString yesButton, Action<NButton> onPressed)
 	{
+		EnsureNodesAreSet();
 		_yesCallable = Callable.From(onPressed);
 		YesButton.IsYes = true;
 		YesButton.SetText(yesButton.GetFormattedText());
@@ -91,6 +175,7 @@ public class NVerticalPopup : Control
 
 	public void InitNoButton(LocString noButton, Action<NButton> onPressed)
 	{
+		EnsureNodesAreSet();
 		_noCallable = Callable.From(onPressed);
 		NoButton.Visible = true;
 		NoButton.IsYes = false;
@@ -135,11 +220,17 @@ public class NVerticalPopup : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(6);
+		List<MethodInfo> list = new List<MethodInfo>(7);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.EnsureNodesAreSet, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.SetText, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.String, "title", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
@@ -155,12 +246,19 @@ public class NVerticalPopup : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.EnsureNodesAreSet && args.Count == 0)
+		{
+			EnsureNodesAreSet();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -197,10 +295,15 @@ public class NVerticalPopup : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
 		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName.EnsureNodesAreSet)
 		{
 			return true;
 		}
@@ -227,6 +330,7 @@ public class NVerticalPopup : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -250,9 +354,15 @@ public class NVerticalPopup : Control
 			NoButton = VariantUtils.ConvertTo<NPopupYesNoButton>(in value);
 			return true;
 		}
+		if (name == PropertyName._nodesAreSet)
+		{
+			_nodesAreSet = VariantUtils.ConvertTo<bool>(in value);
+			return true;
+		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -279,9 +389,19 @@ public class NVerticalPopup : Control
 			value = VariantUtils.CreateFrom(in from);
 			return true;
 		}
+		if (name == PropertyName._nodesAreSet)
+		{
+			value = VariantUtils.CreateFrom(in _nodesAreSet);
+			return true;
+		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -290,9 +410,11 @@ public class NVerticalPopup : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.BodyLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.YesButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.NoButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._nodesAreSet, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -301,8 +423,10 @@ public class NVerticalPopup : Control
 		info.AddProperty(PropertyName.BodyLabel, Variant.From<MegaRichTextLabel>(BodyLabel));
 		info.AddProperty(PropertyName.YesButton, Variant.From<NPopupYesNoButton>(YesButton));
 		info.AddProperty(PropertyName.NoButton, Variant.From<NPopupYesNoButton>(NoButton));
+		info.AddProperty(PropertyName._nodesAreSet, Variant.From(in _nodesAreSet));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -322,6 +446,10 @@ public class NVerticalPopup : Control
 		if (info.TryGetProperty(PropertyName.NoButton, out var value4))
 		{
 			NoButton = value4.As<NPopupYesNoButton>();
+		}
+		if (info.TryGetProperty(PropertyName._nodesAreSet, out var value5))
+		{
+			_nodesAreSet = value5.As<bool>();
 		}
 	}
 }

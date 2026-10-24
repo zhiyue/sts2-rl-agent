@@ -84,7 +84,7 @@ public class EnergyIconsFormatter : IFormatter
 			}
 		}
 		string text3 = "[img]res://images/packed/sprite_fonts/" + text + "_energy_icon.png[/img]";
-		string text4 = ((result <= 0 || result >= 4) ? $"{result}{text3}" : string.Concat(Enumerable.Repeat(text3, result)));
+		string text4 = ((result > 0 && result < 4) ? string.Concat(Enumerable.Repeat(text3, result)) : ((!(formattingInfo.CurrentValue is DynamicVar dynamicVar)) ? $"{result}{text3}" : (dynamicVar.ToHighlightedString(inverse: false) + text3)));
 		formattingInfo.Write(text4);
 		return true;
 	}

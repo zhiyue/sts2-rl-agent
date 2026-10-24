@@ -8,6 +8,24 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Map;
 
+/// <summary>
+/// An hourglass-shaped map where all paths converge through a single centered treasure node.
+/// Used when SpoilsMap card is active in Act 2.
+///
+/// This map is generated from scratch rather than post-processing StandardActMap.
+/// The hourglass structure requires fundamentally different path topology. All paths must converge
+/// through a single centered treasure node, with rows narrowing towards the treasure then widening after.
+/// Post-processing would require deleting most nodes and rewiring all edges, which is roughly as complex
+/// as generating from scratch.
+///
+/// Keeping these implementations separate makes both easier to understand. StandardActMap stays clean,
+/// and the hourglass-specific constraints live here explicitly instead of being tangled up in post-processing logic.
+/// Each can evolve independently.
+///
+/// The tradeoff is this duplicates some map generation logic (~400 lines). If StandardActMap's core rules change
+/// (adjacency constraints, parent/child limits, point type placement), we'll need to manually sync those changes here.
+/// Tests in SpoilsActMapTest verify the core map invariants hold.
+/// </summary>
 public sealed class SpoilsActMap : ActMap
 {
 	private const int _mapWidth = 7;
@@ -61,20 +79,25 @@ public sealed class SpoilsActMap : ActMap
 
 	protected override MapPoint?[,] Grid { get; }
 
-	public SpoilsActMap(IRunState runState)
+	/// <summary>
+	/// Creates a map used only when the player has the <see cref="T:MegaCrit.Sts2.Core.Models.Cards.SpoilsMap" />.
+	/// </summary>
+	/// <param name="runState">The run state for this run.</param>
+	/// <param name="mapPointTypeCountsOverride">If passed, replaces the default point counts used to generate the map.</param>
+	public SpoilsActMap(IRunState runState, MapPointTypeCounts? mapPointTypeCountsOverride = null)
 	{
 		ActModel act = runState.Act;
 		bool isMultiplayer = runState.Players.Count > 1;
 		_mapLength = act.GetNumberOfRooms(isMultiplayer) + 1;
 		_rng = new Rng(runState.Rng.Seed, "spoils_map");
-		_pointTypeCounts = act.GetMapPointTypes(_rng);
+		_pointTypeCounts = mapPointTypeCountsOverride ?? act.GetMapPointTypes(_rng);
 		Grid = new MapPoint[7, _mapLength];
 		_treasureRow = GetRowCount() - 7;
 		BossMapPoint = new MapPoint(GetColumnCount() / 2, GetRowCount());
 		StartingMapPoint = new MapPoint(GetColumnCount() / 2, 0);
 		GenerateHourglassMap();
 		AssignPointTypes();
-		MapPathPruning.PruneDuplicateSegments(Grid, startMapPoints, StartingMapPoint, _rng);
+		MapPathPruning.PruneAndRepair(Grid, startMapPoints, this, _pointTypeCounts, _rng, IsValidPointType);
 	}
 
 	private MapPoint GetOrCreatePoint(int col, int row)
@@ -321,10 +344,8 @@ public sealed class SpoilsActMap : ActMap
 		});
 		ForEachInRow(1, delegate(MapPoint p)
 		{
-			if (p.PointType == MapPointType.Unassigned)
-			{
-				p.PointType = MapPointType.Monster;
-			}
+			p.PointType = MapPointType.Monster;
+			p.CanBeModified = false;
 		});
 		List<MapPointType> list = new List<MapPointType>();
 		for (int num = 0; num < _pointTypeCounts.NumOfRests; num++)
@@ -369,18 +390,23 @@ public sealed class SpoilsActMap : ActMap
 
 	private void AssignRemainingTypesToRandomPoints(Queue<MapPointType> pointTypesToBeAssigned)
 	{
-		if (pointTypesToBeAssigned.Count == 0)
+		for (int i = 0; i < 3; i++)
 		{
-			return;
-		}
-		List<MapPoint> list = (from p in GetAllMapPoints()
-			where p != BossMapPoint && p != StartingMapPoint
-			select p).ToList();
-		list.StableShuffle(_rng);
-		foreach (MapPoint item in list)
-		{
-			if (item.PointType == MapPointType.Unassigned)
+			if (pointTypesToBeAssigned.Count <= 0)
 			{
+				break;
+			}
+			List<MapPoint> list = (from p in GetAllMapPoints()
+				where p != BossMapPoint && p != StartingMapPoint
+				where p.PointType == MapPointType.Unassigned
+				select p).ToList();
+			list.StableShuffle(_rng);
+			foreach (MapPoint item in list)
+			{
+				if (pointTypesToBeAssigned.Count == 0)
+				{
+					break;
+				}
 				MapPointType nextValidPointType = GetNextValidPointType(pointTypesToBeAssigned, item);
 				if (nextValidPointType != MapPointType.Unassigned)
 				{
@@ -436,7 +462,7 @@ public sealed class SpoilsActMap : ActMap
 
 	private static bool IsValidForLower(MapPointType pointType, MapPoint mapPoint)
 	{
-		if (mapPoint.coord.row < 5)
+		if (mapPoint.coord.row < 6)
 		{
 			return !_lowerMapPointRestrictions.Contains(pointType);
 		}

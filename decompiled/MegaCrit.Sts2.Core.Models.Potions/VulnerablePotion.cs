@@ -29,6 +29,6 @@ public sealed class VulnerablePotion : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		NCombatRoom.Instance?.PlaySplashVfx(target, new Color("fd2155"));
-		await PowerCmd.Apply<VulnerablePower>(target, base.DynamicVars.Vulnerable.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(choiceContext, target, base.DynamicVars.Vulnerable.BaseValue, base.Owner.Creature, null);
 	}
 }

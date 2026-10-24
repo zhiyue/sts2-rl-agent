@@ -36,8 +36,8 @@ public sealed class Shockwave : CardModel
 		int amount = base.DynamicVars["Power"].IntValue;
 		foreach (Creature enemy in base.CombatState.HittableEnemies)
 		{
-			await PowerCmd.Apply<WeakPower>(enemy, amount, base.Owner.Creature, this);
-			await PowerCmd.Apply<VulnerablePower>(enemy, amount, base.Owner.Creature, this);
+			await PowerCmd.Apply<WeakPower>(choiceContext, enemy, amount, base.Owner.Creature, this);
+			await PowerCmd.Apply<VulnerablePower>(choiceContext, enemy, amount, base.Owner.Creature, this);
 		}
 	}
 

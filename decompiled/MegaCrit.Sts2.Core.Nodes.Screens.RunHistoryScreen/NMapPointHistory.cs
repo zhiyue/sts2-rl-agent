@@ -7,35 +7,65 @@ using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
-using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Relics;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen;
 
 [ScriptPath("res://src/Core/Nodes/Screens/RunHistoryScreen/NMapPointHistory.cs")]
 public class NMapPointHistory : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetDeckHistory' method.
+		/// </summary>
 		public static readonly StringName SetDeckHistory = "SetDeckHistory";
 
+		/// <summary>
+		/// Cached name for the 'SetRelicHistory' method.
+		/// </summary>
 		public static readonly StringName SetRelicHistory = "SetRelicHistory";
 
+		/// <summary>
+		/// Cached name for the 'HighlightRelevantEntries' method.
+		/// </summary>
 		public static readonly StringName HighlightRelevantEntries = "HighlightRelevantEntries";
 
+		/// <summary>
+		/// Cached name for the 'UnHighlightEntries' method.
+		/// </summary>
 		public static readonly StringName UnHighlightEntries = "UnHighlightEntries";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_actContainer' field.
+		/// </summary>
 		public static readonly StringName _actContainer = "_actContainer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -63,7 +93,7 @@ public class NMapPointHistory : Control
 		int num = 1;
 		for (int i = 0; i < history.MapPointHistory.Count; i++)
 		{
-			LocString title = ModelDb.GetById<ActModel>(history.Acts[i]).Title;
+			LocString title = SaveUtil.ActOrDeprecated(history.Acts[i]).Title;
 			NActHistoryEntry nActHistoryEntry = NActHistoryEntry.Create(title, history, history.MapPointHistory[i], num);
 			_actContainer.AddChildSafely(nActHistoryEntry);
 			_actHistories.Add(nActHistoryEntry);
@@ -125,6 +155,11 @@ public class NMapPointHistory : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -150,6 +185,7 @@ public class NMapPointHistory : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -192,6 +228,7 @@ public class NMapPointHistory : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -218,6 +255,7 @@ public class NMapPointHistory : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -229,6 +267,7 @@ public class NMapPointHistory : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -245,6 +284,11 @@ public class NMapPointHistory : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -254,6 +298,7 @@ public class NMapPointHistory : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -261,6 +306,7 @@ public class NMapPointHistory : Control
 		info.AddProperty(PropertyName._actContainer, Variant.From(in _actContainer));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

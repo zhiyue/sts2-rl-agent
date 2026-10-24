@@ -16,35 +16,79 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// A popup to let the player know a terrible bug has occurred, and to upload a bug report.
+/// The wording should be changed before we release.
+/// Renders above the capstone screens (above top bar).
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NErrorPopup.cs")]
 public class NErrorPopup : NVerticalPopup, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NVerticalPopup.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'OnOkButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnOkButtonPressed = "OnOkButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnCancelButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnCancelButtonPressed = "OnCancelButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnReportBugButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnReportBugButtonPressed = "OnReportBugButtonPressed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NVerticalPopup.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_verticalPopup' field.
+		/// </summary>
 		public static readonly StringName _verticalPopup = "_verticalPopup";
 
+		/// <summary>
+		/// Cached name for the '_title' field.
+		/// </summary>
 		public static readonly StringName _title = "_title";
 
+		/// <summary>
+		/// Cached name for the '_body' field.
+		/// </summary>
 		public static readonly StringName _body = "_body";
 
+		/// <summary>
+		/// Cached name for the '_showReportBugButton' field.
+		/// </summary>
 		public static readonly StringName _showReportBugButton = "_showReportBugButton";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NVerticalPopup.SignalName
 	{
 	}
@@ -115,6 +159,10 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		return nErrorPopup;
 	}
 
+	/// <summary>
+	/// Creates an error popup with hardcoded English text (bypassing localization).
+	/// Use this when localization may be broken (e.g., showing localization errors).
+	/// </summary>
 	public static NErrorPopup? Create(string title, string body, bool showReportBugButton)
 	{
 		if (TestMode.IsOn)
@@ -185,8 +233,14 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		case NetError.UnknownNetworkError:
 			text = "NETWORK_ERROR.UNKNOWN_ERROR.body";
 			break;
+		case NetError.RateLimited:
+			text = "NETWORK_ERROR.RATE_LIMITED.body";
+			break;
 		case NetError.TryAgainLater:
 			text = "NETWORK_ERROR.TRY_AGAIN_LATER.body";
+			break;
+		case NetError.SecureConnectionFailed:
+			text = "NETWORK_ERROR.SECURE_CONNECTION_FAILED.body";
 			break;
 		case NetError.FailedToHost:
 			text = "NETWORK_ERROR.FAILED_TO_HOST.body";
@@ -206,7 +260,7 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		showReportBugButton = flag;
 		if (text2 == null)
 		{
-			Log.Error($"Invalid net error passed to NNetworkErrorPopup: {info}!");
+			Log.Error($"Invalid net error passed to {"NErrorPopup"}: {info}!");
 			text2 = "NETWORK_ERROR.INTERNAL_ERROR.body";
 			showReportBugButton = true;
 		}
@@ -239,6 +293,11 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		await NFeedbackScreenOpener.Instance.OpenFeedbackScreen();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -265,6 +324,7 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -312,6 +372,7 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -338,6 +399,7 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -364,6 +426,7 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -395,6 +458,11 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -407,6 +475,7 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -417,6 +486,7 @@ public class NErrorPopup : NVerticalPopup, IScreenContext
 		info.AddProperty(PropertyName._showReportBugButton, Variant.From(in _showReportBugButton));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

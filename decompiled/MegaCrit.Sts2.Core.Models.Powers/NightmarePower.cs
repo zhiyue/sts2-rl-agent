@@ -14,6 +14,12 @@ public sealed class NightmarePower : PowerModel
 {
 	private class Data
 	{
+		/// <summary>
+		/// This will be null for the moment after this power is applied but before this is set by Nightmare.OnPlay.
+		/// For all current use cases, this means we should never see this being null.
+		/// However, if we needed to override AfterApplied in here in the future, this would be null in it, so let's
+		/// leave this nullable for future-proofing.
+		/// </summary>
 		public CardModel? selectedCard;
 	}
 
@@ -21,7 +27,7 @@ public sealed class NightmarePower : PowerModel
 
 	public override PowerType Type => PowerType.Buff;
 
-	public override bool IsInstanced => true;
+	public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
@@ -32,7 +38,7 @@ public sealed class NightmarePower : PowerModel
 		return new Data();
 	}
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
 		if (player == base.Owner.Player)
 		{
@@ -40,7 +46,7 @@ public sealed class NightmarePower : PowerModel
 			for (int i = 0; i < base.Amount; i++)
 			{
 				CardModel card2 = card.CreateClone();
-				await CardPileCmd.AddGeneratedCardToCombat(card2, PileType.Hand, addedByPlayer: true);
+				await CardPileCmd.AddGeneratedCardToCombat(card2, PileType.Hand, base.Owner.Player);
 			}
 			await PowerCmd.Remove(this);
 		}
@@ -48,7 +54,9 @@ public sealed class NightmarePower : PowerModel
 
 	public void SetSelectedCard(CardModel card)
 	{
-		GetInternalData<Data>().selectedCard = card.CreateClone();
-		((StringVar)base.DynamicVars["Card"]).StringValue = card.Title;
+		CardModel cardModel = card.CreateClone();
+		CardCmd.ClearAffliction(cardModel);
+		GetInternalData<Data>().selectedCard = cardModel;
+		((StringVar)base.DynamicVars["Card"]).StringValue = cardModel.Title;
 	}
 }

@@ -27,7 +27,6 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Random;
-using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Nodes.Potions;
@@ -35,69 +34,161 @@ namespace MegaCrit.Sts2.Core.Nodes.Potions;
 [ScriptPath("res://src/Core/Nodes/Potions/NPotionHolder.cs")]
 public class NPotionHolder : NClickableControl
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NClickableControl.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
+		public new static readonly StringName _EnterTree = "_EnterTree";
+
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OpenPotionPopup' method.
+		/// </summary>
 		public static readonly StringName OpenPotionPopup = "OpenPotionPopup";
 
+		/// <summary>
+		/// Cached name for the 'AddPotion' method.
+		/// </summary>
 		public static readonly StringName AddPotion = "AddPotion";
 
+		/// <summary>
+		/// Cached name for the 'DisableUntilPotionRemoved' method.
+		/// </summary>
 		public static readonly StringName DisableUntilPotionRemoved = "DisableUntilPotionRemoved";
 
-		public static readonly StringName CancelPotionUse = "CancelPotionUse";
+		/// <summary>
+		/// Cached name for the 'CancelPotionUseOrDiscard' method.
+		/// </summary>
+		public static readonly StringName CancelPotionUseOrDiscard = "CancelPotionUseOrDiscard";
 
+		/// <summary>
+		/// Cached name for the 'RemoveUsedPotion' method.
+		/// </summary>
 		public static readonly StringName RemoveUsedPotion = "RemoveUsedPotion";
 
+		/// <summary>
+		/// Cached name for the 'DiscardPotion' method.
+		/// </summary>
 		public static readonly StringName DiscardPotion = "DiscardPotion";
 
+		/// <summary>
+		/// Cached name for the 'ShouldCancelTargeting' method.
+		/// </summary>
 		public static readonly StringName ShouldCancelTargeting = "ShouldCancelTargeting";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NClickableControl.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Potion' property.
+		/// </summary>
 		public static readonly StringName Potion = "Potion";
 
+		/// <summary>
+		/// Cached name for the 'HasPotion' property.
+		/// </summary>
 		public static readonly StringName HasPotion = "HasPotion";
 
+		/// <summary>
+		/// Cached name for the 'IsPotionUsable' property.
+		/// </summary>
 		public static readonly StringName IsPotionUsable = "IsPotionUsable";
 
+		/// <summary>
+		/// Cached name for the '_potionScale' field.
+		/// </summary>
 		public static readonly StringName _potionScale = "_potionScale";
 
+		/// <summary>
+		/// Cached name for the '_emptyIcon' field.
+		/// </summary>
 		public static readonly StringName _emptyIcon = "_emptyIcon";
 
+		/// <summary>
+		/// Cached name for the '_popup' field.
+		/// </summary>
 		public static readonly StringName _popup = "_popup";
 
+		/// <summary>
+		/// Cached name for the '_potionTargeting' field.
+		/// </summary>
 		public static readonly StringName _potionTargeting = "_potionTargeting";
 
+		/// <summary>
+		/// Cached name for the '_isUsable' field.
+		/// </summary>
 		public static readonly StringName _isUsable = "_isUsable";
 
+		/// <summary>
+		/// Cached name for the '_emptyPotionTween' field.
+		/// </summary>
 		public static readonly StringName _emptyPotionTween = "_emptyPotionTween";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_disabledUntilPotionRemoved' field.
+		/// </summary>
 		public static readonly StringName _disabledUntilPotionRemoved = "_disabledUntilPotionRemoved";
 
+		/// <summary>
+		/// Cached name for the '_isFocused' field.
+		/// </summary>
 		public static readonly StringName _isFocused = "_isFocused";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NClickableControl.SignalName
 	{
 	}
 
 	private Vector2 _potionScale = 0.9f * Vector2.One;
-
-	private static readonly HoverTip _emptyHoverTip = new HoverTip(new LocString("static_hover_tips", "POTION_SLOT.title"), new LocString("static_hover_tips", "POTION_SLOT.description"));
 
 	private TextureRect _emptyIcon;
 
@@ -115,7 +206,11 @@ public class NPotionHolder : NClickableControl
 
 	private bool _isFocused;
 
+	private CancellationTokenSource _cts = new CancellationTokenSource();
+
 	private CancellationTokenSource? _cancelGrayOutPotionSource;
+
+	private static HoverTip EmptyHoverTip => new HoverTip(new LocString("static_hover_tips", "POTION_SLOT.title"), new LocString("static_hover_tips", "POTION_SLOT.description"));
 
 	public NPotion? Potion { get; private set; }
 
@@ -134,10 +229,21 @@ public class NPotionHolder : NClickableControl
 		return nPotionHolder;
 	}
 
+	public override void _EnterTree()
+	{
+		_cts = new CancellationTokenSource();
+	}
+
 	public override void _Ready()
 	{
 		_emptyIcon = GetNode<TextureRect>("%EmptyIcon");
 		ConnectSignals();
+	}
+
+	public override void _ExitTree()
+	{
+		_cancelGrayOutPotionSource?.Cancel();
+		_cts.Cancel();
 	}
 
 	protected override void OnFocus()
@@ -154,18 +260,17 @@ public class NPotionHolder : NClickableControl
 			Potion.DoBounce();
 			_hoverTween.TweenProperty(Potion, "scale", _potionScale * 1.15f, 0.05);
 			NDebugAudioManager.Instance?.Play(Rng.Chaotic.NextItem(TmpSfx.PotionSlosh), 0.5f, PitchVariance.Large);
-			if (!GodotObject.IsInstanceValid(_popup))
+			if (!GodotObject.IsInstanceValid(_popup) || _popup.IsMarkedForRemoval)
 			{
-				NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, Potion.Model.HoverTips, HoverTipAlignment.Center);
-				nHoverTipSet.GlobalPosition = base.GlobalPosition + Vector2.Down * base.Size.Y * Mathf.Max(1.5f, base.Scale.Y);
+				NHoverTipSet.CreateAndShow(this, Potion.Model.HoverTips, HoverTipAlignment.Center)?.SetGlobalPosition(base.GlobalPosition + Vector2.Down * base.Size.Y * Mathf.Max(1.5f, base.Scale.Y));
 			}
 		}
 		else
 		{
 			_hoverTween.TweenProperty(_emptyIcon, "scale", _potionScale * 1.15f, 0.05);
-			NHoverTipSet nHoverTipSet2 = NHoverTipSet.CreateAndShow(this, _emptyHoverTip);
-			nHoverTipSet2.GlobalPosition = base.GlobalPosition + Vector2.Down * base.Size.Y * Mathf.Max(1.5f, base.Scale.Y);
-			nHoverTipSet2.SetAlignment(this, HoverTipAlignment.Center);
+			NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, EmptyHoverTip);
+			nHoverTipSet?.SetGlobalPosition(base.GlobalPosition + Vector2.Down * base.Size.Y * Mathf.Max(1.5f, base.Scale.Y));
+			nHoverTipSet?.SetAlignment(this, HoverTipAlignment.Center);
 		}
 	}
 
@@ -174,23 +279,24 @@ public class NPotionHolder : NClickableControl
 		_isFocused = false;
 		NHoverTipSet.Remove(this);
 		_hoverTween?.Kill();
-		_hoverTween = CreateTween().SetParallel();
 		if (Potion != null)
 		{
 			if (!_disabledUntilPotionRemoved)
 			{
+				_hoverTween = CreateTween().SetParallel();
 				_hoverTween.TweenProperty(Potion, "scale", _potionScale, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 			}
 		}
 		else
 		{
+			_hoverTween = CreateTween().SetParallel();
 			_hoverTween.TweenProperty(_emptyIcon, "scale", _potionScale, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 		}
 	}
 
 	protected override void OnPress()
 	{
-		if (Potion != null)
+		if (Potion != null && _isUsable)
 		{
 			GetViewport().SetInputAsHandled();
 		}
@@ -202,7 +308,7 @@ public class NPotionHolder : NClickableControl
 		{
 			OpenPotionPopup();
 		}
-		if (Potion != null)
+		if (Potion != null && _isUsable)
 		{
 			GetViewport().SetInputAsHandled();
 		}
@@ -253,7 +359,7 @@ public class NPotionHolder : NClickableControl
 		}
 	}
 
-	public void CancelPotionUse()
+	public void CancelPotionUseOrDiscard()
 	{
 		_cancelGrayOutPotionSource?.Cancel();
 		_disabledUntilPotionRemoved = false;
@@ -286,9 +392,9 @@ public class NPotionHolder : NClickableControl
 		}));
 		if (base.IsFocused)
 		{
-			NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _emptyHoverTip);
-			nHoverTipSet.GlobalPosition = base.GlobalPosition + Vector2.Down * base.Size.Y * 1.5f;
-			nHoverTipSet.SetAlignment(this, HoverTipAlignment.Center);
+			NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, EmptyHoverTip);
+			nHoverTipSet?.SetGlobalPosition(base.GlobalPosition + Vector2.Down * base.Size.Y * 1.5f);
+			nHoverTipSet?.SetAlignment(this, HoverTipAlignment.Center);
 		}
 		_emptyPotionTween?.Kill();
 		_emptyPotionTween = CreateTween();
@@ -322,6 +428,10 @@ public class NPotionHolder : NClickableControl
 		_emptyPotionTween.TweenProperty(_emptyIcon, "modulate", Colors.White, 0.20000000298023224).FromCurrent().SetDelay(0.20000000298023224);
 	}
 
+	/// <summary>
+	/// Uses the potion.
+	/// This may initiate targeting for single-targeted potions. If targeting is cancelled, the potion will not be used.
+	/// </summary>
 	public async Task UsePotion()
 	{
 		if (Potion == null)
@@ -339,7 +449,8 @@ public class NPotionHolder : NClickableControl
 		}
 		else
 		{
-			Potion.Model.EnqueueManualUse(Potion.Model.Owner.Creature);
+			Creature target = ((Potion.Model.TargetType == TargetType.Self) ? Potion.Model.Owner.Creature : null);
+			Potion.Model.EnqueueManualUse(target);
 			this.TryGrabFocus();
 		}
 	}
@@ -353,7 +464,7 @@ public class NPotionHolder : NClickableControl
 		Creature creature = Potion.Model.Owner.Creature;
 		if (isUsingController && CombatManager.Instance.IsInProgress)
 		{
-			CombatState combatState = creature.CombatState;
+			ICombatState combatState = creature.CombatState;
 			List<Creature> source = (targetType switch
 			{
 				TargetType.AnyEnemy => combatState.GetOpponentsOf(creature), 
@@ -369,15 +480,29 @@ public class NPotionHolder : NClickableControl
 			multiplayerPlayerContainer.FirstPlayerState?.Hitbox.TryGrabFocus();
 			multiplayerPlayerContainer.LockNavigation();
 		}
-		bool flag = Potion.Model is FoulPotion;
-		bool flag2 = creature.Player.RunState.CurrentRoom.RoomType == RoomType.Shop;
-		bool isFoulPotionInShop = isUsingController && flag && flag2;
-		if (isFoulPotionInShop)
+		NMerchantButton merchantButton = null;
+		FocusBehaviorRecursiveEnum? savedFocusBehavior = null;
+		Control merchantScreenContext = null;
+		bool merchantButtonWasDisabled = false;
+		if (isUsingController && Potion.Model is FoulPotion)
 		{
-			NMerchantButton merchantButton = NMerchantRoom.Instance.MerchantButton;
-			merchantButton.SetFocusMode(FocusModeEnum.All);
-			merchantButton.TryGrabFocus();
+			(merchantButton, merchantScreenContext) = FoulPotion.GetFoulPotionMerchantTarget(creature.Player.RunState.CurrentRoom);
+			if (merchantButton != null)
+			{
+				if (merchantScreenContext != null)
+				{
+					savedFocusBehavior = merchantScreenContext.FocusBehaviorRecursive;
+					merchantScreenContext.FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Enabled;
+				}
+				if (!merchantButton.IsEnabled)
+				{
+					merchantButtonWasDisabled = true;
+					merchantButton.Enable();
+				}
+			}
 		}
+		merchantButton?.SetFocusMode(FocusModeEnum.All);
+		merchantButton?.TryGrabFocus();
 		try
 		{
 			Node node = await instance.SelectionFinished();
@@ -411,10 +536,14 @@ public class NPotionHolder : NClickableControl
 		}
 		finally
 		{
-			if (isFoulPotionInShop)
+			merchantButton?.SetFocusMode(FocusModeEnum.None);
+			if (merchantButtonWasDisabled)
 			{
-				NMerchantButton merchantButton2 = NMerchantRoom.Instance.MerchantButton;
-				merchantButton2.SetFocusMode(FocusModeEnum.None);
+				merchantButton.Disable();
+			}
+			if (merchantScreenContext != null && savedFocusBehavior.HasValue)
+			{
+				merchantScreenContext.FocusBehaviorRecursive = savedFocusBehavior.Value;
 			}
 		}
 		this.TryGrabFocus();
@@ -437,25 +566,35 @@ public class NPotionHolder : NClickableControl
 		return true;
 	}
 
+	/// <summary>
+	/// Makes all of your potions popup and make a slosh sound to remind players that they have potions.
+	/// </summary>
 	public async Task ShineOnStartOfCombat()
 	{
-		if (HasPotion)
+		if (HasPotion && Potion.IsValid())
 		{
 			Potion.DoBounce();
-			await Cmd.Wait(0.25f);
+			await Cmd.Wait(0.25f, _cts.Token);
 			NDebugAudioManager.Instance?.Play(Rng.Chaotic.NextItem(TmpSfx.PotionSlosh), 0.3f, PitchVariance.Large);
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(13);
+		List<MethodInfo> list = new List<MethodInfo>(15);
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Bool, "isUsable", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnFocus, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnUnfocus, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnPress, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -466,13 +605,14 @@ public class NPotionHolder : NClickableControl
 			new PropertyInfo(Variant.Type.Object, "potion", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.DisableUntilPotionRemoved, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
-		list.Add(new MethodInfo(MethodName.CancelPotionUse, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.CancelPotionUseOrDiscard, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.RemoveUsedPotion, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.DiscardPotion, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ShouldCancelTargeting, new PropertyInfo(Variant.Type.Bool, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -481,9 +621,21 @@ public class NPotionHolder : NClickableControl
 			ret = VariantUtils.CreateFrom<NPotionHolder>(Create(VariantUtils.ConvertTo<bool>(in args[0])));
 			return true;
 		}
+		if (method == MethodName._EnterTree && args.Count == 0)
+		{
+			_EnterTree();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -529,9 +681,9 @@ public class NPotionHolder : NClickableControl
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.CancelPotionUse && args.Count == 0)
+		if (method == MethodName.CancelPotionUseOrDiscard && args.Count == 0)
 		{
-			CancelPotionUse();
+			CancelPotionUseOrDiscard();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -567,6 +719,7 @@ public class NPotionHolder : NClickableControl
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -574,7 +727,15 @@ public class NPotionHolder : NClickableControl
 		{
 			return true;
 		}
+		if (method == MethodName._EnterTree)
+		{
+			return true;
+		}
 		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName._ExitTree)
 		{
 			return true;
 		}
@@ -606,7 +767,7 @@ public class NPotionHolder : NClickableControl
 		{
 			return true;
 		}
-		if (method == MethodName.CancelPotionUse)
+		if (method == MethodName.CancelPotionUseOrDiscard)
 		{
 			return true;
 		}
@@ -625,6 +786,7 @@ public class NPotionHolder : NClickableControl
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -681,6 +843,7 @@ public class NPotionHolder : NClickableControl
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -750,6 +913,11 @@ public class NPotionHolder : NClickableControl
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -769,6 +937,7 @@ public class NPotionHolder : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -785,6 +954,7 @@ public class NPotionHolder : NClickableControl
 		info.AddProperty(PropertyName._isFocused, Variant.From(in _isFocused));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

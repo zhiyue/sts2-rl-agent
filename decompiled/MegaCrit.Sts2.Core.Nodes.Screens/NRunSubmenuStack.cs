@@ -17,43 +17,98 @@ using MegaCrit.Sts2.Core.Nodes.Screens.StatsScreen;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens;
 
+/// <summary>
+/// Manages spawned submenus during a run.
+/// We lazily spawn submenus only when they are requested to reduce loading times.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/NRunSubmenuStack.cs")]
 public class NRunSubmenuStack : NSubmenuStack
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenuStack.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenuStack.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_settingsScreenScene' field.
+		/// </summary>
 		public static readonly StringName _settingsScreenScene = "_settingsScreenScene";
 
+		/// <summary>
+		/// Cached name for the '_pauseMenuScene' field.
+		/// </summary>
 		public static readonly StringName _pauseMenuScene = "_pauseMenuScene";
 
+		/// <summary>
+		/// Cached name for the '_statsScreenScene' field.
+		/// </summary>
 		public static readonly StringName _statsScreenScene = "_statsScreenScene";
 
+		/// <summary>
+		/// Cached name for the '_runHistoryScreenScene' field.
+		/// </summary>
 		public static readonly StringName _runHistoryScreenScene = "_runHistoryScreenScene";
 
+		/// <summary>
+		/// Cached name for the '_compendiumSubmenu' field.
+		/// </summary>
 		public static readonly StringName _compendiumSubmenu = "_compendiumSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_bestiarySubmenu' field.
+		/// </summary>
 		public static readonly StringName _bestiarySubmenu = "_bestiarySubmenu";
 
+		/// <summary>
+		/// Cached name for the '_relicCollectionSubmenu' field.
+		/// </summary>
 		public static readonly StringName _relicCollectionSubmenu = "_relicCollectionSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_potionLabSubmenu' field.
+		/// </summary>
 		public static readonly StringName _potionLabSubmenu = "_potionLabSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_cardLibrarySubmenu' field.
+		/// </summary>
 		public static readonly StringName _cardLibrarySubmenu = "_cardLibrarySubmenu";
 
+		/// <summary>
+		/// Cached name for the '_runHistoryScreen' field.
+		/// </summary>
 		public static readonly StringName _runHistoryScreen = "_runHistoryScreen";
 
+		/// <summary>
+		/// Cached name for the '_settingsScreen' field.
+		/// </summary>
 		public static readonly StringName _settingsScreen = "_settingsScreen";
 
+		/// <summary>
+		/// Cached name for the '_statsScreen' field.
+		/// </summary>
 		public static readonly StringName _statsScreen = "_statsScreen";
 
+		/// <summary>
+		/// Cached name for the '_pauseMenu' field.
+		/// </summary>
 		public static readonly StringName _pauseMenu = "_pauseMenu";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenuStack.SignalName
 	{
 	}
@@ -206,6 +261,11 @@ public class NRunSubmenuStack : NSubmenuStack
 		throw new ArgumentException($"No such submenu of type {type} in run");
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -214,6 +274,7 @@ public class NRunSubmenuStack : NSubmenuStack
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -226,6 +287,7 @@ public class NRunSubmenuStack : NSubmenuStack
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -236,6 +298,7 @@ public class NRunSubmenuStack : NSubmenuStack
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -307,6 +370,7 @@ public class NRunSubmenuStack : NSubmenuStack
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -378,6 +442,11 @@ public class NRunSubmenuStack : NSubmenuStack
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -398,6 +467,7 @@ public class NRunSubmenuStack : NSubmenuStack
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -417,6 +487,7 @@ public class NRunSubmenuStack : NSubmenuStack
 		info.AddProperty(PropertyName._pauseMenu, Variant.From(in _pauseMenu));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -5,6 +5,9 @@ namespace MegaCrit.Sts2.Core.Odds;
 
 public class RunOddsSet
 {
+	/// <summary>
+	/// Manages the odds of what types of rooms are rolled when entering an unknown point.
+	/// </summary>
 	public UnknownMapPointOdds UnknownMapPoint { get; private init; }
 
 	private RunOddsSet()

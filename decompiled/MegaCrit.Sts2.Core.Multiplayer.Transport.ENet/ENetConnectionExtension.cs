@@ -5,6 +5,13 @@ namespace MegaCrit.Sts2.Core.Multiplayer.Transport.ENet;
 
 public static class ENetConnectionExtension
 {
+	/// <summary>
+	/// Polls an ENetConnection, returning the events that have occurred since the last poll.
+	/// This wraps ENet.Service into a more digestible method.
+	/// </summary>
+	/// <param name="connection">The connection to poll.</param>
+	/// <param name="output">The event we polled from the connection, if any.</param>
+	/// <returns></returns>
 	public static bool TryService(this ENetConnection connection, out ENetServiceData? output)
 	{
 		Array array = connection.Service();

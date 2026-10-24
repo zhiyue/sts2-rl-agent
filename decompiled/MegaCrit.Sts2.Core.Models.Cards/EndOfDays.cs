@@ -43,7 +43,7 @@ public sealed class EndOfDays : CardModel
 		}
 		foreach (Creature hittableEnemy in base.CombatState.HittableEnemies)
 		{
-			await PowerCmd.Apply<DoomPower>(hittableEnemy, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<DoomPower>(choiceContext, hittableEnemy, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, this);
 		}
 		await DoomPower.DoomKill(DoomPower.GetDoomedCreatures(base.CombatState.HittableEnemies));
 	}

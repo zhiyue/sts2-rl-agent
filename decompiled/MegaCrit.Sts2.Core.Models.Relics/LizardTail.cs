@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
@@ -53,6 +54,7 @@ public sealed class LizardTail : RelicModel
 	{
 		Flash();
 		WasUsed = true;
-		await CreatureCmd.Heal(creature, (decimal)creature.MaxHp * (base.DynamicVars.Heal.BaseValue / 100m));
+		decimal amount = Math.Max(1m, (decimal)creature.MaxHp * (base.DynamicVars.Heal.BaseValue / 100m));
+		await CreatureCmd.Heal(creature, amount);
 	}
 }

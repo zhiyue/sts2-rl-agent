@@ -85,7 +85,7 @@ public sealed class Nunchaku : RelicModel
 		InvokeDisplayAmountChanged();
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner && cardPlay.Card.Type == CardType.Attack)
 		{

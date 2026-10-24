@@ -48,7 +48,7 @@ public sealed class RupturePower : PowerModel
 		{
 			if (cardSource == null || !GetInternalData<Data>().playedCards.ContainsKey(cardSource))
 			{
-				await PowerCmd.Apply<StrengthPower>(base.Owner, base.Amount, base.Owner, null);
+				await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner, base.Amount, base.Owner, null);
 			}
 			else
 			{
@@ -57,11 +57,11 @@ public sealed class RupturePower : PowerModel
 		}
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner.Creature == base.Owner && GetInternalData<Data>().playedCards.Remove(cardPlay.Card, out var value))
 		{
-			await PowerCmd.Apply<StrengthPower>(base.Owner, value, base.Owner, null);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner, value, base.Owner, null);
 		}
 	}
 }

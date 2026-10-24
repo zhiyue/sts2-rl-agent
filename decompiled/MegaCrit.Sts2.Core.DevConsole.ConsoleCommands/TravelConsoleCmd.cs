@@ -4,6 +4,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 
+/// <summary>
+/// A command that lets you jump to any room on the map.
+/// </summary>
 public class TravelConsoleCmd : AbstractConsoleCmd
 {
 	public override string CmdName => "travel";

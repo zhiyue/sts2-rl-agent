@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -13,6 +14,7 @@ using MegaCrit.Sts2.Core.Models.CardPools;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Factories;
 
@@ -29,6 +31,12 @@ public static class CardFactory
 		return options.Where((CardModel c) => c.MultiplayerConstraint != CardMultiplayerConstraint.MultiplayerOnly);
 	}
 
+	/// <summary>
+	/// Creates a card to display to the player at the merchant. Takes in a card type, and rarity is rolled.
+	/// </summary>
+	/// <param name="player">The player for which we're creating cards to display.</param>
+	/// <param name="options">The cards to pull from.</param>
+	/// <param name="type">The card type to generate.</param>
 	public static CardCreationResult CreateForMerchant(Player player, IEnumerable<CardModel> options, CardType type)
 	{
 		if (player.Character is Deprived)
@@ -38,23 +46,26 @@ public static class CardFactory
 		options = Hook.ModifyMerchantCardPool(player.RunState, player, options);
 		options = options.Where((CardModel c) => c.Rarity != CardRarity.Basic);
 		options = FilterForPlayerCount(player.RunState, options);
-		CardModel[] source = options.ToArray();
-		CardRarity rolledRarity = Hook.ModifyMerchantCardRarity(player.RunState, player, player.PlayerOdds.CardRarity.RollWithoutChangingFutureOdds(CardRarityOddsType.Shop));
-		List<CardModel> list = source.Where((CardModel c) => c.Rarity == rolledRarity && c.Type == type).ToList();
-		while (list.Count == 0)
+		CardModel[] optionsArr = options.ToArray();
+		CardRarity rarity = Hook.ModifyMerchantCardRarity(player.RunState, player, player.PlayerOdds.CardRarity.RollWithoutChangingFutureOdds(CardRarityOddsType.Shop));
+		CardRarity rarity2 = GetNextAllowedRarity(rarity, (CardRarity r) => optionsArr.Any((CardModel c) => c.Rarity == r && c.Type == type));
+		if (rarity2 == CardRarity.None)
 		{
-			rolledRarity = rolledRarity.GetNextHighestRarity();
-			if (rolledRarity == CardRarity.None)
-			{
-				throw new InvalidOperationException("Can't generate a valid rarity for the merchant card options passed.");
-			}
-			list = source.Where((CardModel c) => c.Rarity == rolledRarity && c.Type == type).ToList();
+			throw new InvalidOperationException($"Can't generate valid rarity for merchant card type {type} with card options: {string.Join(",", optionsArr.Select((CardModel c) => c.Id))}");
 		}
-		CardModel cardModel = player.RunState.CreateCard(player.PlayerRng.Shops.NextItem(list), player);
+		List<CardModel> items = optionsArr.Where((CardModel c) => c.Rarity == rarity2 && c.Type == type).ToList();
+		CardModel cardModel = player.RunState.CreateCard(player.PlayerRng.Shops.NextItem(items), player);
 		RollForUpgrade(player, cardModel, -999999999m);
 		return new CardCreationResult(cardModel);
 	}
 
+	/// <summary>
+	/// Creates a set of cards to display to the player at the merchant.
+	/// The rarity of cards are affected by the source.
+	/// </summary>
+	/// <param name="player">The player for which we're creating cards to display.</param>
+	/// <param name="options">The cards to pull from.</param>
+	/// <param name="rarity">The card rarity to generate. This rarity may be modified by hooks.</param>
 	public static CardCreationResult CreateForMerchant(Player player, IEnumerable<CardModel> options, CardRarity rarity)
 	{
 		options = Hook.ModifyMerchantCardPool(player.RunState, player, options);
@@ -68,6 +79,13 @@ public static class CardFactory
 		return new CardCreationResult(cardModel);
 	}
 
+	/// <summary>
+	/// Creates a set of cards for the player to choose 1 from.
+	/// The rarity of cards are affected by the source.
+	/// </summary>
+	/// <param name="player">The player for which we're creating rewards.</param>
+	/// <param name="cardCount">How many choices to offer (usually 3).</param>
+	/// <param name="options">The options to use when creating the cards.</param>
 	public static IEnumerable<CardCreationResult> CreateForReward(Player player, int cardCount, CardCreationOptions options)
 	{
 		List<CardModel> list = new List<CardModel>();
@@ -90,13 +108,35 @@ public static class CardFactory
 		return list2;
 	}
 
+	/// <summary>
+	/// Get a set of distinct cards for use in combat generation effects like Attack Potion or Discovery.
+	/// </summary>
+	/// <param name="player">The owner of the newly created cards.</param>
+	/// <param name="cards">Cards to choose from.</param>
+	/// <param name="count">Number of cards to get.</param>
+	/// <param name="rng">RNG to use.</param>
+	/// <returns>Mutable cards owned by the player and created within its combat state, for combat generation effects.</returns>
 	public static IEnumerable<CardModel> GetDistinctForCombat(Player player, IEnumerable<CardModel> cards, int count, Rng rng)
 	{
+		List<CardModel> list = TestRngInjector.ConsumeCombatCardGenerationOverride();
+		if (list != null)
+		{
+			return list;
+		}
 		cards = FilterForPlayerCount(player.RunState, cards);
 		return from c in FilterForCombat(cards).TakeRandom(count, rng)
 			select player.Creature.CombatState.CreateCard(c, player);
 	}
 
+	/// <summary>
+	/// Get a set of cards for use in combat generation effects like Calamity.
+	/// Can include multiple of the same card, unlike <see cref="M:MegaCrit.Sts2.Core.Factories.CardFactory.GetDistinctForCombat(MegaCrit.Sts2.Core.Entities.Players.Player,System.Collections.Generic.IEnumerable{MegaCrit.Sts2.Core.Models.CardModel},System.Int32,MegaCrit.Sts2.Core.Random.Rng)" />.
+	/// </summary>
+	/// <param name="player">The owner of the newly created cards.</param>
+	/// <param name="cards">Cards to choose from.</param>
+	/// <param name="count">Number of cards to get.</param>
+	/// <param name="rng">RNG to use.</param>
+	/// <returns>Cards for combat generation effects.</returns>
 	public static IEnumerable<CardModel> GetForCombat(Player player, IEnumerable<CardModel> cards, int count, Rng rng)
 	{
 		List<CardModel> options = FilterForCombat(cards).ToList();
@@ -111,11 +151,22 @@ public static class CardFactory
 		return list;
 	}
 
+	/// <summary>
+	/// Filter out cards that should not be included in combat card generation effects like Attack Potion or Discovery.
+	/// </summary>
+	/// <param name="cards">Cards to filter.</param>
+	/// <returns>Cards for combat generation effects.</returns>
 	public static IEnumerable<CardModel> FilterForCombat(IEnumerable<CardModel> cards)
 	{
 		return cards.Where((CardModel c) => c.CanBeGeneratedInCombat && c.Rarity != CardRarity.Basic && c.Rarity != CardRarity.Ancient && c.Rarity != CardRarity.Event).Distinct();
 	}
 
+	/// <summary>
+	/// Get the default set of cards that the specified card should be able to be transformed into.
+	/// </summary>
+	/// <param name="original">Card that will be transformed.</param>
+	/// <param name="isInCombat">Whether the transformation is happening in combat.</param>
+	/// <returns>The set of cards that the card can be transformed into.</returns>
 	public static IEnumerable<CardModel> GetDefaultTransformationOptions(CardModel original, bool isInCombat)
 	{
 		CardPoolModel cardPoolModel = ((original.Type != CardType.Quest && original.Rarity != CardRarity.Event && original.Rarity != CardRarity.Ancient && original.Rarity != CardRarity.Token) ? original.Pool : ModelDb.CardPool<ColorlessCardPool>());
@@ -205,12 +256,28 @@ public static class CardFactory
 			}
 			flag2 = flag4;
 		}
-		CardRarity cardRarity = ((!flag2) ? player.PlayerOdds.CardRarity.RollWithBaseOdds(rollMethod) : player.PlayerOdds.CardRarity.Roll(rollMethod));
-		while (!allowedRarities.Contains(cardRarity) && cardRarity != CardRarity.None)
+		CardRarity rarity = ((!flag2) ? player.PlayerOdds.CardRarity.RollWithBaseOdds(rollMethod) : player.PlayerOdds.CardRarity.Roll(rollMethod));
+		return GetNextAllowedRarity(rarity, allowedRarities.Contains);
+	}
+
+	private static CardRarity GetNextAllowedRarity(CardRarity rarity, Func<CardRarity, bool> isAllowed)
+	{
+		int num = 1;
+		List<CardRarity> list = new List<CardRarity>(num);
+		CollectionsMarshal.SetCount(list, num);
+		Span<CardRarity> span = CollectionsMarshal.AsSpan(list);
+		int index = 0;
+		span[index] = rarity;
+		List<CardRarity> list2 = list;
+		while (!isAllowed(rarity) && rarity != CardRarity.None)
 		{
-			cardRarity = cardRarity.GetNextHighestRarity();
+			rarity = rarity.GetNextHighestRarityWithWrapping();
+			if (list2.Contains(rarity))
+			{
+				return CardRarity.None;
+			}
 		}
-		return cardRarity;
+		return rarity;
 	}
 
 	private static void RollForUpgrade(Player player, CardModel card, decimal baseChance)

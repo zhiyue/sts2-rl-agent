@@ -6,6 +6,12 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.Entities.Models;
 
+/// <summary>
+/// An IComparer which sorts a collection of models into the same order.
+/// The HookBus keeps a collection of models. In multiplayer, these models may be added or removed in different orders
+/// based on the peer. However, we need these models to execute their hooks in the exact same order across all peers
+/// to maintain determinism.
+/// </summary>
 public class DeterministicModelComparer : IComparer<AbstractModel>
 {
 	public static DeterministicModelComparer Instance { get; } = new DeterministicModelComparer();

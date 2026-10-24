@@ -42,120 +42,326 @@ namespace MegaCrit.Sts2.Core.Nodes.Combat;
 [ScriptPath("res://src/Core/Nodes/Combat/NCreature.cs")]
 public class NCreature : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSpineAnimatorSignals' method.
+		/// </summary>
 		public static readonly StringName ConnectSpineAnimatorSignals = "ConnectSpineAnimatorSignals";
 
+		/// <summary>
+		/// Cached name for the 'UpdateBounds' method.
+		/// </summary>
 		public static readonly StringName UpdateBounds = "UpdateBounds";
 
+		/// <summary>
+		/// Cached name for the 'UpdatePhobiaMode' method.
+		/// </summary>
+		public static readonly StringName UpdatePhobiaMode = "UpdatePhobiaMode";
+
+		/// <summary>
+		/// Cached name for the 'UpdateNavigation' method.
+		/// </summary>
 		public static readonly StringName UpdateNavigation = "UpdateNavigation";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnTargetingStarted' method.
+		/// </summary>
 		public static readonly StringName OnTargetingStarted = "OnTargetingStarted";
 
+		/// <summary>
+		/// Cached name for the 'SetRemotePlayerFocused' method.
+		/// </summary>
 		public static readonly StringName SetRemotePlayerFocused = "SetRemotePlayerFocused";
 
+		/// <summary>
+		/// Cached name for the 'HideHoverTips' method.
+		/// </summary>
 		public static readonly StringName HideHoverTips = "HideHoverTips";
 
+		/// <summary>
+		/// Cached name for the 'SetAnimationTrigger' method.
+		/// </summary>
 		public static readonly StringName SetAnimationTrigger = "SetAnimationTrigger";
 
+		/// <summary>
+		/// Cached name for the 'GetCurrentAnimationLength' method.
+		/// </summary>
 		public static readonly StringName GetCurrentAnimationLength = "GetCurrentAnimationLength";
 
+		/// <summary>
+		/// Cached name for the 'GetCurrentAnimationTimeRemaining' method.
+		/// </summary>
 		public static readonly StringName GetCurrentAnimationTimeRemaining = "GetCurrentAnimationTimeRemaining";
 
+		/// <summary>
+		/// Cached name for the 'ToggleIsInteractable' method.
+		/// </summary>
 		public static readonly StringName ToggleIsInteractable = "ToggleIsInteractable";
 
+		/// <summary>
+		/// Cached name for the 'AnimDisableUi' method.
+		/// </summary>
 		public static readonly StringName AnimDisableUi = "AnimDisableUi";
 
+		/// <summary>
+		/// Cached name for the 'AnimEnableUi' method.
+		/// </summary>
 		public static readonly StringName AnimEnableUi = "AnimEnableUi";
 
+		/// <summary>
+		/// Cached name for the 'StartDeathAnim' method.
+		/// </summary>
 		public static readonly StringName StartDeathAnim = "StartDeathAnim";
 
+		/// <summary>
+		/// Cached name for the 'StartReviveAnim' method.
+		/// </summary>
 		public static readonly StringName StartReviveAnim = "StartReviveAnim";
 
+		/// <summary>
+		/// Cached name for the 'AnimTempRevive' method.
+		/// </summary>
 		public static readonly StringName AnimTempRevive = "AnimTempRevive";
 
+		/// <summary>
+		/// Cached name for the 'ImmediatelySetIdle' method.
+		/// </summary>
 		public static readonly StringName ImmediatelySetIdle = "ImmediatelySetIdle";
 
+		/// <summary>
+		/// Cached name for the 'AnimHideIntent' method.
+		/// </summary>
 		public static readonly StringName AnimHideIntent = "AnimHideIntent";
 
+		/// <summary>
+		/// Cached name for the 'SetScaleAndHue' method.
+		/// </summary>
 		public static readonly StringName SetScaleAndHue = "SetScaleAndHue";
 
+		/// <summary>
+		/// Cached name for the 'ScaleTo' method.
+		/// </summary>
 		public static readonly StringName ScaleTo = "ScaleTo";
 
+		/// <summary>
+		/// Cached name for the 'SetDefaultScaleTo' method.
+		/// </summary>
 		public static readonly StringName SetDefaultScaleTo = "SetDefaultScaleTo";
 
+		/// <summary>
+		/// Cached name for the 'OstyScaleToSize' method.
+		/// </summary>
 		public static readonly StringName OstyScaleToSize = "OstyScaleToSize";
 
+		/// <summary>
+		/// Cached name for the 'AnimShake' method.
+		/// </summary>
 		public static readonly StringName AnimShake = "AnimShake";
 
+		/// <summary>
+		/// Cached name for the 'DoScaleTween' method.
+		/// </summary>
 		public static readonly StringName DoScaleTween = "DoScaleTween";
 
+		/// <summary>
+		/// Cached name for the 'SetOrbManagerPosition' method.
+		/// </summary>
 		public static readonly StringName SetOrbManagerPosition = "SetOrbManagerPosition";
 
+		/// <summary>
+		/// Cached name for the 'GetTopOfHitbox' method.
+		/// </summary>
 		public static readonly StringName GetTopOfHitbox = "GetTopOfHitbox";
 
+		/// <summary>
+		/// Cached name for the 'GetBottomOfHitbox' method.
+		/// </summary>
 		public static readonly StringName GetBottomOfHitbox = "GetBottomOfHitbox";
 
+		/// <summary>
+		/// Cached name for the 'ShowMultiselectReticle' method.
+		/// </summary>
 		public static readonly StringName ShowMultiselectReticle = "ShowMultiselectReticle";
 
+		/// <summary>
+		/// Cached name for the 'HideMultiselectReticle' method.
+		/// </summary>
 		public static readonly StringName HideMultiselectReticle = "HideMultiselectReticle";
 
+		/// <summary>
+		/// Cached name for the 'ShowSingleSelectReticle' method.
+		/// </summary>
 		public static readonly StringName ShowSingleSelectReticle = "ShowSingleSelectReticle";
 
+		/// <summary>
+		/// Cached name for the 'HideSingleSelectReticle' method.
+		/// </summary>
 		public static readonly StringName HideSingleSelectReticle = "HideSingleSelectReticle";
+
+		/// <summary>
+		/// Cached name for the 'SetupForBestiary' method.
+		/// </summary>
+		public static readonly StringName SetupForBestiary = "SetupForBestiary";
+
+		/// <summary>
+		/// Cached name for the 'StartSfxLoop' method.
+		/// </summary>
+		public static readonly StringName StartSfxLoop = "StartSfxLoop";
+
+		/// <summary>
+		/// Cached name for the 'StopSfxLoop' method.
+		/// </summary>
+		public static readonly StringName StopSfxLoop = "StopSfxLoop";
+
+		/// <summary>
+		/// Cached name for the 'StopAllSfxLoops' method.
+		/// </summary>
+		public static readonly StringName StopAllSfxLoops = "StopAllSfxLoops";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Hitbox' property.
+		/// </summary>
 		public static readonly StringName Hitbox = "Hitbox";
 
+		/// <summary>
+		/// Cached name for the 'OrbManager' property.
+		/// </summary>
 		public static readonly StringName OrbManager = "OrbManager";
 
+		/// <summary>
+		/// Cached name for the 'IsInteractable' property.
+		/// </summary>
 		public static readonly StringName IsInteractable = "IsInteractable";
 
+		/// <summary>
+		/// Cached name for the 'VfxSpawnPosition' property.
+		/// </summary>
 		public static readonly StringName VfxSpawnPosition = "VfxSpawnPosition";
 
+		/// <summary>
+		/// Cached name for the 'PowerAppliedVfxSpawnPosition' property.
+		/// </summary>
+		public static readonly StringName PowerAppliedVfxSpawnPosition = "PowerAppliedVfxSpawnPosition";
+
+		/// <summary>
+		/// Cached name for the 'Visuals' property.
+		/// </summary>
 		public static readonly StringName Visuals = "Visuals";
 
+		/// <summary>
+		/// Cached name for the 'Body' property.
+		/// </summary>
 		public static readonly StringName Body = "Body";
 
+		/// <summary>
+		/// Cached name for the 'IntentContainer' property.
+		/// </summary>
 		public static readonly StringName IntentContainer = "IntentContainer";
 
+		/// <summary>
+		/// Cached name for the 'IsPlayingDeathAnimation' property.
+		/// </summary>
 		public static readonly StringName IsPlayingDeathAnimation = "IsPlayingDeathAnimation";
 
+		/// <summary>
+		/// Cached name for the 'HasSpineAnimation' property.
+		/// </summary>
 		public static readonly StringName HasSpineAnimation = "HasSpineAnimation";
 
+		/// <summary>
+		/// Cached name for the 'IsFocused' property.
+		/// </summary>
 		public static readonly StringName IsFocused = "IsFocused";
 
+		/// <summary>
+		/// Cached name for the 'PlayerIntentHandler' property.
+		/// </summary>
 		public static readonly StringName PlayerIntentHandler = "PlayerIntentHandler";
 
+		/// <summary>
+		/// Cached name for the '_stateDisplay' field.
+		/// </summary>
 		public static readonly StringName _stateDisplay = "_stateDisplay";
 
+		/// <summary>
+		/// Cached name for the '_intentFadeTween' field.
+		/// </summary>
 		public static readonly StringName _intentFadeTween = "_intentFadeTween";
 
+		/// <summary>
+		/// Cached name for the '_shakeTween' field.
+		/// </summary>
 		public static readonly StringName _shakeTween = "_shakeTween";
 
+		/// <summary>
+		/// Cached name for the '_isRemotePlayerOrPet' field.
+		/// </summary>
 		public static readonly StringName _isRemotePlayerOrPet = "_isRemotePlayerOrPet";
 
+		/// <summary>
+		/// Cached name for the '_isInBestiary' field.
+		/// </summary>
+		public static readonly StringName _isInBestiary = "_isInBestiary";
+
+		/// <summary>
+		/// Cached name for the '_tempScale' field.
+		/// </summary>
 		public static readonly StringName _tempScale = "_tempScale";
 
+		/// <summary>
+		/// Cached name for the '_scaleTween' field.
+		/// </summary>
 		public static readonly StringName _scaleTween = "_scaleTween";
 
+		/// <summary>
+		/// Cached name for the '_isInMultiselect' field.
+		/// </summary>
 		public static readonly StringName _isInMultiselect = "_isInMultiselect";
 
+		/// <summary>
+		/// Cached name for the '_selectionReticle' field.
+		/// </summary>
 		public static readonly StringName _selectionReticle = "_selectionReticle";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -172,6 +378,8 @@ public class NCreature : Control
 
 	private bool _isRemotePlayerOrPet;
 
+	private bool _isInBestiary;
+
 	private float _tempScale = 1f;
 
 	private Tween? _scaleTween;
@@ -180,7 +388,21 @@ public class NCreature : Control
 
 	private NSelectionReticle _selectionReticle;
 
+	/// <summary>
+	/// Keeps track of the looping sfx that are owned by this creature (ie thieving hopper's fluttering).
+	/// We use this as a way to easily cancel all looping sfx when a creature instance is killed or despawned.
+	/// - The Key is the string field of the sfx we are tracking (ie event://flying_sfx)
+	///
+	/// - The Value is a Tuple, where the first item is the loop param we will use to end the sfx and the second item
+	///   is the value that we need to set that param to end the sfx. (ie ("loop", 1)).
+	///   We need to do this because not all sfx loops use the same loop param or loop value to finish the FMOD event
+	///   (ie waterfall giant uses the same loop param to ramp up how intense it is AND to end the loop).
+	/// </summary>
+	private readonly Dictionary<string, (string, float)> _sfxLoops = new Dictionary<string, (string, float)>();
+
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(_scenePath);
+
+	public static Vector2 PowerAppliedVfxPositionOffset => new Vector2(0f, -200f);
 
 	public Task? DeathAnimationTask { get; set; }
 
@@ -196,9 +418,11 @@ public class NCreature : Control
 
 	public Vector2 VfxSpawnPosition => Visuals.VfxSpawnPosition.GlobalPosition;
 
+	public Vector2 PowerAppliedVfxSpawnPosition => VfxSpawnPosition + PowerAppliedVfxPositionOffset;
+
 	public NCreatureVisuals Visuals { get; private set; }
 
-	public Node2D Body => Visuals.Body;
+	public Node2D Body => Visuals.GetCurrentBody();
 
 	public Control IntentContainer { get; private set; }
 
@@ -206,7 +430,7 @@ public class NCreature : Control
 
 	public bool HasSpineAnimation => Visuals.HasSpineAnimation;
 
-	public MegaSprite? SpineController => Visuals.SpineBody;
+	public SpineAnimationAccess SpineAnimation => Visuals.SpineAnimation;
 
 	public bool IsFocused { get; private set; }
 
@@ -214,7 +438,7 @@ public class NCreature : Control
 
 	public T? GetSpecialNode<T>(string name) where T : Node
 	{
-		return Visuals.GetNode<T>(name);
+		return Visuals.GetNodeOrNull<T>(name);
 	}
 
 	public static NCreature? Create(Creature entity)
@@ -247,7 +471,7 @@ public class NCreature : Control
 		}
 		if (Entity.IsPlayer)
 		{
-			CombatState? combatState = Entity.CombatState;
+			ICombatState? combatState = Entity.CombatState;
 			if (combatState != null && combatState.RunState.Players.Count > 1)
 			{
 				PlayerIntentHandler = NMultiplayerPlayerIntentHandler.Create(Entity.Player);
@@ -259,7 +483,7 @@ public class NCreature : Control
 			}
 		}
 		this.AddChildSafely(Visuals);
-		MoveChild(Visuals, 0);
+		this.MoveChildSafely(Visuals, 0);
 		Visuals.Position = Vector2.Zero;
 		_stateDisplay.SetCreature(Entity);
 		bool flag = Entity.PetOwner != null && !LocalContext.IsMe(Entity.PetOwner);
@@ -278,19 +502,19 @@ public class NCreature : Control
 		{
 			if (Entity.Player != null)
 			{
-				_spineAnimator = Entity.Player.Character.GenerateAnimator(SpineController);
+				_spineAnimator = Entity.Player.Character.GenerateAnimator(Visuals.SpineBody);
 			}
 			else
 			{
-				_spineAnimator = Entity.Monster.GenerateAnimator(SpineController);
+				_spineAnimator = Entity.Monster.GenerateAnimator(Visuals.SpineBody);
 				Visuals.SetUpSkin(Entity.Monster);
 			}
 			ConnectSpineAnimatorSignals();
 			if (Entity.IsDead)
 			{
 				SetAnimationTrigger("Dead");
-				MegaTrackEntry current = Visuals.SpineBody.GetAnimationState().GetCurrent(0);
-				current.SetTrackTime(current.GetAnimationEnd());
+				MegaTrackEntry currentTrack = SpineAnimation.GetCurrentTrack();
+				currentTrack?.SetTrackTime(currentTrack.GetAnimationEnd());
 			}
 		}
 		SetOrbManagerPosition();
@@ -299,11 +523,13 @@ public class NCreature : Control
 			ToggleIsInteractable(Entity.Monster.IsHealthBarVisible);
 		}
 		UpdateBounds(Visuals);
+		UpdatePhobiaMode();
 	}
 
 	public override void _EnterTree()
 	{
 		base._EnterTree();
+		NGame.Instance?.Connect(NGame.SignalName.PhobiaModeToggled, Callable.From(UpdatePhobiaMode));
 		CombatManager.Instance.CombatEnded += OnCombatEnded;
 		Entity.PowerApplied += OnPowerApplied;
 		Entity.PowerRemoved += OnPowerRemoved;
@@ -318,7 +544,9 @@ public class NCreature : Control
 	public override void _ExitTree()
 	{
 		base._ExitTree();
+		StopAllSfxLoops();
 		DeathAnimCancelToken.Cancel();
+		NGame.Instance?.Disconnect(NGame.SignalName.PhobiaModeToggled, Callable.From(UpdatePhobiaMode));
 		CombatManager.Instance.CombatEnded -= OnCombatEnded;
 		Entity.PowerApplied -= OnPowerApplied;
 		Entity.PowerRemoved -= OnPowerRemoved;
@@ -348,17 +576,27 @@ public class NCreature : Control
 		UpdateBounds(Visuals.GetNode<Control>(boundsNodeName));
 	}
 
+	private void UpdatePhobiaMode()
+	{
+		Visuals.UpdatePhobiaMode(Entity.Monster);
+	}
+
+	/// <summary>
+	/// Called when a creatures hitbox is updated. Called on initialization and things like Osty getting bigger, thieving hopper flying, etc.
+	/// </summary>
+	/// <param name="boundsContainer"></param> The parent node which has the children: Bounds, CenterPos, and IntentPos nodes.
 	private void UpdateBounds(Node boundsContainer)
 	{
-		Control node = boundsContainer.GetNode<Control>("Bounds");
+		Control node = boundsContainer.GetNode<Control>("%Bounds");
 		Vector2 size = node.Size * Visuals.Scale / _tempScale;
 		Vector2 vector = (node.GlobalPosition - base.GlobalPosition) / _tempScale;
 		Hitbox.Size = size;
 		Hitbox.GlobalPosition = base.GlobalPosition + vector;
 		_selectionReticle.Size = size;
 		_selectionReticle.GlobalPosition = base.GlobalPosition + vector;
-		_selectionReticle.PivotOffset = _selectionReticle.Size / 2f;
-		IntentContainer.Position = boundsContainer.GetNode<Marker2D>("IntentPos").Position - IntentContainer.Size / 2f;
+		_selectionReticle.PivotOffset = _selectionReticle.Size * 0.5f;
+		IntentContainer.Position = boundsContainer.GetNode<Marker2D>("IntentPos").Position - IntentContainer.Size * 0.5f;
+		IntentContainer.Position = new Vector2(IntentContainer.Position.X, IntentContainer.Position.Y * Visuals.Scale.X);
 		_stateDisplay.SetCreatureBounds(Hitbox);
 	}
 
@@ -384,7 +622,7 @@ public class NCreature : Control
 			child.SetFrozen(isFrozen: false);
 			child.UpdateIntent(intents[i], targets, Entity);
 		}
-		float num = (float)GetHashCode() / 100f;
+		float num = (float)GetHashCode() * 0.01f;
 		for (; i < intents.Count; i++)
 		{
 			NIntent nIntent = NIntent.Create(num + (float)i * 0.3f);
@@ -412,7 +650,7 @@ public class NCreature : Control
 			IntentContainer.Modulate = new Color(IntentContainer.Modulate.R, IntentContainer.Modulate.G, IntentContainer.Modulate.B, 0f);
 			return;
 		}
-		AnimHideIntent(0.4f);
+		AnimHideIntent(0.4);
 		await Cmd.CustomScaledWait(0.25f, 0.4f);
 	}
 
@@ -422,6 +660,10 @@ public class NCreature : Control
 		await RevealIntents();
 	}
 
+	/// <summary>
+	/// This makes the intents visible again!
+	/// So let's fade them in.
+	/// </summary>
 	private Task RevealIntents()
 	{
 		IntentContainer.Modulate = Colors.Transparent;
@@ -433,7 +675,7 @@ public class NCreature : Control
 
 	private void OnFocus()
 	{
-		if (IsFocused)
+		if (IsFocused || _isInBestiary)
 		{
 			return;
 		}
@@ -465,22 +707,25 @@ public class NCreature : Control
 
 	private void OnUnfocus()
 	{
-		IsFocused = false;
-		HideSingleSelectReticle();
-		if (_isRemotePlayerOrPet)
+		if (!_isInBestiary)
 		{
-			_stateDisplay.AnimateOut();
-			Player me = LocalContext.GetMe(Entity.CombatState);
-			NCombatRoom.Instance?.GetCreatureNode(me?.Creature)?.SetRemotePlayerFocused(remotePlayerFocused: false);
+			IsFocused = false;
+			HideSingleSelectReticle();
+			if (_isRemotePlayerOrPet)
+			{
+				_stateDisplay.AnimateOut();
+				Player me = LocalContext.GetMe(Entity.CombatState);
+				NCombatRoom.Instance?.GetCreatureNode(me?.Creature)?.SetRemotePlayerFocused(remotePlayerFocused: false);
+			}
+			else
+			{
+				_stateDisplay.HideNameplate();
+			}
+			NRun.Instance.GlobalUi.MultiplayerPlayerContainer.UnhighlightPlayer(Entity.Player);
+			NTargetManager.Instance.OnNodeUnhovered(this);
+			CombatManager.Instance.StateTracker.CombatStateChanged -= ShowCreatureHoverTips;
+			HideHoverTips();
 		}
-		else
-		{
-			_stateDisplay.HideNameplate();
-		}
-		NRun.Instance.GlobalUi.MultiplayerPlayerContainer.UnhighlightPlayer(Entity.Player);
-		NTargetManager.Instance.OnNodeUnhovered(this);
-		CombatManager.Instance.StateTracker.CombatStateChanged -= ShowCreatureHoverTips;
-		HideHoverTips();
 	}
 
 	public void OnTargetingStarted()
@@ -552,9 +797,26 @@ public class NCreature : Control
 		{
 			return;
 		}
-		NPowerAppliedVfx vfx = NPowerAppliedVfx.Create(power, amount);
+		bool flag = power.GetTypeForAmount(power.Amount) == PowerType.Buff;
+		NPowerAppliedVfx vfx = NPowerAppliedVfx.Create(power, amount, flag);
 		if (vfx != null)
 		{
+			if (flag)
+			{
+				NPowerAppliedBuffVfx buffVfx = NPowerAppliedBuffVfx.Create(PowerAppliedVfxSpawnPosition);
+				Callable.From(delegate
+				{
+					NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(buffVfx);
+				}).CallDeferred();
+			}
+			else
+			{
+				NPowerAppliedDebuffVfx debuffVfx = NPowerAppliedDebuffVfx.Create(PowerAppliedVfxSpawnPosition);
+				Callable.From(delegate
+				{
+					NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(debuffVfx);
+				}).CallDeferred();
+			}
 			Callable.From(delegate
 			{
 				NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(vfx);
@@ -562,9 +824,9 @@ public class NCreature : Control
 		}
 		if (power.ShouldPlayVfx)
 		{
-			SfxCmd.Play((power.GetTypeForAmount(amount) == PowerType.Buff) ? "event:/sfx/buff" : "event:/sfx/debuff");
+			SfxCmd.Play(flag ? "event:/sfx/buff" : "event:/sfx/debuff");
 		}
-		if (power.GetTypeForAmount(power.Amount) == PowerType.Debuff)
+		if (!flag)
 		{
 			AnimShake();
 		}
@@ -608,14 +870,17 @@ public class NCreature : Control
 
 	public float GetCurrentAnimationLength()
 	{
-		return SpineController.GetAnimationState().GetCurrent(0).GetAnimation()
-			.GetDuration();
+		return SpineAnimation.GetCurrentAnimationDuration().GetValueOrDefault();
 	}
 
 	public float GetCurrentAnimationTimeRemaining()
 	{
-		MegaTrackEntry current = SpineController.GetAnimationState().GetCurrent(0);
-		return current.GetTrackComplete() - current.GetTrackTime();
+		MegaTrackEntry currentTrack = SpineAnimation.GetCurrentTrack();
+		if (currentTrack == null)
+		{
+			return 0f;
+		}
+		return currentTrack.GetTrackComplete() - currentTrack.GetTrackTime();
 	}
 
 	public void ToggleIsInteractable(bool on)
@@ -708,24 +973,27 @@ public class NCreature : Control
 	private void AnimTempRevive()
 	{
 		Tween tween = CreateTween();
-		tween.TweenProperty(Visuals, "modulate:a", 0f, 0.20000000298023224);
+		tween.TweenProperty(Visuals, "modulate:a", 0f, 0.2);
 		tween.TweenCallback(Callable.From(ImmediatelySetIdle));
-		tween.TweenProperty(Visuals, "modulate:a", 1f, 0.20000000298023224);
+		tween.TweenProperty(Visuals, "modulate:a", 1f, 0.2);
 	}
 
 	private void ImmediatelySetIdle()
 	{
 		_spineAnimator?.SetTrigger("Idle");
-		MegaTrackEntry current = Visuals.SpineBody.GetAnimationState().GetCurrent(0);
-		current.SetMixDuration(0f);
-		current.SetTrackTime(current.GetAnimationEnd());
+		MegaTrackEntry currentTrack = SpineAnimation.GetCurrentTrack();
+		if (currentTrack != null)
+		{
+			currentTrack.SetMixDuration(0f);
+			currentTrack.SetTrackTime(currentTrack.GetAnimationEnd());
+		}
 	}
 
 	private async Task AnimDie(bool shouldRemove, CancellationToken cancelToken)
 	{
 		Tween disableUiTween = AnimDisableUi();
 		Hitbox.MouseFilter = MouseFilterEnum.Ignore;
-		if (!RunManager.Instance.IsSinglePlayerOrFakeMultiplayer)
+		if (!RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
 		{
 			OrbManager?.ClearOrbs();
 		}
@@ -737,10 +1005,6 @@ public class NCreature : Control
 		{
 			float seconds = Math.Min(GetCurrentAnimationTimeRemaining() + 0.5f, 20f);
 			await Cmd.Wait(seconds, cancelToken, ignoreCombatEnd: true);
-			if (cancelToken.IsCancellationRequested)
-			{
-				return;
-			}
 		}
 		else
 		{
@@ -749,6 +1013,10 @@ public class NCreature : Control
 			{
 				await Cmd.Wait(Entity.Monster.DeathAnimLengthOverride, cancelToken, ignoreCombatEnd: true);
 			}
+		}
+		if (cancelToken.IsCancellationRequested)
+		{
+			return;
 		}
 		if (shouldRemove)
 		{
@@ -759,14 +1027,17 @@ public class NCreature : Control
 				NMonsterDeathVfx nMonsterDeathVfx = NMonsterDeathVfx.Create(this, cancelToken);
 				Node parent = GetParent();
 				parent.AddChildSafely(nMonsterDeathVfx);
-				parent.MoveChild(nMonsterDeathVfx, GetIndex());
+				if (nMonsterDeathVfx != null)
+				{
+					parent.MoveChildSafely(nMonsterDeathVfx, GetIndex());
+				}
 				fadeVfx = nMonsterDeathVfx?.PlayVfx();
 			}
 			if (SaveManager.Instance.PrefsSave.FastMode != FastModeType.Instant)
 			{
-				if (disableUiTween.IsValid() && disableUiTween.IsRunning())
+				if (disableUiTween.IsValid() && disableUiTween.IsRunning() && !(await disableUiTween.AwaitFinished(this)))
 				{
-					await ToSignal(disableUiTween, Tween.SignalName.Finished);
+					return;
 				}
 				foreach (IDeathDelayer item in this.GetChildrenRecursive<IDeathDelayer>())
 				{
@@ -779,18 +1050,18 @@ public class NCreature : Control
 			}
 			this.QueueFreeSafely();
 		}
-		if (Entity.Monster is Osty)
+		else if (Entity.Monster is Osty)
 		{
-			OstyScaleToSize(0f, 0.75f);
+			OstyScaleToSize(0f, 0.75);
 		}
 	}
 
-	public void AnimHideIntent(float delay = 0f)
+	public void AnimHideIntent(double delay = 0.0)
 	{
 		_intentFadeTween?.Kill();
 		_intentFadeTween = CreateTween().SetParallel();
 		PropertyTweener propertyTweener = _intentFadeTween.TweenProperty(IntentContainer, "modulate:a", 0f, 0.5);
-		if (delay > 0f)
+		if (delay > 0.0)
 		{
 			propertyTweener.SetDelay(delay);
 		}
@@ -802,7 +1073,7 @@ public class NCreature : Control
 		UpdateBounds(Visuals);
 	}
 
-	public void ScaleTo(float size, float duration)
+	public void ScaleTo(float size, double duration)
 	{
 		if (!Entity.IsMonster || Entity.Monster.CanChangeScale)
 		{
@@ -822,7 +1093,7 @@ public class NCreature : Control
 		}
 	}
 
-	public void OstyScaleToSize(float ostyHealth, float duration)
+	public void OstyScaleToSize(float ostyHealth, double duration)
 	{
 		float num = Mathf.Lerp(Osty.ScaleRange.X, Osty.ScaleRange.Y, Mathf.Clamp(ostyHealth / 150f, 0f, 1f));
 		NCreature nCreature = NCombatRoom.Instance?.GetCreatureNode(Entity.PetOwner.Creature);
@@ -846,13 +1117,13 @@ public class NCreature : Control
 
 	public void AnimShake()
 	{
-		if ((_shakeTween == null || !_shakeTween.IsRunning()) && !Visuals.IsPlayingHurtAnimation())
+		if (IsInsideTree() && (_shakeTween == null || !_shakeTween.IsRunning()) && !Visuals.IsPlayingHurtAnimation())
 		{
 			Visuals.Position = Vector2.Zero;
 			_shakeTween = CreateTween();
 			_shakeTween.TweenMethod(Callable.From(delegate(float t)
 			{
-				Visuals.Position = Vector2.Right * 10f * Mathf.Sin(t * 4f) * Mathf.Sin(t / 2f);
+				Visuals.Position = Vector2.Right * 10f * Mathf.Sin(t * 4f) * Mathf.Sin(t * 0.5f);
 			}), 0f, (float)Math.PI * 2f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 		}
 	}
@@ -876,16 +1147,31 @@ public class NCreature : Control
 		}
 	}
 
+	/// <summary>
+	/// Helper function to get the top of this creature's hitbox position.
+	/// Used for spawning vfx or aligning UI elements to a creature's hitbox.
+	/// </summary>
 	public Vector2 GetTopOfHitbox()
 	{
 		return Hitbox.GlobalPosition + new Vector2(Hitbox.Size.X * 0.5f, 0f);
 	}
 
+	/// <summary>
+	/// Helper function to get the top of this creature's hitbox position.
+	/// Used for spawning vfx or aligning UI elements to a creature's hitbox.
+	/// </summary>
+	/// <returns></returns>
 	public Vector2 GetBottomOfHitbox()
 	{
 		return Hitbox.GlobalPosition + new Vector2(Hitbox.Size.X * 0.5f, Hitbox.Size.Y);
 	}
 
+	/// <summary>
+	/// Track the block status of another creature.
+	/// Used for pets who want to show extra UI when their owner has block.
+	/// For example, Osty tracks Necrobinder's block.
+	/// </summary>
+	/// <param name="creature">Extra creature (different from _creature) whose block status we want to track in this UI.</param>
 	public void TrackBlockStatus(Creature creature)
 	{
 		_stateDisplay.TrackBlockStatus(creature);
@@ -916,10 +1202,55 @@ public class NCreature : Control
 		}
 	}
 
+	public void SetupForBestiary()
+	{
+		_stateDisplay.Visible = false;
+		IntentContainer.Visible = false;
+		_isInBestiary = true;
+	}
+
+	public void StartSfxLoop(string sfxName)
+	{
+		StartSfxLoop(sfxName, "loop", 1f);
+	}
+
+	public void StartSfxLoop(string sfxName, string loopParam, float loopStopValue)
+	{
+		if (!_sfxLoops.ContainsKey(sfxName))
+		{
+			_sfxLoops.Add(sfxName, (loopParam, loopStopValue));
+			SfxCmd.PlayLoop(sfxName, usesLoopParam: false);
+		}
+	}
+
+	public void StopSfxLoop(string sfxName)
+	{
+		if (_sfxLoops.TryGetValue(sfxName, out (string, float) value))
+		{
+			SfxCmd.SetParam(sfxName, value.Item1, value.Item2);
+			SfxCmd.StopLoop(sfxName);
+			_sfxLoops.Remove(sfxName);
+		}
+	}
+
+	public void StopAllSfxLoops()
+	{
+		List<string> list = _sfxLoops.Keys.ToList();
+		foreach (string item in list)
+		{
+			StopSfxLoop(item);
+		}
+	}
+
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(35);
+		List<MethodInfo> list = new List<MethodInfo>(41);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -928,6 +1259,7 @@ public class NCreature : Control
 		{
 			new PropertyInfo(Variant.Type.String, "boundsNodeName", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.UpdatePhobiaMode, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.UpdateNavigation, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnFocus, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnUnfocus, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -992,9 +1324,26 @@ public class NCreature : Control
 		list.Add(new MethodInfo(MethodName.HideMultiselectReticle, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ShowSingleSelectReticle, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.HideSingleSelectReticle, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.SetupForBestiary, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.StartSfxLoop, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.String, "sfxName", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+		}, null));
+		list.Add(new MethodInfo(MethodName.StartSfxLoop, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.String, "sfxName", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+			new PropertyInfo(Variant.Type.String, "loopParam", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+			new PropertyInfo(Variant.Type.Float, "loopStopValue", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+		}, null));
+		list.Add(new MethodInfo(MethodName.StopSfxLoop, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.String, "sfxName", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+		}, null));
+		list.Add(new MethodInfo(MethodName.StopAllSfxLoops, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -1025,6 +1374,12 @@ public class NCreature : Control
 		if (method == MethodName.UpdateBounds && args.Count == 1)
 		{
 			UpdateBounds(VariantUtils.ConvertTo<string>(in args[0]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.UpdatePhobiaMode && args.Count == 0)
+		{
+			UpdatePhobiaMode();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -1121,7 +1476,7 @@ public class NCreature : Control
 		}
 		if (method == MethodName.AnimHideIntent && args.Count == 1)
 		{
-			AnimHideIntent(VariantUtils.ConvertTo<float>(in args[0]));
+			AnimHideIntent(VariantUtils.ConvertTo<double>(in args[0]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -1133,7 +1488,7 @@ public class NCreature : Control
 		}
 		if (method == MethodName.ScaleTo && args.Count == 2)
 		{
-			ScaleTo(VariantUtils.ConvertTo<float>(in args[0]), VariantUtils.ConvertTo<float>(in args[1]));
+			ScaleTo(VariantUtils.ConvertTo<float>(in args[0]), VariantUtils.ConvertTo<double>(in args[1]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -1145,7 +1500,7 @@ public class NCreature : Control
 		}
 		if (method == MethodName.OstyScaleToSize && args.Count == 2)
 		{
-			OstyScaleToSize(VariantUtils.ConvertTo<float>(in args[0]), VariantUtils.ConvertTo<float>(in args[1]));
+			OstyScaleToSize(VariantUtils.ConvertTo<float>(in args[0]), VariantUtils.ConvertTo<double>(in args[1]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -1201,9 +1556,40 @@ public class NCreature : Control
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.SetupForBestiary && args.Count == 0)
+		{
+			SetupForBestiary();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.StartSfxLoop && args.Count == 1)
+		{
+			StartSfxLoop(VariantUtils.ConvertTo<string>(in args[0]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.StartSfxLoop && args.Count == 3)
+		{
+			StartSfxLoop(VariantUtils.ConvertTo<string>(in args[0]), VariantUtils.ConvertTo<string>(in args[1]), VariantUtils.ConvertTo<float>(in args[2]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.StopSfxLoop && args.Count == 1)
+		{
+			StopSfxLoop(VariantUtils.ConvertTo<string>(in args[0]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.StopAllSfxLoops && args.Count == 0)
+		{
+			StopAllSfxLoops();
+			ret = default(godot_variant);
+			return true;
+		}
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -1224,6 +1610,10 @@ public class NCreature : Control
 			return true;
 		}
 		if (method == MethodName.UpdateBounds)
+		{
+			return true;
+		}
+		if (method == MethodName.UpdatePhobiaMode)
 		{
 			return true;
 		}
@@ -1347,9 +1737,26 @@ public class NCreature : Control
 		{
 			return true;
 		}
+		if (method == MethodName.SetupForBestiary)
+		{
+			return true;
+		}
+		if (method == MethodName.StartSfxLoop)
+		{
+			return true;
+		}
+		if (method == MethodName.StopSfxLoop)
+		{
+			return true;
+		}
+		if (method == MethodName.StopAllSfxLoops)
+		{
+			return true;
+		}
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1408,6 +1815,11 @@ public class NCreature : Control
 			_isRemotePlayerOrPet = VariantUtils.ConvertTo<bool>(in value);
 			return true;
 		}
+		if (name == PropertyName._isInBestiary)
+		{
+			_isInBestiary = VariantUtils.ConvertTo<bool>(in value);
+			return true;
+		}
 		if (name == PropertyName._tempScale)
 		{
 			_tempScale = VariantUtils.ConvertTo<float>(in value);
@@ -1431,6 +1843,7 @@ public class NCreature : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1453,9 +1866,17 @@ public class NCreature : Control
 			value = VariantUtils.CreateFrom(in from2);
 			return true;
 		}
+		Vector2 from3;
 		if (name == PropertyName.VfxSpawnPosition)
 		{
-			value = VariantUtils.CreateFrom<Vector2>(VfxSpawnPosition);
+			from3 = VfxSpawnPosition;
+			value = VariantUtils.CreateFrom(in from3);
+			return true;
+		}
+		if (name == PropertyName.PowerAppliedVfxSpawnPosition)
+		{
+			from3 = PowerAppliedVfxSpawnPosition;
+			value = VariantUtils.CreateFrom(in from3);
 			return true;
 		}
 		if (name == PropertyName.Visuals)
@@ -1517,6 +1938,11 @@ public class NCreature : Control
 			value = VariantUtils.CreateFrom(in _isRemotePlayerOrPet);
 			return true;
 		}
+		if (name == PropertyName._isInBestiary)
+		{
+			value = VariantUtils.CreateFrom(in _isInBestiary);
+			return true;
+		}
 		if (name == PropertyName._tempScale)
 		{
 			value = VariantUtils.CreateFrom(in _tempScale);
@@ -1540,6 +1966,11 @@ public class NCreature : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1548,6 +1979,7 @@ public class NCreature : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._intentFadeTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._shakeTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._isRemotePlayerOrPet, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._isInBestiary, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName._tempScale, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._scaleTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.Hitbox, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -1556,6 +1988,7 @@ public class NCreature : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._selectionReticle, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.IsInteractable, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName.VfxSpawnPosition, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName.PowerAppliedVfxSpawnPosition, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.Visuals, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.Body, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.IntentContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -1566,6 +1999,7 @@ public class NCreature : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1581,12 +2015,14 @@ public class NCreature : Control
 		info.AddProperty(PropertyName._intentFadeTween, Variant.From(in _intentFadeTween));
 		info.AddProperty(PropertyName._shakeTween, Variant.From(in _shakeTween));
 		info.AddProperty(PropertyName._isRemotePlayerOrPet, Variant.From(in _isRemotePlayerOrPet));
+		info.AddProperty(PropertyName._isInBestiary, Variant.From(in _isInBestiary));
 		info.AddProperty(PropertyName._tempScale, Variant.From(in _tempScale));
 		info.AddProperty(PropertyName._scaleTween, Variant.From(in _scaleTween));
 		info.AddProperty(PropertyName._isInMultiselect, Variant.From(in _isInMultiselect));
 		info.AddProperty(PropertyName._selectionReticle, Variant.From(in _selectionReticle));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1635,21 +2071,25 @@ public class NCreature : Control
 		{
 			_isRemotePlayerOrPet = value11.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._tempScale, out var value12))
+		if (info.TryGetProperty(PropertyName._isInBestiary, out var value12))
 		{
-			_tempScale = value12.As<float>();
+			_isInBestiary = value12.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._scaleTween, out var value13))
+		if (info.TryGetProperty(PropertyName._tempScale, out var value13))
 		{
-			_scaleTween = value13.As<Tween>();
+			_tempScale = value13.As<float>();
 		}
-		if (info.TryGetProperty(PropertyName._isInMultiselect, out var value14))
+		if (info.TryGetProperty(PropertyName._scaleTween, out var value14))
 		{
-			_isInMultiselect = value14.As<bool>();
+			_scaleTween = value14.As<Tween>();
 		}
-		if (info.TryGetProperty(PropertyName._selectionReticle, out var value15))
+		if (info.TryGetProperty(PropertyName._isInMultiselect, out var value15))
 		{
-			_selectionReticle = value15.As<NSelectionReticle>();
+			_isInMultiselect = value15.As<bool>();
+		}
+		if (info.TryGetProperty(PropertyName._selectionReticle, out var value16))
+		{
+			_selectionReticle = value16.As<NSelectionReticle>();
 		}
 	}
 }

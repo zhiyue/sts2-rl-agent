@@ -8,57 +8,133 @@ using MegaCrit.Sts2.Core.Timeline;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
+/// <summary>
+/// Visually represents an Epoch.
+/// Used when animating images of Epochs or when we have them float about in space when we unlock Epochs.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/NEpochCard.cs")]
 public class NEpochCard : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'SetToWigglyUnlockPreviewMode' method.
+		/// </summary>
 		public static readonly StringName SetToWigglyUnlockPreviewMode = "SetToWigglyUnlockPreviewMode";
 
+		/// <summary>
+		/// Cached name for the 'GlowFlash' method.
+		/// </summary>
 		public static readonly StringName GlowFlash = "GlowFlash";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_glow' field.
+		/// </summary>
 		public static readonly StringName _glow = "_glow";
 
+		/// <summary>
+		/// Cached name for the '_mask' field.
+		/// </summary>
 		public static readonly StringName _mask = "_mask";
 
+		/// <summary>
+		/// Cached name for the '_portrait' field.
+		/// </summary>
 		public static readonly StringName _portrait = "_portrait";
 
+		/// <summary>
+		/// Cached name for the '_isHovered' field.
+		/// </summary>
 		public static readonly StringName _isHovered = "_isHovered";
 
+		/// <summary>
+		/// Cached name for the '_isHoverable' field.
+		/// </summary>
 		public static readonly StringName _isHoverable = "_isHoverable";
 
+		/// <summary>
+		/// Cached name for the '_isHeld' field.
+		/// </summary>
 		public static readonly StringName _isHeld = "_isHeld";
 
+		/// <summary>
+		/// Cached name for the '_isWigglyUnlockPreviewMode' field.
+		/// </summary>
 		public static readonly StringName _isWigglyUnlockPreviewMode = "_isWigglyUnlockPreviewMode";
 
+		/// <summary>
+		/// Cached name for the '_glowTween' field.
+		/// </summary>
 		public static readonly StringName _glowTween = "_glowTween";
 
+		/// <summary>
+		/// Cached name for the '_targetScale' field.
+		/// </summary>
 		public static readonly StringName _targetScale = "_targetScale";
 
+		/// <summary>
+		/// Cached name for the '_time' field.
+		/// </summary>
 		public static readonly StringName _time = "_time";
 
+		/// <summary>
+		/// Cached name for the '_noiseSpeed' field.
+		/// </summary>
 		public static readonly StringName _noiseSpeed = "_noiseSpeed";
 
+		/// <summary>
+		/// Cached name for the '_noise' field.
+		/// </summary>
 		public static readonly StringName _noise = "_noise";
 
+		/// <summary>
+		/// Cached name for the '_denyTween' field.
+		/// </summary>
 		public static readonly StringName _denyTween = "_denyTween";
 
+		/// <summary>
+		/// Cached name for the '_transparencyTween' field.
+		/// </summary>
 		public static readonly StringName _transparencyTween = "_transparencyTween";
 
+		/// <summary>
+		/// Cached name for the '_scaleTween' field.
+		/// </summary>
 		public static readonly StringName _scaleTween = "_scaleTween";
 
+		/// <summary>
+		/// Cached name for the '_blueGlowColor' field.
+		/// </summary>
 		public static readonly StringName _blueGlowColor = "_blueGlowColor";
 
+		/// <summary>
+		/// Cached name for the '_goldGlowColor' field.
+		/// </summary>
 		public static readonly StringName _goldGlowColor = "_goldGlowColor";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -101,7 +177,7 @@ public class NEpochCard : Control
 	{
 		_glow = GetNode<TextureRect>("%GlowPlaceholder");
 		_portrait = GetNode<TextureRect>("%Portrait");
-		_portrait.Texture = epochModel.BigPortrait;
+		_portrait.Texture = epochModel.RealPortrait;
 		base.Scale = Vector2.One;
 	}
 
@@ -121,6 +197,9 @@ public class NEpochCard : Control
 		}
 	}
 
+	/// <summary>
+	/// Used by the Unlock Epoch Screen
+	/// </summary>
 	public void SetToWigglyUnlockPreviewMode()
 	{
 		_noise = new FastNoiseLite();
@@ -142,6 +221,11 @@ public class NEpochCard : Control
 			.From(Vector2.One * 1.5f);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -156,6 +240,7 @@ public class NEpochCard : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -186,6 +271,7 @@ public class NEpochCard : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -208,6 +294,7 @@ public class NEpochCard : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -299,6 +386,7 @@ public class NEpochCard : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -390,6 +478,11 @@ public class NEpochCard : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -414,6 +507,7 @@ public class NEpochCard : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -437,6 +531,7 @@ public class NEpochCard : Control
 		info.AddProperty(PropertyName._goldGlowColor, Variant.From(in _goldGlowColor));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

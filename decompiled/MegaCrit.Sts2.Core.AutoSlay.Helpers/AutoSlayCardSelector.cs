@@ -10,6 +10,10 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Helpers;
 
+/// <summary>
+/// Handles automatic card selection during AutoSlay runs.
+/// Randomly selects cards when the game would normally show a selection UI.
+/// </summary>
 public class AutoSlayCardSelector : ICardSelector
 {
 	private readonly Rng _random;
@@ -19,6 +23,9 @@ public class AutoSlayCardSelector : ICardSelector
 		_random = random;
 	}
 
+	/// <summary>
+	/// Randomly selects cards from the available options based on the selector preferences.
+	/// </summary>
 	public Task<IEnumerable<CardModel>> GetSelectedCards(IEnumerable<CardModel> options, int minSelect, int maxSelect)
 	{
 		List<CardModel> list = options.ToList();
@@ -37,13 +44,20 @@ public class AutoSlayCardSelector : ICardSelector
 		return Task.FromResult(result);
 	}
 
-	public CardModel? GetSelectedCardReward(IReadOnlyList<CardCreationResult> options, IReadOnlyList<CardRewardAlternative> alternatives)
+	/// <summary>
+	/// Randomly selects a card reward from the available options.
+	/// </summary>
+	public CardRewardSelection GetSelectedCardReward(IReadOnlyList<CardCreationResult> options, IReadOnlyList<CardRewardAlternative> alternatives)
 	{
 		if (options.Count == 0)
 		{
-			return null;
+			return default(CardRewardSelection);
 		}
 		int index = _random.NextInt(options.Count);
-		return options[index].Card;
+		return new CardRewardSelection
+		{
+			card = options[index].Card,
+			alternative = null
+		};
 	}
 }

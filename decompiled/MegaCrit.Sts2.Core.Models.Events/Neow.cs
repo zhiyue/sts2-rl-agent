@@ -46,42 +46,64 @@ public class Neow : AncientEventModel
 		}
 	}
 
-	public override IEnumerable<EventOption> AllPossibleOptions => PositiveOptions.Concat(CurseOptions).Concat(new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[7] { ClericOption, BundleOption, EmpowerOption, ToughnessOption, SafetyOption, PatienceOption, ScavengerOption }));
+	public override IEnumerable<EventOption> AllPossibleOptions
+	{
+		get
+		{
+			List<EventOption> list = new List<EventOption>();
+			list.AddRange(CurseOptions);
+			list.AddRange(PositiveOptions);
+			list.Add(LavaRockOption);
+			list.Add(NeowsTalismanOption);
+			list.Add(NutritiousOysterOption);
+			list.Add(PomanderOption);
+			list.Add(SmallCapsuleOption);
+			list.Add(StoneHumidifierOption);
+			return new _003C_003Ez__ReadOnlyList<EventOption>(list);
+		}
+	}
 
-	private IEnumerable<EventOption> PositiveOptions => new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[9]
+	private IEnumerable<EventOption> PositiveOptions => new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[14]
 	{
 		RelicOption<ArcaneScroll>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
 		RelicOption<BoomingConch>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
-		RelicOption<Pomander>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
+		RelicOption<FishingRod>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
 		RelicOption<GoldenPearl>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
+		RelicOption<Kaleidoscope>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
 		RelicOption<LeadPaperweight>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
-		RelicOption<NewLeaf>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
+		RelicOption<LostCoffer>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
+		RelicOption<MassiveScroll>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
 		RelicOption<NeowsTorment>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
+		RelicOption<NewLeaf>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
+		RelicOption<PhialHolster>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
 		RelicOption<PreciseScissors>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
-		RelicOption<LostCoffer>("INITIAL", "NEOW.pages.DONE.POSITIVE.description")
+		RelicOption<ScrollBoxes>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
+		RelicOption<WingedBoots>("INITIAL", "NEOW.pages.DONE.POSITIVE.description")
 	});
 
-	private EventOption ToughnessOption => RelicOption<NutritiousOyster>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
+	private EventOption LavaRockOption => RelicOption<LavaRock>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
 
-	private EventOption SafetyOption => RelicOption<StoneHumidifier>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
+	private EventOption NeowsTalismanOption => RelicOption<NeowsTalisman>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
 
-	private EventOption ClericOption => RelicOption<MassiveScroll>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
+	private EventOption NutritiousOysterOption => RelicOption<NutritiousOyster>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
 
-	private EventOption PatienceOption => RelicOption<LavaRock>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
+	private EventOption PomanderOption => RelicOption<Pomander>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
 
-	private EventOption ScavengerOption => RelicOption<SmallCapsule>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
+	private EventOption SmallCapsuleOption => RelicOption<SmallCapsule>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
 
-	private EventOption EmpowerOption => RelicOption<SilverCrucible>("INITIAL", "NEOW.pages.DONE.CURSED.description");
+	private EventOption StoneHumidifierOption => RelicOption<StoneHumidifier>("INITIAL", "NEOW.pages.DONE.POSITIVE.description");
 
-	private IEnumerable<EventOption> CurseOptions => new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[4]
+	private IEnumerable<EventOption> CurseOptions => new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[8]
 	{
-		RelicOption<CursedPearl>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
+		RelicOption<CursedPearl>("INITIAL", "NEOW.pages.DONE.CURSED.description"),
+		RelicOption<HeftyTablet>("INITIAL", "NEOW.pages.DONE.CURSED.description"),
 		RelicOption<LargeCapsule>("INITIAL", "NEOW.pages.DONE.CURSED.description"),
 		RelicOption<LeafyPoultice>("INITIAL", "NEOW.pages.DONE.CURSED.description"),
-		RelicOption<PrecariousShears>("INITIAL", "NEOW.pages.DONE.CURSED.description")
+		RelicOption<NeowsBones>("INITIAL", "NEOW.pages.DONE.POSITIVE.description"),
+		RelicOption<PrecariousShears>("INITIAL", "NEOW.pages.DONE.CURSED.description"),
+		RelicOption<SilkenTress>("INITIAL", "NEOW.pages.DONE.CURSED.description"),
+		RelicOption<SilverCrucible>("INITIAL", "NEOW.pages.DONE.CURSED.description")
 	});
-
-	private EventOption BundleOption => RelicOption<ScrollBoxes>("INITIAL", "NEOW.pages.DONE.CURSED.description");
 
 	private List<EventOption> ModifierOptions
 	{
@@ -194,55 +216,65 @@ public class Neow : AncientEventModel
 		if (base.Owner.RunState.Modifiers.Count <= 0)
 		{
 			List<EventOption> list = CurseOptions.ToList();
-			if (ScrollBoxes.CanGenerateBundles(base.Owner))
+			list.RemoveAll(delegate(EventOption r)
 			{
-				list.Add(BundleOption);
-			}
-			if (base.Owner.RunState.Players.Count == 1)
-			{
-				list.Add(EmpowerOption);
-			}
+				RelicModel? relic = r.Relic;
+				return relic != null && !relic.IsAllowedAtNeow(base.Owner);
+			});
 			EventOption eventOption = base.Rng.NextItem(list);
 			List<EventOption> list2 = PositiveOptions.ToList();
 			if (eventOption.Relic is CursedPearl)
 			{
 				list2.RemoveAll((EventOption o) => o.Relic is GoldenPearl);
 			}
-			if (eventOption.Relic is PrecariousShears)
+			if (eventOption.Relic is HeftyTablet)
 			{
-				list2.RemoveAll((EventOption o) => o.Relic is PreciseScissors);
+				list2.RemoveAll((EventOption o) => o.Relic is ArcaneScroll);
 			}
 			if (eventOption.Relic is LeafyPoultice)
 			{
 				list2.RemoveAll((EventOption o) => o.Relic is NewLeaf);
 			}
-			if (base.Owner.RunState.Players.Count > 1)
+			if (eventOption.Relic is PrecariousShears)
 			{
-				list2.Add(ClericOption);
-			}
-			if (base.Rng.NextBool())
-			{
-				list2.Add(ToughnessOption);
-			}
-			else
-			{
-				list2.Add(SafetyOption);
+				list2.RemoveAll((EventOption o) => o.Relic is PreciseScissors);
 			}
 			if (!(eventOption.Relic is LargeCapsule))
 			{
 				if (base.Rng.NextBool())
 				{
-					list2.Add(PatienceOption);
+					list2.Add(LavaRockOption);
 				}
 				else
 				{
-					list2.Add(ScavengerOption);
+					list2.Add(SmallCapsuleOption);
 				}
 			}
-			List<EventOption> list3 = list2.ToList().UnstableShuffle(base.Rng).Take(2)
-				.ToList();
+			if (base.Rng.NextBool())
+			{
+				list2.Add(NutritiousOysterOption);
+			}
+			else
+			{
+				list2.Add(StoneHumidifierOption);
+			}
+			if (base.Rng.NextBool())
+			{
+				list2.Add(NeowsTalismanOption);
+			}
+			else
+			{
+				list2.Add(PomanderOption);
+			}
+			list2.RemoveAll(delegate(EventOption r)
+			{
+				RelicModel? relic = r.Relic;
+				return relic != null && !relic.IsAllowedAtNeow(base.Owner);
+			});
+			List<EventOption> list3 = new List<EventOption>();
+			list3.AddRange(list2.ToList().UnstableShuffle(base.Rng).Take(2));
 			list3.Add(eventOption);
-			return list3;
+			return new _003C_003Ez__ReadOnlyList<EventOption>(list3);
 		}
 		foreach (ModifierModel modifier in base.Owner.RunState.Modifiers)
 		{

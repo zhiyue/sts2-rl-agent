@@ -13,6 +13,9 @@ using MegaCrit.Sts2.Core.Rooms;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
 
+/// <summary>
+/// Handles shop rooms by attempting to buy every affordable item.
+/// </summary>
 public class ShopRoomHandler : IRoomHandler, IHandler
 {
 	private const string _roomPath = "/root/Game/RootSceneContainer/Run/RoomContainer/MerchantRoom";

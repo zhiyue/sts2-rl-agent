@@ -1,7 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 
 namespace MegaCrit.Sts2.Core.Models.Powers;
 
@@ -11,11 +15,11 @@ public sealed class PrepTimePower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Side)
+		if (participants.Contains(base.Owner))
 		{
-			await PowerCmd.Apply<VigorPower>(base.Owner, base.Amount, base.Owner, null);
+			await PowerCmd.Apply<VigorPower>(new ThrowingPlayerChoiceContext(), base.Owner, base.Amount, base.Owner, null);
 		}
 	}
 }

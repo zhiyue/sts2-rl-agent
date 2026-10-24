@@ -37,114 +37,276 @@ namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NMultiplayerPlayerState.cs")]
 public class NMultiplayerPlayerState : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnCreatureValueChanged' method.
+		/// </summary>
 		public static readonly StringName OnCreatureValueChanged = "OnCreatureValueChanged";
 
+		/// <summary>
+		/// Cached name for the 'RefreshValues' method.
+		/// </summary>
 		public static readonly StringName RefreshValues = "RefreshValues";
 
+		/// <summary>
+		/// Cached name for the 'UpdateHealthBarWidth' method.
+		/// </summary>
 		public static readonly StringName UpdateHealthBarWidth = "UpdateHealthBarWidth";
 
+		/// <summary>
+		/// Cached name for the 'UpdateSelectionReticleWidth' method.
+		/// </summary>
 		public static readonly StringName UpdateSelectionReticleWidth = "UpdateSelectionReticleWidth";
 
+		/// <summary>
+		/// Cached name for the 'OnEnergyChanged' method.
+		/// </summary>
 		public static readonly StringName OnEnergyChanged = "OnEnergyChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnStarsChanged' method.
+		/// </summary>
 		public static readonly StringName OnStarsChanged = "OnStarsChanged";
 
+		/// <summary>
+		/// Cached name for the 'RefreshCombatValues' method.
+		/// </summary>
 		public static readonly StringName RefreshCombatValues = "RefreshCombatValues";
 
+		/// <summary>
+		/// Cached name for the 'OnCreatureHovered' method.
+		/// </summary>
 		public static readonly StringName OnCreatureHovered = "OnCreatureHovered";
 
+		/// <summary>
+		/// Cached name for the 'OnCreatureUnhovered' method.
+		/// </summary>
 		public static readonly StringName OnCreatureUnhovered = "OnCreatureUnhovered";
 
+		/// <summary>
+		/// Cached name for the 'FlashPlayerReady' method.
+		/// </summary>
 		public static readonly StringName FlashPlayerReady = "FlashPlayerReady";
 
+		/// <summary>
+		/// Cached name for the 'UpdateHighlightedState' method.
+		/// </summary>
 		public static readonly StringName UpdateHighlightedState = "UpdateHighlightedState";
 
+		/// <summary>
+		/// Cached name for the 'BlockChanged' method.
+		/// </summary>
 		public static readonly StringName BlockChanged = "BlockChanged";
 
+		/// <summary>
+		/// Cached name for the 'RefreshConnectedState' method.
+		/// </summary>
 		public static readonly StringName RefreshConnectedState = "RefreshConnectedState";
 
+		/// <summary>
+		/// Cached name for the 'OnPlayerVotesCleared' method.
+		/// </summary>
 		public static readonly StringName OnPlayerVotesCleared = "OnPlayerVotesCleared";
 
+		/// <summary>
+		/// Cached name for the 'OnPlayerEndTurnPing' method.
+		/// </summary>
 		public static readonly StringName OnPlayerEndTurnPing = "OnPlayerEndTurnPing";
 
+		/// <summary>
+		/// Cached name for the 'FlashEndTurn' method.
+		/// </summary>
 		public static readonly StringName FlashEndTurn = "FlashEndTurn";
 
+		/// <summary>
+		/// Cached name for the 'SetNextTweenTime' method.
+		/// </summary>
 		public static readonly StringName SetNextTweenTime = "SetNextTweenTime";
 
+		/// <summary>
+		/// Cached name for the 'OnPlayerScreenChanged' method.
+		/// </summary>
 		public static readonly StringName OnPlayerScreenChanged = "OnPlayerScreenChanged";
 
+		/// <summary>
+		/// Cached name for the 'TweenLocationIconAway' method.
+		/// </summary>
 		public static readonly StringName TweenLocationIconAway = "TweenLocationIconAway";
 
+		/// <summary>
+		/// Cached name for the 'TweenLocationIconIn' method.
+		/// </summary>
 		public static readonly StringName TweenLocationIconIn = "TweenLocationIconIn";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public static readonly StringName OnRelease = "OnRelease";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Hitbox' property.
+		/// </summary>
 		public static readonly StringName Hitbox = "Hitbox";
 
+		/// <summary>
+		/// Cached name for the '_healthBar' field.
+		/// </summary>
 		public static readonly StringName _healthBar = "_healthBar";
 
+		/// <summary>
+		/// Cached name for the '_characterIcon' field.
+		/// </summary>
 		public static readonly StringName _characterIcon = "_characterIcon";
 
+		/// <summary>
+		/// Cached name for the '_nameplateLabel' field.
+		/// </summary>
 		public static readonly StringName _nameplateLabel = "_nameplateLabel";
 
+		/// <summary>
+		/// Cached name for the '_topContainer' field.
+		/// </summary>
 		public static readonly StringName _topContainer = "_topContainer";
 
+		/// <summary>
+		/// Cached name for the '_turnEndIndicator' field.
+		/// </summary>
 		public static readonly StringName _turnEndIndicator = "_turnEndIndicator";
 
+		/// <summary>
+		/// Cached name for the '_disconnectedIndicator' field.
+		/// </summary>
 		public static readonly StringName _disconnectedIndicator = "_disconnectedIndicator";
 
+		/// <summary>
+		/// Cached name for the '_networkProblemIndicator' field.
+		/// </summary>
 		public static readonly StringName _networkProblemIndicator = "_networkProblemIndicator";
 
+		/// <summary>
+		/// Cached name for the '_selectionReticle' field.
+		/// </summary>
 		public static readonly StringName _selectionReticle = "_selectionReticle";
 
+		/// <summary>
+		/// Cached name for the '_locationIcon' field.
+		/// </summary>
 		public static readonly StringName _locationIcon = "_locationIcon";
 
+		/// <summary>
+		/// Cached name for the '_locationContainer' field.
+		/// </summary>
 		public static readonly StringName _locationContainer = "_locationContainer";
 
+		/// <summary>
+		/// Cached name for the '_energyContainer' field.
+		/// </summary>
 		public static readonly StringName _energyContainer = "_energyContainer";
 
+		/// <summary>
+		/// Cached name for the '_energyImage' field.
+		/// </summary>
 		public static readonly StringName _energyImage = "_energyImage";
 
+		/// <summary>
+		/// Cached name for the '_energyCount' field.
+		/// </summary>
 		public static readonly StringName _energyCount = "_energyCount";
 
+		/// <summary>
+		/// Cached name for the '_starContainer' field.
+		/// </summary>
 		public static readonly StringName _starContainer = "_starContainer";
 
+		/// <summary>
+		/// Cached name for the '_starCount' field.
+		/// </summary>
 		public static readonly StringName _starCount = "_starCount";
 
+		/// <summary>
+		/// Cached name for the '_cardContainer' field.
+		/// </summary>
 		public static readonly StringName _cardContainer = "_cardContainer";
 
+		/// <summary>
+		/// Cached name for the '_cardImage' field.
+		/// </summary>
 		public static readonly StringName _cardImage = "_cardImage";
 
+		/// <summary>
+		/// Cached name for the '_cardCount' field.
+		/// </summary>
 		public static readonly StringName _cardCount = "_cardCount";
 
+		/// <summary>
+		/// Cached name for the '_locationIconTween' field.
+		/// </summary>
 		public static readonly StringName _locationIconTween = "_locationIconTween";
 
+		/// <summary>
+		/// Cached name for the '_isMouseOver' field.
+		/// </summary>
 		public static readonly StringName _isMouseOver = "_isMouseOver";
 
+		/// <summary>
+		/// Cached name for the '_isCreatureHovered' field.
+		/// </summary>
 		public static readonly StringName _isCreatureHovered = "_isCreatureHovered";
 
+		/// <summary>
+		/// Cached name for the '_isHighlighted' field.
+		/// </summary>
 		public static readonly StringName _isHighlighted = "_isHighlighted";
 
+		/// <summary>
+		/// Cached name for the '_focusedWhileTargeting' field.
+		/// </summary>
 		public static readonly StringName _focusedWhileTargeting = "_focusedWhileTargeting";
 
+		/// <summary>
+		/// Cached name for the '_nextTweenTime' field.
+		/// </summary>
 		public static readonly StringName _nextTweenTime = "_nextTweenTime";
 
+		/// <summary>
+		/// Cached name for the '_currentLocationIcon' field.
+		/// </summary>
 		public static readonly StringName _currentLocationIcon = "_currentLocationIcon";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -249,7 +411,7 @@ public class NMultiplayerPlayerState : Control
 		_cardCount = _cardContainer.GetNode<MegaLabel>("CardCount");
 		_selectionReticle.Visible = true;
 		_characterIcon.Texture = Player.Character.IconTexture;
-		_nameplateLabel.SetTextAutoSize(PlatformUtil.GetPlayerName(RunManager.Instance.NetService.Platform, Player.NetId));
+		_nameplateLabel.SetTextAutoSize(PlatformUtil.GetPlayerNameRaw(RunManager.Instance.NetService.Platform, Player.NetId));
 		_healthBar.SetCreature(Player.Creature);
 		_networkProblemIndicator.Initialize(Player.NetId);
 		_locationContainer.Visible = false;
@@ -468,8 +630,8 @@ public class NMultiplayerPlayerState : Control
 		_energyCount.SetTextAutoSize(Player.PlayerCombatState.Energy.ToString());
 		_starCount.SetTextAutoSize(Player.PlayerCombatState.Stars.ToString());
 		_cardCount.SetTextAutoSize(Player.PlayerCombatState.Hand.Cards.Count.ToString());
-		_energyCount.AddThemeColorOverride(ThemeConstants.Label.fontColor, (Player.PlayerCombatState.Energy == 0) ? StsColors.red : StsColors.cream);
-		_energyCount.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, (Player.PlayerCombatState.Energy == 0) ? StsColors.unplayableEnergyCostOutline : Player.Character.EnergyLabelOutlineColor);
+		_energyCount.AddThemeColorOverride(ThemeConstants.Label.FontColor, (Player.PlayerCombatState.Energy == 0) ? StsColors.red : StsColors.cream);
+		_energyCount.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, (Player.PlayerCombatState.Energy == 0) ? StsColors.unplayableEnergyCostOutline : Player.Character.EnergyLabelOutlineColor);
 		Material material = ((Player.PlayerCombatState.Energy == 0) ? PreloadManager.Cache.GetMaterial("res://materials/ui/energy_orb_dark.tres") : null);
 		_energyImage.Material = material;
 		_energyImage.Modulate = ((Player.PlayerCombatState.Energy == 0) ? Colors.DarkGray : Colors.White);
@@ -532,7 +694,7 @@ public class NMultiplayerPlayerState : Control
 					title = new LocString("static_hover_tips", "NETWORK_PROBLEM_HOST.title");
 				}
 				locString.Add("Player", PlatformUtil.GetPlayerName(RunManager.Instance.NetService.Platform, Player.NetId));
-				NHoverTipSet.CreateAndShow(this, new HoverTip(title, locString)).GlobalPosition = base.GlobalPosition + Vector2.Down * 80f;
+				NHoverTipSet.CreateAndShow(this, new HoverTip(title, locString))?.SetGlobalPosition(base.GlobalPosition + Vector2.Down * 80f);
 			}
 		}
 		else
@@ -735,7 +897,7 @@ public class NMultiplayerPlayerState : Control
 		if (nextTweenTime >= Time.GetTicksMsec())
 		{
 			double timeSec = (double)(nextTweenTime - Time.GetTicksMsec()) / 1000.0;
-			await ToSignal(GetTree().CreateTimer(timeSec), SceneTreeTimer.SignalName.Timeout);
+			await GetTree().CreateTimer(timeSec).AwaitSignal(SceneTreeTimer.SignalName.Timeout, this);
 		}
 	}
 
@@ -750,7 +912,7 @@ public class NMultiplayerPlayerState : Control
 			.SetDelay(0.30000001192092896);
 		tween.TweenProperty(node, "modulate:a", 0f, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo)
 			.SetDelay(0.30000001192092896);
-		await ToSignal(tween, Tween.SignalName.Finished);
+		await tween.AwaitFinished(this);
 	}
 
 	private async Task RemovedAnimation(Control node)
@@ -765,7 +927,7 @@ public class NMultiplayerPlayerState : Control
 		tween.TweenProperty(node, "modulate:a", 1f, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 		tween.TweenProperty(node, "scale:y", 0f, 0.30000001192092896).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo)
 			.SetDelay(0.5);
-		await ToSignal(tween, Tween.SignalName.Finished);
+		await tween.AwaitFinished(this);
 	}
 
 	private void OnPlayerScreenChanged(ulong playerId, NetScreenType _)
@@ -844,6 +1006,11 @@ public class NMultiplayerPlayerState : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -915,6 +1082,7 @@ public class NMultiplayerPlayerState : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -1077,6 +1245,7 @@ public class NMultiplayerPlayerState : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -1183,6 +1352,7 @@ public class NMultiplayerPlayerState : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1319,6 +1489,7 @@ public class NMultiplayerPlayerState : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1455,6 +1626,11 @@ public class NMultiplayerPlayerState : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1488,6 +1664,7 @@ public class NMultiplayerPlayerState : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1520,6 +1697,7 @@ public class NMultiplayerPlayerState : Control
 		info.AddProperty(PropertyName._currentLocationIcon, Variant.From(in _currentLocationIcon));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

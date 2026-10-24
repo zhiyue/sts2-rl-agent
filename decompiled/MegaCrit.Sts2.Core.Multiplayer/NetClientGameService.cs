@@ -132,6 +132,11 @@ public class NetClientGameService : INetClientHandler, INetHandler, INetClientGa
 		_qualityTracker.SetIsLoading(isLoading);
 	}
 
+	public void SetBufferMessages(bool bufferMessages)
+	{
+		_messageBus.SetBufferMessages(bufferMessages);
+	}
+
 	public string? GetRawLobbyIdentifier()
 	{
 		return NetClient?.GetRawLobbyIdentifier();

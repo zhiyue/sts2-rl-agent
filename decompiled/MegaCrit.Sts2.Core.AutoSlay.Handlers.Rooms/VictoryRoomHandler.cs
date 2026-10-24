@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
 
+/// <summary>
+/// Handles post-combat victory rooms where the proceed button is displayed.
+/// </summary>
 public class VictoryRoomHandler : IHandler
 {
 	public TimeSpan Timeout => TimeSpan.FromSeconds(30L);

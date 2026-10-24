@@ -9,29 +9,63 @@ using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// Container for Modal Windows (Confirmation screens, FTUEs, etc). This is rendered above most UI!
+/// There can never be two modals active at once. If so, Casey has failed in the UI department.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NModalContainer.cs")]
 public class NModalContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Add' method.
+		/// </summary>
 		public static readonly StringName Add = "Add";
 
+		/// <summary>
+		/// Cached name for the 'Clear' method.
+		/// </summary>
 		public static readonly StringName Clear = "Clear";
 
+		/// <summary>
+		/// Cached name for the 'ShowBackstop' method.
+		/// </summary>
 		public static readonly StringName ShowBackstop = "ShowBackstop";
 
+		/// <summary>
+		/// Cached name for the 'HideBackstop' method.
+		/// </summary>
 		public static readonly StringName HideBackstop = "HideBackstop";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_backstop' field.
+		/// </summary>
 		public static readonly StringName _backstop = "_backstop";
 
+		/// <summary>
+		/// Cached name for the '_backstopTween' field.
+		/// </summary>
 		public static readonly StringName _backstopTween = "_backstopTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -58,6 +92,9 @@ public class NModalContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Used when we create a FTUE or modal popup. We add it to our ModalContainer!
+	/// </summary>
 	public void Add(Node modalToCreate, bool showBackstop = true)
 	{
 		if (OpenModal != null)
@@ -106,6 +143,11 @@ public class NModalContainer : Control
 		_backstopTween.TweenCallback(Callable.From(() => _backstop.Visible = false));
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -122,6 +164,7 @@ public class NModalContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -158,6 +201,7 @@ public class NModalContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -184,6 +228,7 @@ public class NModalContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -200,6 +245,7 @@ public class NModalContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -216,6 +262,11 @@ public class NModalContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -225,6 +276,7 @@ public class NModalContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -233,6 +285,7 @@ public class NModalContainer : Control
 		info.AddProperty(PropertyName._backstopTween, Variant.From(in _backstopTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

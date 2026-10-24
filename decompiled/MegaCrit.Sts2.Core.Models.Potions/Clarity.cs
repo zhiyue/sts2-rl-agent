@@ -31,6 +31,6 @@ public sealed class Clarity : PotionModel
 		PotionModel.AssertValidForTargetedPotion(target);
 		NCombatRoom.Instance?.PlaySplashVfx(target, new Color("ac54b3"));
 		await CardPileCmd.Draw(choiceContext, base.DynamicVars.Cards.BaseValue, target.Player);
-		await PowerCmd.Apply<ClarityPower>(target, base.DynamicVars["ClarityPower"].BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<ClarityPower>(choiceContext, target, base.DynamicVars["ClarityPower"].BaseValue, base.Owner.Creature, null);
 	}
 }

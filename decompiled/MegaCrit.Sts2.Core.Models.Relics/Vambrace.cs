@@ -68,7 +68,7 @@ public sealed class Vambrace : RelicModel
 		{
 			return 1m;
 		}
-		if (target != base.Owner.Creature)
+		if (cardSource.Owner != base.Owner)
 		{
 			return 1m;
 		}
@@ -95,7 +95,7 @@ public sealed class Vambrace : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner != base.Owner)
 		{

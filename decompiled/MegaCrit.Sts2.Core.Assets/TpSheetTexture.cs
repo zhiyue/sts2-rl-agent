@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 namespace MegaCrit.Sts2.Core.Assets;
 
+/// <summary>
+/// A single texture page in the atlas (multi-page atlases have multiple entries).
+/// </summary>
 public class TpSheetTexture
 {
 	public string Image { get; set; } = "";

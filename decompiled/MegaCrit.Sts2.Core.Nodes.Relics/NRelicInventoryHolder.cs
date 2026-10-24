@@ -19,47 +19,109 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Relics;
 
+/// <summary>
+/// Shows the relic in a relic container. The full relic experience; shows the amount, can flash, and can animate in
+/// from an arbitrary position.
+/// This is used in the relic display under the top bar during a run.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Relics/NRelicInventoryHolder.cs")]
 public class NRelicInventoryHolder : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'RefreshAmount' method.
+		/// </summary>
 		public static readonly StringName RefreshAmount = "RefreshAmount";
 
+		/// <summary>
+		/// Cached name for the 'RefreshStatus' method.
+		/// </summary>
 		public static readonly StringName RefreshStatus = "RefreshStatus";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'DoFlash' method.
+		/// </summary>
 		public static readonly StringName DoFlash = "DoFlash";
 
+		/// <summary>
+		/// Cached name for the 'OnDisplayAmountChanged' method.
+		/// </summary>
 		public static readonly StringName OnDisplayAmountChanged = "OnDisplayAmountChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnStatusChanged' method.
+		/// </summary>
 		public static readonly StringName OnStatusChanged = "OnStatusChanged";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Relic' property.
+		/// </summary>
 		public static readonly StringName Relic = "Relic";
 
+		/// <summary>
+		/// Cached name for the 'Inventory' property.
+		/// </summary>
 		public static readonly StringName Inventory = "Inventory";
 
+		/// <summary>
+		/// Cached name for the '_relic' field.
+		/// </summary>
 		public static readonly StringName _relic = "_relic";
 
+		/// <summary>
+		/// Cached name for the '_amountLabel' field.
+		/// </summary>
 		public static readonly StringName _amountLabel = "_amountLabel";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_obtainedTween' field.
+		/// </summary>
 		public static readonly StringName _obtainedTween = "_obtainedTween";
 
+		/// <summary>
+		/// Cached name for the '_originalIconPosition' field.
+		/// </summary>
 		public static readonly StringName _originalIconPosition = "_originalIconPosition";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -120,7 +182,9 @@ public class NRelicInventoryHolder : NButton
 
 	public override void _ExitTree()
 	{
+		base._ExitTree();
 		_hoverTween?.Kill();
+		_cancellationTokenSource?.Cancel();
 		if (_subscribedRelic != null)
 		{
 			_subscribedRelic.DisplayAmountChanged -= OnDisplayAmountChanged;
@@ -195,7 +259,7 @@ public class NRelicInventoryHolder : NButton
 			await _cancellationTokenSource.CancelAsync();
 		}
 		CancellationTokenSource cancelTokenSource = (_cancellationTokenSource = new CancellationTokenSource());
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame(cancelTokenSource.Token);
 		if (!cancelTokenSource.IsCancellationRequested)
 		{
 			_obtainedTween?.Kill();
@@ -240,8 +304,7 @@ public class NRelicInventoryHolder : NButton
 		_hoverTween?.Kill();
 		_hoverTween = CreateTween();
 		_hoverTween.TweenProperty(_relic.Icon, "scale", Vector2.One * 1.25f, 0.05);
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _relic.Model.HoverTips);
-		nHoverTipSet.SetAlignmentForRelic(_relic);
+		NHoverTipSet.CreateAndShow(this, _relic.Model.HoverTips)?.SetAlignmentForRelic(_relic);
 	}
 
 	protected override void OnUnfocus()
@@ -276,6 +339,11 @@ public class NRelicInventoryHolder : NButton
 		RefreshStatus();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -292,6 +360,7 @@ public class NRelicInventoryHolder : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -352,6 +421,7 @@ public class NRelicInventoryHolder : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -394,6 +464,7 @@ public class NRelicInventoryHolder : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -430,6 +501,7 @@ public class NRelicInventoryHolder : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -471,6 +543,11 @@ public class NRelicInventoryHolder : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -485,6 +562,7 @@ public class NRelicInventoryHolder : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -497,6 +575,7 @@ public class NRelicInventoryHolder : NButton
 		info.AddProperty(PropertyName._originalIconPosition, Variant.From(in _originalIconPosition));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

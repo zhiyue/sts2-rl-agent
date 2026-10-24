@@ -23,6 +23,10 @@ public static class PacketReaderExtensions
 			throw new ArgumentException("T must not be AbstractModel!");
 		}
 		string entryForNetId = ModelIdSerializationCache.GetEntryForNetId(reader.ReadInt(ModelIdSerializationCache.EntryIdBitSize));
+		if (entryForNetId == ModelId.none.Entry)
+		{
+			return ModelId.none;
+		}
 		return new ModelId(ModelId.SlugifyCategory(ModelDb.GetCategoryType(typeof(T)).Name), entryForNetId);
 	}
 
@@ -30,6 +34,10 @@ public static class PacketReaderExtensions
 	{
 		string categoryForNetId = ModelIdSerializationCache.GetCategoryForNetId(reader.ReadInt(ModelIdSerializationCache.CategoryIdBitSize));
 		string entryForNetId = ModelIdSerializationCache.GetEntryForNetId(reader.ReadInt(ModelIdSerializationCache.EntryIdBitSize));
+		if (entryForNetId == ModelId.none.Entry || categoryForNetId == ModelId.none.Category)
+		{
+			return ModelId.none;
+		}
 		return new ModelId(categoryForNetId, entryForNetId);
 	}
 

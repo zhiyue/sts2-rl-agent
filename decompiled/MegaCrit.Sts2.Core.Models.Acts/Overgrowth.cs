@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using MegaCrit.Sts2.Core.Entities.Ascension;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models.Encounters;
@@ -47,6 +45,10 @@ public sealed class Overgrowth : ActModel
 	protected override int NumberOfWeakEncounters => 3;
 
 	protected override int BaseNumberOfRooms => 15;
+
+	public override int Index => 0;
+
+	public override bool IsDefault => true;
 
 	public override string[] BgMusicOptions => new string[2] { "event:/music/act1_a1_v1", "event:/music/act1_a2_v2" };
 
@@ -124,16 +126,15 @@ public sealed class Overgrowth : ActModel
 		}
 	}
 
+	public override bool IsUnlocked(UnlockState unlockState)
+	{
+		return true;
+	}
+
 	public override MapPointTypeCounts GetMapPointTypes(Rng mapRng)
 	{
-		int num = mapRng.NextGaussianInt(7, 1, 6, 7);
-		if (AscensionHelper.HasAscension(AscensionLevel.Gloom))
-		{
-			num--;
-		}
-		return new MapPointTypeCounts(mapRng)
-		{
-			NumOfRests = num
-		};
+		int restCount = mapRng.NextGaussianInt(7, 1, 6, 7);
+		int unknownCount = MapPointTypeCounts.StandardRandomUnknownCount(mapRng);
+		return new MapPointTypeCounts(unknownCount, restCount);
 	}
 }

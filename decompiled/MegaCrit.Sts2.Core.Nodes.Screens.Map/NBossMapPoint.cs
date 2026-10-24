@@ -15,48 +15,111 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Map;
 [ScriptPath("res://src/Core/Nodes/Screens/Map/NBossMapPoint.cs")]
 public class NBossMapPoint : NMapPoint
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NMapPoint.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'OnSelected' method.
+		/// </summary>
 		public new static readonly StringName OnSelected = "OnSelected";
 
+		/// <summary>
+		/// Cached name for the 'RefreshColorInstantly' method.
+		/// </summary>
 		public new static readonly StringName RefreshColorInstantly = "RefreshColorInstantly";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NMapPoint.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'TraveledColor' property.
+		/// </summary>
 		public new static readonly StringName TraveledColor = "TraveledColor";
 
+		/// <summary>
+		/// Cached name for the 'UntravelableColor' property.
+		/// </summary>
 		public new static readonly StringName UntravelableColor = "UntravelableColor";
 
+		/// <summary>
+		/// Cached name for the 'HoveredColor' property.
+		/// </summary>
 		public new static readonly StringName HoveredColor = "HoveredColor";
 
+		/// <summary>
+		/// Cached name for the 'HoverScale' property.
+		/// </summary>
 		public new static readonly StringName HoverScale = "HoverScale";
 
+		/// <summary>
+		/// Cached name for the 'DownScale' property.
+		/// </summary>
 		public new static readonly StringName DownScale = "DownScale";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_usesSpine' field.
+		/// </summary>
 		public static readonly StringName _usesSpine = "_usesSpine";
 
+		/// <summary>
+		/// Cached name for the '_spriteContainer' field.
+		/// </summary>
 		public static readonly StringName _spriteContainer = "_spriteContainer";
 
+		/// <summary>
+		/// Cached name for the '_spineSprite' field.
+		/// </summary>
 		public static readonly StringName _spineSprite = "_spineSprite";
 
+		/// <summary>
+		/// Cached name for the '_material' field.
+		/// </summary>
 		public static readonly StringName _material = "_material";
 
+		/// <summary>
+		/// Cached name for the '_placeholderImage' field.
+		/// </summary>
 		public static readonly StringName _placeholderImage = "_placeholderImage";
 
+		/// <summary>
+		/// Cached name for the '_placeholderOutline' field.
+		/// </summary>
 		public static readonly StringName _placeholderOutline = "_placeholderOutline";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NMapPoint.SignalName
 	{
 	}
@@ -202,6 +265,11 @@ public class NBossMapPoint : NMapPoint
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -215,6 +283,7 @@ public class NBossMapPoint : NMapPoint
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -257,6 +326,7 @@ public class NBossMapPoint : NMapPoint
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -287,6 +357,7 @@ public class NBossMapPoint : NMapPoint
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -328,6 +399,7 @@ public class NBossMapPoint : NMapPoint
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -401,6 +473,11 @@ public class NBossMapPoint : NMapPoint
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -420,6 +497,7 @@ public class NBossMapPoint : NMapPoint
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -433,6 +511,7 @@ public class NBossMapPoint : NMapPoint
 		info.AddProperty(PropertyName._placeholderOutline, Variant.From(in _placeholderOutline));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -28,7 +28,7 @@ public sealed class AdaptiveStrike : CardModel
 			.Execute(choiceContext);
 		CardModel cardModel = CreateClone();
 		cardModel.EnergyCost.SetThisCombat(0);
-		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Discard, addedByPlayer: true), 1.5f);
+		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Discard, base.Owner), 1.5f);
 	}
 
 	protected override void OnUpgrade()

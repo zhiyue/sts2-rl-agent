@@ -30,6 +30,6 @@ public sealed class HeartOfIron : PotionModel
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
-		await PowerCmd.Apply<PlatingPower>(target, base.DynamicVars["PlatingPower"].BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<PlatingPower>(choiceContext, target, base.DynamicVars["PlatingPower"].BaseValue, base.Owner.Creature, null);
 	}
 }

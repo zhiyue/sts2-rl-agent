@@ -3,6 +3,11 @@ using System.Text.Json.Serialization;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// Holds progress data on a per Epoch basis.
+/// If a SerializableEpoch is NOT in the list of epochs in SerializableProgress,
+/// it means the player has not revealed that Epoch's Slot via Timeline Expansion.
+/// </summary>
 public class SerializableEpoch
 {
 	[JsonPropertyName("id")]

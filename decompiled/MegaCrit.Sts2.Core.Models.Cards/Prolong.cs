@@ -23,7 +23,7 @@ public sealed class Prolong : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		Creature creature = base.Owner.Creature;
-		await PowerCmd.Apply<BlockNextTurnPower>(creature, creature.Block, creature, this);
+		await PowerCmd.Apply<BlockNextTurnPower>(choiceContext, creature, creature.Block, creature, this);
 	}
 
 	protected override void OnUpgrade()

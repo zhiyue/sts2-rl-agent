@@ -12,12 +12,12 @@ public sealed class MockCloneCardsOnPlayPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Single;
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner.Player)
 		{
 			CardModel card = cardPlay.Card.CreateClone();
-			await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Hand, base.Owner.Player);
 		}
 	}
 }

@@ -16,46 +16,106 @@ namespace MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 [ScriptPath("res://src/Core/Nodes/Cards/Holders/NGridCardHolder.cs")]
 public class NGridCardHolder : NCardHolder, IPoolable
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NCardHolder.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'InitPool' method.
+		/// </summary>
 		public static readonly StringName InitPool = "InitPool";
 
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'UpdateCardModel' method.
+		/// </summary>
 		public static readonly StringName UpdateCardModel = "UpdateCardModel";
 
+		/// <summary>
+		/// Cached name for the 'OnInstantiated' method.
+		/// </summary>
 		public static readonly StringName OnInstantiated = "OnInstantiated";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'EnsureCardLibraryStatsExists' method.
+		/// </summary>
 		public static readonly StringName EnsureCardLibraryStatsExists = "EnsureCardLibraryStatsExists";
 
+		/// <summary>
+		/// Cached name for the 'OnCardReassigned' method.
+		/// </summary>
 		public new static readonly StringName OnCardReassigned = "OnCardReassigned";
 
+		/// <summary>
+		/// Cached name for the 'SetCard' method.
+		/// </summary>
 		public new static readonly StringName SetCard = "SetCard";
 
+		/// <summary>
+		/// Cached name for the 'UpdateName' method.
+		/// </summary>
 		public static readonly StringName UpdateName = "UpdateName";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'SetIsPreviewingUpgrade' method.
+		/// </summary>
 		public static readonly StringName SetIsPreviewingUpgrade = "SetIsPreviewingUpgrade";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnReturnedFromPool' method.
+		/// </summary>
 		public static readonly StringName OnReturnedFromPool = "OnReturnedFromPool";
 
+		/// <summary>
+		/// Cached name for the 'OnFreedToPool' method.
+		/// </summary>
 		public static readonly StringName OnFreedToPool = "OnFreedToPool";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NCardHolder.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'CardLibraryStats' property.
+		/// </summary>
 		public static readonly StringName CardLibraryStats = "CardLibraryStats";
 
+		/// <summary>
+		/// Cached name for the 'IsShowingUpgradedCard' property.
+		/// </summary>
 		public new static readonly StringName IsShowingUpgradedCard = "IsShowingUpgradedCard";
 
+		/// <summary>
+		/// Cached name for the '_isPreviewingUpgrade' field.
+		/// </summary>
 		public static readonly StringName _isPreviewingUpgrade = "_isPreviewingUpgrade";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NCardHolder.SignalName
 	{
 	}
@@ -153,7 +213,7 @@ public class NGridCardHolder : NCardHolder, IPoolable
 		base.SetCard(node);
 		if (CardLibraryStats != null)
 		{
-			MoveChild(CardLibraryStats, GetChildCount() - 1);
+			this.MoveChildSafely(CardLibraryStats, GetChildCount() - 1);
 		}
 	}
 
@@ -165,7 +225,7 @@ public class NGridCardHolder : NCardHolder, IPoolable
 	protected override void OnFocus()
 	{
 		base.OnFocus();
-		MoveToFront();
+		this.MoveToFrontSafely();
 	}
 
 	public void SetIsPreviewingUpgrade(bool showUpgradePreview)
@@ -227,6 +287,11 @@ public class NGridCardHolder : NCardHolder, IPoolable
 	{
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -257,6 +322,7 @@ public class NGridCardHolder : NCardHolder, IPoolable
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -364,6 +430,7 @@ public class NGridCardHolder : NCardHolder, IPoolable
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -426,6 +493,7 @@ public class NGridCardHolder : NCardHolder, IPoolable
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -442,6 +510,7 @@ public class NGridCardHolder : NCardHolder, IPoolable
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -463,6 +532,11 @@ public class NGridCardHolder : NCardHolder, IPoolable
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -473,6 +547,7 @@ public class NGridCardHolder : NCardHolder, IPoolable
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -481,6 +556,7 @@ public class NGridCardHolder : NCardHolder, IPoolable
 		info.AddProperty(PropertyName._isPreviewingUpgrade, Variant.From(in _isPreviewingUpgrade));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

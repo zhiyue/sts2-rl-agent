@@ -12,6 +12,7 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models.Monsters;
 using MegaCrit.Sts2.Core.Nodes.Audio;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.TestSupport;
 
@@ -33,7 +34,7 @@ public sealed class SandpitPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override bool IsInstanced => true;
+	public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
 
 	private IReadOnlyList<Creature> AllAffectedCreatures
 	{
@@ -66,7 +67,7 @@ public sealed class SandpitPower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStartLate(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
 		if (side == CombatSide.Enemy)
 		{
@@ -74,7 +75,7 @@ public sealed class SandpitPower : PowerModel
 		}
 	}
 
-	public override async Task AfterPowerAmountChanged(PowerModel power, decimal _, Creature? __, CardModel? cardSource)
+	public override async Task AfterPowerAmountChanged(PlayerChoiceContext choiceContext, PowerModel power, decimal _, Creature? __, CardModel? cardSource)
 	{
 		if (!TestMode.IsOn && power == this)
 		{
@@ -135,7 +136,7 @@ public sealed class SandpitPower : PowerModel
 		await UpdateCreaturePositions();
 	}
 
-	public override async Task BeforeTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task BeforeSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
 		if (side == CombatSide.Enemy)
 		{
@@ -195,7 +196,7 @@ public sealed class SandpitPower : PowerModel
 		}
 		if (tween != null)
 		{
-			await tween.ToSignal(tween, Tween.SignalName.Finished);
+			await tween.AwaitFinished(NCombatRoom.Instance);
 		}
 	}
 }

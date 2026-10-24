@@ -21,63 +21,148 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
+/// <summary>
+/// Manages spawned submenus in the main menu.
+/// We lazily spawn submenus only when they are requested to reduce loading times.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NMainMenuSubmenuStack.cs")]
 public class NMainMenuSubmenuStack : NSubmenuStack
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenuStack.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenuStack.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_settingsScreenScene' field.
+		/// </summary>
 		public static readonly StringName _settingsScreenScene = "_settingsScreenScene";
 
+		/// <summary>
+		/// Cached name for the '_characterSelectScreenScene' field.
+		/// </summary>
 		public static readonly StringName _characterSelectScreenScene = "_characterSelectScreenScene";
 
+		/// <summary>
+		/// Cached name for the '_singleplayerSubmenu' field.
+		/// </summary>
 		public static readonly StringName _singleplayerSubmenu = "_singleplayerSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_multiplayerSubmenu' field.
+		/// </summary>
 		public static readonly StringName _multiplayerSubmenu = "_multiplayerSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_multiplayerHostSubmenu' field.
+		/// </summary>
 		public static readonly StringName _multiplayerHostSubmenu = "_multiplayerHostSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_joinFriendSubmenu' field.
+		/// </summary>
 		public static readonly StringName _joinFriendSubmenu = "_joinFriendSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_characterSelectSubmenu' field.
+		/// </summary>
 		public static readonly StringName _characterSelectSubmenu = "_characterSelectSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_loadMultiplayerSubmenu' field.
+		/// </summary>
 		public static readonly StringName _loadMultiplayerSubmenu = "_loadMultiplayerSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_compendiumSubmenu' field.
+		/// </summary>
 		public static readonly StringName _compendiumSubmenu = "_compendiumSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_bestiarySubmenu' field.
+		/// </summary>
 		public static readonly StringName _bestiarySubmenu = "_bestiarySubmenu";
 
+		/// <summary>
+		/// Cached name for the '_relicCollectionSubmenu' field.
+		/// </summary>
 		public static readonly StringName _relicCollectionSubmenu = "_relicCollectionSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_potionLabSubmenu' field.
+		/// </summary>
 		public static readonly StringName _potionLabSubmenu = "_potionLabSubmenu";
 
+		/// <summary>
+		/// Cached name for the '_cardLibrarySubmenu' field.
+		/// </summary>
 		public static readonly StringName _cardLibrarySubmenu = "_cardLibrarySubmenu";
 
+		/// <summary>
+		/// Cached name for the '_runHistorySubmenu' field.
+		/// </summary>
 		public static readonly StringName _runHistorySubmenu = "_runHistorySubmenu";
 
+		/// <summary>
+		/// Cached name for the '_statsScreen' field.
+		/// </summary>
 		public static readonly StringName _statsScreen = "_statsScreen";
 
+		/// <summary>
+		/// Cached name for the '_timelineScreen' field.
+		/// </summary>
 		public static readonly StringName _timelineScreen = "_timelineScreen";
 
+		/// <summary>
+		/// Cached name for the '_settingsScreen' field.
+		/// </summary>
 		public static readonly StringName _settingsScreen = "_settingsScreen";
 
+		/// <summary>
+		/// Cached name for the '_dailyScreen' field.
+		/// </summary>
 		public static readonly StringName _dailyScreen = "_dailyScreen";
 
+		/// <summary>
+		/// Cached name for the '_dailyLoadScreen' field.
+		/// </summary>
 		public static readonly StringName _dailyLoadScreen = "_dailyLoadScreen";
 
+		/// <summary>
+		/// Cached name for the '_customRunScreen' field.
+		/// </summary>
 		public static readonly StringName _customRunScreen = "_customRunScreen";
 
+		/// <summary>
+		/// Cached name for the '_customRunLoadScreen' field.
+		/// </summary>
 		public static readonly StringName _customRunLoadScreen = "_customRunLoadScreen";
 
+		/// <summary>
+		/// Cached name for the '_moddingScreen' field.
+		/// </summary>
 		public static readonly StringName _moddingScreen = "_moddingScreen";
 
+		/// <summary>
+		/// Cached name for the '_profileScreen' field.
+		/// </summary>
 		public static readonly StringName _profileScreen = "_profileScreen";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenuStack.SignalName
 	{
 	}
@@ -379,6 +464,11 @@ public class NMainMenuSubmenuStack : NSubmenuStack
 		throw new ArgumentException($"No such submenu {type} in main menu");
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -387,6 +477,7 @@ public class NMainMenuSubmenuStack : NSubmenuStack
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -399,6 +490,7 @@ public class NMainMenuSubmenuStack : NSubmenuStack
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -409,6 +501,7 @@ public class NMainMenuSubmenuStack : NSubmenuStack
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -530,6 +623,7 @@ public class NMainMenuSubmenuStack : NSubmenuStack
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -651,6 +745,11 @@ public class NMainMenuSubmenuStack : NSubmenuStack
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -681,6 +780,7 @@ public class NMainMenuSubmenuStack : NSubmenuStack
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -710,6 +810,7 @@ public class NMainMenuSubmenuStack : NSubmenuStack
 		info.AddProperty(PropertyName._profileScreen, Variant.From(in _profileScreen));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

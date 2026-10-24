@@ -5,7 +5,6 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Combat;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
@@ -23,10 +22,9 @@ public sealed class PaelsLegion : MonsterModel
 
 	public override bool IsHealthBarVisible => false;
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
 		string skinName = ((!base.IsMutable) ? MegaCrit.Sts2.Core.Models.Relics.PaelsLegion.SkinOptions[0] : base.Creature.PetOwner.GetRelic<MegaCrit.Sts2.Core.Models.Relics.PaelsLegion>().Skin);
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
 		MegaSkeletonDataResource data = skeleton.GetData();
 		skeleton.SetSkin(data.FindSkin(skinName));
 		skeleton.SetSlotsToSetupPose();

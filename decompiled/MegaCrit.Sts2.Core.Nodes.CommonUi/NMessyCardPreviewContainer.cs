@@ -8,11 +8,16 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// A card preview container intended to be used when lots and lots of cards are previewed and the player isn't
+/// meant to be able to parse every single card. Example usage in the Reflections event
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NMessyCardPreviewContainer.cs")]
 public class NMessyCardPreviewContainer : Control
 {
 	public class PoissonDiscSampler
 	{
+		/// Helper struct to calculate the x and y indices of a sample in the grid
 		private struct GridPos
 		{
 			public readonly int x;
@@ -38,6 +43,11 @@ public class NMessyCardPreviewContainer : Control
 
 		private readonly List<Vector2> _activeSamples = new List<Vector2>();
 
+		/// Create a sampler with the following parameters:
+		///
+		/// width:  each sample's x coordinate will be between [0, width]
+		/// height: each sample's y coordinate will be between [0, height]
+		/// radius: each sample will be at least `radius` units away from any other sample, and at most 2 * `radius`.
 		public PoissonDiscSampler(float width, float height, float radius)
 		{
 			_rect = new Rect2(0f, 0f, width, height);
@@ -46,6 +56,7 @@ public class NMessyCardPreviewContainer : Control
 			_grid = new Vector2[Mathf.CeilToInt(width / _cellSize), Mathf.CeilToInt(height / _cellSize)];
 		}
 
+		/// Return a lazy sequence of samples.
 		public IEnumerator<Vector2> Samples()
 		{
 			yield return AddSample(_rect.Size / 2f);
@@ -99,6 +110,7 @@ public class NMessyCardPreviewContainer : Control
 			return true;
 		}
 
+		/// Adds the sample to the active samples queue and the grid before returning it
 		private Vector2 AddSample(Vector2 sample)
 		{
 			_activeSamples.Add(sample);
@@ -108,22 +120,46 @@ public class NMessyCardPreviewContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'PositionNewChild' method.
+		/// </summary>
 		public static readonly StringName PositionNewChild = "PositionNewChild";
 
+		/// <summary>
+		/// Cached name for the 'ResetSamples' method.
+		/// </summary>
 		public static readonly StringName ResetSamples = "ResetSamples";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_resetNewCardTimer' field.
+		/// </summary>
 		public static readonly StringName _resetNewCardTimer = "_resetNewCardTimer";
 
+		/// <summary>
+		/// Cached name for the '_currentMaxPosition' field.
+		/// </summary>
 		public static readonly StringName _currentMaxPosition = "_currentMaxPosition";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -172,6 +208,11 @@ public class NMessyCardPreviewContainer : Control
 		_samples = poissonDiscSampler.Samples();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -185,6 +226,7 @@ public class NMessyCardPreviewContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -209,6 +251,7 @@ public class NMessyCardPreviewContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -227,6 +270,7 @@ public class NMessyCardPreviewContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -243,6 +287,7 @@ public class NMessyCardPreviewContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -259,6 +304,11 @@ public class NMessyCardPreviewContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -268,6 +318,7 @@ public class NMessyCardPreviewContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -276,6 +327,7 @@ public class NMessyCardPreviewContainer : Control
 		info.AddProperty(PropertyName._currentMaxPosition, Variant.From(in _currentMaxPosition));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

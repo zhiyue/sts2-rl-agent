@@ -30,6 +30,9 @@ public struct SettingsDataMetric
 	[JsonPropertyName("runTimer")]
 	public bool ShowRunTimer { get; set; }
 
+	[JsonPropertyName("phobiaMode")]
+	public bool PhobiaMode { get; set; }
+
 	[JsonPropertyName("cardIndices")]
 	public bool ShowCardIndices { get; set; }
 

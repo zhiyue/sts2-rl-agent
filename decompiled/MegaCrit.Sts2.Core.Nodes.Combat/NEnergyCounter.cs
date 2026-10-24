@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
+using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.addons.mega_text;
 
@@ -19,48 +20,111 @@ namespace MegaCrit.Sts2.Core.Nodes.Combat;
 [ScriptPath("res://src/Core/Nodes/Combat/NEnergyCounter.cs")]
 public class NEnergyCounter : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnHovered' method.
+		/// </summary>
 		public static readonly StringName OnHovered = "OnHovered";
 
+		/// <summary>
+		/// Cached name for the 'OnUnhovered' method.
+		/// </summary>
 		public static readonly StringName OnUnhovered = "OnUnhovered";
 
+		/// <summary>
+		/// Cached name for the 'RefreshLabel' method.
+		/// </summary>
 		public static readonly StringName RefreshLabel = "RefreshLabel";
 
+		/// <summary>
+		/// Cached name for the 'OnEnergyChanged' method.
+		/// </summary>
 		public static readonly StringName OnEnergyChanged = "OnEnergyChanged";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'AnimIn' method.
+		/// </summary>
 		public static readonly StringName AnimIn = "AnimIn";
 
+		/// <summary>
+		/// Cached name for the 'AnimOut' method.
+		/// </summary>
 		public static readonly StringName AnimOut = "AnimOut";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'OutlineColor' property.
+		/// </summary>
 		public static readonly StringName OutlineColor = "OutlineColor";
 
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_layers' field.
+		/// </summary>
 		public static readonly StringName _layers = "_layers";
 
+		/// <summary>
+		/// Cached name for the '_rotationLayers' field.
+		/// </summary>
 		public static readonly StringName _rotationLayers = "_rotationLayers";
 
-		public static readonly StringName _backParticles = "_backParticles";
+		/// <summary>
+		/// Cached name for the '_backVfx' field.
+		/// </summary>
+		public static readonly StringName _backVfx = "_backVfx";
 
-		public static readonly StringName _frontParticles = "_frontParticles";
+		/// <summary>
+		/// Cached name for the '_frontVfx' field.
+		/// </summary>
+		public static readonly StringName _frontVfx = "_frontVfx";
 
+		/// <summary>
+		/// Cached name for the '_animInTween' field.
+		/// </summary>
 		public static readonly StringName _animInTween = "_animInTween";
 
+		/// <summary>
+		/// Cached name for the '_animOutTween' field.
+		/// </summary>
 		public static readonly StringName _animOutTween = "_animOutTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -75,9 +139,9 @@ public class NEnergyCounter : Control
 
 	private Control _rotationLayers;
 
-	private CpuParticles2D _backParticles;
+	private NParticlesContainer? _backVfx;
 
-	private CpuParticles2D _frontParticles;
+	private NParticlesContainer? _frontVfx;
 
 	private HoverTip _hoverTip;
 
@@ -111,8 +175,8 @@ public class NEnergyCounter : Control
 		_label = GetNode<MegaLabel>("Label");
 		_layers = GetNode<Control>("%Layers");
 		_rotationLayers = GetNode<Control>("%RotationLayers");
-		_backParticles = GetNode<CpuParticles2D>("%BurstBack");
-		_frontParticles = GetNode<CpuParticles2D>("%BurstFront");
+		_backVfx = GetNode<NParticlesContainer>("%EnergyVfxBack");
+		_frontVfx = GetNode<NParticlesContainer>("%EnergyVfxFront");
 		LocString locString = new LocString("static_hover_tips", "ENERGY_COUNT.description");
 		locString.Add("energyPrefix", EnergyIconHelper.GetPrefix(_player.Character.CardPool));
 		_hoverTip = new HoverTip(new LocString("static_hover_tips", "ENERGY_COUNT.title"), locString);
@@ -137,8 +201,7 @@ public class NEnergyCounter : Control
 
 	private void OnHovered()
 	{
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
-		nHoverTipSet.GlobalPosition = base.GlobalPosition + new Vector2(-70f, -200f);
+		NHoverTipSet.CreateAndShow(this, _hoverTip)?.SetGlobalPosition(base.GlobalPosition + new Vector2(-70f, -200f));
 	}
 
 	private void OnUnhovered()
@@ -155,8 +218,8 @@ public class NEnergyCounter : Control
 	{
 		PlayerCombatState playerCombatState = _player.PlayerCombatState;
 		_label.SetTextAutoSize($"{playerCombatState.Energy}/{playerCombatState.MaxEnergy}");
-		_label.AddThemeColorOverride(ThemeConstants.Label.fontColor, (playerCombatState.Energy == 0) ? StsColors.red : StsColors.cream);
-		_label.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, (playerCombatState.Energy == 0) ? StsColors.unplayableEnergyCostOutline : OutlineColor);
+		_label.AddThemeColorOverride(ThemeConstants.Label.FontColor, (playerCombatState.Energy == 0) ? StsColors.red : StsColors.cream);
+		_label.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, (playerCombatState.Energy == 0) ? StsColors.unplayableEnergyCostOutline : OutlineColor);
 		Material material = ((playerCombatState.Energy == 0) ? PreloadManager.Cache.GetMaterial("res://materials/ui/energy_orb_dark.tres") : null);
 		foreach (Control item in _layers.GetChildren().OfType<Control>())
 		{
@@ -173,8 +236,8 @@ public class NEnergyCounter : Control
 	{
 		if (oldEnergy < newEnergy)
 		{
-			_frontParticles.Emitting = true;
-			_backParticles.Emitting = true;
+			_backVfx?.Restart();
+			_frontVfx?.Restart();
 		}
 	}
 
@@ -203,6 +266,11 @@ public class NEnergyCounter : Control
 		_animOutTween.TweenProperty(this, "position", _hidePosition, 0.6000000238418579).SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Back);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -227,6 +295,7 @@ public class NEnergyCounter : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -293,6 +362,7 @@ public class NEnergyCounter : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -339,6 +409,7 @@ public class NEnergyCounter : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -357,14 +428,14 @@ public class NEnergyCounter : Control
 			_rotationLayers = VariantUtils.ConvertTo<Control>(in value);
 			return true;
 		}
-		if (name == PropertyName._backParticles)
+		if (name == PropertyName._backVfx)
 		{
-			_backParticles = VariantUtils.ConvertTo<CpuParticles2D>(in value);
+			_backVfx = VariantUtils.ConvertTo<NParticlesContainer>(in value);
 			return true;
 		}
-		if (name == PropertyName._frontParticles)
+		if (name == PropertyName._frontVfx)
 		{
-			_frontParticles = VariantUtils.ConvertTo<CpuParticles2D>(in value);
+			_frontVfx = VariantUtils.ConvertTo<NParticlesContainer>(in value);
 			return true;
 		}
 		if (name == PropertyName._animInTween)
@@ -380,6 +451,7 @@ public class NEnergyCounter : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -403,14 +475,14 @@ public class NEnergyCounter : Control
 			value = VariantUtils.CreateFrom(in _rotationLayers);
 			return true;
 		}
-		if (name == PropertyName._backParticles)
+		if (name == PropertyName._backVfx)
 		{
-			value = VariantUtils.CreateFrom(in _backParticles);
+			value = VariantUtils.CreateFrom(in _backVfx);
 			return true;
 		}
-		if (name == PropertyName._frontParticles)
+		if (name == PropertyName._frontVfx)
 		{
-			value = VariantUtils.CreateFrom(in _frontParticles);
+			value = VariantUtils.CreateFrom(in _frontVfx);
 			return true;
 		}
 		if (name == PropertyName._animInTween)
@@ -426,6 +498,11 @@ public class NEnergyCounter : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -433,14 +510,15 @@ public class NEnergyCounter : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._label, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._layers, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._rotationLayers, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._backParticles, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._frontParticles, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._backVfx, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._frontVfx, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._animInTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._animOutTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Color, PropertyName.OutlineColor, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -448,12 +526,13 @@ public class NEnergyCounter : Control
 		info.AddProperty(PropertyName._label, Variant.From(in _label));
 		info.AddProperty(PropertyName._layers, Variant.From(in _layers));
 		info.AddProperty(PropertyName._rotationLayers, Variant.From(in _rotationLayers));
-		info.AddProperty(PropertyName._backParticles, Variant.From(in _backParticles));
-		info.AddProperty(PropertyName._frontParticles, Variant.From(in _frontParticles));
+		info.AddProperty(PropertyName._backVfx, Variant.From(in _backVfx));
+		info.AddProperty(PropertyName._frontVfx, Variant.From(in _frontVfx));
 		info.AddProperty(PropertyName._animInTween, Variant.From(in _animInTween));
 		info.AddProperty(PropertyName._animOutTween, Variant.From(in _animOutTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -470,13 +549,13 @@ public class NEnergyCounter : Control
 		{
 			_rotationLayers = value3.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._backParticles, out var value4))
+		if (info.TryGetProperty(PropertyName._backVfx, out var value4))
 		{
-			_backParticles = value4.As<CpuParticles2D>();
+			_backVfx = value4.As<NParticlesContainer>();
 		}
-		if (info.TryGetProperty(PropertyName._frontParticles, out var value5))
+		if (info.TryGetProperty(PropertyName._frontVfx, out var value5))
 		{
-			_frontParticles = value5.As<CpuParticles2D>();
+			_frontVfx = value5.As<NParticlesContainer>();
 		}
 		if (info.TryGetProperty(PropertyName._animInTween, out var value6))
 		{

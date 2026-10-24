@@ -27,6 +27,11 @@ public sealed class LoomingFruit : RelicModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new MaxHpVar(31m));
 
+	/// <summary>
+	/// 50% chance of Looming Fruit having the cornucopia. This chance is LOCKED for each player indefinitely.
+	/// Players will only know if there's a cornucopia or not by seeing OTHER player's Looming Fruit.
+	/// </summary>
+	/// <returns></returns>
 	private static bool HasCornucopia()
 	{
 		string uniqueId = SaveManager.Instance.Progress.UniqueId;

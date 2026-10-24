@@ -13,6 +13,11 @@ public sealed class StormPower : PowerModel
 {
 	private class Data
 	{
+		/// <summary>
+		/// Keep track of the Power cards we've seen played and the power amount at the time they were played.
+		/// This lets Storm avoid triggering on cards that started play before it was applied, and avoid channeling
+		/// extra lightning on multiple plays of Storm.
+		/// </summary>
 		public readonly Dictionary<CardModel, int> amountsForPlayedCards = new Dictionary<CardModel, int>();
 	}
 
@@ -45,14 +50,14 @@ public sealed class StormPower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner.Player && GetInternalData<Data>().amountsForPlayedCards.Remove(cardPlay.Card, out var lightning) && lightning > 0)
 		{
 			Flash();
 			for (int i = 0; i < lightning; i++)
 			{
-				await OrbCmd.Channel<LightningOrb>(context, base.Owner.Player);
+				await OrbCmd.Channel<LightningOrb>(choiceContext, base.Owner.Player);
 			}
 		}
 	}

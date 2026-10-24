@@ -6,6 +6,9 @@ using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 
+/// <summary>
+/// Sent by a host to a client in response to a ClientLoadJoinRequestMessage.
+/// </summary>
 public struct ClientLoadJoinResponseMessage : INetMessage, IPacketSerializable
 {
 	public SerializableRun serializableRun;
@@ -17,6 +20,8 @@ public struct ClientLoadJoinResponseMessage : INetMessage, IPacketSerializable
 	public NetTransferMode Mode => NetTransferMode.Reliable;
 
 	public LogLevel LogLevel => LogLevel.Info;
+
+	public bool ShouldBuffer => true;
 
 	public void Serialize(PacketWriter writer)
 	{

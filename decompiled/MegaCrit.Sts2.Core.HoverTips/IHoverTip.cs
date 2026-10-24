@@ -19,6 +19,10 @@ public interface IHoverTip
 
 	bool IsInstanced { get; }
 
+	/// <summary>
+	/// The canonical model that this HoverTip is for.
+	/// Null for HoverTips that are unrelated to a model (static, card keyword, etc.).
+	/// </summary>
 	AbstractModel? CanonicalModel { get; }
 
 	static IEnumerable<IHoverTip> RemoveDupes(IEnumerable<IHoverTip> tips)

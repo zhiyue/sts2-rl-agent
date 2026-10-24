@@ -26,6 +26,6 @@ public sealed class StableSerum : PotionModel
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
-		await PowerCmd.Apply<RetainHandPower>(target, base.DynamicVars.Repeat.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<RetainHandPower>(choiceContext, target, base.DynamicVars.Repeat.BaseValue, base.Owner.Creature, null);
 	}
 }

@@ -18,22 +18,27 @@ public sealed class RadiantPearl : RelicModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new CardsVar(1));
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlyArray<IHoverTip>(new IHoverTip[2]
+	protected override IEnumerable<IHoverTip> ExtraHoverTips
 	{
-		HoverTipFactory.ForEnergy(this),
-		HoverTipFactory.FromCard<Luminesce>()
-	});
+		get
+		{
+			List<IHoverTip> list = new List<IHoverTip>();
+			list.Add(HoverTipFactory.ForEnergy(this));
+			list.AddRange(HoverTipFactory.FromCardWithCardHoverTips<Luminesce>());
+			return new _003C_003Ez__ReadOnlyList<IHoverTip>(list);
+		}
+	}
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
-		if (player == base.Owner && combatState.RoundNumber == 1)
+		if (player == base.Owner && base.Owner.PlayerCombatState.TurnNumber == 1)
 		{
 			List<CardModel> list = new List<CardModel>();
 			for (int i = 0; i < base.DynamicVars.Cards.IntValue; i++)
 			{
 				list.Add(base.Owner.Creature.CombatState.CreateCard<Luminesce>(base.Owner));
 			}
-			await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Hand, base.Owner);
 		}
 	}
 }

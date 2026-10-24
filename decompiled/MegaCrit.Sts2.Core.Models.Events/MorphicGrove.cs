@@ -15,15 +15,15 @@ namespace MegaCrit.Sts2.Core.Models.Events;
 
 public sealed class MorphicGrove : EventModel
 {
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
-	{
-		new GoldVar(100),
-		new MaxHpVar(5m)
-	});
+	private const int _transformCount = 2;
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsShared => true;
+
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new MaxHpVar(5m));
+
+	public override bool IsAllowed(IRunState runState)
 	{
-		return runState.Players.All((Player p) => (decimal)p.Gold >= base.DynamicVars.Gold.BaseValue);
+		return runState.Players.All((Player p) => p.Gold >= 100 && p.Deck.Cards.Count((CardModel c) => c.IsTransformable) >= 2);
 	}
 
 	protected override IReadOnlyList<EventOption> GenerateInitialOptions()
@@ -43,11 +43,11 @@ public sealed class MorphicGrove : EventModel
 
 	private async Task Group()
 	{
-		await PlayerCmd.LoseGold(base.DynamicVars.Gold.BaseValue, base.Owner, GoldLossType.Stolen);
+		await PlayerCmd.LoseGold(base.Owner.Gold, base.Owner, GoldLossType.Stolen);
 		List<CardModel> list = (await CardSelectCmd.FromDeckForTransformation(prefs: new CardSelectorPrefs(CardSelectorPrefs.TransformSelectionPrompt, 2), player: base.Owner)).ToList();
 		foreach (CardModel item in list)
 		{
-			await CardCmd.TransformToRandom(item, base.Owner.RunState.Rng.Niche, CardPreviewStyle.EventLayout);
+			await CardCmd.TransformToRandom(item, base.Rng, CardPreviewStyle.EventLayout);
 		}
 		SetEventFinished(L10NLookup("MORPHIC_GROVE.pages.GROUP.description"));
 	}

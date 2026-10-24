@@ -94,7 +94,7 @@ public sealed class TuningFork : RelicModel
 		SkillsPlayed++;
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner && cardPlay.Card.Type == CardType.Skill)
 		{

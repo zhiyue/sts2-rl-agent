@@ -34,7 +34,7 @@ public sealed class Haze : CardModel
 		await Cmd.CustomScaledWait(0.2f, 0.4f);
 		foreach (Creature hittableEnemy in base.CombatState.HittableEnemies)
 		{
-			await PowerCmd.Apply<PoisonPower>(hittableEnemy, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<PoisonPower>(choiceContext, hittableEnemy, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, this);
 		}
 	}
 

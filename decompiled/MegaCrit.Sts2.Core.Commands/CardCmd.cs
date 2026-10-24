@@ -21,6 +21,7 @@ using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
+using MegaCrit.Sts2.Core.Nodes.Vfx.Cards;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Runs.History;
@@ -30,13 +31,30 @@ namespace MegaCrit.Sts2.Core.Commands;
 
 public static class CardCmd
 {
+	/// <summary>
+	/// Automatically play a card for free. Used for non-player-choice card playing effects.
+	/// </summary>
+	/// <example>
+	/// Examples of where this would be used:
+	/// * Havoc ("Play the top card of your Draw Pile and Exhaust it.")
+	/// * Duplication Potion ("This turn, your next card is played twice.")
+	/// </example>
+	/// <param name="choiceContext">The context that is signalled in the event of a player choice.</param>
+	/// <param name="card">Card to autoplay.</param>
+	/// <param name="target">Target for the autoplay. Will be randomized if null.</param>
+	/// <param name="type">Type of autoplay. Certain checks may be bypassed for different autoplay types.</param>
+	/// <param name="skipXCapture">
+	/// If true, skip capturing the X value for X-cost cards and X-star cost cards. Use this when the caller has already
+	/// spent energy/stars via SpendResources, which sets CapturedXValue to the energy spent and stars spent.
+	/// </param>
+	/// <param name="skipCardPileVisuals">Skip card pile visuals (tween to/from pile, smoke puff VFX, etc).</param>
 	public static async Task AutoPlay(PlayerChoiceContext choiceContext, CardModel card, Creature? target, AutoPlayType type = AutoPlayType.Default, bool skipXCapture = false, bool skipCardPileVisuals = false)
 	{
-		if (CombatManager.Instance.IsOverOrEnding)
+		if (CombatManager.Instance.IsOverOrEnding || card.Owner.Creature.IsDead)
 		{
 			return;
 		}
-		CombatState combatState = card.CombatState ?? card.Owner.Creature.CombatState;
+		ICombatState combatState = card.CombatState ?? card.Owner.Creature.CombatState;
 		if (card.Keywords.Contains(CardKeyword.Unplayable))
 		{
 			await MoveToResultPileWithoutPlaying(choiceContext, card);
@@ -48,7 +66,7 @@ public static class CardCmd
 			LocString playerDialogueLine = UnplayableReason.BlockedByHook.GetPlayerDialogueLine(preventer);
 			if (playerDialogueLine != null)
 			{
-				NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(NThoughtBubbleVfx.Create(playerDialogueLine.GetFormattedText(), card.Owner.Creature, 1.0));
+				card.Owner.Creature.GetVfxContainer()?.AddChildSafely(NThoughtBubbleVfx.Create(playerDialogueLine.GetFormattedText(), card.Owner.Creature, 1.0));
 			}
 			return;
 		}
@@ -77,13 +95,13 @@ public static class CardCmd
 				return;
 			}
 		}
-		if (!card.IsDupe)
+		PlayerCombatState playerCombatState = card.Owner.PlayerCombatState;
+		if (card.EnergyCost.CostsX && !skipXCapture)
 		{
-			PlayerCombatState playerCombatState = card.Owner.PlayerCombatState;
-			if (card.EnergyCost.CostsX && !skipXCapture)
-			{
-				card.EnergyCost.CapturedXValue = playerCombatState.Energy;
-			}
+			card.EnergyCost.CapturedXValue = playerCombatState.Energy;
+		}
+		if (!skipXCapture)
+		{
 			if (card.HasStarCostX)
 			{
 				card.LastStarsSpent = playerCombatState.Stars;
@@ -118,16 +136,39 @@ public static class CardCmd
 		await card.MoveToResultPileWithoutPlaying(choiceContext);
 	}
 
+	/// <summary>
+	/// Discard a card.
+	/// WARNING: If you're discarding multiple cards at once for an effect like Concentrate or Gambler's Brew, do NOT
+	/// use this method inside a loop, because the timing of the Sly effect will be incorrect. Instead, use the overload
+	/// of this method that takes an IEnumerable.
+	/// </summary>
+	/// <param name="choiceContext">The context that is signalled in the event of a player choice.</param>
+	/// <param name="card">Card to discard.</param>
 	public static async Task Discard(PlayerChoiceContext choiceContext, CardModel card)
 	{
 		await Discard(choiceContext, new global::_003C_003Ez__ReadOnlySingleElementList<CardModel>(card));
 	}
 
+	/// <summary>
+	/// Discard multiple cards.
+	/// </summary>
+	/// <param name="choiceContext">The context that is signalled in the event of a player choice.</param>
+	/// <param name="cards">Cards to discard.</param>
 	public static async Task Discard(PlayerChoiceContext choiceContext, IEnumerable<CardModel> cards)
 	{
 		await DiscardAndDraw(choiceContext, cards, 0);
 	}
 
+	/// <summary>
+	/// Discard cards, then draw cards.
+	/// Unlike calling <see cref="M:MegaCrit.Sts2.Core.Commands.CardCmd.Discard(MegaCrit.Sts2.Core.GameActions.Multiplayer.PlayerChoiceContext,MegaCrit.Sts2.Core.Models.CardModel)" /> followed by
+	/// <see cref="M:MegaCrit.Sts2.Core.Commands.CardPileCmd.Draw(MegaCrit.Sts2.Core.GameActions.Multiplayer.PlayerChoiceContext,MegaCrit.Sts2.Core.Entities.Players.Player)" />, this will wait to trigger the discard-related hooks
+	/// until after the draw is complete.
+	/// Good for effects like <see cref="T:MegaCrit.Sts2.Core.Models.Cards.CalculatedGamble" />.
+	/// </summary>
+	/// <param name="choiceContext">The context that is signalled in the event of a player choice.</param>
+	/// <param name="cardsToDiscard">Cards to discard.</param>
+	/// <param name="cardsToDraw">Number of cards to draw.</param>
 	public static async Task DiscardAndDraw(PlayerChoiceContext choiceContext, IEnumerable<CardModel> cardsToDiscard, int cardsToDraw)
 	{
 		if (CombatManager.Instance.IsOverOrEnding)
@@ -139,7 +180,7 @@ public static class CardCmd
 		{
 			return;
 		}
-		CombatState combatState = discardCards[0].CombatState ?? discardCards[0].Owner.Creature.CombatState;
+		ICombatState combatState = discardCards[0].CombatState ?? discardCards[0].Owner.Creature.CombatState;
 		List<CardModel> slyCards = new List<CardModel>();
 		CardPile discardPile = PileType.Discard.GetPile(discardCards[0].Owner);
 		foreach (CardModel card in discardCards)
@@ -163,6 +204,11 @@ public static class CardCmd
 		}
 	}
 
+	/// <summary>
+	/// Downgrades a card to its base form.
+	/// Keeps things like enchantments and conditions.
+	/// </summary>
+	/// <param name="card">Card to downgrade.</param>
 	public static void Downgrade(CardModel card)
 	{
 		if (!CombatManager.Instance.IsEnding)
@@ -176,22 +222,46 @@ public static class CardCmd
 		}
 	}
 
+	/// <summary>
+	/// Exhaust a card.
+	/// Note: do NOT make a bulk version of this; the hooks for one exhausted card should fully run before the next
+	/// card starts exhausting.
+	/// </summary>
+	/// <param name="choiceContext">The context that is signalled in the event of a player choice.</param>
+	/// <param name="card">Card to exhaust.</param>
+	/// <param name="causedByEthereal">
+	/// Was this Exhaust caused by Ethereal?
+	/// This should always be false except the specific case in <see cref="T:MegaCrit.Sts2.Core.Combat.CombatManager" />.
+	/// </param>
+	/// <param name="skipVisuals">Skip card pile visuals (tween to/from pile, smoke puff VFX, etc).</param>
 	public static async Task Exhaust(PlayerChoiceContext choiceContext, CardModel card, bool causedByEthereal = false, bool skipVisuals = false)
 	{
 		if (!CombatManager.Instance.IsOverOrEnding)
 		{
-			CombatState combatState = card.CombatState ?? card.Owner.Creature.CombatState;
+			ICombatState combatState = card.CombatState ?? card.Owner.Creature.CombatState;
 			await CardPileCmd.Add(card, PileType.Exhaust, CardPilePosition.Bottom, null, skipVisuals);
 			CombatManager.Instance.History.CardExhausted(combatState, card);
 			await Hook.AfterCardExhausted(combatState, choiceContext, card, causedByEthereal);
 		}
 	}
 
+	/// <summary>
+	/// Upgrade a card.
+	/// Use this for actually upgrading a card, not for previewing an upgrade, because it won't highlight value changes.
+	/// </summary>
+	/// <param name="card">Card to upgrade.</param>
+	/// <param name="style">How the upgraded card is displayed to the player.</param>
 	public static void Upgrade(CardModel card, CardPreviewStyle style = CardPreviewStyle.HorizontalLayout)
 	{
 		Upgrade(new global::_003C_003Ez__ReadOnlySingleElementList<CardModel>(card), style);
 	}
 
+	/// <summary>
+	/// Upgrade a set of cards.
+	/// Use this for actually upgrading cards, not for previewing upgrades, because it won't highlight value changes.
+	/// </summary>
+	/// <param name="cards">Cards to upgrade.</param>
+	/// <param name="style">How multiple cards are aligned if previewed together.</param>
 	public static void Upgrade(IEnumerable<CardModel> cards, CardPreviewStyle style)
 	{
 		if (CombatManager.Instance.IsEnding)
@@ -243,17 +313,38 @@ public static class CardCmd
 		}
 	}
 
+	/// <summary>
+	/// Transform a card to another randomly-selected card.
+	/// </summary>
+	/// <param name="original">Card to transform from.</param>
+	/// <param name="rng">RNG to use for random card.</param>
+	/// <param name="style">How the transformed card is displayed to the player.</param>
+	/// <returns>The replacement card.</returns>
 	public static async Task<CardPileAddResult> TransformToRandom(CardModel original, Rng rng, CardPreviewStyle style = CardPreviewStyle.HorizontalLayout)
 	{
 		return (await Transform(new CardTransformation(original).Yield(), rng, style)).First();
 	}
 
+	/// <summary>
+	/// Transform a card into a new card of the specified type.
+	/// </summary>
+	/// <param name="original">Card to transform from.</param>
+	/// <param name="style">How the transformed card is displayed to the player.</param>
+	/// <typeparam name="T">Card type to transform to.</typeparam>
+	/// <returns>The replacement card.</returns>
 	public static async Task<CardPileAddResult?> TransformTo<T>(CardModel original, CardPreviewStyle style = CardPreviewStyle.HorizontalLayout) where T : CardModel
 	{
 		CardModel replacement = original.CardScope.CreateCard<T>(original.Owner);
 		return await Transform(original, replacement, style);
 	}
 
+	/// <summary>
+	/// Transform a card to another card.
+	/// </summary>
+	/// <param name="original">Card to transform from.</param>
+	/// <param name="replacement">Card to transform to.</param>
+	/// <param name="style">How the transformed card is displayed to the player.</param>
+	/// <returns>The replacement card.</returns>
 	public static async Task<CardPileAddResult?> Transform(CardModel original, CardModel replacement, CardPreviewStyle style = CardPreviewStyle.HorizontalLayout)
 	{
 		return (await Transform(new CardTransformation(original, replacement).Yield(), null, style)).FirstOrDefault();
@@ -268,6 +359,13 @@ public static class CardCmd
 		return value1.Item3.CompareTo(value2.Item3);
 	}
 
+	/// <summary>
+	/// Transforms several cards to other cards.
+	/// </summary>
+	/// <param name="transformations">Cards to transform.</param>
+	/// <param name="rng">Random number generator to use when choosing from random options.</param>
+	/// <param name="style">How the transformed cards are displayed to the player.</param>
+	/// <returns>The replacement card.</returns>
 	public static async Task<IEnumerable<CardPileAddResult>> Transform(IEnumerable<CardTransformation> transformations, Rng? rng, CardPreviewStyle style = CardPreviewStyle.HorizontalLayout)
 	{
 		if (CombatManager.Instance.IsEnding)
@@ -279,7 +377,7 @@ public static class CardCmd
 		{
 			return Array.Empty<CardPileAddResult>();
 		}
-		CombatState combatState = transformationsArr[0].Original.CombatState;
+		ICombatState combatState = transformationsArr[0].Original.CombatState;
 		List<(CardTransformation, CardPile, int, CardModel)> transformationsWithOriginalData = new List<(CardTransformation, CardPile, int, CardModel)>();
 		CardTransformation[] array = transformationsArr;
 		for (int i = 0; i < array.Length; i++)
@@ -343,7 +441,7 @@ public static class CardCmd
 			else
 			{
 				pile2.AddInternal(replacement2, item4);
-				CombatManager.Instance.History.CardGenerated(combatState, replacement2, generatedByPlayer: true);
+				CombatManager.Instance.History.CardGenerated(combatState, replacement2, replacement2.Owner);
 				await Hook.AfterCardEnteredCombat(combatState, replacement2);
 			}
 			await Hook.AfterCardChangedPiles(runState, combatState, replacement2, pile2.Type, null);
@@ -352,7 +450,7 @@ public static class CardCmd
 			replacement2.AfterTransformedTo();
 			results.Add(result);
 		}
-		List<Task> tasksToAwait = new List<Task>();
+		float num = 0f;
 		for (int j = 0; j < results.Count; j++)
 		{
 			CardModel original2 = transformationsWithOriginalData[j].Item1.Original;
@@ -377,8 +475,12 @@ public static class CardCmd
 						playQueue.RemoveCardFromQueueForCancellation(nCard, forceReturnToHand: true);
 					}
 					hand.TryCancelCardPlay(original2);
-					tasksToAwait.Add(TaskHelper.RunSafely(NCardTransformVfx.PlayAnimOnCardInHand(nCard, cardAdded2)));
-					await Cmd.Wait(0.2f);
+					NCardTransformShineVfx nCardTransformShineVfx = NCardTransformShineVfx.Create(nCard, cardAdded2, Array.Empty<RelicModel>());
+					if (nCardTransformShineVfx != null)
+					{
+						num += nCardTransformShineVfx.GetEffectiveDuration(shortVersion: true);
+						TaskHelper.RunSafely(nCardTransformShineVfx.PlayAnimation(shortVersion: true));
+					}
 				}
 			}
 			else if (style != CardPreviewStyle.None && TestMode.IsOff)
@@ -393,24 +495,40 @@ public static class CardCmd
 				}))?.AddChildSafely(NCardTransformVfx.Create(original2, cardAdded2, results[j].modifyingModels?.OfType<RelicModel>()));
 			}
 		}
-		await Task.WhenAll(tasksToAwait);
-		for (int j = 0; j < results.Count; j++)
+		await Cmd.Wait(num);
+		for (int k = 0; k < results.Count; k++)
 		{
-			CardPileAddResult cardPileAddResult = results[j];
+			CardPileAddResult cardPileAddResult = results[k];
 			if (cardPileAddResult.success && cardPileAddResult.cardAdded.Pile.Type.IsCombatPile())
 			{
-				await Hook.AfterCardGeneratedForCombat(cardPileAddResult.cardAdded.CombatState, cardPileAddResult.cardAdded, addedByPlayer: true);
+				await Hook.AfterCardGeneratedForCombat(cardPileAddResult.cardAdded.CombatState, cardPileAddResult.cardAdded, cardPileAddResult.cardAdded.Owner);
 			}
-			transformationsWithOriginalData[j].Item1.Original.RemoveFromState();
+			transformationsWithOriginalData[k].Item1.Original.RemoveFromState();
 		}
 		return results;
 	}
 
+	/// <summary>
+	/// Apply an Enchantment to a card.
+	/// </summary>
+	/// <param name="card">Card to enchant.</param>
+	/// <param name="amount">Amount of the enchantment to apply.</param>
+	/// <typeparam name="T">Type of enchantment to apply.</typeparam>
+	/// <returns>Enchantment that was applied, or null if it failed.</returns>
 	public static T? Enchant<T>(CardModel card, decimal amount) where T : EnchantmentModel
 	{
 		return Enchant(ModelDb.Enchantment<T>().ToMutable(), card, amount) as T;
 	}
 
+	/// <summary>
+	/// Apply an Enchantment to a card.
+	/// Use this for actually enchanting a card, not for previewing an enchantment, because it won't highlight value
+	/// changes.
+	/// </summary>
+	/// <param name="enchantment">Enchantment to apply.</param>
+	/// <param name="card">Card to enchant.</param>
+	/// <param name="amount">Amount of the enchantment to apply.</param>
+	/// <returns>Enchantment that was applied, or null if it failed.</returns>
 	public static EnchantmentModel? Enchant(EnchantmentModel enchantment, CardModel card, decimal amount)
 	{
 		enchantment.AssertMutable();
@@ -432,18 +550,31 @@ public static class CardCmd
 			card.Enchantment.Amount += (int)amount;
 		}
 		card.FinalizeUpgradeInternal();
-		if (card.Pile != null)
+		CardPile pile = card.Pile;
+		if (pile != null && pile.Type == PileType.Deck)
 		{
 			card.Owner.RunState.CurrentMapPointHistoryEntry?.GetEntry(card.Owner.NetId).CardsEnchanted.Add(new CardEnchantmentHistoryEntry(card, enchantment.Id));
 		}
 		return card.Enchantment;
 	}
 
+	/// <summary>
+	/// Clear a card's Enchantment if it has one.
+	/// </summary>
+	/// <param name="card">Card whose enchantment we want to clear.</param>
 	public static void ClearEnchantment(CardModel card)
 	{
 		card.ClearEnchantmentInternal();
 	}
 
+	/// <summary>
+	/// Apply Afflictions to cards and show it to the owning player if they are the local player.
+	/// </summary>
+	/// <param name="cards">Cards to afflict.</param>
+	/// <param name="amount">Amount of the affliction to apply.</param>
+	/// <param name="style">The style of preview to use.</param>
+	/// <typeparam name="T">Type of affliction to apply.</typeparam>
+	/// <returns>Afflictions that were applied.</returns>
 	public static async Task<IEnumerable<T>> AfflictAndPreview<T>(IEnumerable<CardModel> cards, decimal amount, CardPreviewStyle style = CardPreviewStyle.HorizontalLayout) where T : AfflictionModel
 	{
 		List<T> afflictions = new List<T>();
@@ -472,11 +603,25 @@ public static class CardCmd
 		return afflictions;
 	}
 
+	/// <summary>
+	/// Apply an Affliction to a card.
+	/// </summary>
+	/// <param name="card">Card to afflict.</param>
+	/// <param name="amount">Amount of the affliction to apply.</param>
+	/// <typeparam name="T">Type of affliction to apply.</typeparam>
+	/// <returns>Affliction that was applied, or null if it failed.</returns>
 	public static async Task<T?> Afflict<T>(CardModel card, decimal amount) where T : AfflictionModel
 	{
 		return (await Afflict(ModelDb.Affliction<T>().ToMutable(), card, amount)) as T;
 	}
 
+	/// <summary>
+	/// Apply an Affliction to a card.
+	/// </summary>
+	/// <param name="affliction">Affliction to apply.</param>
+	/// <param name="card">Card to afflict.</param>
+	/// <param name="amount">Amount of the affliction to apply.</param>
+	/// <returns>Affliction that was applied, or null if it failed.</returns>
 	public static Task<AfflictionModel?> Afflict(AfflictionModel affliction, CardModel card, decimal amount)
 	{
 		if (CombatManager.Instance.IsOverOrEnding)
@@ -488,7 +633,7 @@ public static class CardCmd
 			}
 		}
 		affliction.AssertMutable();
-		CombatState combatState = card.CombatState ?? card.Owner.Creature.CombatState;
+		ICombatState combatState = card.CombatState ?? card.Owner.Creature.CombatState;
 		if (combatState == null || !Hook.ShouldAfflict(combatState, card, affliction))
 		{
 			return Task.FromResult<AfflictionModel>(null);
@@ -514,11 +659,20 @@ public static class CardCmd
 		return Task.FromResult(card.Affliction);
 	}
 
+	/// <summary>
+	/// Clear a card's Affliction if it has one.
+	/// </summary>
+	/// <param name="card">Card whose affliction we want to clear.</param>
 	public static void ClearAffliction(CardModel card)
 	{
 		card.ClearAfflictionInternal();
 	}
 
+	/// <summary>
+	/// Apply keywords to a card.
+	/// </summary>
+	/// <param name="card">Card to apply keyword too.</param>
+	/// <param name="keywords">keywords to apply.</param>
 	public static void ApplyKeyword(CardModel card, params CardKeyword[] keywords)
 	{
 		foreach (CardKeyword keyword in keywords)
@@ -537,17 +691,35 @@ public static class CardCmd
 		NCard.FindOnTable(card)?.UpdateVisuals(card.Pile.Type, CardPreviewMode.Normal);
 	}
 
+	/// <summary>
+	/// Apply Sly to a card for the current turn only.
+	/// </summary>
+	/// <param name="card">Card to apply single-turn Sly to.</param>
 	public static void ApplySingleTurnSly(CardModel card)
 	{
 		card.GiveSingleTurnSly();
 		NCard.FindOnTable(card)?.UpdateVisuals(card.Pile.Type, CardPreviewMode.Normal);
 	}
 
+	/// <summary>
+	/// Creates a set of NCards that spawn in the middle of the screen, then fly to the pile they're in.
+	/// Useful for when you want to preview cards that are being added to a pile.
+	/// </summary>
+	/// <param name="card">Card to preview.</param>
+	/// <param name="time">How long the card lingers before it goes off screen</param>
+	/// <param name="style">How multiple cards are aligned if previewed together.</param>
 	public static TaskCompletionSource? Preview(CardModel card, float time = 1.2f, CardPreviewStyle style = CardPreviewStyle.HorizontalLayout)
 	{
 		return PreviewInternal(card, isAddingCardsToPile: false, null, time, style);
 	}
 
+	/// <summary>
+	/// Creates a set of NCards that spawn in the middle of the screen, then fly to the pile they're in.
+	/// Useful for when you want to preview cards that are being added to a pile.
+	/// </summary>
+	/// <param name="cards">Cards to preview.</param>
+	/// <param name="time">How long the card lingers before it goes off screen</param>
+	/// <param name="style">How multiple cards are aligned if previewed together.</param>
 	public static void Preview(IReadOnlyList<CardModel> cards, float time = 1.2f, CardPreviewStyle style = CardPreviewStyle.HorizontalLayout)
 	{
 		if (TestMode.IsOn || CombatManager.Instance.IsEnding)
@@ -606,7 +778,10 @@ public static class CardCmd
 			return null;
 		}
 		PileType pileType = card.Pile.Type;
-		NCard node = NCard.Create(card);
+		if (GetTotalCardsBeingPreviewed() > 50)
+		{
+			return null;
+		}
 		Control control;
 		switch (style)
 		{
@@ -633,7 +808,17 @@ public static class CardCmd
 		default:
 			throw new ArgumentOutOfRangeException("style", $"Unexpected {"CardPreviewStyle"} {style}!");
 		}
-		control?.AddChildSafely(node);
+		Control control2 = control;
+		if (control2 == null)
+		{
+			return null;
+		}
+		if (style == CardPreviewStyle.HorizontalLayout && control2.GetChildCount() > 5)
+		{
+			control2 = (pileType.IsCombatPile() ? NCombatRoom.Instance.Ui.MessyCardPreviewContainer : NRun.Instance?.GlobalUi.MessyCardPreviewContainer);
+		}
+		NCard node = NCard.Create(card);
+		control2?.AddChildSafely(node);
 		node.UpdateVisuals(pileType, CardPreviewMode.Normal);
 		TaskCompletionSource source = new TaskCompletionSource();
 		Tween tween = node.CreateTween();
@@ -646,12 +831,11 @@ public static class CardCmd
 		tween.TweenCallback(Callable.From(delegate
 		{
 			NCardFlyVfx nCardFlyVfx = null;
-			Node node2 = ((pileType != PileType.Deck) ? NCombatRoom.Instance?.CombatVfxContainer : NRun.Instance?.GlobalUi.TopBar.TrailContainer);
+			Node node2 = ((pileType != PileType.Deck) ? card.Owner.Creature.GetVfxContainer() : NRun.Instance?.GlobalUi.TopBar.TrailContainer);
 			if (node2 != null)
 			{
 				PileType pileType2 = ((card.Pile != null) ? card.Pile.Type : pileType);
-				Vector2 targetPosition = pileType2.GetTargetPosition(node);
-				nCardFlyVfx = NCardFlyVfx.Create(node, targetPosition, isAddingCardsToPile, card.Owner.Character.TrailPath);
+				nCardFlyVfx = NCardFlyVfx.Create(node, pileType2, isAddingCardsToPile, card.Owner.Character.TrailPath);
 			}
 			if (nCardFlyVfx != null && node2 != null)
 			{
@@ -668,6 +852,24 @@ public static class CardCmd
 			}
 		})).SetDelay(time);
 		return source;
+	}
+
+	private static int GetTotalCardsBeingPreviewed()
+	{
+		int num = 0;
+		if (NCombatRoom.Instance != null)
+		{
+			num = NCombatRoom.Instance.Ui.CardPreviewContainer.GetChildCount();
+			num += NCombatRoom.Instance.Ui.MessyCardPreviewContainer.GetChildCount();
+		}
+		if (NRun.Instance != null)
+		{
+			num += NRun.Instance.GlobalUi.CardPreviewContainer.GetChildCount();
+			num += NRun.Instance.GlobalUi.MessyCardPreviewContainer.GetChildCount();
+			num += NRun.Instance.GlobalUi.EventCardPreviewContainer.GetChildCount();
+			num += NRun.Instance.GlobalUi.GridCardPreviewContainer.GetChildCount();
+		}
+		return num;
 	}
 
 	private static Task FlashRelics(NCard node, IEnumerable<RelicModel>? relicsToFlash)

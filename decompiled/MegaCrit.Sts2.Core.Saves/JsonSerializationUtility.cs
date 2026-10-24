@@ -10,6 +10,9 @@ using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// Utility for serializing and deserializing save data.
+/// </summary>
 public static class JsonSerializationUtility
 {
 	public static IJsonTypeInfoResolver DefaultResolver { get; } = MegaCritSerializerContext.Default;
@@ -20,11 +23,21 @@ public static class JsonSerializationUtility
 		TypeInfoResolver = MegaCritSerializerContext.Default.WithAddedModifier(AlphabetizeProperties).WithAddedModifier(JsonSerializeConditionAttribute.CheckJsonSerializeConditionsModifier)
 	};
 
+	/// <summary>
+	/// Adds a type info resolver to the resolving chain. Only used in tests to include test objects in the JSON
+	/// serialization.
+	/// </summary>
 	public static void AddTypeInfoResolver(IJsonTypeInfoResolver resolver)
 	{
 		Options.TypeInfoResolverChain.Add(resolver);
 	}
 
+	/// <summary>
+	/// Serializes a save schema to JSON asynchronously.
+	/// </summary>
+	/// <typeparam name="T">The type of save schema</typeparam>
+	/// <param name="data">The data to serialize</param>
+	/// <returns>The JSON string</returns>
 	public static async Task<string> SerializeAsync<T>(T data) where T : ISaveSchema
 	{
 		using MemoryStream stream = new MemoryStream();
@@ -60,11 +73,23 @@ public static class JsonSerializationUtility
 		}
 	}
 
+	/// <summary>
+	/// Serializes a save schema to JSON.
+	/// </summary>
+	/// <typeparam name="T">The type of save schema</typeparam>
+	/// <param name="obj">The object to serialize</param>
+	/// <returns>The JSON string</returns>
 	public static string ToJson<T>(T obj) where T : ISaveSchema
 	{
 		return JsonSerializer.Serialize(obj, GetTypeInfo<T>());
 	}
 
+	/// <summary>
+	/// Deserializes JSON to a save schema object.
+	/// </summary>
+	/// <typeparam name="T">The type of save schema</typeparam>
+	/// <param name="json">The JSON string</param>
+	/// <returns>The deserialization result</returns>
 	public static ReadSaveResult<T> FromJson<T>(string json) where T : ISaveSchema, new()
 	{
 		if (string.IsNullOrWhiteSpace(json))

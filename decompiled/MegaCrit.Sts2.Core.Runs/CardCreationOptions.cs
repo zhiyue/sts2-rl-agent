@@ -11,24 +11,68 @@ using MegaCrit.Sts2.Core.Rooms;
 
 namespace MegaCrit.Sts2.Core.Runs;
 
+/// <summary>
+/// Options passed when creating cards for rewards.
+/// Various combinations of these options will do different things, so read carefully when you are using this for a
+/// new circumstance.
+/// </summary>
 public record CardCreationOptions
 {
+	/// <summary>
+	/// The card pool from which rewards will be pulled.
+	/// Either <see cref="P:MegaCrit.Sts2.Core.Runs.CardCreationOptions.CardPools" /> must be non-empty or <see cref="P:MegaCrit.Sts2.Core.Runs.CardCreationOptions.CustomCardPool" /> must be non-null.
+	/// </summary>
 	public IReadOnlyCollection<CardPoolModel> CardPools => _cardPools;
 
+	/// <summary>
+	/// The filter to apply to the card pool when generating rewards.
+	/// We use this instead of <see cref="P:MegaCrit.Sts2.Core.Runs.CardCreationOptions.CustomCardPool" /> because it allows effects that modify the available card
+	/// pools (like <see cref="T:MegaCrit.Sts2.Core.Models.Relics.PrismaticGem" />) to properly apply the same filter.
+	/// WARNING: This cannot be serialized, so don't use this when adding extra rewards to combat rewards.
+	/// </summary>
 	public Func<CardModel, bool>? CardPoolFilter { get; private set; }
 
+	/// <summary>
+	/// The card pool from which rewards will be pulled.
+	/// Either <see cref="P:MegaCrit.Sts2.Core.Runs.CardCreationOptions.CardPools" /> must be non-empty or <see cref="P:MegaCrit.Sts2.Core.Runs.CardCreationOptions.CustomCardPool" /> must be non-null.
+	/// WARNING: This cannot be serialized, so don't use this when adding extra rewards to combat rewards.
+	/// </summary>
 	public IEnumerable<CardModel>? CustomCardPool { get; private set; }
 
+	/// <summary>
+	/// The source from which this reward is being generated from.
+	/// Used to indicate to modification hooks whether they should apply to this reward or not. For example, some relics
+	/// specify that they only apply to encounter rewards, and not to rewards from events or shops.
+	/// </summary>
 	public CardCreationSource Source { get; private set; }
 
+	/// <summary>
+	/// The odds to use when generating the rarity of the cards in the reward.
+	/// Hooks should look at the source to determine where the cards come from, not this.
+	/// </summary>
 	public CardRarityOddsType RarityOdds { get; private set; }
 
+	/// <summary>
+	/// Restrictions applied when determining what can modify the generated rewards.
+	/// </summary>
 	public CardCreationFlags Flags { get; private set; }
 
+	/// <summary>
+	/// If set, we use this override over the default one in the factory
+	/// Used in the Crystal Sphere Items so that we can pass the event rng to be used and not hit state divergences in multiplayer
+	/// since we don't sync the player rng sets in that case
+	/// </summary>
 	public Rng? RngOverride { get; private set; }
 
 	private readonly List<CardPoolModel> _cardPools = new List<CardPoolModel>();
 
+	/// <summary>
+	/// Constructor which takes a card pool model.
+	/// </summary>
+	/// <param name="cardPools">The card pools from which rewards will be generated.</param>
+	/// <param name="source">The purpose for which the rewards are being generated.</param>
+	/// <param name="rarityOdds">The odds to apply when rolling card rarities.</param>
+	/// <param name="cardPoolFilter">A filter to apply to the card pool when generating rewards.</param>
 	public CardCreationOptions(IEnumerable<CardPoolModel> cardPools, CardCreationSource source, CardRarityOddsType rarityOdds, Func<CardModel, bool>? cardPoolFilter = null)
 	{
 		_cardPools.AddRange(cardPools);
@@ -37,6 +81,12 @@ public record CardCreationOptions
 		CardPoolFilter = cardPoolFilter;
 	}
 
+	/// <summary>
+	/// Constructor which takes a custom card pool.
+	/// </summary>
+	/// <param name="customCardPool">The list of cards from which rewards will be generated.</param>
+	/// <param name="source">The purpose for which the rewards are being generated.</param>
+	/// <param name="rarityOdds">The odds to apply when rolling card rarities.</param>
 	public CardCreationOptions(IEnumerable<CardModel> customCardPool, CardCreationSource source, CardRarityOddsType rarityOdds)
 	{
 		CustomCardPool = customCardPool;
@@ -45,6 +95,11 @@ public record CardCreationOptions
 		AssertUniformOddsIfSingleRarityPool();
 	}
 
+	/// <summary>
+	/// Creates a default instance of CardCreationOptions for use in generating end-of-combat rewards or shop rewards for
+	/// the given room type.
+	/// Do not use this in events or relics.
+	/// </summary>
 	public static CardCreationOptions ForRoom(Player player, RoomType roomType)
 	{
 		CardCreationSource cardCreationSource;
@@ -75,21 +130,42 @@ public record CardCreationOptions
 		});
 	}
 
+	/// <summary>
+	/// Generates an instance of CardCreationOptions which can be used when generating rewards for events or relics.
+	/// This uses CardRarityOddsType.RegularEncounter to generate card rarities, meaning that common cards will be far
+	/// more likely to show up than rare ones.
+	/// </summary>
 	public static CardCreationOptions ForNonCombatWithDefaultOdds(IEnumerable<CardPoolModel> cardPools, Func<CardModel, bool>? cardPoolFilter = null)
 	{
 		return new CardCreationOptions(cardPools, CardCreationSource.Other, CardRarityOddsType.RegularEncounter, cardPoolFilter).WithFlags(CardCreationFlags.NoUpgradeRoll);
 	}
 
+	/// <summary>
+	/// Generates an instance of CardCreationOptions which should be used when generating rewards for events or relics.
+	/// This uses CardRarityOddsType.RegularEncounter to generate card rarities, meaning that common cards will be much
+	/// more likely to show up than rare ones.
+	/// DO NOT use this if your custom pool only contains cards of specific rarities! CardRarityOddsType.RegularEncounter
+	/// rolls for rarity, and if it lands on a rarity that your pool does not contain, then it will break. In that
+	/// situation, use ForEventWithUniformOdds instead.
+	/// </summary>
 	public static CardCreationOptions ForNonCombatWithDefaultOdds(IEnumerable<CardModel> customCardPool)
 	{
 		return new CardCreationOptions(customCardPool, CardCreationSource.Other, CardRarityOddsType.RegularEncounter).WithFlags(CardCreationFlags.NoUpgradeRoll);
 	}
 
+	/// <summary>
+	/// Generates an instance of CardCreationOptions which can be used when generating rewards for events or relics.
+	/// This uses CardRarityOddsType.Uniform to generate card rarities, meaning that all cards in the pool will have an
+	/// even chance of being rolled.
+	/// </summary>
 	public static CardCreationOptions ForNonCombatWithUniformOdds(IEnumerable<CardPoolModel> cardPools, Func<CardModel, bool>? cardPoolFilter = null)
 	{
 		return new CardCreationOptions(cardPools, CardCreationSource.Other, CardRarityOddsType.Uniform, cardPoolFilter).WithFlags(CardCreationFlags.NoUpgradeRoll);
 	}
 
+	/// <summary>
+	/// Get all the cards that could be created for the specified player based on this set of options.
+	/// </summary>
 	public IEnumerable<CardModel> GetPossibleCards(Player player)
 	{
 		IEnumerable<CardModel> enumerable = ((CardPools.Count <= 0) ? CustomCardPool : (from c in CardPools.SelectMany((CardPoolModel p) => p.GetUnlockedCards(player.UnlockState, player.RunState.CardMultiplayerConstraint))
@@ -102,6 +178,14 @@ public record CardCreationOptions
 		return enumerable;
 	}
 
+	/// <summary>
+	/// Sets the custom pool on this instance of CardCreationOptions.
+	/// </summary>
+	/// <param name="customPool">The custom pool to use when rolling rewards.</param>
+	/// <param name="rarityOdds">
+	/// The new rarity odds to use when rolling rewards.
+	/// If there is only one rarity in the new custom pool, you should pass Uniform to this.
+	/// </param>
 	public CardCreationOptions WithCustomPool(IEnumerable<CardModel> customPool, CardRarityOddsType? rarityOdds = null)
 	{
 		CustomCardPool = customPool.ToArray();
@@ -111,6 +195,9 @@ public record CardCreationOptions
 		return this;
 	}
 
+	/// <summary>
+	/// Sets the card pool on this instance of CardCreationOptions.
+	/// </summary>
 	public CardCreationOptions WithCardPools(IEnumerable<CardPoolModel> pools, Func<CardModel, bool>? cardPoolFilter = null)
 	{
 		_cardPools.Clear();
@@ -120,6 +207,9 @@ public record CardCreationOptions
 		return this;
 	}
 
+	/// <summary>
+	/// Sets flags on this instance of CardCreationOptions.
+	/// </summary>
 	public CardCreationOptions WithFlags(CardCreationFlags flag)
 	{
 		Flags |= flag;

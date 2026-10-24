@@ -10,33 +10,72 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
+/// <summary>
+/// Exists solely to move the y position of the map asset when the aspect ratio becomes narrower than 16:9
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Map/NMapBg.cs")]
 public class NMapBg : VBoxContainer
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : VBoxContainer.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnVisibilityChanged' method.
+		/// </summary>
 		public static readonly StringName OnVisibilityChanged = "OnVisibilityChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnWindowChange' method.
+		/// </summary>
 		public static readonly StringName OnWindowChange = "OnWindowChange";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : VBoxContainer.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_mapTop' field.
+		/// </summary>
 		public static readonly StringName _mapTop = "_mapTop";
 
+		/// <summary>
+		/// Cached name for the '_mapMid' field.
+		/// </summary>
 		public static readonly StringName _mapMid = "_mapMid";
 
+		/// <summary>
+		/// Cached name for the '_mapBot' field.
+		/// </summary>
 		public static readonly StringName _mapBot = "_mapBot";
 
+		/// <summary>
+		/// Cached name for the '_drawings' field.
+		/// </summary>
 		public static readonly StringName _drawings = "_drawings";
 
+		/// <summary>
+		/// Cached name for the '_window' field.
+		/// </summary>
 		public static readonly StringName _window = "_window";
 
+		/// <summary>
+		/// Cached name for the '_offsetX' field.
+		/// </summary>
 		public static readonly StringName _offsetX = "_offsetX";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : VBoxContainer.SignalName
 	{
 	}
@@ -104,6 +143,11 @@ public class NMapBg : VBoxContainer
 		_drawings.RepositionBasedOnBackground(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -114,6 +158,7 @@ public class NMapBg : VBoxContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -138,6 +183,7 @@ public class NMapBg : VBoxContainer
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -156,6 +202,7 @@ public class NMapBg : VBoxContainer
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -192,6 +239,7 @@ public class NMapBg : VBoxContainer
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -228,6 +276,11 @@ public class NMapBg : VBoxContainer
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -241,6 +294,7 @@ public class NMapBg : VBoxContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -253,6 +307,7 @@ public class NMapBg : VBoxContainer
 		info.AddProperty(PropertyName._offsetX, Variant.From(in _offsetX));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

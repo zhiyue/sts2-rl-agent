@@ -19,7 +19,7 @@ public sealed class Supermassive : CardModel
 	{
 		new CalculationBaseVar(5m),
 		new ExtraDamageVar(3m),
-		new CalculatedDamageVar(ValueProp.Move).WithMultiplier((CardModel card, Creature? _) => CombatManager.Instance.History.Entries.OfType<CardGeneratedEntry>().Count((CardGeneratedEntry c) => c.Actor.Player == card.Owner && c.GeneratedByPlayer))
+		new CalculatedDamageVar(ValueProp.Move).WithMultiplier((CardModel card, Creature? _) => CombatManager.Instance.History.Entries.OfType<CardGeneratedEntry>().Count((CardGeneratedEntry c) => c.Creator == card.Owner))
 	});
 
 	public Supermassive()

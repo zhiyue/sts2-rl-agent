@@ -11,7 +11,7 @@ public sealed class VineShamblerNormal : EncounterModel
 
 	public override IEnumerable<MonsterModel> AllPossibleMonsters => new global::_003C_003Ez__ReadOnlySingleElementList<MonsterModel>(ModelDb.Monster<VineShambler>());
 
-	public override IEnumerable<string>? ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Entangled>().OverlayPath);
+	public override IEnumerable<string> ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Entangled>().OverlayPath);
 
 	protected override IReadOnlyList<(MonsterModel, string?)> GenerateMonsters()
 	{

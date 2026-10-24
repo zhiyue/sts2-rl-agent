@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
@@ -13,6 +14,7 @@ using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.Screens.Bestiary;
 using MegaCrit.Sts2.Core.Platform;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
@@ -114,8 +116,16 @@ public class Creature
 
 	public CombatSide Side { get; }
 
-	public CombatState? CombatState { get; set; }
+	/// <summary>
+	/// The CombatState that this creature exists in.
+	/// Never null for monsters.
+	/// Will be null for players when outside of combat.
+	/// </summary>
+	public ICombatState? CombatState { get; set; }
 
+	/// <summary>
+	/// Use this when displaying the name to the player.
+	/// </summary>
 	public string Name
 	{
 		get
@@ -124,11 +134,31 @@ public class Creature
 			{
 				return Monster.Title.GetFormattedText();
 			}
-			if (RunManager.Instance.IsSinglePlayerOrFakeMultiplayer)
+			if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
 			{
 				return Player.Character.Title.GetFormattedText();
 			}
-			return PlatformUtil.GetPlayerName(RunManager.Instance.NetService.Platform, Player.NetId);
+			return PlatformUtil.GetPlayerNameRaw(RunManager.Instance.NetService.Platform, Player.NetId);
+		}
+	}
+
+	/// <summary>
+	/// Use this when logging the name of the creature.
+	/// It avoids logging player names directly.
+	/// </summary>
+	public string LogName
+	{
+		get
+		{
+			if (IsMonster)
+			{
+				return Monster.Title.GetFormattedText();
+			}
+			if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
+			{
+				return Player.Character.Title.GetFormattedText();
+			}
+			return "PlayerId " + Player.NetId;
 		}
 	}
 
@@ -136,8 +166,17 @@ public class Creature
 
 	public bool IsPlayer => Player != null;
 
-	public bool ShowsInfiniteHp { get; set; }
+	/// <summary>
+	/// How should this creature's health bar be displayed?
+	/// This is mostly for visuals, although a few gameplay effects (like <see cref="T:MegaCrit.Sts2.Core.Models.Powers.HellraiserPower" />) check it to see
+	/// if the creature can currently take damage.
+	/// </summary>
+	public HpDisplay HpDisplay { get; set; }
 
+	/// <summary>
+	/// The player that owns this pet.
+	/// Returns null if this creature is not a pet.
+	/// </summary>
 	public Player? PetOwner
 	{
 		get
@@ -154,8 +193,14 @@ public class Creature
 		}
 	}
 
+	/// <summary>
+	/// Is this creature a pet?
+	/// </summary>
 	public bool IsPet => PetOwner != null;
 
+	/// <summary>
+	/// Get all the pets that belong to this creature.
+	/// </summary>
 	public IReadOnlyList<Creature> Pets => Player?.PlayerCombatState?.Pets ?? Array.Empty<Creature>();
 
 	public bool IsAlive => CurrentHp > 0;
@@ -197,6 +242,13 @@ public class Creature
 
 	public bool IsEnemy => Side == CombatSide.Enemy;
 
+	/// <summary>
+	/// Is this creature a <b>primary enemy</b>?
+	/// A <b>primary enemy</b> can stay alive all alone.
+	/// A <b>secondary enemy</b> will automatically die unless there's also a living primary enemy.
+	/// Most enemies are primary enemies. Enemies with powers like <see cref="T:MegaCrit.Sts2.Core.Models.Powers.MinionPower" /> or <see cref="T:MegaCrit.Sts2.Core.Models.Powers.IllusionPower" /> are
+	/// secondary.
+	/// </summary>
 	public bool IsPrimaryEnemy
 	{
 		get
@@ -209,6 +261,10 @@ public class Creature
 		}
 	}
 
+	/// <summary>
+	/// Is this creature a <b>secondary enemy</b>?
+	/// See <see cref="P:MegaCrit.Sts2.Core.Entities.Creatures.Creature.IsPrimaryEnemy" /> for detailed definitions.
+	/// </summary>
 	public bool IsSecondaryEnemy
 	{
 		get
@@ -221,6 +277,11 @@ public class Creature
 		}
 	}
 
+	/// <summary>
+	/// Is this creature <b>hittable</b>?
+	/// A <b>hittable</b> creature is alive and can be "hit" by effects.
+	/// This is different from <b>targetable</b>; an un-targetable creature can still be hit by AOE effects.
+	/// </summary>
 	public bool IsHittable
 	{
 		get
@@ -237,6 +298,13 @@ public class Creature
 		}
 	}
 
+	/// <summary>
+	/// Can this creature have powers applied to it?
+	/// A creature can have powers applied to it if it's in combat and can be "hit" by effects.
+	/// This is different from <b>targetable</b>; an un-targetable creature can have powers applied to it.
+	/// It's also different from <b>hittable</b>; a creature is not hittable if it's dead, but dead creatures can still
+	/// have powers applied to them.
+	/// </summary>
 	public bool CanReceivePowers
 	{
 		get
@@ -340,6 +408,9 @@ public class Creature
 		throw new InvalidOperationException("Creature and Monster should never both be null.");
 	}
 
+	/// <summary>
+	/// Called when the creature is first added to combat.
+	/// </summary>
 	public async Task AfterAddedToRoom()
 	{
 		if (Side == CombatSide.Enemy)
@@ -348,6 +419,14 @@ public class Creature
 		}
 	}
 
+	/// <summary>
+	/// DO NOT CALL UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING.
+	/// Hooks and everything are all done in CreatureCmd.Damage, so there needs to be a really good reason to want to
+	/// avoid them.
+	/// </summary>
+	/// <param name="amount">Amount of damage to be dealt to this creature's block.</param>
+	/// <param name="props">Damage props</param>
+	/// <returns>How much damage was blocked.</returns>
 	public decimal DamageBlockInternal(decimal amount, ValueProp props)
 	{
 		decimal num = (props.HasFlag(ValueProp.Unblockable) ? 0m : Math.Min(Block, amount));
@@ -355,16 +434,25 @@ public class Creature
 		return num;
 	}
 
+	/// <summary>
+	/// DO NOT CALL UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING.
+	/// Hooks and everything are all done in CreatureCmd.Damage, so there needs to be a really good reason to want to
+	/// avoid them.
+	/// </summary>
+	/// <param name="amount">Amount of damage to be dealt to this creature's HP.</param>
+	/// <param name="props">Value props for the damage.</param>
+	/// <returns>Result of the damage.</returns>
 	public DamageResult LoseHpInternal(decimal amount, ValueProp props)
 	{
 		bool flag = CurrentHp > 0 && amount >= (decimal)CurrentHp;
 		int currentHp = CurrentHp;
-		CurrentHp = Math.Max(CurrentHp - (int)amount, 0);
+		int num = (int)Math.Min(amount, 999999999m);
+		CurrentHp = Math.Max(CurrentHp - num, 0);
 		return new DamageResult(this, props)
 		{
 			UnblockedDamage = currentHp - CurrentHp,
 			WasTargetKilled = flag,
-			OverkillDamage = (flag ? ((int)(-((decimal)currentHp - amount))) : 0)
+			OverkillDamage = (flag ? Math.Max(num - currentHp, 0) : 0)
 		};
 	}
 
@@ -374,7 +462,7 @@ public class Creature
 		{
 			throw new ArgumentException("amount must be positive. Use LoseBlock for block loss.");
 		}
-		Block = Math.Min(Block + (int)amount, 999);
+		Block = (int)Math.Min((decimal)Block + amount, 999999999m);
 	}
 
 	public void LoseBlockInternal(decimal amount)
@@ -383,7 +471,7 @@ public class Creature
 		{
 			throw new ArgumentException("amount must be positive. Use GainBlock for block gain.");
 		}
-		Block = Math.Max(Block - (int)amount, 0);
+		Block = (int)Math.Max((decimal)Block - amount, 0m);
 	}
 
 	public void HealInternal(decimal amount)
@@ -408,7 +496,7 @@ public class Creature
 		{
 			throw new ArgumentException("amount must be non-negative.");
 		}
-		MaxHp = (int)amount;
+		MaxHp = Math.Min((int)amount, 999999999);
 		CurrentHp = Math.Min(CurrentHp, MaxHp);
 	}
 
@@ -423,6 +511,16 @@ public class Creature
 		this.Died?.Invoke(this);
 	}
 
+	/// <summary>
+	/// Stun this creature.
+	/// You should probably be calling
+	/// <see cref="M:MegaCrit.Sts2.Core.Commands.CreatureCmd.Stun(MegaCrit.Sts2.Core.Entities.Creatures.Creature,System.Func{System.Collections.Generic.IReadOnlyList{MegaCrit.Sts2.Core.Entities.Creatures.Creature},System.Threading.Tasks.Task},System.String)" /> instead.
+	/// </summary>
+	/// <param name="stunMove">Logic for the move that the stunned creature will "perform".</param>
+	/// <param name="nextMoveId">
+	/// ID of the move that the creature should perform the turn after they perform stunMove.
+	/// If null or empty, this will default to the last move they performed.
+	/// </param>
 	public void StunInternal(Func<IReadOnlyList<Creature>, Task> stunMove, string? nextMoveId)
 	{
 		if (Monster == null)
@@ -480,6 +578,11 @@ public class Creature
 		return _powers.OfType<T>();
 	}
 
+	public IEnumerable<PowerModel> GetPowerInstances(ModelId id)
+	{
+		return _powers.Where((PowerModel p) => p.Id == id);
+	}
+
 	public PowerModel? GetPowerById(ModelId id)
 	{
 		return _powers.FirstOrDefault((PowerModel p) => p.Id == id);
@@ -490,13 +593,18 @@ public class Creature
 		return GetPower<T>()?.Amount ?? 0;
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY PowerModel.ApplyInternal should be calling this.
+	/// </summary>
+	/// <param name="power">Power to apply.</param>
 	public void ApplyPowerInternal(PowerModel power)
 	{
 		if (power.Owner != this)
 		{
 			throw new InvalidOperationException("ONLY CALL THIS FROM PowerModel.ApplyInternal!");
 		}
-		if (!power.IsInstanced && _powers.Any((PowerModel p) => p.GetType() == power.GetType()))
+		if (power.InstanceType == PowerInstanceType.None && _powers.Any((PowerModel p) => p.GetType() == power.GetType()))
 		{
 			throw new InvalidOperationException("Trying to add multiple instances of a non-instanced power to a creature.");
 		}
@@ -504,6 +612,13 @@ public class Creature
 		this.PowerApplied?.Invoke(power);
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY PowerModel.Amount should be calling this.
+	/// </summary>
+	/// <param name="power">Power to modify.</param>
+	/// <param name="change">How much the power has changed.</param>
+	/// <param name="silent">Whether or not VFX should be displayed for this power.</param>
 	public void InvokePowerModified(PowerModel power, int change, bool silent)
 	{
 		if (change > 0)
@@ -520,6 +635,11 @@ public class Creature
 		}
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS!
+	/// ONLY PowerModel.RemoveInternal should be calling this.
+	/// </summary>
+	/// <param name="power">Power to remove.</param>
 	public void RemovePowerInternal(PowerModel power)
 	{
 		if (power.Owner != this)
@@ -530,6 +650,11 @@ public class Creature
 		this.PowerRemoved?.Invoke(power);
 	}
 
+	/// <summary>
+	/// NEVER CALL THIS UNLESS YOU KNOW WHAT YOU'RE DOING!
+	/// This skips the AfterRemoved call for powers.
+	/// </summary>
+	/// <param name="except">Powers that should not be removed.</param>
 	public IEnumerable<PowerModel> RemoveAllPowersInternalExcept(IEnumerable<PowerModel>? except = null)
 	{
 		List<PowerModel> list = _powers.Except(except ?? Array.Empty<PowerModel>()).ToList();
@@ -545,7 +670,7 @@ public class Creature
 		return RemoveAllPowersInternalExcept(_powers.Where((PowerModel p) => !p.ShouldPowerBeRemovedAfterOwnerDeath() || !Hook.ShouldPowerBeRemovedOnDeath(p)));
 	}
 
-	public void BeforeTurnStart(int roundNumber, CombatSide side)
+	public void BeforeTurnStart(CombatSide side)
 	{
 		foreach (PowerModel power in _powers)
 		{
@@ -553,12 +678,17 @@ public class Creature
 		}
 	}
 
-	public async Task AfterTurnStart(int roundNumber, CombatSide side)
+	public async Task AfterTurnStart(CombatSide side)
 	{
-		if (roundNumber > 1 || side != CombatSide.Player)
+		if (side == CombatSide.Player)
 		{
-			await ClearBlock();
+			Player? player = Player;
+			if (player != null && player.PlayerCombatState?.TurnNumber == 1)
+			{
+				return;
+			}
 		}
+		await ClearBlock();
 	}
 
 	public void OnSideSwitch()
@@ -599,9 +729,13 @@ public class Creature
 
 	public override string ToString()
 	{
-		return "Creature " + Name;
+		return "Creature " + LogName;
 	}
 
+	/// <summary>
+	/// Helper function to get the percent hp of a creature (0 - 1).
+	/// </summary>
+	/// <returns></returns>
 	public double GetHpPercentRemaining()
 	{
 		return (double)_currentHp / (double)_maxHp;
@@ -609,10 +743,63 @@ public class Creature
 
 	public static decimal ScaleHpForMultiplayer(decimal hp, EncounterModel? encounter, int playerCount, int actIndex)
 	{
-		if (playerCount == 1)
+		if (playerCount <= 1)
 		{
 			return hp;
 		}
 		return hp * (decimal)playerCount * MultiplayerScalingModel.GetMultiplayerScaling(encounter, actIndex);
+	}
+
+	public NCreature? GetCreatureNode()
+	{
+		if (TestMode.IsOn)
+		{
+			return null;
+		}
+		object obj = NCombatRoom.Instance?.GetCreatureNode(this);
+		if (obj == null)
+		{
+			NBestiary? instance = NBestiary.Instance;
+			if (instance == null)
+			{
+				return null;
+			}
+			obj = instance.GetCreatureNode(this);
+		}
+		return (NCreature?)obj;
+	}
+
+	public Control? GetVfxContainer()
+	{
+		if (TestMode.IsOn)
+		{
+			return null;
+		}
+		if (NCombatRoom.Instance?.GetCreatureNode(this) != null)
+		{
+			return NCombatRoom.Instance.CombatVfxContainer;
+		}
+		if (NBestiary.Instance?.GetCreatureNode(this) != null)
+		{
+			return NBestiary.Instance.VfxContainer;
+		}
+		return null;
+	}
+
+	public Control? GetBackVfxContainer()
+	{
+		if (TestMode.IsOn)
+		{
+			return null;
+		}
+		if (NCombatRoom.Instance?.GetCreatureNode(this) != null)
+		{
+			return NCombatRoom.Instance.BackCombatVfxContainer;
+		}
+		if (NBestiary.Instance?.GetCreatureNode(this) != null)
+		{
+			return NBestiary.Instance.BackVfxContainer;
+		}
+		return null;
 	}
 }

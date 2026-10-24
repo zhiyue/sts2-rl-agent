@@ -15,6 +15,8 @@ public class CombatReplay : IPacketSerializable
 
 	public List<uint> choiceIds = new List<uint>();
 
+	public List<int> rewardIds = new List<int>();
+
 	public uint nextActionId;
 
 	public uint nextChecksumId;
@@ -37,6 +39,11 @@ public class CombatReplay : IPacketSerializable
 		{
 			writer.WriteUInt(choiceId);
 		}
+		writer.WriteInt(rewardIds.Count);
+		foreach (int rewardId in rewardIds)
+		{
+			writer.WriteInt(rewardId);
+		}
 		writer.WriteUInt(nextActionId);
 		writer.WriteUInt(nextChecksumId);
 		writer.WriteUInt(nextHookId);
@@ -55,6 +62,11 @@ public class CombatReplay : IPacketSerializable
 		{
 			choiceIds.Add(reader.ReadUInt());
 		}
+		int num2 = reader.ReadInt();
+		for (int j = 0; j < num2; j++)
+		{
+			rewardIds.Add(reader.ReadInt());
+		}
 		nextActionId = reader.ReadUInt();
 		nextChecksumId = reader.ReadUInt();
 		nextHookId = reader.ReadUInt();
@@ -71,6 +83,7 @@ public class CombatReplay : IPacketSerializable
 			gitCommit = gitCommit,
 			modelIdHash = modelIdHash,
 			choiceIds = choiceIds,
+			rewardIds = rewardIds,
 			nextActionId = nextActionId,
 			nextChecksumId = nextChecksumId,
 			nextHookId = nextHookId,

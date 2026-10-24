@@ -1,7 +1,15 @@
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// Extension methods for ReadSaveStatus.
+/// </summary>
 public static class ReadSaveStatusExtensions
 {
+	/// <summary>
+	/// Determines if a save read status is recoverable.
+	/// </summary>
+	/// <param name="status">The read status to check</param>
+	/// <returns>True if the status indicates a recoverable error or success</returns>
 	public static bool IsRecoverable(this ReadSaveStatus status)
 	{
 		bool flag;

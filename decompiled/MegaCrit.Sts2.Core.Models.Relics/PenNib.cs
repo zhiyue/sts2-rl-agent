@@ -91,6 +91,9 @@ public sealed class PenNib : RelicModel
 		InvokeDisplayAmountChanged();
 	}
 
+	/// <summary>
+	/// This is public so we can call it from save tests.
+	/// </summary>
 	public void NotifyAttackPlayed()
 	{
 		AttacksPlayed++;
@@ -148,7 +151,7 @@ public sealed class PenNib : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (AttackToDouble == null)
 		{

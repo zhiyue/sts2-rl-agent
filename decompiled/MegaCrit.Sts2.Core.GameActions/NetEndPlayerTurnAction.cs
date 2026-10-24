@@ -6,25 +6,25 @@ namespace MegaCrit.Sts2.Core.GameActions;
 
 public struct NetEndPlayerTurnAction : INetAction, IPacketSerializable
 {
-	public int combatRound;
+	public int turnNumber;
 
 	public GameAction ToGameAction(Player player)
 	{
-		return new EndPlayerTurnAction(player, combatRound);
+		return new EndPlayerTurnAction(player, turnNumber);
 	}
 
 	public void Serialize(PacketWriter writer)
 	{
-		writer.WriteInt(combatRound, 16);
+		writer.WriteInt(turnNumber, 16);
 	}
 
 	public void Deserialize(PacketReader reader)
 	{
-		combatRound = reader.ReadInt(16);
+		turnNumber = reader.ReadInt(16);
 	}
 
 	public override string ToString()
 	{
-		return $"{"NetEndPlayerTurnAction"} round: {combatRound}";
+		return $"{"NetEndPlayerTurnAction"} turn: {turnNumber}";
 	}
 }

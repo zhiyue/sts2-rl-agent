@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Combat.History.Entries;
@@ -23,8 +25,8 @@ public class BlockGainedEntry : CombatHistoryEntry
 		}
 	}
 
-	public BlockGainedEntry(int amount, ValueProp props, CardPlay? cardPlay, Creature receiver, int roundNumber, CombatSide currentSide, CombatHistory history)
-		: base(receiver, roundNumber, currentSide, history)
+	public BlockGainedEntry(int amount, ValueProp props, CardPlay? cardPlay, Creature receiver, int roundNumber, CombatSide currentSide, CombatHistory history, IEnumerable<Player> players)
+		: base(receiver, roundNumber, currentSide, history, players)
 	{
 		Amount = amount;
 		Props = props;

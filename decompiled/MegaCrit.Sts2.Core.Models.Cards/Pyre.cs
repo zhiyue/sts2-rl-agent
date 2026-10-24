@@ -26,14 +26,14 @@ public sealed class Pyre : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<PyrePower>(base.Owner.Creature, base.DynamicVars.Energy.BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<PyrePower>(choiceContext, base.Owner.Creature, base.DynamicVars.Energy.BaseValue, base.Owner.Creature, this);
 	}
 
 	public override async Task OnEnqueuePlayVfx(Creature? target)
 	{
 		NFireBurningVfx child = NFireBurningVfx.Create(base.Owner.Creature, 1f, goingRight: false);
 		NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(child);
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
 	}
 
 	protected override void OnUpgrade()

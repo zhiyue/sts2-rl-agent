@@ -17,36 +17,81 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.StatsScreen;
 [ScriptPath("res://src/Core/Nodes/Screens/StatsScreen/NStatEntry.cs")]
 public class NStatEntry : NClickableControl
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NClickableControl.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'SetTopText' method.
+		/// </summary>
 		public static readonly StringName SetTopText = "SetTopText";
 
+		/// <summary>
+		/// Cached name for the 'SetBottomText' method.
+		/// </summary>
 		public static readonly StringName SetBottomText = "SetBottomText";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NClickableControl.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_imgUrl' field.
+		/// </summary>
 		public static readonly StringName _imgUrl = "_imgUrl";
 
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 
+		/// <summary>
+		/// Cached name for the '_topLabel' field.
+		/// </summary>
 		public static readonly StringName _topLabel = "_topLabel";
 
+		/// <summary>
+		/// Cached name for the '_bottomLabel' field.
+		/// </summary>
 		public static readonly StringName _bottomLabel = "_bottomLabel";
 
+		/// <summary>
+		/// Cached name for the '_controllerFocusReticle' field.
+		/// </summary>
 		public static readonly StringName _controllerFocusReticle = "_controllerFocusReticle";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NClickableControl.SignalName
 	{
 	}
@@ -114,13 +159,11 @@ public class NStatEntry : NClickableControl
 		{
 			if (base.GlobalPosition.X < GetViewport().GetVisibleRect().Size.X * 0.4f)
 			{
-				NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
-				nHoverTipSet.GlobalPosition = new Vector2(base.GlobalPosition.X - 392f, base.GlobalPosition.Y);
+				NHoverTipSet.CreateAndShow(this, _hoverTip)?.SetGlobalPosition(new Vector2(base.GlobalPosition.X - 392f, base.GlobalPosition.Y));
 			}
 			else
 			{
-				NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
-				nHoverTipSet.GlobalPosition = new Vector2(base.GlobalPosition.X + 532f, base.GlobalPosition.Y);
+				NHoverTipSet.CreateAndShow(this, _hoverTip)?.SetGlobalPosition(new Vector2(base.GlobalPosition.X + 532f, base.GlobalPosition.Y));
 			}
 		}
 		if (NControllerManager.Instance.IsUsingController)
@@ -141,6 +184,11 @@ public class NStatEntry : NClickableControl
 		_controllerFocusReticle.OnDeselect();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -163,6 +211,7 @@ public class NStatEntry : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -216,6 +265,7 @@ public class NStatEntry : NClickableControl
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -246,6 +296,7 @@ public class NStatEntry : NClickableControl
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -282,6 +333,7 @@ public class NStatEntry : NClickableControl
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -318,6 +370,11 @@ public class NStatEntry : NClickableControl
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -331,6 +388,7 @@ public class NStatEntry : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -343,6 +401,7 @@ public class NStatEntry : NClickableControl
 		info.AddProperty(PropertyName._controllerFocusReticle, Variant.From(in _controllerFocusReticle));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

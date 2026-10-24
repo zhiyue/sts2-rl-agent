@@ -10,40 +10,91 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx.Cards;
 [ScriptPath("res://src/Core/Nodes/Vfx/Cards/NSpookyHandVfx.cs")]
 public class NSpookyHandVfx : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'AnimateIn' method.
+		/// </summary>
 		public static readonly StringName AnimateIn = "AnimateIn";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_elapsedPauseTime' field.
+		/// </summary>
 		public static readonly StringName _elapsedPauseTime = "_elapsedPauseTime";
 
+		/// <summary>
+		/// Cached name for the '_pauseCounter' field.
+		/// </summary>
 		public static readonly StringName _pauseCounter = "_pauseCounter";
 
+		/// <summary>
+		/// Cached name for the '_isPaused' field.
+		/// </summary>
 		public static readonly StringName _isPaused = "_isPaused";
 
+		/// <summary>
+		/// Cached name for the '_timer' field.
+		/// </summary>
 		public static readonly StringName _timer = "_timer";
 
+		/// <summary>
+		/// Cached name for the '_totalPauses' field.
+		/// </summary>
 		public static readonly StringName _totalPauses = "_totalPauses";
 
+		/// <summary>
+		/// Cached name for the '_canPauseTimer' field.
+		/// </summary>
 		public static readonly StringName _canPauseTimer = "_canPauseTimer";
 
+		/// <summary>
+		/// Cached name for the '_intensity' field.
+		/// </summary>
 		public static readonly StringName _intensity = "_intensity";
 
+		/// <summary>
+		/// Cached name for the '_speed' field.
+		/// </summary>
 		public static readonly StringName _speed = "_speed";
 
+		/// <summary>
+		/// Cached name for the '_duration' field.
+		/// </summary>
 		public static readonly StringName _duration = "_duration";
 
+		/// <summary>
+		/// Cached name for the '_originalRotation' field.
+		/// </summary>
 		public static readonly StringName _originalRotation = "_originalRotation";
 
+		/// <summary>
+		/// Cached name for the '_targetScale' field.
+		/// </summary>
 		public static readonly StringName _targetScale = "_targetScale";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -99,6 +150,10 @@ public class NSpookyHandVfx : Control
 		tween.TweenProperty(this, "modulate:a", 0f, duration).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Quad);
 	}
 
+	/// <summary>
+	/// Processes the jittering and rotation logic for this vfx
+	/// </summary>
+	/// <param name="delta"></param>
 	public override void _Process(double delta)
 	{
 		float num = (float)delta;
@@ -127,6 +182,11 @@ public class NSpookyHandVfx : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -140,6 +200,7 @@ public class NSpookyHandVfx : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -164,6 +225,7 @@ public class NSpookyHandVfx : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -182,6 +244,7 @@ public class NSpookyHandVfx : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -243,6 +306,7 @@ public class NSpookyHandVfx : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -304,6 +368,11 @@ public class NSpookyHandVfx : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -322,6 +391,7 @@ public class NSpookyHandVfx : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -339,6 +409,7 @@ public class NSpookyHandVfx : Control
 		info.AddProperty(PropertyName._targetScale, Variant.From(in _targetScale));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -3,11 +3,14 @@ using Godot;
 
 namespace MegaCrit.Sts2.Core.Bindings.MegaSpine;
 
+/// <summary>
+/// C# bindings for SpineAnimationState.
+/// </summary>
 public class MegaAnimationState : MegaSpineBinding
 {
 	protected override string SpineClassName => "SpineAnimationState";
 
-	protected override IEnumerable<string> SpineMethods => new global::_003C_003Ez__ReadOnlyArray<string>(new string[6] { "add_animation", "apply", "get_current", "set_animation", "set_time_scale", "update" });
+	protected override IEnumerable<string> SpineMethods => new global::_003C_003Ez__ReadOnlyArray<string>(new string[7] { "add_animation", "add_empty_animation", "apply", "get_current", "set_animation", "set_time_scale", "update" });
 
 	public MegaAnimationState(Variant native)
 		: base(native)
@@ -24,14 +27,48 @@ public class MegaAnimationState : MegaSpineBinding
 		Call("apply", skeleton.BoundObject);
 	}
 
-	public MegaTrackEntry GetCurrent(int trackIndex)
+	public MegaTrackEntry? GetCurrent(int trackIndex)
 	{
-		return new MegaTrackEntry(Call("get_current", trackIndex));
+		Variant native = Call("get_current", trackIndex);
+		if (native.VariantType != Variant.Type.Object)
+		{
+			return null;
+		}
+		return new MegaTrackEntry(native);
+	}
+
+	/// <summary>
+	/// Returns the name of the animation currently playing on the given track, or null if no track is
+	/// active. Value-only so no transient wrapper escapes; the native reads are kept GC-safe by the
+	/// GC.KeepAlive in MegaSpineBinding.Call (PRG-6985).
+	/// </summary>
+	public string? GetCurrentAnimationName(int trackIndex = 0)
+	{
+		return GetCurrent(trackIndex)?.GetAnimationName();
+	}
+
+	/// <summary>
+	/// Returns the duration of the animation currently playing on the given track, or null if no track
+	/// is active. See <see cref="M:MegaCrit.Sts2.Core.Bindings.MegaSpine.MegaAnimationState.GetCurrentAnimationName(System.Int32)" />.
+	/// </summary>
+	public float? GetCurrentAnimationDuration(int trackIndex = 0)
+	{
+		return GetCurrent(trackIndex)?.GetAnimationDuration();
 	}
 
 	public MegaTrackEntry? SetAnimation(string animationName, bool loop = true, int trackId = 0)
 	{
 		Variant native = Call("set_animation", animationName, loop, trackId);
+		if (native.AsGodotObject() == null)
+		{
+			return null;
+		}
+		return new MegaTrackEntry(native);
+	}
+
+	public MegaTrackEntry? AddEmptyAnimation(int trackId = 0)
+	{
+		Variant native = Call("add_empty_animation", trackId, 0, 0);
 		if (native.AsGodotObject() == null)
 		{
 			return null;

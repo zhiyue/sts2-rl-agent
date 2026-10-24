@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Grand Strategy
+/// </summary>
 public class Regent4Epoch : EpochModel
 {
 	public override string Id => "REGENT4_EPOCH";

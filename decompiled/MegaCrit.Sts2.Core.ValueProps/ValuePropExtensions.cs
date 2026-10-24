@@ -1,6 +1,6 @@
 namespace MegaCrit.Sts2.Core.ValueProps;
 
-internal static class ValuePropExtensions
+public static class ValuePropExtensions
 {
 	public static bool IsPoweredAttack(this ValueProp props)
 	{

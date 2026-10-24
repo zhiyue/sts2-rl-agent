@@ -34,7 +34,7 @@ public sealed class PersonalHivePower : PowerModel
 				CardModel card = base.CombatState.CreateCard<Dazed>(dealer.Player);
 				CardPileAddResult[] array = statusCards;
 				int num = i;
-				array[num] = await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Draw, addedByPlayer: false, CardPilePosition.Random);
+				array[num] = await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Draw, null, CardPilePosition.Random);
 			}
 			CardCmd.PreviewCardPileAdd(statusCards);
 			await Cmd.Wait(0.5f);

@@ -15,7 +15,19 @@ public sealed class WarHistorianRepy : EventModel
 {
 	public override bool IsShared => true;
 
-	public override bool IsAllowed(RunState runState)
+	private bool ShouldGetSecondReward
+	{
+		get
+		{
+			if (base.Owner.Deck.Cards.Any((CardModel c) => c is LanternKey))
+			{
+				return base.Owner.RunState.Players.Count <= 1;
+			}
+			return false;
+		}
+	}
+
+	public override bool IsAllowed(IRunState runState)
 	{
 		return false;
 	}
@@ -24,23 +36,55 @@ public sealed class WarHistorianRepy : EventModel
 	{
 		return new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[2]
 		{
-			new EventOption(this, UnlockCage, "WAR_HISTORIAN_REPY.pages.INITIAL.options.UNLOCK_CAGE", HoverTipFactory.FromRelic<HistoryCourse>().Concat(new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<LanternKey>()))),
-			new EventOption(this, UnlockChest, "WAR_HISTORIAN_REPY.pages.INITIAL.options.UNLOCK_CHEST", HoverTipFactory.FromCard<LanternKey>())
+			new EventOption(this, InitialUnlockCage, "WAR_HISTORIAN_REPY.pages.INITIAL.options.UNLOCK_CAGE", HoverTipFactory.FromRelic<HistoryCourse>().Concat(HoverTipFactory.FromCardWithCardHoverTips<LanternKey>())),
+			new EventOption(this, InitialUnlockChest, "WAR_HISTORIAN_REPY.pages.INITIAL.options.UNLOCK_CHEST", HoverTipFactory.FromCardWithCardHoverTips<LanternKey>())
 		});
 	}
 
-	private async Task UnlockCage()
+	private async Task InitialUnlockCage()
 	{
-		SetEventFinished(L10NLookup("WAR_HISTORIAN_REPY.pages.UNLOCK_CAGE.description"));
-		base.Owner.RunState.ExtraFields.FreedRepy = true;
-		await RemoveLanternKey();
-		await RelicCmd.Obtain(ModelDb.Relic<HistoryCourse>().ToMutable(), base.Owner);
+		await RemoveLanternKeysForInitialChoice();
+		await UnlockCage();
+		if (ShouldGetSecondReward)
+		{
+			SetEventState(L10NLookup("WAR_HISTORIAN_REPY.pages.UNLOCK_CAGE.description"), new global::_003C_003Ez__ReadOnlySingleElementList<EventOption>(new EventOption(this, SecondUnlockChest, "WAR_HISTORIAN_REPY.pages.INITIAL.options.UNLOCK_CHEST", HoverTipFactory.FromCardWithCardHoverTips<LanternKey>())));
+		}
+		else
+		{
+			SetEventFinished(L10NLookup("WAR_HISTORIAN_REPY.pages.UNLOCK_CAGE.description"));
+		}
+	}
+
+	private async Task InitialUnlockChest()
+	{
+		await RemoveLanternKeysForInitialChoice();
+		await UnlockChest();
+		if (ShouldGetSecondReward)
+		{
+			SetEventState(L10NLookup("WAR_HISTORIAN_REPY.pages.UNLOCK_CHEST.description"), new global::_003C_003Ez__ReadOnlySingleElementList<EventOption>(new EventOption(this, SecondUnlockCage, "WAR_HISTORIAN_REPY.pages.INITIAL.options.UNLOCK_CAGE", HoverTipFactory.FromRelic<HistoryCourse>().Concat(HoverTipFactory.FromCardWithCardHoverTips<LanternKey>()))));
+		}
+		else
+		{
+			SetEventFinished(L10NLookup("WAR_HISTORIAN_REPY.pages.UNLOCK_CHEST.description"));
+		}
+	}
+
+	private async Task SecondUnlockCage()
+	{
+		SetEventFinished(L10NLookup("WAR_HISTORIAN_REPY.pages.EXTRA_UNLOCK_CAGE.description"));
+		await RemoveLanternKeysForSecondChoice();
+		await UnlockCage();
+	}
+
+	private async Task SecondUnlockChest()
+	{
+		SetEventFinished(L10NLookup("WAR_HISTORIAN_REPY.pages.EXTRA_UNLOCK_CHEST.description"));
+		await RemoveLanternKeysForSecondChoice();
+		await UnlockChest();
 	}
 
 	private async Task UnlockChest()
 	{
-		SetEventFinished(L10NLookup("WAR_HISTORIAN_REPY.pages.UNLOCK_CHEST.description"));
-		await RemoveLanternKey();
 		List<Reward> list = new List<Reward>();
 		list.Add(new PotionReward(base.Owner));
 		list.Add(new PotionReward(base.Owner));
@@ -49,7 +93,35 @@ public sealed class WarHistorianRepy : EventModel
 		await RewardsCmd.OfferCustom(base.Owner, list);
 	}
 
-	private async Task RemoveLanternKey()
+	private async Task UnlockCage()
+	{
+		base.Owner.RunState.ExtraFields.FreedRepy = true;
+		await RelicCmd.Obtain<HistoryCourse>(base.Owner);
+	}
+
+	private async Task RemoveLanternKeysForInitialChoice()
+	{
+		if (base.Owner.RunState.Players.Count > 1)
+		{
+			await RemoveLanternKeysForSecondChoice();
+		}
+		else
+		{
+			await RemoveFirstLanternKey();
+		}
+	}
+
+	private async Task RemoveFirstLanternKey()
+	{
+		CardModel cardModel = base.Owner.Deck.Cards.FirstOrDefault((CardModel c) => c is LanternKey);
+		if (cardModel != null)
+		{
+			PlayerCmd.CompleteQuest(cardModel);
+			await CardPileCmd.RemoveFromDeck(cardModel);
+		}
+	}
+
+	private async Task RemoveLanternKeysForSecondChoice()
 	{
 		List<CardModel> list = base.Owner.Deck.Cards.Where((CardModel c) => c is LanternKey).ToList();
 		foreach (CardModel item in list)

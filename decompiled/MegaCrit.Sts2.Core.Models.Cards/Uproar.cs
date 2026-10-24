@@ -13,7 +13,7 @@ namespace MegaCrit.Sts2.Core.Models.Cards;
 
 public sealed class Uproar : CardModel
 {
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(5m, ValueProp.Move));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(6m, ValueProp.Move));
 
 	public Uproar()
 		: base(2, CardType.Attack, CardRarity.Common, TargetType.AnyEnemy)

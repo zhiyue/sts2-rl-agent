@@ -11,6 +11,9 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles bundle card selection screens.
+/// </summary>
 public class ChooseABundleScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NChooseABundleSelectionScreen);

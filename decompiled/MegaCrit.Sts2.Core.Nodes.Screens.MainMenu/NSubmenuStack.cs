@@ -8,36 +8,76 @@ using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
+/// <summary>
+/// Manages submenus in the main menu.
+/// Also manages specific submenus while in-game (the compendium stack).
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NSubmenuStack.cs")]
 public abstract class NSubmenuStack : Control
 {
 	[Signal]
 	public delegate void StackModifiedEventHandler();
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'InitializeForMainMenu' method.
+		/// </summary>
 		public static readonly StringName InitializeForMainMenu = "InitializeForMainMenu";
 
+		/// <summary>
+		/// Cached name for the 'Push' method.
+		/// </summary>
 		public static readonly StringName Push = "Push";
 
+		/// <summary>
+		/// Cached name for the 'Pop' method.
+		/// </summary>
 		public static readonly StringName Pop = "Pop";
 
+		/// <summary>
+		/// Cached name for the 'ShowBackstop' method.
+		/// </summary>
 		public static readonly StringName ShowBackstop = "ShowBackstop";
 
+		/// <summary>
+		/// Cached name for the 'HideBackstop' method.
+		/// </summary>
 		public static readonly StringName HideBackstop = "HideBackstop";
 
+		/// <summary>
+		/// Cached name for the 'Peek' method.
+		/// </summary>
 		public static readonly StringName Peek = "Peek";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'SubmenusOpen' property.
+		/// </summary>
 		public static readonly StringName SubmenusOpen = "SubmenusOpen";
 
+		/// <summary>
+		/// Cached name for the '_mainMenu' field.
+		/// </summary>
 		public static readonly StringName _mainMenu = "_mainMenu";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'StackModified' signal.
+		/// </summary>
 		public static readonly StringName StackModified = "StackModified";
 	}
 
@@ -49,6 +89,7 @@ public abstract class NSubmenuStack : Control
 
 	public bool SubmenusOpen => _submenus.Count > 0;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NSubmenuStack.StackModifiedEventHandler" />
 	public event StackModifiedEventHandler StackModified
 	{
 		add
@@ -131,6 +172,11 @@ public abstract class NSubmenuStack : Control
 		return result;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -150,6 +196,7 @@ public abstract class NSubmenuStack : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -191,6 +238,7 @@ public abstract class NSubmenuStack : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -221,6 +269,7 @@ public abstract class NSubmenuStack : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -232,6 +281,7 @@ public abstract class NSubmenuStack : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -248,6 +298,11 @@ public abstract class NSubmenuStack : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -257,6 +312,7 @@ public abstract class NSubmenuStack : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -265,6 +321,7 @@ public abstract class NSubmenuStack : Control
 		info.AddSignalEventDelegate(SignalName.StackModified, backing_StackModified);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -279,6 +336,11 @@ public abstract class NSubmenuStack : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -292,6 +354,7 @@ public abstract class NSubmenuStack : Control
 		EmitSignal(SignalName.StackModified);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -305,6 +368,7 @@ public abstract class NSubmenuStack : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

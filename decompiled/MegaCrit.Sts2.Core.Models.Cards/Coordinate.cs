@@ -27,7 +27,7 @@ public sealed class Coordinate : CardModel
 	{
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
 		decimal baseValue = base.DynamicVars.Strength.BaseValue;
-		await PowerCmd.Apply<CoordinatePower>(cardPlay.Target, baseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<CoordinatePower>(choiceContext, cardPlay.Target, baseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

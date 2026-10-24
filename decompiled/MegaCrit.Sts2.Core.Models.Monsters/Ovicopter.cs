@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -16,7 +17,11 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Ovicopter : MonsterModel
 {
-	private const string _layMove = "lay";
+	private const string _tenderizerMove = "TENDERIZER_MOVE";
+
+	private const string _layTrigger = "layTrigger";
+
+	private const string _buffTrigger = "buffTrigger";
 
 	private const string _idleLoop = "event:/sfx/enemy/enemy_attacks/egg_layer/egg_layer_idle_loop";
 
@@ -33,6 +38,8 @@ public sealed class Ovicopter : MonsterModel
 	private int NutritionalPasteStrengthAmount => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 4, 3);
 
 	public override string DeathSfx => "event:/sfx/enemy/enemy_attacks/egg_layer/egg_layer_die";
+
+	protected override string AttackSfx => "event:/sfx/enemy/enemy_attacks/egg_layer/egg_layer_attack";
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Slime;
 
@@ -74,19 +81,23 @@ public sealed class Ovicopter : MonsterModel
 	private async Task LayEggsMove(IReadOnlyList<Creature> targets)
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/egg_layer/egg_layer_lay");
-		await CreatureCmd.TriggerAnim(base.Creature, "lay", 1f);
+		await CreatureCmd.TriggerAnim(base.Creature, "layTrigger", 1f);
 		for (int i = 0; i < 3; i++)
 		{
-			string slotName = base.CombatState.Encounter.Slots.LastOrDefault((string s) => base.CombatState.Enemies.All((Creature c) => c.SlotName != s), string.Empty);
-			await PowerCmd.Apply<MinionPower>(await CreatureCmd.Add<ToughEgg>(base.CombatState, slotName), 1m, base.Creature, null);
+			string text = base.CombatState.Encounter?.Slots.LastOrDefault((string s) => base.CombatState.Enemies.All((Creature c) => c.SlotName != s));
+			if (text != null)
+			{
+				Creature target = await CreatureCmd.Add<ToughEgg>(base.CombatState, text);
+				await PowerCmd.Apply<MinionPower>(new ThrowingPlayerChoiceContext(), target, 1m, base.Creature, null);
+			}
 		}
 	}
 
 	private async Task NutritionalPasteMove(IReadOnlyList<Creature> targets)
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/egg_layer/egg_layer_lay");
-		await CreatureCmd.TriggerAnim(base.Creature, "lay", 1f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, NutritionalPasteStrengthAmount, base.Creature, null);
+		await CreatureCmd.TriggerAnim(base.Creature, "buffTrigger", 1f);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, NutritionalPasteStrengthAmount, base.Creature, null);
 	}
 
 	private async Task SmashMove(IReadOnlyList<Creature> targets)
@@ -103,27 +114,35 @@ public sealed class Ovicopter : MonsterModel
 			.WithAttackerFx(null, AttackSfx)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
-		await PowerCmd.Apply<VulnerablePower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
 	{
 		AnimState animState = new AnimState("idle_loop", isLooping: true);
 		AnimState animState2 = new AnimState("cast");
-		AnimState animState3 = new AnimState("attack");
-		AnimState animState4 = new AnimState("hurt");
+		AnimState animState3 = new AnimState("buff");
+		AnimState animState4 = new AnimState("attack");
+		AnimState animState5 = new AnimState("hurt");
 		AnimState state = new AnimState("die");
-		AnimState animState5 = new AnimState("lay");
-		animState2.NextState = animState;
+		AnimState animState6 = new AnimState("lay");
 		animState3.NextState = animState;
-		animState5.NextState = animState;
+		animState2.NextState = animState;
 		animState4.NextState = animState;
+		animState6.NextState = animState;
+		animState5.NextState = animState;
 		CreatureAnimator creatureAnimator = new CreatureAnimator(animState, controller);
 		creatureAnimator.AddAnyState("Dead", state);
-		creatureAnimator.AddAnyState("Hit", animState4);
+		creatureAnimator.AddAnyState("Hit", animState5);
 		creatureAnimator.AddAnyState("Cast", animState2);
-		creatureAnimator.AddAnyState("Attack", animState3);
-		creatureAnimator.AddAnyState("lay", animState5);
+		creatureAnimator.AddAnyState("Attack", animState4);
+		creatureAnimator.AddAnyState("layTrigger", animState6);
+		creatureAnimator.AddAnyState("buffTrigger", animState3);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "TENDERIZER_MOVE";
 	}
 }

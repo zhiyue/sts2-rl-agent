@@ -52,3 +52,7 @@ extracted_pck/
 
 # NuGet
 nuget.config
+
+# Local backups of pre-v0.107.1 decompile snapshots
+decompiled_2026-03-15_backup/
+extracted_pck_2026-03-15_backup/

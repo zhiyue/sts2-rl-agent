@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Expeditionists
+/// </summary>
 public class Necrobinder2Epoch : EpochModel
 {
 	public override string Id => "NECROBINDER2_EPOCH";

@@ -11,7 +11,7 @@ public sealed class GlobeHeadNormal : EncounterModel
 
 	public override IEnumerable<MonsterModel> AllPossibleMonsters => new global::_003C_003Ez__ReadOnlySingleElementList<MonsterModel>(ModelDb.Monster<GlobeHead>());
 
-	public override IEnumerable<string>? ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Galvanized>().OverlayPath);
+	public override IEnumerable<string> ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Galvanized>().OverlayPath);
 
 	protected override IReadOnlyList<(MonsterModel, string?)> GenerateMonsters()
 	{

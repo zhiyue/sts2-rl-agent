@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Leaderboard;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
@@ -11,19 +12,23 @@ namespace MegaCrit.Sts2.Core.Platform.Steam;
 
 public class SteamLeaderboardStrategy : ILeaderboardStrategy
 {
-	private PacketWriter _writer = new PacketWriter();
+	private readonly PacketWriter _writer = new PacketWriter();
 
-	private int[] _cachedUserDetails = new int[64];
+	private readonly int[] _cachedUserDetails = new int[64];
 
-	private CSteamID[] _cachedUsers = new CSteamID[10];
+	private readonly CSteamID[] _cachedUsers = new CSteamID[10];
 
 	public PlatformType Platform => PlatformType.Steam;
 
-	public async Task<ILeaderboardHandle> GetOrCreateLeaderboard(string name)
+	public async Task<ILeaderboardHandle> GetOrCreateLeaderboard(string name, CancellationToken cancelToken)
 	{
 		SteamAPICall_t call = SteamUserStats.FindOrCreateLeaderboard(name, ELeaderboardSortMethod.k_ELeaderboardSortMethodDescending, ELeaderboardDisplayType.k_ELeaderboardDisplayTypeNumeric);
-		using SteamCallResult<LeaderboardFindResult_t> callResult = new SteamCallResult<LeaderboardFindResult_t>(call);
+		using SteamCallResult<LeaderboardFindResult_t> callResult = new SteamCallResult<LeaderboardFindResult_t>(call, cancelToken);
 		LeaderboardFindResult_t leaderboardFindResult_t = await callResult.Task;
+		if (cancelToken.IsCancellationRequested)
+		{
+			throw new TaskCanceledException();
+		}
 		if (leaderboardFindResult_t.m_bLeaderboardFound == 0)
 		{
 			throw new InvalidOperationException("Steam FindOrCreateLeaderboard returned 0 from leaderboard found!");
@@ -34,12 +39,12 @@ public class SteamLeaderboardStrategy : ILeaderboardStrategy
 		};
 	}
 
-	public async Task<ILeaderboardHandle?> GetLeaderboard(string name)
+	public async Task<ILeaderboardHandle?> GetLeaderboard(string name, CancellationToken cancelToken)
 	{
 		SteamAPICall_t call = SteamUserStats.FindLeaderboard(name);
-		using SteamCallResult<LeaderboardFindResult_t> callResult = new SteamCallResult<LeaderboardFindResult_t>(call);
+		using SteamCallResult<LeaderboardFindResult_t> callResult = new SteamCallResult<LeaderboardFindResult_t>(call, cancelToken);
 		LeaderboardFindResult_t leaderboardFindResult_t = await callResult.Task;
-		if (leaderboardFindResult_t.m_bLeaderboardFound == 0)
+		if (cancelToken.IsCancellationRequested || leaderboardFindResult_t.m_bLeaderboardFound == 0)
 		{
 			return null;
 		}
@@ -55,14 +60,14 @@ public class SteamLeaderboardStrategy : ILeaderboardStrategy
 		int[] pScoreDetails = PackScoreDetails(userIds, out scoreDetailsCount);
 		SteamLeaderboardHandle steamLeaderboardHandle = (SteamLeaderboardHandle)handleInterface;
 		SteamAPICall_t call = SteamUserStats.UploadLeaderboardScore(steamLeaderboardHandle.leaderboard, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodForceUpdate, score, pScoreDetails, scoreDetailsCount);
-		using SteamCallResult<LeaderboardScoreUploaded_t> callResult = new SteamCallResult<LeaderboardScoreUploaded_t>(call);
+		using SteamCallResult<LeaderboardScoreUploaded_t> callResult = new SteamCallResult<LeaderboardScoreUploaded_t>(call, SteamInitializer.DisconnectToken);
 		if ((await callResult.Task).m_bSuccess == 0)
 		{
 			throw new IOException("Steam score upload failed!");
 		}
 	}
 
-	public async Task<List<LeaderboardEntry>> QueryLeaderboard(ILeaderboardHandle handleInterface, LeaderboardQueryType type, int startIndex, int count)
+	public async Task<List<LeaderboardEntry>> QueryLeaderboard(ILeaderboardHandle handleInterface, LeaderboardQueryType type, int startIndex, int count, CancellationToken cancelToken = default(CancellationToken))
 	{
 		SteamLeaderboardHandle steamLeaderboardHandle = (SteamLeaderboardHandle)handleInterface;
 		int num = startIndex;
@@ -71,9 +76,13 @@ public class SteamLeaderboardStrategy : ILeaderboardStrategy
 			num++;
 		}
 		SteamAPICall_t call = SteamUserStats.DownloadLeaderboardEntries(steamLeaderboardHandle.leaderboard, LeaderboardDataRequestTypeFrom(type), num, num + count - 1);
-		using SteamCallResult<LeaderboardScoresDownloaded_t> callResult = new SteamCallResult<LeaderboardScoresDownloaded_t>(call);
+		using SteamCallResult<LeaderboardScoresDownloaded_t> callResult = new SteamCallResult<LeaderboardScoresDownloaded_t>(call, cancelToken);
 		LeaderboardScoresDownloaded_t leaderboardScoresDownloaded_t = await callResult.Task;
 		List<LeaderboardEntry> list = new List<LeaderboardEntry>();
+		if (cancelToken.IsCancellationRequested)
+		{
+			return new List<LeaderboardEntry>();
+		}
 		int num2 = 0;
 		int num3 = leaderboardScoresDownloaded_t.m_cEntryCount;
 		if (type == LeaderboardQueryType.FriendsOnly)
@@ -81,18 +90,22 @@ public class SteamLeaderboardStrategy : ILeaderboardStrategy
 			num2 = startIndex;
 			num3 = Math.Min(startIndex + count, leaderboardScoresDownloaded_t.m_cEntryCount);
 		}
+		if (num2 >= num3)
+		{
+			return new List<LeaderboardEntry>();
+		}
 		for (int i = num2; i < num3; i++)
 		{
 			if (!SteamUserStats.GetDownloadedLeaderboardEntry(leaderboardScoresDownloaded_t.m_hSteamLeaderboardEntries, i, out var pLeaderboardEntry, _cachedUserDetails, _cachedUserDetails.Length))
 			{
-				throw new InvalidOperationException($"Failed to download leaderboard entry at index {i}");
+				throw new InvalidOperationException($"Failed to download leaderboard entry at index {i}. Start result index: {num2}. result count: {num3}");
 			}
 			list.Add(LeaderboardEntryFromSteamType(pLeaderboardEntry));
 		}
 		return list;
 	}
 
-	public async Task<List<LeaderboardEntry>> QueryLeaderboardForUsers(ILeaderboardHandle handleInterface, IReadOnlyList<ulong> userIds)
+	public async Task<List<LeaderboardEntry>> QueryLeaderboardForUsers(ILeaderboardHandle handleInterface, IReadOnlyList<ulong> userIds, CancellationToken cancelToken = default(CancellationToken))
 	{
 		SteamLeaderboardHandle steamLeaderboardHandle = (SteamLeaderboardHandle)handleInterface;
 		for (int i = 0; i < userIds.Count; i++)
@@ -100,9 +113,13 @@ public class SteamLeaderboardStrategy : ILeaderboardStrategy
 			_cachedUsers[i] = new CSteamID(userIds[i]);
 		}
 		SteamAPICall_t call = SteamUserStats.DownloadLeaderboardEntriesForUsers(steamLeaderboardHandle.leaderboard, _cachedUsers, userIds.Count);
-		using SteamCallResult<LeaderboardScoresDownloaded_t> callResult = new SteamCallResult<LeaderboardScoresDownloaded_t>(call);
+		using SteamCallResult<LeaderboardScoresDownloaded_t> callResult = new SteamCallResult<LeaderboardScoresDownloaded_t>(call, cancelToken);
 		LeaderboardScoresDownloaded_t leaderboardScoresDownloaded_t = await callResult.Task;
 		List<LeaderboardEntry> list = new List<LeaderboardEntry>();
+		if (cancelToken.IsCancellationRequested)
+		{
+			return new List<LeaderboardEntry>();
+		}
 		for (int j = 0; j < leaderboardScoresDownloaded_t.m_cEntryCount; j++)
 		{
 			if (!SteamUserStats.GetDownloadedLeaderboardEntry(leaderboardScoresDownloaded_t.m_hSteamLeaderboardEntries, j, out var pLeaderboardEntry, _cachedUserDetails, _cachedUserDetails.Length))

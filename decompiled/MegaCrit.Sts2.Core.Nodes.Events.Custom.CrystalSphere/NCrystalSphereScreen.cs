@@ -21,73 +21,172 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Events.Custom.CrystalSphere;
 
+/// <summary>
+/// The UI node for the Crystal Sphere minigame.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Events/Custom/CrystalSphere/NCrystalSphereScreen.cs")]
 public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetBigDivination' method.
+		/// </summary>
 		public static readonly StringName SetBigDivination = "SetBigDivination";
 
+		/// <summary>
+		/// Cached name for the 'SetSmallDivination' method.
+		/// </summary>
 		public static readonly StringName SetSmallDivination = "SetSmallDivination";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnHoverCell' method.
+		/// </summary>
 		public static readonly StringName OnHoverCell = "OnHoverCell";
 
+		/// <summary>
+		/// Cached name for the 'OnUnhoverCell' method.
+		/// </summary>
 		public static readonly StringName OnUnhoverCell = "OnUnhoverCell";
 
+		/// <summary>
+		/// Cached name for the 'UpdateDivinationsLeft' method.
+		/// </summary>
 		public static readonly StringName UpdateDivinationsLeft = "UpdateDivinationsLeft";
 
+		/// <summary>
+		/// Cached name for the 'OnMinigameFinished' method.
+		/// </summary>
 		public static readonly StringName OnMinigameFinished = "OnMinigameFinished";
 
+		/// <summary>
+		/// Cached name for the 'OnProceedButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnProceedButtonPressed = "OnProceedButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayOpened' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayOpened = "AfterOverlayOpened";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayClosed' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayClosed = "AfterOverlayClosed";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayShown' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayShown = "AfterOverlayShown";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayHidden' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayHidden = "AfterOverlayHidden";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ScreenType' property.
+		/// </summary>
 		public static readonly StringName ScreenType = "ScreenType";
 
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_itemsContainer' field.
+		/// </summary>
 		public static readonly StringName _itemsContainer = "_itemsContainer";
 
+		/// <summary>
+		/// Cached name for the '_cellContainer' field.
+		/// </summary>
 		public static readonly StringName _cellContainer = "_cellContainer";
 
+		/// <summary>
+		/// Cached name for the '_bigDivinationButton' field.
+		/// </summary>
 		public static readonly StringName _bigDivinationButton = "_bigDivinationButton";
 
+		/// <summary>
+		/// Cached name for the '_smallDivinationButton' field.
+		/// </summary>
 		public static readonly StringName _smallDivinationButton = "_smallDivinationButton";
 
+		/// <summary>
+		/// Cached name for the '_divinationsLeftLabel' field.
+		/// </summary>
 		public static readonly StringName _divinationsLeftLabel = "_divinationsLeftLabel";
 
+		/// <summary>
+		/// Cached name for the '_mask' field.
+		/// </summary>
 		public static readonly StringName _mask = "_mask";
 
+		/// <summary>
+		/// Cached name for the '_proceedButton' field.
+		/// </summary>
 		public static readonly StringName _proceedButton = "_proceedButton";
 
+		/// <summary>
+		/// Cached name for the '_instructionsTitleLabel' field.
+		/// </summary>
 		public static readonly StringName _instructionsTitleLabel = "_instructionsTitleLabel";
 
+		/// <summary>
+		/// Cached name for the '_instructionsDescriptionLabel' field.
+		/// </summary>
 		public static readonly StringName _instructionsDescriptionLabel = "_instructionsDescriptionLabel";
 
+		/// <summary>
+		/// Cached name for the '_instructionsContainer' field.
+		/// </summary>
 		public static readonly StringName _instructionsContainer = "_instructionsContainer";
 
+		/// <summary>
+		/// Cached name for the '_dialogue' field.
+		/// </summary>
 		public static readonly StringName _dialogue = "_dialogue";
 
+		/// <summary>
+		/// Cached name for the '_fadeTween' field.
+		/// </summary>
 		public static readonly StringName _fadeTween = "_fadeTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -213,8 +312,8 @@ public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 		_bigDivinationButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(SetBigDivination));
 		_smallDivinationButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(SetSmallDivination));
 		_proceedButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OnProceedButtonPressed));
-		_smallDivinationButton.SetHotkeys(new string[1] { MegaInput.viewExhaustPileAndTabRight });
-		_bigDivinationButton.SetHotkeys(new string[1] { MegaInput.viewDeckAndTabLeft });
+		_smallDivinationButton.SetHotkeys(new string[1] { MegaInput.viewDrawPile });
+		_bigDivinationButton.SetHotkeys(new string[1] { MegaInput.viewDiscardPile });
 		UpdateDivinationsLeft();
 		_proceedButton.Disable();
 		_proceedButton.UpdateText(NProceedButton.ProceedLoc);
@@ -356,6 +455,11 @@ public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 		_proceedButton.Disable();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -392,6 +496,7 @@ public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -482,6 +587,7 @@ public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -544,6 +650,7 @@ public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -610,6 +717,7 @@ public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -691,6 +799,11 @@ public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -713,6 +826,7 @@ public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -731,6 +845,7 @@ public class NCrystalSphereScreen : Control, IOverlayScreen, IScreenContext
 		info.AddProperty(PropertyName._fadeTween, Variant.From(in _fadeTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

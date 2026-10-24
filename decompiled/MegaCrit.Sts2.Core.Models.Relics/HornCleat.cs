@@ -19,7 +19,7 @@ public sealed class HornCleat : RelicModel
 
 	public override async Task AfterBlockCleared(Creature creature)
 	{
-		if (creature.CombatState.RoundNumber == 2 && creature == base.Owner.Creature)
+		if (creature == base.Owner.Creature && base.Owner.PlayerCombatState.TurnNumber == 2)
 		{
 			Flash();
 			await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, null);

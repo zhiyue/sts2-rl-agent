@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// The Architect: Too many Beasts of Imagination begin to populate Preon and things aren’t simple and fun anymore.
+/// </summary>
 public class Colorless2Epoch : EpochModel
 {
 	public override string Id => "COLORLESS2_EPOCH";

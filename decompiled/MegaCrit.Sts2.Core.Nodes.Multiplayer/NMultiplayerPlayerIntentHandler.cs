@@ -25,69 +25,171 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 
+/// <summary>
+/// Handles the following:
+///  - Displaying "intents" for remote players when they hover over potions, cards, relics, and powers
+///  - Pulling cards that are executing player choice from the play pile and displaying them above the player's head
+///    with some thinky dots, then returning those cards to the play queue
+///  - Displaying relics, potions, and powers that are executing player choice and displaying them above the player's head
+///    with thinky dots
+///
+/// Note that none of these are executed in singleplayer.
+/// For the local player in multiplayer, the first responsibility is excluded (we know what we're hovering). However,
+/// the last two points still apply.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NMultiplayerPlayerIntentHandler.cs")]
 public class NMultiplayerPlayerIntentHandler : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnHitboxEntered' method.
+		/// </summary>
 		public static readonly StringName OnHitboxEntered = "OnHitboxEntered";
 
+		/// <summary>
+		/// Cached name for the 'OnHitboxExited' method.
+		/// </summary>
 		public static readonly StringName OnHitboxExited = "OnHitboxExited";
 
+		/// <summary>
+		/// Cached name for the 'OnHoverChanged' method.
+		/// </summary>
 		public static readonly StringName OnHoverChanged = "OnHoverChanged";
 
+		/// <summary>
+		/// Cached name for the 'RefreshHoverDisplay' method.
+		/// </summary>
 		public static readonly StringName RefreshHoverDisplay = "RefreshHoverDisplay";
 
+		/// <summary>
+		/// Cached name for the 'OnPeerInputStateChanged' method.
+		/// </summary>
 		public static readonly StringName OnPeerInputStateChanged = "OnPeerInputStateChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnPeerInputStateRemoved' method.
+		/// </summary>
 		public static readonly StringName OnPeerInputStateRemoved = "OnPeerInputStateRemoved";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'HideThinkyDots' method.
+		/// </summary>
 		public static readonly StringName HideThinkyDots = "HideThinkyDots";
 
+		/// <summary>
+		/// Cached name for the 'RefreshHoverTips' method.
+		/// </summary>
 		public static readonly StringName RefreshHoverTips = "RefreshHoverTips";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'CardIntent' property.
+		/// </summary>
 		public static readonly StringName CardIntent = "CardIntent";
 
+		/// <summary>
+		/// Cached name for the '_cardIntent' field.
+		/// </summary>
 		public static readonly StringName _cardIntent = "_cardIntent";
 
+		/// <summary>
+		/// Cached name for the '_relicIntent' field.
+		/// </summary>
 		public static readonly StringName _relicIntent = "_relicIntent";
 
+		/// <summary>
+		/// Cached name for the '_potionIntent' field.
+		/// </summary>
 		public static readonly StringName _potionIntent = "_potionIntent";
 
+		/// <summary>
+		/// Cached name for the '_powerIntent' field.
+		/// </summary>
 		public static readonly StringName _powerIntent = "_powerIntent";
 
+		/// <summary>
+		/// Cached name for the '_hitbox' field.
+		/// </summary>
 		public static readonly StringName _hitbox = "_hitbox";
 
+		/// <summary>
+		/// Cached name for the '_targetingIndicator' field.
+		/// </summary>
 		public static readonly StringName _targetingIndicator = "_targetingIndicator";
 
+		/// <summary>
+		/// Cached name for the '_cardThinkyDots' field.
+		/// </summary>
 		public static readonly StringName _cardThinkyDots = "_cardThinkyDots";
 
+		/// <summary>
+		/// Cached name for the '_relicThinkyDots' field.
+		/// </summary>
 		public static readonly StringName _relicThinkyDots = "_relicThinkyDots";
 
+		/// <summary>
+		/// Cached name for the '_potionThinkyDots' field.
+		/// </summary>
 		public static readonly StringName _potionThinkyDots = "_potionThinkyDots";
 
+		/// <summary>
+		/// Cached name for the '_powerThinkyDots' field.
+		/// </summary>
 		public static readonly StringName _powerThinkyDots = "_powerThinkyDots";
 
+		/// <summary>
+		/// Cached name for the '_shouldShowHoverTip' field.
+		/// </summary>
 		public static readonly StringName _shouldShowHoverTip = "_shouldShowHoverTip";
 
+		/// <summary>
+		/// Cached name for the '_hoverTips' field.
+		/// </summary>
 		public static readonly StringName _hoverTips = "_hoverTips";
 
+		/// <summary>
+		/// Cached name for the '_isInPlayerChoice' field.
+		/// </summary>
 		public static readonly StringName _isInPlayerChoice = "_isInPlayerChoice";
 
+		/// <summary>
+		/// Cached name for the '_cardInPlayAwaitingPlayerChoice' field.
+		/// </summary>
 		public static readonly StringName _cardInPlayAwaitingPlayerChoice = "_cardInPlayAwaitingPlayerChoice";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -136,7 +238,7 @@ public class NMultiplayerPlayerIntentHandler : Control
 		{
 			return null;
 		}
-		if (RunManager.Instance.IsSinglePlayerOrFakeMultiplayer)
+		if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
 		{
 			return null;
 		}
@@ -494,6 +596,11 @@ public class NMultiplayerPlayerIntentHandler : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -524,6 +631,7 @@ public class NMultiplayerPlayerIntentHandler : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -596,6 +704,7 @@ public class NMultiplayerPlayerIntentHandler : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -646,6 +755,7 @@ public class NMultiplayerPlayerIntentHandler : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -727,6 +837,7 @@ public class NMultiplayerPlayerIntentHandler : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -813,6 +924,11 @@ public class NMultiplayerPlayerIntentHandler : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -836,6 +952,7 @@ public class NMultiplayerPlayerIntentHandler : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -857,6 +974,7 @@ public class NMultiplayerPlayerIntentHandler : Control
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

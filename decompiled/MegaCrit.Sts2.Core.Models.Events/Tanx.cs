@@ -18,13 +18,13 @@ public class Tanx : AncientEventModel
 
 	private const string _sfxCuriosity = "event:/sfx/npcs/tanx/tanx_curiosity";
 
-	private const int _apexCount = 3;
+	private const int _triBoomerangCount = 3;
 
 	public override Color ButtonColor => new Color(0.05f, 0.02f, 0f, 0.5f);
 
 	public override Color DialogueColor => new Color("731717");
 
-	public override IEnumerable<EventOption> AllPossibleOptions => BaseOptionPool.Append(ApexOption);
+	public override IEnumerable<EventOption> AllPossibleOptions => BaseOptionPool.Append(TriBoomerangOption);
 
 	private IEnumerable<EventOption> BaseOptionPool => new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[9]
 	{
@@ -39,7 +39,7 @@ public class Tanx : AncientEventModel
 		RelicOption<WarHammer>()
 	});
 
-	private EventOption ApexOption => RelicOption<TriBoomerang>();
+	private EventOption TriBoomerangOption => RelicOption<TriBoomerang>();
 
 	protected override AncientDialogueSet DefineDialogues()
 	{
@@ -136,7 +136,7 @@ public class Tanx : AncientEventModel
 		List<EventOption> list = BaseOptionPool.ToList();
 		if (base.Owner.Deck.Cards.Count((CardModel c) => ModelDb.Enchantment<Instinct>().CanEnchant(c)) >= 3)
 		{
-			list.Add(ApexOption);
+			list.Add(TriBoomerangOption);
 		}
 		return list.UnstableShuffle(base.Rng).Take(3).ToList();
 	}

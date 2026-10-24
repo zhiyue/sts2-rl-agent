@@ -6,57 +6,135 @@ using Godot.NativeInterop;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// Manages the local mouse cursor image and hotspot.
+/// Note: You'll see that Image is used all over this class instead of Texture2D. For some reason it's massively faster
+/// to use Image rather than Texture2D, so please keep it that way.
+/// Cursor images are exported scene dependencies to ensure they're loaded with the scene and won't be disposed.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NCursorManager.cs")]
 public class NCursorManager : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'StopOverridingCursor' method.
+		/// </summary>
 		public static readonly StringName StopOverridingCursor = "StopOverridingCursor";
 
+		/// <summary>
+		/// Cached name for the 'OverrideCursor' method.
+		/// </summary>
 		public static readonly StringName OverrideCursor = "OverrideCursor";
 
+		/// <summary>
+		/// Cached name for the 'UpdateCursor' method.
+		/// </summary>
 		public static readonly StringName UpdateCursor = "UpdateCursor";
 
+		/// <summary>
+		/// Cached name for the 'SetIsUsingController' method.
+		/// </summary>
 		public static readonly StringName SetIsUsingController = "SetIsUsingController";
 
+		/// <summary>
+		/// Cached name for the 'SetCursorShown' method.
+		/// </summary>
 		public static readonly StringName SetCursorShown = "SetCursorShown";
 
+		/// <summary>
+		/// Cached name for the 'RefreshCursorShown' method.
+		/// </summary>
 		public static readonly StringName RefreshCursorShown = "RefreshCursorShown";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'CursorTilted' property.
+		/// </summary>
 		public static readonly StringName CursorTilted = "CursorTilted";
 
+		/// <summary>
+		/// Cached name for the 'CursorNotTilted' property.
+		/// </summary>
 		public static readonly StringName CursorNotTilted = "CursorNotTilted";
 
+		/// <summary>
+		/// Cached name for the 'HotSpot' property.
+		/// </summary>
 		public static readonly StringName HotSpot = "HotSpot";
 
+		/// <summary>
+		/// Cached name for the '_cursorTilted' field.
+		/// </summary>
 		public static readonly StringName _cursorTilted = "_cursorTilted";
 
+		/// <summary>
+		/// Cached name for the '_cursorNotTilted' field.
+		/// </summary>
 		public static readonly StringName _cursorNotTilted = "_cursorNotTilted";
 
+		/// <summary>
+		/// Cached name for the '_cursorInspect' field.
+		/// </summary>
 		public static readonly StringName _cursorInspect = "_cursorInspect";
 
+		/// <summary>
+		/// Cached name for the '_overriddenCursorTilted' field.
+		/// </summary>
 		public static readonly StringName _overriddenCursorTilted = "_overriddenCursorTilted";
 
+		/// <summary>
+		/// Cached name for the '_overriddenCursorNotTilted' field.
+		/// </summary>
 		public static readonly StringName _overriddenCursorNotTilted = "_overriddenCursorNotTilted";
 
+		/// <summary>
+		/// Cached name for the '_lastSetCursor' field.
+		/// </summary>
 		public static readonly StringName _lastSetCursor = "_lastSetCursor";
 
+		/// <summary>
+		/// Cached name for the '_isDown' field.
+		/// </summary>
 		public static readonly StringName _isDown = "_isDown";
 
+		/// <summary>
+		/// Cached name for the '_isUsingController' field.
+		/// </summary>
 		public static readonly StringName _isUsingController = "_isUsingController";
 
+		/// <summary>
+		/// Cached name for the '_shouldShowCursor' field.
+		/// </summary>
 		public static readonly StringName _shouldShowCursor = "_shouldShowCursor";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -164,6 +242,10 @@ public class NCursorManager : Node
 		RefreshCursorShown();
 	}
 
+	/// <summary>
+	/// Call this when you want to show or hide the cursor.
+	/// Note that if the player is using a controller, the cursor will remain hidden even if show is true.
+	/// </summary>
 	public void SetCursorShown(bool show)
 	{
 		_shouldShowCursor = show;
@@ -180,6 +262,11 @@ public class NCursorManager : Node
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -210,6 +297,7 @@ public class NCursorManager : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -270,6 +358,7 @@ public class NCursorManager : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -312,6 +401,7 @@ public class NCursorManager : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -363,6 +453,7 @@ public class NCursorManager : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -432,6 +523,11 @@ public class NCursorManager : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -451,6 +547,7 @@ public class NCursorManager : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -466,6 +563,7 @@ public class NCursorManager : Node
 		info.AddProperty(PropertyName._shouldShowCursor, Variant.From(in _shouldShowCursor));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

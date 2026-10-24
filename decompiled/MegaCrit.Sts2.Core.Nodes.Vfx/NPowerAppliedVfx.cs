@@ -5,10 +5,10 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
-using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.addons.mega_text;
@@ -18,28 +18,66 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NPowerAppliedVfx.cs")]
 public class NPowerAppliedVfx : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 
+		/// <summary>
+		/// Cached name for the '_iconEcho' field.
+		/// </summary>
 		public static readonly StringName _iconEcho = "_iconEcho";
 
+		/// <summary>
+		/// Cached name for the '_powerField' field.
+		/// </summary>
 		public static readonly StringName _powerField = "_powerField";
 
+		/// <summary>
+		/// Cached name for the '_amount' field.
+		/// </summary>
 		public static readonly StringName _amount = "_amount";
 
+		/// <summary>
+		/// Cached name for the '_isBuff' field.
+		/// </summary>
+		public static readonly StringName _isBuff = "_isBuff";
+
+		/// <summary>
+		/// Cached name for the '_textTween' field.
+		/// </summary>
 		public static readonly StringName _textTween = "_textTween";
 
+		/// <summary>
+		/// Cached name for the '_spriteTween' field.
+		/// </summary>
 		public static readonly StringName _spriteTween = "_spriteTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -55,6 +93,8 @@ public class NPowerAppliedVfx : Control
 	private PowerModel _power;
 
 	private int _amount;
+
+	private bool _isBuff;
 
 	private Tween? _textTween;
 
@@ -77,7 +117,7 @@ public class NPowerAppliedVfx : Control
 		TaskHelper.RunSafely(StartVfx());
 	}
 
-	public static NPowerAppliedVfx? Create(PowerModel power, int amount)
+	public static NPowerAppliedVfx? Create(PowerModel power, int amount, bool isBuff)
 	{
 		if (TestMode.IsOn)
 		{
@@ -94,6 +134,7 @@ public class NPowerAppliedVfx : Control
 		NPowerAppliedVfx nPowerAppliedVfx = PreloadManager.Cache.GetScene("res://scenes/vfx/power_applied_vfx.tscn").Instantiate<NPowerAppliedVfx>(PackedScene.GenEditState.Disabled);
 		nPowerAppliedVfx._power = power;
 		nPowerAppliedVfx._amount = amount;
+		nPowerAppliedVfx._isBuff = isBuff;
 		return nPowerAppliedVfx;
 	}
 
@@ -108,24 +149,30 @@ public class NPowerAppliedVfx : Control
 		_powerField.SetTextAutoSize(_power.Title.GetFormattedText());
 		_icon.Texture = _power.BigIcon;
 		_iconEcho.Texture = _power.BigIcon;
-		_powerField.Modulate = ((_power.GetTypeForAmount(_amount) == PowerType.Buff) ? StsColors.green : StsColors.red);
-		_powerField.Position = new Vector2(_powerField.Position.X, _powerField.Position.Y - 200f);
+		_powerField.Modulate = (_isBuff ? StsColors.green : StsColors.red);
+		_powerField.Position = new Vector2(_powerField.Position.X, _powerField.Position.Y + NCreature.PowerAppliedVfxPositionOffset.Y);
 		_spriteTween = CreateTween().SetParallel();
 		_spriteTween.TweenProperty(_icon, "scale", Vector2.One * 0.8f, 1.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo)
 			.From(Vector2.One * 0.4f);
 		_spriteTween.TweenProperty(_icon, "modulate:a", 0.5f, 0.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
 		_spriteTween.TweenProperty(_icon, "modulate:a", 0f, 1.0).SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Sine)
 			.SetDelay(0.25);
+		float num = _powerField.Position.Y + (_isBuff ? (-100f) : 100f);
 		_textTween = CreateTween().SetParallel();
-		CreateTween().TweenProperty(_powerField, "position:y", _powerField.Position.Y + 50f, 1.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+		_textTween.TweenProperty(_powerField, "position:y", num, 1.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 		_textTween.TweenProperty(_powerField, "modulate:a", 1f, 0.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 		_textTween.TweenProperty(_powerField, "modulate:a", 0f, 0.75).SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Expo)
 			.From(1f)
 			.SetDelay(0.25);
-		await ToSignal(_spriteTween, Tween.SignalName.Finished);
+		await _spriteTween.AwaitFinished(this);
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -135,6 +182,7 @@ public class NPowerAppliedVfx : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -153,6 +201,7 @@ public class NPowerAppliedVfx : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -167,6 +216,7 @@ public class NPowerAppliedVfx : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -190,6 +240,11 @@ public class NPowerAppliedVfx : Control
 			_amount = VariantUtils.ConvertTo<int>(in value);
 			return true;
 		}
+		if (name == PropertyName._isBuff)
+		{
+			_isBuff = VariantUtils.ConvertTo<bool>(in value);
+			return true;
+		}
 		if (name == PropertyName._textTween)
 		{
 			_textTween = VariantUtils.ConvertTo<Tween>(in value);
@@ -203,6 +258,7 @@ public class NPowerAppliedVfx : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -226,6 +282,11 @@ public class NPowerAppliedVfx : Control
 			value = VariantUtils.CreateFrom(in _amount);
 			return true;
 		}
+		if (name == PropertyName._isBuff)
+		{
+			value = VariantUtils.CreateFrom(in _isBuff);
+			return true;
+		}
 		if (name == PropertyName._textTween)
 		{
 			value = VariantUtils.CreateFrom(in _textTween);
@@ -239,6 +300,11 @@ public class NPowerAppliedVfx : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -247,11 +313,13 @@ public class NPowerAppliedVfx : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._iconEcho, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._powerField, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Int, PropertyName._amount, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._isBuff, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._textTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._spriteTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -260,10 +328,12 @@ public class NPowerAppliedVfx : Control
 		info.AddProperty(PropertyName._iconEcho, Variant.From(in _iconEcho));
 		info.AddProperty(PropertyName._powerField, Variant.From(in _powerField));
 		info.AddProperty(PropertyName._amount, Variant.From(in _amount));
+		info.AddProperty(PropertyName._isBuff, Variant.From(in _isBuff));
 		info.AddProperty(PropertyName._textTween, Variant.From(in _textTween));
 		info.AddProperty(PropertyName._spriteTween, Variant.From(in _spriteTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -284,13 +354,17 @@ public class NPowerAppliedVfx : Control
 		{
 			_amount = value4.As<int>();
 		}
-		if (info.TryGetProperty(PropertyName._textTween, out var value5))
+		if (info.TryGetProperty(PropertyName._isBuff, out var value5))
 		{
-			_textTween = value5.As<Tween>();
+			_isBuff = value5.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._spriteTween, out var value6))
+		if (info.TryGetProperty(PropertyName._textTween, out var value6))
 		{
-			_spriteTween = value6.As<Tween>();
+			_textTween = value6.As<Tween>();
+		}
+		if (info.TryGetProperty(PropertyName._spriteTween, out var value7))
+		{
+			_spriteTween = value7.As<Tween>();
 		}
 	}
 }

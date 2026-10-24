@@ -13,6 +13,9 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles the deck transform selection screen.
+/// </summary>
 public class DeckTransformScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NDeckTransformSelectScreen);

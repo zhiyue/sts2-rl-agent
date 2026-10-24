@@ -28,7 +28,7 @@ public sealed class HiddenDaggers : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CardCmd.Discard(choiceContext, await CardSelectCmd.FromHandForDiscard(choiceContext, base.Owner, new CardSelectorPrefs(CardSelectorPrefs.DiscardSelectionPrompt, base.DynamicVars.Cards.IntValue), null, this));
+		await CardCmd.Discard(choiceContext, await CardSelectCmd.FromHandForDiscard(prefs: new CardSelectorPrefs(CardSelectorPrefs.DiscardSelectionPrompt, base.DynamicVars.Cards.IntValue), context: choiceContext, player: base.Owner, filter: null, source: this));
 		IEnumerable<CardModel> enumerable = await Shiv.CreateInHand(base.Owner, base.DynamicVars["Shivs"].IntValue, base.CombatState);
 		if (!base.IsUpgraded)
 		{

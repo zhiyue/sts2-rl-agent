@@ -21,6 +21,8 @@ public sealed class GnarledHammer : RelicModel
 		new DynamicVar("SharpAmount", 3m)
 	});
 
+	public override bool HasUponPickupEffect => true;
+
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => HoverTipFactory.FromEnchantment<Sharp>(base.DynamicVars["SharpAmount"].IntValue);
 
 	public override async Task AfterObtained()

@@ -45,7 +45,7 @@ public sealed class Byrdpip : RelicModel
 
 	public override async Task AfterObtained()
 	{
-		Skin = new Rng((uint)(base.Owner.NetId + base.Owner.RunState.Rng.Seed)).NextItem(SkinOptions);
+		Skin = new Rng(base.Owner, base.Id).NextItem(SkinOptions);
 		List<CardModel> list = PileType.Deck.GetPile(base.Owner).Cards.Where((CardModel c) => c is ByrdonisEgg).ToList();
 		if (CombatManager.Instance.IsInProgress)
 		{

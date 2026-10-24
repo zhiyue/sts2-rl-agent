@@ -44,60 +44,141 @@ public class NTargetManager : Node2D
 	[Signal]
 	public delegate void TargetingEndedEventHandler();
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'CancelTargeting' method.
+		/// </summary>
 		public static readonly StringName CancelTargeting = "CancelTargeting";
 
+		/// <summary>
+		/// Cached name for the 'FinishTargeting' method.
+		/// </summary>
 		public static readonly StringName FinishTargeting = "FinishTargeting";
 
+		/// <summary>
+		/// Cached name for the 'AllowedToTargetNode' method.
+		/// </summary>
 		public static readonly StringName AllowedToTargetNode = "AllowedToTargetNode";
 
+		/// <summary>
+		/// Cached name for the 'OnNodeHovered' method.
+		/// </summary>
 		public static readonly StringName OnNodeHovered = "OnNodeHovered";
 
+		/// <summary>
+		/// Cached name for the 'OnNodeUnhovered' method.
+		/// </summary>
 		public static readonly StringName OnNodeUnhovered = "OnNodeUnhovered";
 
+		/// <summary>
+		/// Cached name for the 'OnCreatureHovered' method.
+		/// </summary>
 		public static readonly StringName OnCreatureHovered = "OnCreatureHovered";
 
+		/// <summary>
+		/// Cached name for the 'OnCreatureUnhovered' method.
+		/// </summary>
 		public static readonly StringName OnCreatureUnhovered = "OnCreatureUnhovered";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsInSelection' property.
+		/// </summary>
 		public static readonly StringName IsInSelection = "IsInSelection";
 
+		/// <summary>
+		/// Cached name for the 'HoveredNode' property.
+		/// </summary>
 		public static readonly StringName HoveredNode = "HoveredNode";
 
+		/// <summary>
+		/// Cached name for the 'LastTargetingFinishedFrame' property.
+		/// </summary>
 		public static readonly StringName LastTargetingFinishedFrame = "LastTargetingFinishedFrame";
 
+		/// <summary>
+		/// Cached name for the '_targetingArrow' field.
+		/// </summary>
 		public static readonly StringName _targetingArrow = "_targetingArrow";
 
+		/// <summary>
+		/// Cached name for the '_targetMode' field.
+		/// </summary>
 		public static readonly StringName _targetMode = "_targetMode";
 
+		/// <summary>
+		/// Cached name for the '_validTargetsType' field.
+		/// </summary>
 		public static readonly StringName _validTargetsType = "_validTargetsType";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'CreatureHovered' signal.
+		/// </summary>
 		public static readonly StringName CreatureHovered = "CreatureHovered";
 
+		/// <summary>
+		/// Cached name for the 'CreatureUnhovered' signal.
+		/// </summary>
 		public static readonly StringName CreatureUnhovered = "CreatureUnhovered";
 
+		/// <summary>
+		/// Cached name for the 'NodeHovered' signal.
+		/// </summary>
 		public static readonly StringName NodeHovered = "NodeHovered";
 
+		/// <summary>
+		/// Cached name for the 'NodeUnhovered' signal.
+		/// </summary>
 		public static readonly StringName NodeUnhovered = "NodeUnhovered";
 
+		/// <summary>
+		/// Cached name for the 'TargetingBegan' signal.
+		/// </summary>
 		public static readonly StringName TargetingBegan = "TargetingBegan";
 
+		/// <summary>
+		/// Cached name for the 'TargetingEnded' signal.
+		/// </summary>
 		public static readonly StringName TargetingEnded = "TargetingEnded";
 	}
 
@@ -131,8 +212,12 @@ public class NTargetManager : Node2D
 
 	private Node? HoveredNode { get; set; }
 
+	/// <summary>
+	/// This is the frame on which the last targeting was cancelled or finished as reported by SceneTree.GetFrame.
+	/// </summary>
 	public long LastTargetingFinishedFrame { get; set; }
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NTargetManager.CreatureHoveredEventHandler" />
 	public event CreatureHoveredEventHandler CreatureHovered
 	{
 		add
@@ -145,6 +230,7 @@ public class NTargetManager : Node2D
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NTargetManager.CreatureUnhoveredEventHandler" />
 	public event CreatureUnhoveredEventHandler CreatureUnhovered
 	{
 		add
@@ -157,6 +243,7 @@ public class NTargetManager : Node2D
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NTargetManager.NodeHoveredEventHandler" />
 	public event NodeHoveredEventHandler NodeHovered
 	{
 		add
@@ -169,6 +256,7 @@ public class NTargetManager : Node2D
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NTargetManager.NodeUnhoveredEventHandler" />
 	public event NodeUnhoveredEventHandler NodeUnhovered
 	{
 		add
@@ -181,6 +269,7 @@ public class NTargetManager : Node2D
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NTargetManager.TargetingBeganEventHandler" />
 	public event TargetingBeganEventHandler TargetingBegan
 	{
 		add
@@ -193,6 +282,7 @@ public class NTargetManager : Node2D
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NTargetManager.TargetingEndedEventHandler" />
 	public event TargetingEndedEventHandler TargetingEnded
 	{
 		add
@@ -282,7 +372,10 @@ public class NTargetManager : Node2D
 		{
 			flag = true;
 			cancel = true;
-			GetViewport().SetInputAsHandled();
+			if (inputEvent.IsActionPressed(MegaInput.cancel))
+			{
+				GetViewport().SetInputAsHandled();
+			}
 		}
 		if (_exitEarlyCondition != null && _exitEarlyCondition())
 		{
@@ -304,7 +397,7 @@ public class NTargetManager : Node2D
 		if (HoveredNode is NCreature nCreature)
 		{
 			Creature entity = nCreature.Entity;
-			if (entity != null && !entity.IsHittable && _targetMode == TargetMode.Controller)
+			if (entity != null && !entity.IsHittable)
 			{
 				FinishTargeting(cancel: true);
 			}
@@ -417,7 +510,7 @@ public class NTargetManager : Node2D
 		switch (_validTargetsType)
 		{
 		case TargetType.AnyEnemy:
-			if (creature.Side != CombatSide.Enemy)
+			if (creature.Side != CombatSide.Enemy || creature.IsDead)
 			{
 				return false;
 			}
@@ -529,6 +622,11 @@ public class NTargetManager : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -572,6 +670,7 @@ public class NTargetManager : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -649,6 +748,7 @@ public class NTargetManager : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -703,6 +803,7 @@ public class NTargetManager : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -734,6 +835,7 @@ public class NTargetManager : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -770,6 +872,11 @@ public class NTargetManager : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -783,6 +890,7 @@ public class NTargetManager : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -800,6 +908,7 @@ public class NTargetManager : Node2D
 		info.AddSignalEventDelegate(SignalName.TargetingEnded, backing_TargetingEnded);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -850,6 +959,11 @@ public class NTargetManager : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -905,6 +1019,7 @@ public class NTargetManager : Node2D
 		EmitSignal(SignalName.TargetingEnded);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -938,6 +1053,7 @@ public class NTargetManager : Node2D
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

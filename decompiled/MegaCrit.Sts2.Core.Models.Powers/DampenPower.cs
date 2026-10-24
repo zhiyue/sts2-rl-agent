@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -34,10 +33,6 @@ public sealed class DampenPower : PowerModel
 		{
 			GetInternalData<Data>().downgradedCardsToOldUpgradeLevels.Add(item, item.CurrentUpgradeLevel);
 			CardCmd.Downgrade(item);
-			if (base.Owner.HasPower<HexPower>())
-			{
-				CardCmd.ApplyKeyword(item, CardKeyword.Ethereal);
-			}
 		}
 		Flash();
 		return Task.CompletedTask;

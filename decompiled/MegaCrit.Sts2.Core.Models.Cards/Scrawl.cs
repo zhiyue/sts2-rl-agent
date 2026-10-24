@@ -17,7 +17,7 @@ public sealed class Scrawl : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		int num = 10 - base.Owner.PlayerCombatState.Hand.Cards.Count;
+		int num = CardPile.MaxCardsInHand - base.Owner.PlayerCombatState.Hand.Cards.Count;
 		await CardPileCmd.Draw(choiceContext, num, base.Owner);
 	}
 

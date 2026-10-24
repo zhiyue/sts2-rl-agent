@@ -13,7 +13,7 @@ public sealed class DanseMacabre : CardModel
 {
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new PowerVar<DanseMacabrePower>(3m),
+		new PowerVar<DanseMacabrePower>(4m),
 		new EnergyVar(2)
 	});
 
@@ -26,12 +26,12 @@ public sealed class DanseMacabre : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<DanseMacabrePower>(base.Owner.Creature, base.DynamicVars["DanseMacabrePower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<DanseMacabrePower>(choiceContext, base.Owner.Creature, base.DynamicVars["DanseMacabrePower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars["DanseMacabrePower"].UpgradeValueBy(1m);
+		base.DynamicVars["DanseMacabrePower"].UpgradeValueBy(2m);
 	}
 }

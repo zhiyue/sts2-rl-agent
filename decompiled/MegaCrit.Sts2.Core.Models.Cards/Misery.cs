@@ -38,17 +38,17 @@ public sealed class Misery : CardModel
 			}
 			foreach (PowerModel item in originalDebuffs)
 			{
-				PowerModel powerById = enemy.GetPowerById(item.Id);
-				if (powerById != null && !powerById.IsInstanced)
+				PowerModel powerModel = PowerCmd.FindExistingInstanceForStacking(item, enemy, item.Applier);
+				if (powerModel != null)
 				{
-					DoHackyThingsForSpecificPowers(powerById);
-					await PowerCmd.ModifyAmount(powerById, item.Amount, base.Owner.Creature, this);
+					DoHackyThingsForSpecificPowers(powerModel);
+					await PowerCmd.ModifyAmount(choiceContext, powerModel, item.Amount, item.Applier, this);
 				}
 				else
 				{
 					PowerModel power = (PowerModel)item.ClonePreservingMutability();
 					DoHackyThingsForSpecificPowers(power);
-					await PowerCmd.Apply(power, enemy, item.Amount, base.Owner.Creature, this);
+					await PowerCmd.Apply(choiceContext, power, enemy, item.Amount, item.Applier, this);
 				}
 			}
 		}

@@ -2,16 +2,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Audio;
+using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Audio;
-using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -20,6 +21,14 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Queen : MonsterModel
 {
+	private const string _puppetStringsMove = "PUPPET_STRINGS_MOVE";
+
+	private const string _burnBrightForMeMove = "BURN_BRIGHT_FOR_ME_MOVE";
+
+	private const string _executionMove = "EXECUTION_MOVE";
+
+	private const string _enrageMove = "ENRAGE_MOVE";
+
 	private const string _queenTrackName = "queen_progress";
 
 	private const string _castSfx = "event:/sfx/enemy/enemy_attacks/queen/queen_cast";
@@ -100,40 +109,31 @@ public sealed class Queen : MonsterModel
 		}
 	}
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		visuals.SpineBody.GetAnimationState().SetAnimation("tracks/writhe", loop: true, 1);
+		spine.GetAnimationState().SetAnimation("tracks/writhe", loop: true, 1);
 	}
 
 	public override void BeforeRemovedFromRoom()
 	{
 		if (!base.CombatState.RunState.IsGameOver)
 		{
-			NCombatRoom.Instance.GetCreatureNode(base.Creature)?.SpineController.GetAnimationState().SetAnimation("tracks/empty", loop: true, 1);
+			NCombatRoom.Instance?.GetCreatureNode(base.Creature)?.SpineAnimation.SetAnimation("tracks/empty", loop: true, 1);
 		}
 	}
 
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		base.Creature.Died += AfterDeath;
 		Amalgam = base.CombatState.Enemies.First((Creature c) => c.Monster is TorchHeadAmalgam);
-		Amalgam.Died += AmalgamDeathResponse;
 		NRunMusicController.Instance?.UpdateMusicParameter("queen_progress", 1f);
-	}
-
-	private void AfterDeath(Creature _)
-	{
-		base.Creature.Died -= AfterDeath;
-		NRunMusicController.Instance?.UpdateMusicParameter("queen_progress", 5f);
-		NCombatRoom.Instance.GetCreatureNode(base.Creature)?.SpineController.GetAnimationState().SetAnimation("tracks/empty", loop: true, 1);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
 		MoveState moveState = new MoveState("PUPPET_STRINGS_MOVE", PuppetStringsMove, new CardDebuffIntent());
-		MoveState moveState2 = new MoveState("YOUR_MINE_MOVE", YoureMineMove, new DebuffIntent());
+		MoveState moveState2 = new MoveState("YOU_ARE_MINE_MOVE", YoureMineMove, new DebuffIntent());
 		ConditionalBranchState conditionalBranchState = new ConditionalBranchState("YOURE_MINE_NOW_BRANCH");
 		BurnBrightForMeState = new MoveState("BURN_BRIGHT_FOR_ME_MOVE", BurnBrightForMeMove, new BuffIntent(), new DefendIntent());
 		ConditionalBranchState conditionalBranchState2 = new ConditionalBranchState("BURN_BRIGHT_FOR_ME_BRANCH");
@@ -165,18 +165,18 @@ public sealed class Queen : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/queen/queen_cast");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.5f);
-		await PowerCmd.Apply<ChainsOfBindingPower>(targets, 3m, base.Creature, null);
+		await PowerCmd.Apply<ChainsOfBindingPower>(new ThrowingPlayerChoiceContext(), targets, 3m, base.Creature, null);
 	}
 
 	private async Task YoureMineMove(IReadOnlyList<Creature> targets)
 	{
 		LocString line = MonsterModel.L10NMonsterLookup("QUEEN.banter");
-		TalkCmd.Play(line, base.Creature, -1.0, VfxColor.Purple);
+		TalkCmd.Play(line, base.Creature, VfxColor.Purple);
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/queen/queen_cast");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.5f);
-		await PowerCmd.Apply<FrailPower>(targets, 99m, base.Creature, null);
-		await PowerCmd.Apply<WeakPower>(targets, 99m, base.Creature, null);
-		await PowerCmd.Apply<VulnerablePower>(targets, 99m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 99m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 99m, base.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(new ThrowingPlayerChoiceContext(), targets, 99m, base.Creature, null);
 	}
 
 	private async Task BurnBrightForMeMove(IReadOnlyList<Creature> targets)
@@ -184,13 +184,10 @@ public sealed class Queen : MonsterModel
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/queen/queen_cast");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.8f);
 		int strengthAmount = AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 1, 1);
-		List<Creature> list = base.Creature.CombatState.GetTeammatesOf(base.Creature).ToList();
-		foreach (Creature item in list)
+		List<Creature> source = base.Creature.CombatState.GetTeammatesOf(base.Creature).ToList();
+		foreach (Creature item in source.Where((Creature teammate) => teammate != base.Creature))
 		{
-			if (item != base.Creature)
-			{
-				await PowerCmd.Apply<StrengthPower>(item, strengthAmount, base.Creature, null);
-			}
+			await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), item, strengthAmount, base.Creature, null);
 		}
 		await CreatureCmd.GainBlock(base.Creature, 20m, ValueProp.Move, null);
 	}
@@ -218,23 +215,37 @@ public sealed class Queen : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/queen/queen_cast");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.5f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
-	private void AmalgamDeathResponse(Creature _)
+	public override Task AfterDeath(PlayerChoiceContext choiceContext, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
 	{
-		NRunMusicController.Instance?.UpdateMusicParameter("queen_progress", 2f);
-		Amalgam.Died -= AmalgamDeathResponse;
-		if (!base.Creature.IsDead)
+		if (creature.Monster is TorchHeadAmalgam && base.Creature.IsAlive)
 		{
+			NRunMusicController.Instance?.UpdateMusicParameter("queen_progress", 2f);
 			HasAmalgamDied = true;
 			Amalgam = null;
 			LocString line = MonsterModel.L10NMonsterLookup("QUEEN.amalgamDeathSpeakLine");
-			TalkCmd.Play(line, base.Creature, -1.0, VfxColor.Purple);
+			TalkCmd.Play(line, base.Creature, VfxColor.Purple);
 			if (base.NextMove == BurnBrightForMeState)
 			{
 				SetMoveImmediate(EnragedState);
 			}
 		}
+		if (creature == base.Creature)
+		{
+			NRunMusicController.Instance?.UpdateMusicParameter("queen_progress", 5f);
+			base.Creature.GetCreatureNode()?.SpineAnimation.SetAnimation("tracks/empty", loop: true, 1);
+		}
+		return Task.CompletedTask;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		if (moveStateId != "PUPPET_STRINGS_MOVE" && moveStateId != "BURN_BRIGHT_FOR_ME_MOVE" && moveStateId != "ENRAGE_MOVE")
+		{
+			return moveStateId != "EXECUTION_MOVE";
+		}
+		return false;
 	}
 }

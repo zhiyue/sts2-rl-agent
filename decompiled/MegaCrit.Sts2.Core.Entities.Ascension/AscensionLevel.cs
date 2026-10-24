@@ -8,7 +8,7 @@ public enum AscensionLevel
 	Poverty,
 	TightBelt,
 	AscendersBane,
-	Gloom,
+	Inflation,
 	Scarcity,
 	ToughEnemies,
 	DeadlyEnemies,

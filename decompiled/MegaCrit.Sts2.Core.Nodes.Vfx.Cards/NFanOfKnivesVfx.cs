@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.TestSupport;
@@ -17,40 +18,91 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx.Cards;
 [ScriptPath("res://src/Core/Nodes/Vfx/Cards/NFanOfKnivesVfx.cs")]
 public class NFanOfKnivesVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_shiv1' field.
+		/// </summary>
 		public static readonly StringName _shiv1 = "_shiv1";
 
+		/// <summary>
+		/// Cached name for the '_shiv2' field.
+		/// </summary>
 		public static readonly StringName _shiv2 = "_shiv2";
 
+		/// <summary>
+		/// Cached name for the '_shiv3' field.
+		/// </summary>
 		public static readonly StringName _shiv3 = "_shiv3";
 
+		/// <summary>
+		/// Cached name for the '_shiv4' field.
+		/// </summary>
 		public static readonly StringName _shiv4 = "_shiv4";
 
+		/// <summary>
+		/// Cached name for the '_shiv5' field.
+		/// </summary>
 		public static readonly StringName _shiv5 = "_shiv5";
 
+		/// <summary>
+		/// Cached name for the '_shiv6' field.
+		/// </summary>
 		public static readonly StringName _shiv6 = "_shiv6";
 
+		/// <summary>
+		/// Cached name for the '_shiv7' field.
+		/// </summary>
 		public static readonly StringName _shiv7 = "_shiv7";
 
+		/// <summary>
+		/// Cached name for the '_shiv8' field.
+		/// </summary>
 		public static readonly StringName _shiv8 = "_shiv8";
 
+		/// <summary>
+		/// Cached name for the '_shiv9' field.
+		/// </summary>
 		public static readonly StringName _shiv9 = "_shiv9";
 
+		/// <summary>
+		/// Cached name for the '_spawnPosition' field.
+		/// </summary>
 		public static readonly StringName _spawnPosition = "_spawnPosition";
 
+		/// <summary>
+		/// Cached name for the '_spawnTween' field.
+		/// </summary>
 		public static readonly StringName _spawnTween = "_spawnTween";
 
+		/// <summary>
+		/// Cached name for the '_fanTween' field.
+		/// </summary>
 		public static readonly StringName _fanTween = "_fanTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -163,10 +215,17 @@ public class NFanOfKnivesVfx : Node2D
 		_fanTween.TweenProperty(_shiv7, "rotation", 0.872665f, 0.8).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back);
 		_fanTween.TweenProperty(_shiv8, "rotation", 1.3089975f, 0.8).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back);
 		_fanTween.TweenProperty(_shiv9, "rotation", 1.74533f, 0.8).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back);
-		await ToSignal(_spawnTween, Tween.SignalName.Finished);
-		this.QueueFreeSafely();
+		if (await _spawnTween.AwaitFinished(this) && await _fanTween.AwaitFinished(this))
+		{
+			this.QueueFreeSafely();
+		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -176,6 +235,7 @@ public class NFanOfKnivesVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -194,6 +254,7 @@ public class NFanOfKnivesVfx : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -208,6 +269,7 @@ public class NFanOfKnivesVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -274,6 +336,7 @@ public class NFanOfKnivesVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -340,6 +403,11 @@ public class NFanOfKnivesVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -359,6 +427,7 @@ public class NFanOfKnivesVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -377,6 +446,7 @@ public class NFanOfKnivesVfx : Node2D
 		info.AddProperty(PropertyName._fanTween, Variant.From(in _fanTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

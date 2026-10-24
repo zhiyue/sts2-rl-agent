@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 
 namespace MegaCrit.Sts2.Core.Models.Powers;
@@ -16,15 +18,15 @@ public sealed class CountdownPower : PowerModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromPower<DoomPower>());
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Side)
+		if (participants.Contains(base.Owner))
 		{
 			Flash();
 			Creature creature = base.Owner.Player.RunState.Rng.CombatTargets.NextItem(base.CombatState.HittableEnemies);
 			if (creature != null)
 			{
-				await PowerCmd.Apply<DoomPower>(creature, base.Amount, base.Owner, null);
+				await PowerCmd.Apply<DoomPower>(new ThrowingPlayerChoiceContext(), creature, base.Amount, base.Owner, null);
 			}
 		}
 	}

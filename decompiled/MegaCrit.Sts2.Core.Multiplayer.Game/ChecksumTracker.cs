@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO.Hashing;
+using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.Logging;
@@ -10,9 +11,14 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.TestSupport;
+using Sentry;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game;
 
+/// <summary>
+/// Calculates checksums, sends them to peers, and validates received checksums to ensure there are no state divergences
+/// during deterministic execution (currently: during combat, after events, and after rest sites).
+/// </summary>
 public class ChecksumTracker : IDisposable
 {
 	private struct TrackedChecksum
@@ -20,6 +26,8 @@ public class ChecksumTracker : IDisposable
 		public NetChecksumData data;
 
 		public string context;
+
+		public string fingerprintContext;
 
 		public NetFullCombatState fullState;
 	}
@@ -49,6 +57,8 @@ public class ChecksumTracker : IDisposable
 
 	public uint NextId { get; private set; }
 
+	public bool IsEnabled { get; set; } = true;
+
 	public event Action<NetFullCombatState>? StateDiverged;
 
 	public event Action<NetChecksumData, string, NetFullCombatState>? ChecksumGenerated;
@@ -67,8 +77,19 @@ public class ChecksumTracker : IDisposable
 		_netService.UnregisterMessageHandler<StateDivergenceMessage>(OnReceivedStateDivergenceMessage);
 	}
 
+	/// <summary>
+	/// Main entry point for this class. Generates a checksum of the full combat state for validation against peers'.
+	/// On host, the checksum is saved for comparison against those received from clients.
+	/// On clients, the checksum is saved and sent to the host for validation.
+	/// This should be called the exact same amount of times for every peer, otherwise false positive mismatches will be
+	/// generated.
+	/// </summary>
 	public NetChecksumData GenerateChecksum(string context, GameAction? action)
 	{
+		if (!IsEnabled)
+		{
+			return default(NetChecksumData);
+		}
 		_logger.Debug($"Generating checksum for context: {context} action: {action} id: {NextId}");
 		NetChecksumData netChecksumData = ObtainAndTrackChecksum(context, action);
 		if (_netService.Type == NetGameType.Client)
@@ -82,6 +103,9 @@ public class ChecksumTracker : IDisposable
 		return netChecksumData;
 	}
 
+	/// <summary>
+	/// Called on the host when a client sends a message containing the checksum for their current game state.
+	/// </summary>
 	private void OnReceivedChecksumDataMessage(ChecksumDataMessage message, ulong senderId)
 	{
 		if (_netService.Type != NetGameType.Host)
@@ -105,6 +129,11 @@ public class ChecksumTracker : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Called on client when the host sends a message indicating that the client's state has diverged from the host's.
+	/// Also called on the host when the client receives the host's message, so that the host knows what state the client
+	/// was in and can log both.
+	/// </summary>
 	private void OnReceivedStateDivergenceMessage(StateDivergenceMessage message, ulong senderId)
 	{
 		NetChecksumData remoteChecksumData = message.senderChecksum;
@@ -116,7 +145,7 @@ public class ChecksumTracker : IDisposable
 		else
 		{
 			TrackedChecksum localChecksum = _checksums[num];
-			LogStateDivergence(localChecksum, message, senderId);
+			LogStateDivergence(localChecksum, message, senderId, num);
 		}
 		if (_netService.Type == NetGameType.Host)
 		{
@@ -129,6 +158,9 @@ public class ChecksumTracker : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Call this to obtain checksum data that may be sent over the network with a message.
+	/// </summary>
 	private NetChecksumData ObtainAndTrackChecksum(string context, GameAction? action)
 	{
 		NetFullCombatState netFullCombatState = NetFullCombatState.FromRun(_runState, action);
@@ -143,6 +175,7 @@ public class ChecksumTracker : IDisposable
 		{
 			data = netChecksumData,
 			context = context,
+			fingerprintContext = ((action != null) ? action.GetType().Name : context),
 			fullState = netFullCombatState
 		};
 		this.ChecksumGenerated?.Invoke(netChecksumData, context, netFullCombatState);
@@ -188,7 +221,7 @@ public class ChecksumTracker : IDisposable
 		}
 	}
 
-	private void LogStateDivergence(TrackedChecksum localChecksum, StateDivergenceMessage message, ulong remoteId)
+	private void LogStateDivergence(TrackedChecksum localChecksum, StateDivergenceMessage message, ulong remoteId, int checksumIndex)
 	{
 		if (localChecksum.data.id != message.senderChecksum.id)
 		{
@@ -197,6 +230,7 @@ public class ChecksumTracker : IDisposable
 		if (!TestMode.IsOn)
 		{
 			Log.Error($"State divergence message received for player {remoteId} checksum ID {localChecksum.data.id}! (We are {_netService.Type} {_netService.NetId})\nContext: {localChecksum.context}. Local: {localChecksum.data.checksum}. Remote: {message.senderChecksum.checksum}.\nLOCAL STATE DUMP\n{localChecksum.fullState}\nREMOTE STATE DUMP\n{message.senderCombatState}\n");
+			ReportDivergenceToSentry(localChecksum, message, remoteId, checksumIndex);
 		}
 		if (_netService.Type == NetGameType.Client)
 		{
@@ -208,6 +242,34 @@ public class ChecksumTracker : IDisposable
 			_netService.SendMessage(message2);
 			this.StateDiverged?.Invoke(message.senderCombatState);
 		}
+	}
+
+	private void ReportDivergenceToSentry(TrackedChecksum localChecksum, StateDivergenceMessage message, ulong remoteId, int checksumIndex)
+	{
+		string role = _netService.Type.ToString();
+		string message2 = "Multiplayer state divergence: " + localChecksum.fingerprintContext;
+		string localState = localChecksum.fullState.ToString();
+		string remoteState = message.senderCombatState.ToString();
+		SentryService.CaptureException(new StateDivergenceException(message2), delegate(Scope scope)
+		{
+			scope.SetFingerprint("StateDivergence", localChecksum.fingerprintContext);
+			scope.SetTag("net.role", role);
+			scope.SetTag("divergence.type", localChecksum.fingerprintContext);
+			scope.SetExtra("divergence.context", localChecksum.context);
+			scope.SetExtra("divergence.checksum_id", localChecksum.data.id);
+			scope.SetExtra("divergence.local_checksum", localChecksum.data.checksum);
+			scope.SetExtra("divergence.remote_checksum", message.senderChecksum.checksum);
+			scope.SetExtra("divergence.local_net_id", _netService.NetId);
+			scope.SetExtra("divergence.remote_net_id", remoteId);
+			scope.SetExtra("divergence.lobby_id", _netService.GetRawLobbyIdentifier() ?? "unknown");
+			scope.AddCompressedAttachment(localState, "local_state.txt.gz");
+			scope.AddCompressedAttachment(remoteState, "remote_state.txt.gz");
+			if (checksumIndex > 0)
+			{
+				string text = _checksums[checksumIndex - 1].fullState.ToString();
+				scope.AddCompressedAttachment(text, "previous_state.txt.gz");
+			}
+		});
 	}
 
 	public void LoadReplayChecksums(List<ReplayChecksumData> replayChecksums, uint nextId)

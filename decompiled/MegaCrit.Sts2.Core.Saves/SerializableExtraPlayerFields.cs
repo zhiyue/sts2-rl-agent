@@ -13,15 +13,33 @@ public class SerializableExtraPlayerFields : IPacketSerializable
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public int WongoPoints { get; set; }
 
+	[JsonPropertyName("ccccombo_badge_unlocked")]
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public bool CccomboBadgeUnlocked { get; set; }
+
+	[JsonPropertyName("damage_dealt")]
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public int DamageDealt { get; set; }
+
+	[JsonPropertyName("debuffs_applied")]
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public int DebuffsApplied { get; set; }
+
 	public void Serialize(PacketWriter writer)
 	{
 		writer.WriteInt(CardShopRemovalsUsed);
 		writer.WriteInt(WongoPoints);
+		writer.WriteBool(CccomboBadgeUnlocked);
+		writer.WriteInt(DamageDealt);
+		writer.WriteInt(DebuffsApplied);
 	}
 
 	public void Deserialize(PacketReader reader)
 	{
 		CardShopRemovalsUsed = reader.ReadInt();
 		WongoPoints = reader.ReadInt();
+		CccomboBadgeUnlocked = reader.ReadBool();
+		DamageDealt = reader.ReadInt();
+		DebuffsApplied = reader.ReadInt();
 	}
 }

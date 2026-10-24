@@ -32,7 +32,7 @@ public sealed class DeadlyPoison : CardModel
 		NPoisonImpactVfx child = NPoisonImpactVfx.Create(cardPlay.Target);
 		NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(child);
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<PoisonPower>(cardPlay.Target, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<PoisonPower>(choiceContext, cardPlay.Target, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

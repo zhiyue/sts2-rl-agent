@@ -26,7 +26,7 @@ public sealed class SunkenTreasury : EventModel
 		return new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[2]
 		{
 			new EventOption(this, FirstChest, "SUNKEN_TREASURY.pages.INITIAL.options.FIRST_CHEST"),
-			new EventOption(this, SecondChest, "SUNKEN_TREASURY.pages.INITIAL.options.SECOND_CHEST", HoverTipFactory.FromCard<Greed>())
+			new EventOption(this, SecondChest, "SUNKEN_TREASURY.pages.INITIAL.options.SECOND_CHEST", HoverTipFactory.FromCardWithCardHoverTips<Greed>())
 		});
 	}
 

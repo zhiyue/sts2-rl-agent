@@ -65,7 +65,7 @@ public sealed class WelcomeToWongos : EventModel
 		new StringVar("RandomRelic")
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		if (runState.CurrentActIndex == 1)
 		{
@@ -77,7 +77,7 @@ public sealed class WelcomeToWongos : EventModel
 	protected override IReadOnlyList<EventOption> GenerateInitialOptions()
 	{
 		Player owner = base.Owner;
-		FeaturedItem = RelicFactory.PullNextRelicFromFront(owner, RelicRarity.Rare);
+		FeaturedItem = RelicFactory.PullNextRelicFromFront(owner, RelicRarity.Rare, (RelicModel r) => r.IsAllowedInShops);
 		((StringVar)base.DynamicVars["RandomRelic"]).StringValue = FeaturedItem.Title.GetFormattedText();
 		List<EventOption> list = new List<EventOption>();
 		if ((decimal)owner.Gold >= base.DynamicVars["BargainBinCost"].BaseValue)
@@ -133,7 +133,7 @@ public sealed class WelcomeToWongos : EventModel
 	private async Task BuyBargainBin()
 	{
 		await PlayerCmd.LoseGold(base.DynamicVars["BargainBinCost"].BaseValue, base.Owner, GoldLossType.Spent);
-		RelicModel relic = RelicFactory.PullNextRelicFromFront(base.Owner, RelicRarity.Common).ToMutable();
+		RelicModel relic = RelicFactory.PullNextRelicFromFront(base.Owner, RelicRarity.Common, (RelicModel r) => r.IsAllowedInShops).ToMutable();
 		await RelicCmd.Obtain(relic, base.Owner);
 		SetEventFinished(await CheckObtainWongoBadge(32));
 	}

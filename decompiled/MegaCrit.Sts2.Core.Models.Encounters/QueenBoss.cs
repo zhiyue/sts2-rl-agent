@@ -28,7 +28,7 @@ public sealed class QueenBoss : EncounterModel
 		ModelDb.Monster<TorchHeadAmalgam>()
 	});
 
-	public override IEnumerable<string>? ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Bound>().OverlayPath);
+	public override IEnumerable<string> ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Bound>().OverlayPath);
 
 	public override float GetCameraScaling()
 	{

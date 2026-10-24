@@ -26,6 +26,6 @@ public sealed class GigantificationPotion : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		NCombatRoom.Instance?.PlaySplashVfx(target, new Color(Colors.Red));
-		await PowerCmd.Apply<GigantificationPower>(target, base.DynamicVars["GigantificationPower"].BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<GigantificationPower>(choiceContext, target, base.DynamicVars["GigantificationPower"].BaseValue, base.Owner.Creature, null);
 	}
 }

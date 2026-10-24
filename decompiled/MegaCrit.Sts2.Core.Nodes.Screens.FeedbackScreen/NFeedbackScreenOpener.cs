@@ -6,26 +6,48 @@ using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.FeedbackScreen;
 
+/// <summary>
+/// Opens the feedback screen from anywhere when a hotkey is pressed.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/FeedbackScreen/NFeedbackScreenOpener.cs")]
 public class NFeedbackScreenOpener : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -44,7 +66,7 @@ public class NFeedbackScreenOpener : Node
 
 	public override void _Input(InputEvent inputEvent)
 	{
-		if (inputEvent is InputEventKey { Pressed: not false } inputEventKey && inputEventKey.Keycode == Key.F2 && !NGame.Instance.FeedbackScreen.Visible && !(NCapstoneContainer.Instance?.CurrentCapstoneScreen is NCapstoneSubmenuStack { ScreenType: NetScreenType.Feedback }))
+		if (inputEvent is InputEventKey { Pressed: not false } inputEventKey && inputEventKey.Keycode == Key.F2 && !NGame.Instance.GetOrCreateFeedbackScreen().Visible && !(NCapstoneContainer.Instance?.CurrentCapstoneScreen is NCapstoneSubmenuStack { ScreenType: NetScreenType.Feedback }))
 		{
 			TaskHelper.RunSafely(OpenFeedbackScreen());
 		}
@@ -53,14 +75,19 @@ public class NFeedbackScreenOpener : Node
 	public async Task OpenFeedbackScreen()
 	{
 		Image screenshot = GetViewport().GetTexture().GetImage();
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame();
 		NGame.Instance.GetInspectCardScreen().Close();
 		NGame.Instance.GetInspectRelicScreen().Close();
-		NSendFeedbackScreen feedbackScreen = NGame.Instance.FeedbackScreen;
-		feedbackScreen.SetScreenshot(screenshot);
-		NGame.Instance.FeedbackScreen.Open();
+		NSendFeedbackScreen orCreateFeedbackScreen = NGame.Instance.GetOrCreateFeedbackScreen();
+		orCreateFeedbackScreen.SetScreenshot(screenshot);
+		orCreateFeedbackScreen.Open();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -74,6 +101,7 @@ public class NFeedbackScreenOpener : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -98,6 +126,7 @@ public class NFeedbackScreenOpener : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -116,12 +145,14 @@ public class NFeedbackScreenOpener : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

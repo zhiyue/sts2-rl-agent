@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -16,6 +17,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class SludgeSpinner : MonsterModel
 {
+	private const string _rageMove = "RAGE_MOVE";
+
 	private const string _dashAttackSfx = "event:/sfx/enemy/enemy_attacks/sludge_spinner/sludge_spinner_attack_dash";
 
 	private const string _spinAttackSfx = "event:/sfx/enemy/enemy_attacks/sludge_spinner/sludge_spinner_attack_spin";
@@ -55,7 +58,7 @@ public sealed class SludgeSpinner : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/sludge_spinner/sludge_spinner_attack_spin")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<WeakPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
 	}
 
 	private async Task SlamMove(IReadOnlyList<Creature> targets)
@@ -72,7 +75,7 @@ public sealed class SludgeSpinner : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/sludge_spinner/sludge_spinner_attack_dash")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
@@ -91,5 +94,10 @@ public sealed class SludgeSpinner : MonsterModel
 		creatureAnimator.AddAnyState("Dead", state);
 		creatureAnimator.AddAnyState("Hit", animState4);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "RAGE_MOVE";
 	}
 }

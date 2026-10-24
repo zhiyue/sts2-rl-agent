@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -48,7 +49,7 @@ public class UpgradeCardConsoleCmd : AbstractConsoleCmd
 
 	public override CompletionResult GetArgumentCompletions(Player? player, string[] args)
 	{
-		if (args.Length <= 1 && RunManager.Instance.IsInProgress && player != null)
+		if (args.Length <= 1 && RunManager.Instance.IsInProgress && CombatManager.Instance.IsInProgress && player != null)
 		{
 			CardPile pile = PileType.Hand.GetPile(player);
 			int count = pile.Cards.Count;

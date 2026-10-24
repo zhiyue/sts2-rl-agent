@@ -1,51 +1,39 @@
-using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Models.Relics;
 
 public sealed class BowlerHat : RelicModel
 {
-	private const decimal _bonusMultiplier = 0.2m;
-
-	private decimal _pendingBonusGold;
-
-	private bool _isApplyingBonus;
+	private const string _goldIncreaseKey = "GoldIncrease";
 
 	public override RelicRarity Rarity => RelicRarity.Uncommon;
+
+	public override bool IsAllowedInShops => false;
+
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DynamicVar("GoldIncrease", 1.25m));
 
 	public override bool IsAllowed(IRunState runState)
 	{
 		return RelicModel.IsBeforeAct3TreasureChest(runState);
 	}
 
-	public override bool ShouldGainGold(decimal amount, Player player)
+	public override decimal ModifyGoldGained(Player player, decimal amount)
 	{
-		if (_isApplyingBonus)
-		{
-			return true;
-		}
 		if (player != base.Owner)
 		{
-			return true;
+			return amount;
 		}
-		_pendingBonusGold = Math.Floor(amount * 0.2m);
-		return true;
+		return amount * base.DynamicVars["GoldIncrease"].BaseValue;
 	}
 
-	public override async Task AfterGoldGained(Player player)
+	public override Task AfterModifyingGoldGained(Player player, decimal amount)
 	{
-		if (player == base.Owner && !_isApplyingBonus && !(_pendingBonusGold <= 0m))
-		{
-			decimal pendingBonusGold = _pendingBonusGold;
-			_pendingBonusGold = default(decimal);
-			_isApplyingBonus = true;
-			Flash();
-			await PlayerCmd.GainGold(pendingBonusGold, base.Owner);
-			_isApplyingBonus = false;
-		}
+		Flash();
+		return Task.CompletedTask;
 	}
 }

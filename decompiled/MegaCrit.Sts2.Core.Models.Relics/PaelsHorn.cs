@@ -12,7 +12,7 @@ public sealed class PaelsHorn : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Ancient;
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Relax>());
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => HoverTipFactory.FromCardWithCardHoverTips<Relax>();
 
 	public override async Task AfterObtained()
 	{

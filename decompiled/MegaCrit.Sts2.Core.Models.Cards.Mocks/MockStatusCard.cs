@@ -23,6 +23,6 @@ public sealed class MockStatusCard : MockCardModel
 
 	protected override int GetBaseBlock()
 	{
-		throw new NotImplementedException();
+		return 0;
 	}
 }

@@ -29,9 +29,9 @@ public sealed class Severance : CardModel
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(choiceContext);
 		List<Soul> souls = Soul.Create(base.Owner, 3, base.CombatState).ToList();
-		CardPileAddResult drawResult = await CardPileCmd.AddGeneratedCardToCombat(souls[0], PileType.Draw, addedByPlayer: true, CardPilePosition.Random);
-		CardPileAddResult discardResult = await CardPileCmd.AddGeneratedCardToCombat(souls[1], PileType.Discard, addedByPlayer: true);
-		await CardPileCmd.AddGeneratedCardToCombat(souls[2], PileType.Hand, addedByPlayer: true);
+		CardPileAddResult drawResult = await CardPileCmd.AddGeneratedCardToCombat(souls[0], PileType.Draw, base.Owner, CardPilePosition.Random);
+		CardPileAddResult discardResult = await CardPileCmd.AddGeneratedCardToCombat(souls[1], PileType.Discard, base.Owner);
+		await CardPileCmd.AddGeneratedCardToCombat(souls[2], PileType.Hand, base.Owner);
 		CardCmd.PreviewCardPileAdd(new global::_003C_003Ez__ReadOnlyArray<CardPileAddResult>(new CardPileAddResult[2] { drawResult, discardResult }));
 	}
 

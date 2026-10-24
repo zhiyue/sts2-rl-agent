@@ -23,7 +23,7 @@ public sealed class Radiate : CardModel
 		new CalculationBaseVar(0m),
 		new CalculationExtraVar(1m),
 		new CalculatedVar("CalculatedHits").WithMultiplier((CardModel card, Creature? _) => (from e in CombatManager.Instance.History.Entries.OfType<StarsModifiedEntry>()
-			where e.HappenedThisTurn(card.CombatState) && e.Amount > 0
+			where e.HappenedThisTurn(card.CombatState) && e.Amount > 0 && e.Actor == card.Owner.Creature
 			select e).Sum((StarsModifiedEntry e) => e.Amount))
 	});
 

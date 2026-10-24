@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -18,11 +19,15 @@ public sealed class TheObscura : MonsterModel
 {
 	private const string _summonTrigger = "Summon";
 
+	private const string _piercingGazeMove = "PIERCING_GAZE_MOVE";
+
 	private const string _summonSfx = "event:/sfx/enemy/enemy_attacks/obscura/obscura_summon";
 
 	private const string _buffSfx = "event:/sfx/enemy/enemy_attacks/obscura/obscura_buff";
 
 	private bool _hasSummoned;
+
+	protected override bool HasPhobiaSpineSkin => true;
 
 	protected override string AttackSfx => "event:/sfx/enemy/enemy_attacks/obscura/obscura_attack";
 
@@ -74,7 +79,10 @@ public sealed class TheObscura : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/obscura/obscura_summon");
 		await CreatureCmd.TriggerAnim(base.Creature, "Summon", 0.15f);
-		await CreatureCmd.Add<Parafright>(base.CombatState, "illusion");
+		if (base.CombatState.IsLiveCombat())
+		{
+			await CreatureCmd.Add<Parafright>(base.CombatState, "illusion");
+		}
 		HasSummoned = true;
 	}
 
@@ -90,7 +98,7 @@ public sealed class TheObscura : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/obscura/obscura_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.7f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature.CombatState.GetTeammatesOf(base.Creature), 3m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature.CombatState.GetTeammatesOf(base.Creature), 3m, base.Creature, null);
 	}
 
 	private async Task HardeningStrikeMove(IReadOnlyList<Creature> targets)
@@ -127,5 +135,10 @@ public sealed class TheObscura : MonsterModel
 		creatureAnimator.AddAnyState("Cast", animState3);
 		creatureAnimator.AddAnyState("Summon", animState4);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "PIERCING_GAZE_MOVE";
 	}
 }

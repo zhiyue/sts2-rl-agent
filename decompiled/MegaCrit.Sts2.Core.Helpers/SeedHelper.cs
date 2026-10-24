@@ -9,15 +9,19 @@ public static class SeedHelper
 
 	public const int seedDefaultLength = 10;
 
-	public static string GetRandomSeed(int length = 10)
+	public static string GetRandomSeed(Rng? rng = null, int length = 10)
 	{
+		if (rng == null)
+		{
+			rng = Rng.Chaotic;
+		}
 		string text;
 		do
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			for (int i = 0; i < length; i++)
 			{
-				stringBuilder.Append(Rng.Chaotic.NextItem("0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"));
+				stringBuilder.Append(rng.NextItem("0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"));
 			}
 			text = stringBuilder.ToString();
 		}

@@ -28,7 +28,7 @@ public sealed class Distraction : CardModel
 		if (cardModel != null)
 		{
 			cardModel.SetToFreeThisTurn();
-			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, base.Owner);
 		}
 	}
 

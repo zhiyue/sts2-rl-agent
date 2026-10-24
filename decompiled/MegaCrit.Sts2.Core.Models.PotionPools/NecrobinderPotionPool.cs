@@ -18,6 +18,9 @@ public sealed class NecrobinderPotionPool : PotionPoolModel
 		return Necrobinder4Epoch.Potions;
 	}
 
+	/// <summary>
+	/// Only return the Potions if the associated Epoch is revealed.
+	/// </summary>
 	public override IEnumerable<PotionModel> GetUnlockedPotions(UnlockState unlockState)
 	{
 		if (!unlockState.IsEpochRevealed<Necrobinder4Epoch>())

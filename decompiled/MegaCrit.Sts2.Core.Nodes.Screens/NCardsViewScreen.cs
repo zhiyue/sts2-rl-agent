@@ -11,7 +11,6 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
-using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
@@ -19,45 +18,113 @@ using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens;
 
+/// <summary>
+/// This is the screen used to view an arbitrary set of cards
+/// EX: pandoras box
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/NCardsViewScreen.cs")]
 public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'OnInspectCardHidden' method.
+		/// </summary>
+		public static readonly StringName OnInspectCardHidden = "OnInspectCardHidden";
+
+		/// <summary>
+		/// Cached name for the 'ToggleShowUpgrades' method.
+		/// </summary>
 		public static readonly StringName ToggleShowUpgrades = "ToggleShowUpgrades";
 
+		/// <summary>
+		/// Cached name for the 'OnReturnButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnReturnButtonPressed = "OnReturnButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'AfterCapstoneOpened' method.
+		/// </summary>
 		public static readonly StringName AfterCapstoneOpened = "AfterCapstoneOpened";
 
+		/// <summary>
+		/// Cached name for the 'AfterCapstoneClosed' method.
+		/// </summary>
 		public static readonly StringName AfterCapstoneClosed = "AfterCapstoneClosed";
+
+		/// <summary>
+		/// Cached name for the 'OnControllerStateUpdated' method.
+		/// </summary>
+		public static readonly StringName OnControllerStateUpdated = "OnControllerStateUpdated";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ScreenType' property.
+		/// </summary>
 		public static readonly StringName ScreenType = "ScreenType";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the 'FocusedControlFromTopBar' property.
+		/// </summary>
 		public static readonly StringName FocusedControlFromTopBar = "FocusedControlFromTopBar";
 
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the '_background' field.
+		/// </summary>
 		public static readonly StringName _background = "_background";
 
+		/// <summary>
+		/// Cached name for the '_grid' field.
+		/// </summary>
 		public static readonly StringName _grid = "_grid";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_showUpgrades' field.
+		/// </summary>
 		public static readonly StringName _showUpgrades = "_showUpgrades";
 
+		/// <summary>
+		/// Cached name for the '_bottomLabel' field.
+		/// </summary>
 		public static readonly StringName _bottomLabel = "_bottomLabel";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -101,22 +168,17 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		_backButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OnReturnButtonPressed));
 		_backButton.Enable();
 		_grid = GetNode<NCardGrid>("CardGrid");
-		_grid.Connect(NCardGrid.SignalName.HolderPressed, Callable.From(delegate(NCardHolder h)
-		{
-			ShowCardDetail(h.CardModel);
-		}));
-		_grid.Connect(NCardGrid.SignalName.HolderAltPressed, Callable.From(delegate(NCardHolder h)
-		{
-			ShowCardDetail(h.CardModel);
-		}));
 		_grid.InsetForTopBar();
 		_bottomLabel.Text = _infoText.GetFormattedText();
 		_showUpgrades = GetNode<NTickbox>("%Upgrades");
 		_showUpgrades.Connect(NTickbox.SignalName.Toggled, Callable.From<NTickbox>(ToggleShowUpgrades));
+		OnControllerStateUpdated();
+		NControllerManager.Instance.Connect(NControllerManager.SignalName.MouseDetected, Callable.From(OnControllerStateUpdated));
+		NControllerManager.Instance.Connect(NControllerManager.SignalName.ControllerDetected, Callable.From(OnControllerStateUpdated));
 		base.ProcessMode = (ProcessModeEnum)(base.Visible ? 0 : 4);
 	}
 
-	private void ShowCardDetail(CardModel cardModel)
+	protected void ShowCardDetail(CardModel cardModel)
 	{
 		_backButton.Disable();
 		List<CardModel> list = _grid.CurrentlyDisplayedCards.ToList();
@@ -126,9 +188,14 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		{
 			if (!inspectCardScreen.Visible)
 			{
-				_backButton.Enable();
+				OnInspectCardHidden();
 			}
 		}), 4u);
+	}
+
+	protected virtual void OnInspectCardHidden()
+	{
+		_backButton.Enable();
 	}
 
 	private void ToggleShowUpgrades(NTickbox tickbox)
@@ -152,12 +219,28 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		this.QueueFreeSafely();
 	}
 
+	private void OnControllerStateUpdated()
+	{
+		_showUpgrades.Visible = !NControllerManager.Instance.IsUsingController;
+		if (NControllerManager.Instance.IsUsingController)
+		{
+			_showUpgrades.IsTicked = false;
+			ToggleShowUpgrades(_showUpgrades);
+		}
+	}
+
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(6);
+		List<MethodInfo> list = new List<MethodInfo>(8);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ConnectSignals, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.OnInspectCardHidden, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ToggleShowUpgrades, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "tickbox", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
@@ -168,9 +251,11 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		}, null));
 		list.Add(new MethodInfo(MethodName.AfterCapstoneOpened, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.AfterCapstoneClosed, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.OnControllerStateUpdated, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -183,6 +268,12 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		if (method == MethodName.ConnectSignals && args.Count == 0)
 		{
 			ConnectSignals();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.OnInspectCardHidden && args.Count == 0)
+		{
+			OnInspectCardHidden();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -210,9 +301,16 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.OnControllerStateUpdated && args.Count == 0)
+		{
+			OnControllerStateUpdated();
+			ret = default(godot_variant);
+			return true;
+		}
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -221,6 +319,10 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 			return true;
 		}
 		if (method == MethodName.ConnectSignals)
+		{
+			return true;
+		}
+		if (method == MethodName.OnInspectCardHidden)
 		{
 			return true;
 		}
@@ -240,9 +342,14 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		{
 			return true;
 		}
+		if (method == MethodName.OnControllerStateUpdated)
+		{
+			return true;
+		}
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -274,6 +381,7 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -328,6 +436,11 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -344,6 +457,7 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -355,6 +469,7 @@ public abstract class NCardsViewScreen : Control, ICapstoneScreen, IScreenContex
 		info.AddProperty(PropertyName._bottomLabel, Variant.From(in _bottomLabel));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -1,21 +1,24 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Audio;
+using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class SoulNexus : MonsterModel
 {
+	private const string _maelstromMove = "MAELSTROM_MOVE";
+
 	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 254, 234);
 
 	public override int MaxInitialHp => MinInitialHp;
@@ -32,9 +35,9 @@ public sealed class SoulNexus : MonsterModel
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Magic;
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		visuals.SpineBody.GetAnimationState().SetAnimation("tracks/writhe", loop: true, 1);
+		spine.GetAnimationState().SetAnimation("tracks/writhe", loop: true, 1);
 	}
 
 	public override async Task AfterAddedToRoom()
@@ -46,14 +49,14 @@ public sealed class SoulNexus : MonsterModel
 	private void AfterDeath(Creature _)
 	{
 		base.Creature.Died -= AfterDeath;
-		NCombatRoom.Instance.GetCreatureNode(base.Creature)?.SpineController.GetAnimationState().SetAnimation("tracks/empty", loop: true, 1);
+		NCombatRoom.Instance.GetCreatureNode(base.Creature)?.SpineAnimation.SetAnimation("tracks/empty", loop: true, 1);
 	}
 
 	public override void BeforeRemovedFromRoom()
 	{
 		if (!base.CombatState.RunState.IsGameOver)
 		{
-			NCombatRoom.Instance.GetCreatureNode(base.Creature)?.SpineController.GetAnimationState().SetAnimation("tracks/empty", loop: true, 1);
+			NCombatRoom.Instance?.GetCreatureNode(base.Creature)?.SpineAnimation.SetAnimation("tracks/empty", loop: true, 1);
 		}
 	}
 
@@ -97,7 +100,12 @@ public sealed class SoulNexus : MonsterModel
 		await DamageCmd.Attack(DrainLifeDamage).FromMonster(this).WithAttackerAnim("Cast", 1f)
 			.WithAttackerFx(null, CastSfx)
 			.Execute(null);
-		await PowerCmd.Apply<VulnerablePower>(targets, 2m, base.Creature, null);
-		await PowerCmd.Apply<WeakPower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "MAELSTROM_MOVE";
 	}
 }

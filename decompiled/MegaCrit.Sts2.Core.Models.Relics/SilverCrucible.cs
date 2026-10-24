@@ -78,6 +78,11 @@ public sealed class SilverCrucible : RelicModel
 		}
 	}
 
+	public override bool IsAllowed(IRunState runState)
+	{
+		return runState.Players.Count == 1;
+	}
+
 	private void CheckIfUsedUp()
 	{
 		if (IsUsedUp)
@@ -93,6 +98,10 @@ public sealed class SilverCrucible : RelicModel
 			return false;
 		}
 		if (TimesUsed >= base.DynamicVars.Cards.IntValue)
+		{
+			return false;
+		}
+		if (!options.Flags.HasFlag(CardCreationFlags.IsCardReward))
 		{
 			return false;
 		}

@@ -41,7 +41,7 @@ public sealed class PotionOfBinding : PotionModel
 		{
 			NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(NSmokePuffVfx.Create(item, NSmokePuffVfx.SmokePuffColor.Green));
 		}
-		await PowerCmd.Apply<WeakPower>(targets, base.DynamicVars["VulnerablePower"].IntValue, base.Owner.Creature, null);
-		await PowerCmd.Apply<VulnerablePower>(targets, base.DynamicVars["WeakPower"].IntValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<WeakPower>(choiceContext, targets, base.DynamicVars["VulnerablePower"].IntValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(choiceContext, targets, base.DynamicVars["WeakPower"].IntValue, base.Owner.Creature, null);
 	}
 }

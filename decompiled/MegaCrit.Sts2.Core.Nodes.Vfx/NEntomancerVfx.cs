@@ -11,40 +11,91 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NEntomancerVfx.cs")]
 public class NEntomancerVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'LaunchSwarm' method.
+		/// </summary>
 		public static readonly StringName LaunchSwarm = "LaunchSwarm";
 
+		/// <summary>
+		/// Cached name for the 'CompleteSwarmAttack' method.
+		/// </summary>
 		public static readonly StringName CompleteSwarmAttack = "CompleteSwarmAttack";
 
+		/// <summary>
+		/// Cached name for the 'CancelSwarmAttack' method.
+		/// </summary>
 		public static readonly StringName CancelSwarmAttack = "CancelSwarmAttack";
 
+		/// <summary>
+		/// Cached name for the 'TurnOffSwarm' method.
+		/// </summary>
 		public static readonly StringName TurnOffSwarm = "TurnOffSwarm";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_swarmParticles' field.
+		/// </summary>
 		public static readonly StringName _swarmParticles = "_swarmParticles";
 
+		/// <summary>
+		/// Cached name for the '_attackingBugParticles' field.
+		/// </summary>
 		public static readonly StringName _attackingBugParticles = "_attackingBugParticles";
 
+		/// <summary>
+		/// Cached name for the '_swarmTargetNode' field.
+		/// </summary>
 		public static readonly StringName _swarmTargetNode = "_swarmTargetNode";
 
+		/// <summary>
+		/// Cached name for the '_basePosition' field.
+		/// </summary>
 		public static readonly StringName _basePosition = "_basePosition";
 
+		/// <summary>
+		/// Cached name for the '_swarmTween' field.
+		/// </summary>
 		public static readonly StringName _swarmTween = "_swarmTween";
 
+		/// <summary>
+		/// Cached name for the '_swarming' field.
+		/// </summary>
 		public static readonly StringName _swarming = "_swarming";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -131,6 +182,11 @@ public class NEntomancerVfx : Node
 		_swarmTween?.Kill();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -151,6 +207,7 @@ public class NEntomancerVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -199,6 +256,7 @@ public class NEntomancerVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -233,6 +291,7 @@ public class NEntomancerVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -274,6 +333,7 @@ public class NEntomancerVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -315,6 +375,11 @@ public class NEntomancerVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -329,6 +394,7 @@ public class NEntomancerVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -342,6 +408,7 @@ public class NEntomancerVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

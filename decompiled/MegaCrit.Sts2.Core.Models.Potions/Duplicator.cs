@@ -18,6 +18,6 @@ public sealed class Duplicator : PotionModel
 
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
-		await PowerCmd.Apply<DuplicationPower>(base.Owner.Creature, 1m, base.Owner.Creature, null);
+		await PowerCmd.Apply<DuplicationPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, null);
 	}
 }

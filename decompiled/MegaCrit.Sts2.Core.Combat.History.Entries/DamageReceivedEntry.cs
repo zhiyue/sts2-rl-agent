@@ -1,8 +1,13 @@
+using System.Collections.Generic;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.Combat.History.Entries;
 
+/// <summary>
+/// Tracks every time a creature receives damage.
+/// </summary>
 public class DamageReceivedEntry : CombatHistoryEntry
 {
 	public DamageResult Result { get; }
@@ -26,8 +31,8 @@ public class DamageReceivedEntry : CombatHistoryEntry
 		}
 	}
 
-	public DamageReceivedEntry(DamageResult result, Creature receiver, Creature? dealer, CardModel? cardSource, int roundNumber, CombatSide currentSide, CombatHistory history)
-		: base(receiver, roundNumber, currentSide, history)
+	public DamageReceivedEntry(DamageResult result, Creature receiver, Creature? dealer, CardModel? cardSource, int roundNumber, CombatSide currentSide, CombatHistory history, IEnumerable<Player> players)
+		: base(receiver, roundNumber, currentSide, history, players)
 	{
 		Result = result;
 		Dealer = dealer;

@@ -7,13 +7,13 @@ using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.TestSupport;
 
@@ -65,13 +65,16 @@ public sealed class Myte : MonsterModel
 	{
 		if (TestMode.IsOff)
 		{
-			NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(base.Creature);
-			Creature target = LocalContext.GetMe(base.CombatState)?.Creature;
-			creatureNode.GetSpecialNode<NMyteVfx>("%NMyteVfx")?.SetTarget(target);
+			NCreature creatureNode = base.Creature.GetCreatureNode();
+			if (creatureNode != null)
+			{
+				Creature target = LocalContext.GetMe(base.CombatState)?.Creature;
+				creatureNode.GetSpecialNode<NMyteVfx>("%NMyteVfx")?.SetTarget(target);
+			}
 		}
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/mite/mite_cast");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.6f);
-		await CardPileCmd.AddToCombatAndPreview<Toxic>(targets, PileType.Hand, 2, addedByPlayer: false);
+		await CardPileCmd.AddToCombatAndPreview<Toxic>(targets, PileType.Hand, 2, null);
 	}
 
 	private async Task BiteMove(IReadOnlyList<Creature> targets)
@@ -88,7 +91,7 @@ public sealed class Myte : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/mite/mite_suck")
 			.WithHitFx("vfx/vfx_bite")
 			.Execute(null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, SuckStrength, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, SuckStrength, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

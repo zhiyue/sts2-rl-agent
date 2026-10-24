@@ -13,11 +13,25 @@ namespace MegaCrit.Sts2.Core.Commands;
 
 public static class RelicCmd
 {
+	/// <summary>
+	/// Give a relic to the player.
+	/// </summary>
+	/// <param name="player">Player to give the relic to.</param>
+	/// <typeparam name="T">Type of relic to obtain.</typeparam>
+	/// <returns>RelicModel</returns>
 	public static async Task<T> Obtain<T>(Player player) where T : RelicModel
 	{
 		return (T)(await Obtain(ModelDb.Relic<T>().ToMutable(), player));
 	}
 
+	/// <summary>
+	/// Give a relic to the player.
+	/// </summary>
+	/// <param name="relic">Relic to obtain.</param>
+	/// <param name="player">Player to give the relic to.</param>
+	/// <param name="index">index in the relic list we want to add our relic to.
+	/// Default of -1 means that we append it to the end of the relic list.</param>
+	/// <returns>RelicModel</returns>
 	public static async Task<RelicModel> Obtain(RelicModel relic, Player player, int index = -1)
 	{
 		relic.AssertMutable();
@@ -40,6 +54,10 @@ public static class RelicCmd
 		return relic;
 	}
 
+	/// <summary>
+	/// Remove a relic from its owner.
+	/// </summary>
+	/// <param name="relic">Relic to remove.</param>
 	public static async Task Remove(RelicModel relic)
 	{
 		relic.Owner.RunState.CurrentMapPointHistoryEntry?.GetEntry(relic.Owner.NetId).RelicsRemoved.Add(relic.Id);
@@ -47,6 +65,12 @@ public static class RelicCmd
 		await relic.AfterRemoved();
 	}
 
+	/// <summary>
+	/// Replace a relic with another relic
+	/// </summary>
+	/// <param name="original">Relic to remove.</param>
+	/// <param name="replace">Relic to obtain.</param>
+	/// <returns>RelicModel</returns>
 	public static async Task<RelicModel> Replace(RelicModel original, RelicModel replace)
 	{
 		original.AssertMutable();
@@ -57,6 +81,11 @@ public static class RelicCmd
 		return await Obtain(replace, player, indexOfOriginal);
 	}
 
+	/// <summary>
+	/// Melts a relic.
+	/// A melted relic remains in your inventory, but is unusable.
+	/// </summary>
+	/// <param name="relic">Relic to melt.</param>
 	public static async Task Melt(RelicModel relic)
 	{
 		relic.Owner.MeltRelicInternal(relic);

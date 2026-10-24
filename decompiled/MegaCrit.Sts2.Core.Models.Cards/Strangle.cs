@@ -29,7 +29,7 @@ public sealed class Strangle : CardModel
 		await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(choiceContext);
-		await PowerCmd.Apply<StranglePower>(cardPlay.Target, base.DynamicVars["StranglePower"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<StranglePower>(choiceContext, cardPlay.Target, base.DynamicVars["StranglePower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

@@ -9,7 +9,6 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Localization;
-using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -34,7 +33,7 @@ public sealed class SmithRestSiteOption : RestSiteOption
 		get
 		{
 			LocString locString;
-			if (base.IsEnabled)
+			if (IsEnabled)
 			{
 				locString = new LocString("rest_site_ui", "OPTION_" + OptionId + ".description");
 				locString.Add("Count", SmithCount);
@@ -47,11 +46,11 @@ public sealed class SmithRestSiteOption : RestSiteOption
 		}
 	}
 
+	public override bool IsEnabled => base.Owner.Deck.UpgradableCardCount != 0;
+
 	public SmithRestSiteOption(Player owner)
 		: base(owner)
 	{
-		Log.Info("Set enabled");
-		base.IsEnabled = owner.Deck.UpgradableCardCount != 0;
 	}
 
 	public override async Task<bool> OnSelect()

@@ -21,36 +21,81 @@ public class NSearchBar : Control
 	[Signal]
 	public delegate void QuerySubmittedEventHandler(string query);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'TextUpdated' method.
+		/// </summary>
 		public static readonly StringName TextUpdated = "TextUpdated";
 
+		/// <summary>
+		/// Cached name for the 'TextSubmitted' method.
+		/// </summary>
 		public static readonly StringName TextSubmitted = "TextSubmitted";
 
+		/// <summary>
+		/// Cached name for the 'ClearText' method.
+		/// </summary>
 		public static readonly StringName ClearText = "ClearText";
 
+		/// <summary>
+		/// Cached name for the 'Normalize' method.
+		/// </summary>
 		public static readonly StringName Normalize = "Normalize";
 
+		/// <summary>
+		/// Cached name for the 'RemoveHtmlTags' method.
+		/// </summary>
 		public static readonly StringName RemoveHtmlTags = "RemoveHtmlTags";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Text' property.
+		/// </summary>
 		public static readonly StringName Text = "Text";
 
+		/// <summary>
+		/// Cached name for the 'TextArea' property.
+		/// </summary>
 		public static readonly StringName TextArea = "TextArea";
 
+		/// <summary>
+		/// Cached name for the '_textArea' field.
+		/// </summary>
 		public static readonly StringName _textArea = "_textArea";
 
+		/// <summary>
+		/// Cached name for the '_clearButton' field.
+		/// </summary>
 		public static readonly StringName _clearButton = "_clearButton";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'QueryChanged' signal.
+		/// </summary>
 		public static readonly StringName QueryChanged = "QueryChanged";
 
+		/// <summary>
+		/// Cached name for the 'QuerySubmitted' signal.
+		/// </summary>
 		public static readonly StringName QuerySubmitted = "QuerySubmitted";
 	}
 
@@ -66,6 +111,7 @@ public class NSearchBar : Control
 
 	public LineEdit TextArea => _textArea;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.CommonUi.NSearchBar.QueryChangedEventHandler" />
 	public event QueryChangedEventHandler QueryChanged
 	{
 		add
@@ -78,6 +124,7 @@ public class NSearchBar : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.CommonUi.NSearchBar.QuerySubmittedEventHandler" />
 	public event QuerySubmittedEventHandler QuerySubmitted
 	{
 		add
@@ -90,6 +137,14 @@ public class NSearchBar : Control
 		}
 	}
 
+	/// <remarks>
+	/// Pattern:<br />
+	/// <code>[\\t\\r\\n]</code><br />
+	/// Explanation:<br />
+	/// <code>
+	/// ○ Match a character in the set [\t\n\r].<br />
+	/// </code>
+	/// </remarks>
 	[GeneratedRegex("[\\t\\r\\n]")]
 	[GeneratedCode("System.Text.RegularExpressions.Generator", "9.0.12.31616")]
 	private static Regex NonSpaceWhitespaceCharacters()
@@ -97,6 +152,14 @@ public class NSearchBar : Control
 		return _003CRegexGenerator_g_003EFACC081AAF3D765EFF87A82C4FBB77F6FD3EA759AA2D03D993988F88E97CC0B5B__NonSpaceWhitespaceCharacters_5.Instance;
 	}
 
+	/// <remarks>
+	/// Pattern:<br />
+	/// <code>\\s{2,}</code><br />
+	/// Explanation:<br />
+	/// <code>
+	/// ○ Match a whitespace character atomically at least twice.<br />
+	/// </code>
+	/// </remarks>
 	[GeneratedRegex("\\s{2,}")]
 	[GeneratedCode("System.Text.RegularExpressions.Generator", "9.0.12.31616")]
 	private static Regex ConsecutiveSpaces()
@@ -104,6 +167,16 @@ public class NSearchBar : Control
 		return _003CRegexGenerator_g_003EFACC081AAF3D765EFF87A82C4FBB77F6FD3EA759AA2D03D993988F88E97CC0B5B__ConsecutiveSpaces_6.Instance;
 	}
 
+	/// <remarks>
+	/// Pattern:<br />
+	/// <code>&lt;.*?&gt;</code><br />
+	/// Explanation:<br />
+	/// <code>
+	/// ○ Match '&lt;'.<br />
+	/// ○ Match a character other than '\n' lazily any number of times.<br />
+	/// ○ Match '&gt;'.<br />
+	/// </code>
+	/// </remarks>
 	[GeneratedRegex("<.*?>")]
 	[GeneratedCode("System.Text.RegularExpressions.Generator", "9.0.12.31616")]
 	private static Regex HtmlTags()
@@ -157,6 +230,11 @@ public class NSearchBar : Control
 		return HtmlTags().Replace(text, string.Empty);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -186,6 +264,7 @@ public class NSearchBar : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -249,6 +328,7 @@ public class NSearchBar : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -279,6 +359,7 @@ public class NSearchBar : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -295,6 +376,7 @@ public class NSearchBar : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -321,6 +403,11 @@ public class NSearchBar : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -332,6 +419,7 @@ public class NSearchBar : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -342,6 +430,7 @@ public class NSearchBar : Control
 		info.AddSignalEventDelegate(SignalName.QuerySubmitted, backing_QuerySubmitted);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -364,6 +453,11 @@ public class NSearchBar : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -389,6 +483,7 @@ public class NSearchBar : Control
 		EmitSignal(SignalName.QuerySubmitted, query);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -406,6 +501,7 @@ public class NSearchBar : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

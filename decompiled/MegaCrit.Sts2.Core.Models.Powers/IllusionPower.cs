@@ -51,9 +51,18 @@ public sealed class IllusionPower : PowerModel
 		return new Data();
 	}
 
+	/// <summary>
+	/// Illusions keep their buffs (including IllusionPower itself) after dying.
+	/// We ignore Temporary powers (ie temp strength down from dark shackles or dying star) so that the
+	/// temp powers they are applying also go away
+	/// </summary>
 	public override bool ShouldPowerBeRemovedOnDeath(PowerModel power)
 	{
-		return power.Type == PowerType.Debuff;
+		if (power.Type == PowerType.Debuff)
+		{
+			return !(power is ITemporaryPower);
+		}
+		return false;
 	}
 
 	public override Task AfterApplied(Creature? applier, CardModel? cardSource)
@@ -62,7 +71,7 @@ public sealed class IllusionPower : PowerModel
 		{
 			return Task.CompletedTask;
 		}
-		return PowerCmd.Apply<MinionPower>(base.Owner, 1m, null, null);
+		return PowerCmd.Apply<MinionPower>(new ThrowingPlayerChoiceContext(), base.Owner, 1m, null, null);
 	}
 
 	public override async Task AfterDeath(PlayerChoiceContext choiceContext, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
@@ -80,6 +89,9 @@ public sealed class IllusionPower : PowerModel
 		}
 	}
 
+	/// <summary>
+	/// This is so the owner doesn't receive powers while it is reviving.
+	/// </summary>
 	public override bool ShouldAllowHitting(Creature creature)
 	{
 		if (creature != base.Owner)

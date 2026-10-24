@@ -7,6 +7,10 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Game;
 
+/// <summary>
+/// Sent from clients to host when they initiate a GameAction.
+/// The GameAction must not be enqueued until the host sends back an ActionEnqueuedMessage, to preserve determinism.
+/// </summary>
 public struct RequestEnqueueActionMessage : INetMessage, IPacketSerializable, IRunLocationTargetedMessage
 {
 	public RunLocation location;
@@ -20,6 +24,8 @@ public struct RequestEnqueueActionMessage : INetMessage, IPacketSerializable, IR
 	public RunLocation Location => location;
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
+
+	public bool ShouldBuffer => true;
 
 	public void Serialize(PacketWriter writer)
 	{

@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Resolving Bugs
+/// </summary>
 public class Defect4Epoch : EpochModel
 {
 	public override string Id => "DEFECT4_EPOCH";

@@ -12,31 +12,73 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 
 namespace MegaCrit.Sts2.Core.Nodes.Cards;
 
+/// <summary>
+/// Used in Rest Site, Armaments, etc.
+/// This is only for upgrades. Not used for previewing enchantments.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Cards/NUpgradePreview.cs")]
 public class NUpgradePreview : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Reload' method.
+		/// </summary>
 		public static readonly StringName Reload = "Reload";
 
+		/// <summary>
+		/// Cached name for the 'RemoveExistingCards' method.
+		/// </summary>
 		public static readonly StringName RemoveExistingCards = "RemoveExistingCards";
 
+		/// <summary>
+		/// Cached name for the 'ReturnCard' method.
+		/// </summary>
 		public static readonly StringName ReturnCard = "ReturnCard";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'SelectedCardPosition' property.
+		/// </summary>
 		public static readonly StringName SelectedCardPosition = "SelectedCardPosition";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
+		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
+
+		/// <summary>
+		/// Cached name for the '_before' field.
+		/// </summary>
 		public static readonly StringName _before = "_before";
 
+		/// <summary>
+		/// Cached name for the '_after' field.
+		/// </summary>
 		public static readonly StringName _after = "_after";
 
+		/// <summary>
+		/// Cached name for the '_arrows' field.
+		/// </summary>
 		public static readonly StringName _arrows = "_arrows";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -63,6 +105,8 @@ public class NUpgradePreview : Control
 			Reload();
 		}
 	}
+
+	public Control DefaultFocusedControl => _before.GetChild<NPreviewCardHolder>(0);
 
 	public override void _Ready()
 	{
@@ -96,6 +140,9 @@ public class NUpgradePreview : Control
 		}
 	}
 
+	/// <summary>
+	/// Helper function to remove any existing preview cards
+	/// </summary>
 	private void RemoveExistingCards()
 	{
 		foreach (Node child in _before.GetChildren())
@@ -115,6 +162,11 @@ public class NUpgradePreview : Control
 		Card = null;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -129,6 +181,7 @@ public class NUpgradePreview : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -159,6 +212,7 @@ public class NUpgradePreview : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -181,6 +235,7 @@ public class NUpgradePreview : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -202,12 +257,18 @@ public class NUpgradePreview : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
 		if (name == PropertyName.SelectedCardPosition)
 		{
 			value = VariantUtils.CreateFrom<Vector2>(SelectedCardPosition);
+			return true;
+		}
+		if (name == PropertyName.DefaultFocusedControl)
+		{
+			value = VariantUtils.CreateFrom<Control>(DefaultFocusedControl);
 			return true;
 		}
 		if (name == PropertyName._before)
@@ -228,6 +289,11 @@ public class NUpgradePreview : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -236,9 +302,11 @@ public class NUpgradePreview : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._after, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._arrows, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName.SelectedCardPosition, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.DefaultFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -248,6 +316,7 @@ public class NUpgradePreview : Control
 		info.AddProperty(PropertyName._arrows, Variant.From(in _arrows));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

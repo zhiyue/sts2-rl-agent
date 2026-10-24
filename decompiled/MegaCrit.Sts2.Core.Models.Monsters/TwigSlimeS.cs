@@ -23,7 +23,7 @@ public sealed class TwigSlimeS : MonsterModel
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
-		MoveState moveState = new MoveState("BUTT_MOVE", TackleMove, new SingleAttackIntent(TackleDamage));
+		MoveState moveState = new MoveState("TACKLE_MOVE", TackleMove, new SingleAttackIntent(TackleDamage));
 		moveState.FollowUpState = moveState;
 		list.Add(moveState);
 		return new MonsterMoveStateMachine(list, moveState);

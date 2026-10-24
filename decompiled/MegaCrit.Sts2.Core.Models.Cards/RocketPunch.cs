@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -31,8 +32,12 @@ public sealed class RocketPunch : CardModel
 		await CardPileCmd.Draw(choiceContext, base.DynamicVars.Cards.BaseValue, base.Owner);
 	}
 
-	public override Task AfterCardGeneratedForCombat(CardModel card, bool addedByPlayer)
+	public override Task AfterCardGeneratedForCombat(CardModel card, Player? creator)
 	{
+		if (creator != base.Owner)
+		{
+			return Task.CompletedTask;
+		}
 		if (card.Owner != base.Owner)
 		{
 			return Task.CompletedTask;
@@ -41,7 +46,7 @@ public sealed class RocketPunch : CardModel
 		{
 			return Task.CompletedTask;
 		}
-		base.EnergyCost.SetThisTurnOrUntilPlayed(0);
+		base.EnergyCost.SetUntilPlayed(0);
 		return Task.CompletedTask;
 	}
 

@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
+using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.ValueProps;
 
@@ -12,7 +13,7 @@ namespace MegaCrit.Sts2.Core.Models.Cards;
 
 public sealed class Unrelenting : CardModel
 {
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(12m, ValueProp.Move));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(14m, ValueProp.Move));
 
 	public Unrelenting()
 		: base(2, CardType.Attack, CardRarity.Uncommon, TargetType.AnyEnemy)
@@ -23,9 +24,11 @@ public sealed class Unrelenting : CardModel
 	{
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
 		await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
-			.WithHitFx("vfx/vfx_attack_slash")
+			.WithAttackerAnim(Ironclad.GetHeavyAnimIfApplicable(base.Owner.Character), Ironclad.GetHeavyAttackDelayIfApplicable(base.Owner.Character))
+			.WithHitFx("vfx/vfx_heavy_blunt", null, "heavy_attack.mp3")
+			.WithHitVfxSpawnedAtBase()
 			.Execute(choiceContext);
-		await PowerCmd.Apply<FreeAttackPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		await PowerCmd.Apply<FreeAttackPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

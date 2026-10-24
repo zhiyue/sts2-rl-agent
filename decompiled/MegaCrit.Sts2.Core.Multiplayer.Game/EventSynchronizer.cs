@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Helpers;
@@ -32,6 +33,8 @@ public class EventSynchronizer : IDisposable
 
 	private uint _pageIndex;
 
+	private readonly List<Task> _pendingOptionTasks = new List<Task>();
+
 	private readonly Rng _multiplayerOptionSelectionRng;
 
 	private readonly Logger _logger = new Logger("EventSynchronizer", LogType.GameSync);
@@ -50,7 +53,7 @@ public class EventSynchronizer : IDisposable
 		_messageBuffer = messageBuffer;
 		_playerCollection = playerCollection;
 		_localPlayerId = localPlayerId;
-		_multiplayerOptionSelectionRng = new Rng(seed);
+		_multiplayerOptionSelectionRng = new Rng(seed, "event_synchronizer");
 		_messageBuffer.RegisterMessageHandler<OptionIndexChosenMessage>(HandleEventOptionChosenMessage);
 		_messageBuffer.RegisterMessageHandler<VotedForSharedEventOptionMessage>(HandleVotedForSharedEventOptionMessage);
 		_messageBuffer.RegisterMessageHandler<SharedEventOptionChosenMessage>(HandleSharedEventOptionChosenMessage);
@@ -63,6 +66,13 @@ public class EventSynchronizer : IDisposable
 		_messageBuffer.UnregisterMessageHandler<SharedEventOptionChosenMessage>(HandleSharedEventOptionChosenMessage);
 	}
 
+	/// <summary>
+	/// Called when an event room is entered.
+	/// </summary>
+	/// <param name="canonicalEvent">The canonical version of the event that will be started.</param>
+	/// <param name="isPrefinished">If the event is already pre-finished</param>
+	/// <param name="debugOnStart">A method to call to inject some debug code right after the model is cloned. The mutable
+	/// model instances will be passed to the method.</param>
 	public void BeginEvent(EventModel canonicalEvent, bool isPrefinished = false, Action<EventModel>? debugOnStart = null)
 	{
 		_logger.Debug($"Beginning event {canonicalEvent.Id}, shared: {canonicalEvent.IsShared}");
@@ -79,6 +89,7 @@ public class EventSynchronizer : IDisposable
 			}
 		}
 		_events.Clear();
+		_pendingOptionTasks.Clear();
 		ClearPlayerVotes();
 		_pageIndex = 0u;
 		_canonicalEvent = canonicalEvent;
@@ -92,6 +103,7 @@ public class EventSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary>Received during shared events. Records a player's vote for a given event option. </summary>
 	private void HandleVotedForSharedEventOptionMessage(VotedForSharedEventOptionMessage message, ulong senderId)
 	{
 		_logger.Debug($"Received {"VotedForSharedEventOptionMessage"} from player {senderId} for option {message.optionIndex} on page {message.pageIndex}");
@@ -107,6 +119,8 @@ public class EventSynchronizer : IDisposable
 		PlayerVotedForSharedOptionIndex(player, message.optionIndex, message.pageIndex);
 	}
 
+	/// <summary> Records a player's vote. Called in response to a remote player's message, or immediately when the
+	/// local player votes for a shared event option. </summary>
 	private void PlayerVotedForSharedOptionIndex(Player player, uint optionIndex, uint pageIndex)
 	{
 		if (pageIndex < _pageIndex)
@@ -130,6 +144,8 @@ public class EventSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary> Called on the host when all votes for a shared event page are received. Decides which event option
+	/// should be chosen and notifies all clients of the option chosen. </summary>
 	private void ChooseSharedEventOption()
 	{
 		if (_netService.Type == NetGameType.Client)
@@ -149,6 +165,7 @@ public class EventSynchronizer : IDisposable
 		ChooseOptionForSharedEvent(value);
 	}
 
+	/// <summary> Called on clients when the host receives all player votes and decides on an event option to choose. </summary>
 	private void HandleSharedEventOptionChosenMessage(SharedEventOptionChosenMessage message, ulong senderId)
 	{
 		_logger.Debug($"Received {"SharedEventOptionChosenMessage"} for option {message.optionIndex} on page {message.pageIndex}");
@@ -163,6 +180,7 @@ public class EventSynchronizer : IDisposable
 		ChooseOptionForSharedEvent(message.optionIndex);
 	}
 
+	/// <summary> Called on all peers during non-shared events when one peer selects an event option. </summary>
 	private void HandleEventOptionChosenMessage(OptionIndexChosenMessage message, ulong senderId)
 	{
 		if (message.type == OptionIndexType.Event)
@@ -181,6 +199,12 @@ public class EventSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Called when the local player selects an event option button.
+	/// During shared events, this votes for the event option.
+	/// During non-shared events, this immediately executes the option and sends the event option to all other peers.
+	/// </summary>
+	/// <param name="index">The index of the event option that was chosen.</param>
 	public void ChooseLocalOption(int index)
 	{
 		if (IsShared)
@@ -209,6 +233,7 @@ public class EventSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary> Executes the shared event option on all players' event model instances and clears player votes. </summary>
 	private void ChooseOptionForSharedEvent(uint optionIndex)
 	{
 		if (!IsShared)
@@ -224,6 +249,9 @@ public class EventSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Executes the given event option for a given player.
+	/// </summary>
 	private void ChooseOptionForEvent(Player player, int optionIndex)
 	{
 		EventModel eventForPlayer = GetEventForPlayer(player);
@@ -237,7 +265,7 @@ public class EventSynchronizer : IDisposable
 		}
 		_logger.Debug($"Option index {optionIndex} chosen for player {player.NetId} in event {eventForPlayer.Id}. Choice key: {eventForPlayer.CurrentOptions[optionIndex].TextKey}");
 		EventOption eventOption = eventForPlayer.CurrentOptions[optionIndex];
-		TaskHelper.RunSafely(eventOption.Chosen());
+		_pendingOptionTasks.Add(TaskHelper.RunSafely(eventOption.Chosen()));
 		SaveEventOptionToHistory(player, eventOption);
 	}
 
@@ -292,5 +320,24 @@ public class EventSynchronizer : IDisposable
 		{
 			TaskHelper.RunSafely(@event.Resume(exitedRoom));
 		}
+	}
+
+	/// <summary>
+	/// Awaits all in-flight event option tasks. Called before the room exit checksum to ensure that all
+	/// players' event handlers have finished mutating state. Without this, a peer whose local event
+	/// finished quickly (e.g. Touch a Mirror) can exit the room while a remote player's slow handler
+	/// (e.g. Shatter's per-card deck duplication loop) is still running, causing the checksum to
+	/// capture incomplete state.
+	/// </summary>
+	public async Task AwaitPendingOptionTasks()
+	{
+		try
+		{
+			await Task.WhenAll(_pendingOptionTasks);
+		}
+		catch (Exception)
+		{
+		}
+		_pendingOptionTasks.Clear();
 	}
 }

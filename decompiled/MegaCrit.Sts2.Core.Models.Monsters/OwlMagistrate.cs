@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -31,7 +32,7 @@ public sealed class OwlMagistrate : MonsterModel
 
 	private bool _isFlying;
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 243, 234);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 247, 231);
 
 	public override int MaxInitialHp => MinInitialHp;
 
@@ -42,8 +43,6 @@ public sealed class OwlMagistrate : MonsterModel
 	private int PeckAssaultDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 4, 4);
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Armor;
-
-	public override string BestiaryAttackAnimId => "attack_peck";
 
 	public override string HurtSfx
 	{
@@ -84,7 +83,10 @@ public sealed class OwlMagistrate : MonsterModel
 
 	public override void BeforeRemovedFromRoom()
 	{
-		SfxCmd.StopLoop("event:/sfx/enemy/enemy_attacks/owl_magistrate/owl_magistrate_fly_loop");
+		if (IsFlying)
+		{
+			SfxCmd.StopLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/owl_magistrate/owl_magistrate_fly_loop");
+		}
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -129,18 +131,18 @@ public sealed class OwlMagistrate : MonsterModel
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/owl_magistrate/owl_magistrate_take_off");
 		await CreatureCmd.TriggerAnim(base.Creature, "TakeOff", 0f);
 		await Cmd.Wait(1.25f);
-		await PowerCmd.Apply<SoarPower>(base.Creature, 1m, base.Creature, null);
-		SfxCmd.PlayLoop("event:/sfx/enemy/enemy_attacks/owl_magistrate/owl_magistrate_fly_loop");
+		await PowerCmd.Apply<SoarPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
+		SfxCmd.PlayLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/owl_magistrate/owl_magistrate_fly_loop");
 	}
 
 	private async Task VerdictMove(IReadOnlyList<Creature> targets)
 	{
 		IsFlying = false;
-		SfxCmd.StopLoop("event:/sfx/enemy/enemy_attacks/owl_magistrate/owl_magistrate_fly_loop");
+		SfxCmd.StopLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/owl_magistrate/owl_magistrate_fly_loop");
 		await DamageCmd.Attack(VerdictDamage).FromMonster(this).WithAttackerAnim("Attack", 0.5f)
 			.WithHitFx("vfx/vfx_attack_slash", "event:/sfx/enemy/enemy_attacks/owl_magistrate/owl_magistrate_attack_dive")
 			.Execute(null);
-		await PowerCmd.Apply<VulnerablePower>(targets, 4m, base.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(new ThrowingPlayerChoiceContext(), targets, 4m, base.Creature, null);
 		await PowerCmd.Remove<SoarPower>(base.Creature);
 		await Cmd.Wait(1f);
 	}

@@ -8,7 +8,6 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Powers;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Cards;
 
 namespace MegaCrit.Sts2.Core.Models.Cards;
@@ -30,7 +29,7 @@ public sealed class FanOfKnives : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<FanOfKnivesPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		await PowerCmd.Apply<FanOfKnivesPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 		for (int i = 0; i < base.DynamicVars["Shivs"].IntValue; i++)
 		{
 			await Shiv.CreateInHand(base.Owner, base.CombatState);
@@ -40,8 +39,8 @@ public sealed class FanOfKnives : CardModel
 
 	public override async Task OnEnqueuePlayVfx(Creature? target)
 	{
-		NCombatRoom.Instance?.BackCombatVfxContainer.AddChildSafely(NFanOfKnivesVfx.Create(base.Owner.Creature));
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		base.Owner.Creature.GetBackVfxContainer()?.AddChildSafely(NFanOfKnivesVfx.Create(base.Owner.Creature));
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
 	}
 
 	protected override void OnUpgrade()

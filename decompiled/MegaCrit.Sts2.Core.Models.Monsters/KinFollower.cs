@@ -10,13 +10,12 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Audio;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.TestSupport;
 
@@ -86,10 +85,9 @@ public sealed class KinFollower : MonsterModel
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Fur;
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
-		MegaSkin megaSkin = visuals.SpineBody.NewSkin("custom-skin");
+		MegaSkin megaSkin = spine.NewSkin("custom-skin");
 		MegaSkeletonDataResource data = skeleton.GetData();
 		MegaSkin skin = data.FindSkin(MegaCrit.Sts2.Core.Random.Rng.Chaotic.NextItem(_hairOptions));
 		megaSkin.AddSkin(skin);
@@ -100,27 +98,7 @@ public sealed class KinFollower : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<MinionPower>(base.Creature, 1m, base.Creature, null);
-		NRunMusicController.Instance?.UpdateMusicParameter("the_kin_progress", 0f);
-		base.Creature.Died += AfterDeath;
-	}
-
-	private void AfterDeath(Creature _)
-	{
-		base.Creature.Died -= AfterDeath;
-		IReadOnlyList<Creature> teammatesOf = base.Creature.CombatState.GetTeammatesOf(base.Creature);
-		if (teammatesOf.Any((Creature c) => c != null && c.Monster is KinPriest && c.IsAlive))
-		{
-			NRunMusicController.Instance?.UpdateMusicParameter("the_kin_progress", 1f);
-		}
-		if (!teammatesOf.Any((Creature c) => c != null && c.Monster is KinFollower && c.IsAlive))
-		{
-			Creature creature = teammatesOf.FirstOrDefault((Creature c) => c != null && c.Monster is KinPriest && c.IsAlive);
-			if (creature != null && creature.Monster is KinPriest kinPriest)
-			{
-				kinPriest.AllFollowerDeathResponse();
-			}
-		}
+		await PowerCmd.Apply<MinionPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -151,7 +129,7 @@ public sealed class KinFollower : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/the_kin_minion/the_kin_minion_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.9f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, DanceStrength, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, DanceStrength, base.Creature, null);
 	}
 
 	private async Task BoomerangMove(IReadOnlyList<Creature> targets)
@@ -161,15 +139,15 @@ public sealed class KinFollower : MonsterModel
 			Vector2? vector = null;
 			foreach (Creature target in targets)
 			{
-				NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(target);
+				NCreature creatureNode = target.GetCreatureNode();
 				if (!vector.HasValue || vector.Value.X > creatureNode.GlobalPosition.X)
 				{
 					vector = creatureNode.GlobalPosition;
 				}
 			}
-			NCreature creatureNode2 = NCombatRoom.Instance.GetCreatureNode(base.Creature);
+			NCreature creatureNode2 = base.Creature.GetCreatureNode();
 			Node2D specialNode = creatureNode2.GetSpecialNode<Node2D>("Visuals/AttackDistanceControl");
-			if (specialNode != null)
+			if (specialNode != null && vector.HasValue)
 			{
 				specialNode.Position = Vector2.Left * (creatureNode2.GlobalPosition.X - vector.Value.X) / creatureNode2.Body.Scale;
 			}

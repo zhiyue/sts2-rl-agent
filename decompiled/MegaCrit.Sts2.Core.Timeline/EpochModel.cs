@@ -17,15 +17,25 @@ using MegaCrit.Sts2.SourceGeneration;
 
 namespace MegaCrit.Sts2.Core.Timeline;
 
+/// <summary>
+/// An abstract class which contains data for a single Epoch.
+/// </summary>
 [GenerateSubtypes(DynamicallyAccessedMemberTypes = DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 public abstract class EpochModel
 {
 	private static IReadOnlyList<string>? _allEpochIds;
 
+	private bool? _isArtPlaceholder;
+
+	private string? _resolvedPortraitPath;
+
 	private static readonly Dictionary<string, Type> _epochTypeDictionary;
 
 	private static readonly Dictionary<Type, string> _typeToIdDictionary;
 
+	/// <summary>
+	/// List of all valid epochs currently in the game
+	/// </summary>
 	private static IEnumerable<string> EpochIds => new global::_003C_003Ez__ReadOnlyArray<string>(new string[57]
 	{
 		GetId<Act2BEpoch>(),
@@ -97,10 +107,26 @@ public abstract class EpochModel
 
 	public ModelId ModelId => new ModelId("epoch", Id);
 
-	public virtual bool IsArtPlaceholder => true;
+	public bool IsArtPlaceholder
+	{
+		get
+		{
+			if (!_isArtPlaceholder.HasValue)
+			{
+				_isArtPlaceholder = !HasRealPortrait;
+			}
+			return _isArtPlaceholder.Value;
+		}
+	}
 
+	/// <summary>
+	/// Not used as of this time except for the header of the hovertip when peeking at the unlock requirement.
+	/// </summary>
 	public LocString Title => new LocString("epochs", Id + ".title");
 
+	/// <summary>
+	/// The fancy lore text.
+	/// </summary>
 	public string Description => new LocString("epochs", Id + ".description").GetFormattedText();
 
 	public string? StoryTitle
@@ -117,22 +143,58 @@ public abstract class EpochModel
 
 	public virtual string? StoryId => null;
 
+	/// <summary>
+	/// The text shown in the hovertip when you hover this Epoch while it's not yet obtained.
+	/// </summary>
 	public LocString UnlockInfo => new LocString("epochs", Id + ".unlockInfo");
 
+	/// <summary>
+	/// The text which shows up at the bottom of the Epoch Inspect Screen, describing what had been unlocked.
+	/// </summary>
 	public virtual string UnlockText => new LocString("epochs", Id + ".unlockText").GetFormattedText();
 
 	public abstract EpochEra Era { get; }
 
+	/// <summary>
+	/// The "row" which this Era supposedly resides in. 0 is the bottom, 4 is the top!
+	/// </summary>
 	public abstract int EraPosition { get; }
 
 	public Texture2D Portrait => ResourceLoader.Load<Texture2D>(PackedPortraitPath, null, ResourceLoader.CacheMode.Reuse);
 
 	public string PackedPortraitPath => ImageHelper.GetImagePath("atlases/epoch_atlas.sprites/" + Id.ToLowerInvariant() + ".tres");
 
-	public Texture2D BigPortrait => ResourceLoader.Load<Texture2D>(BigPortraitPath, null, ResourceLoader.CacheMode.Reuse);
+	public Texture2D RealPortrait => ResourceLoader.Load<Texture2D>(ResolvedPortraitPath, null, ResourceLoader.CacheMode.Reuse);
 
-	public string BigPortraitPath => ImageHelper.GetImagePath("timeline/epoch_portraits/" + Id.ToLowerInvariant() + ".png");
+	private bool HasRealPortrait => ResourceLoader.Exists(RealPortraitPath);
 
+	private string RealPortraitPath => ImageHelper.GetImagePath("timeline/epoch_portraits/" + Id.ToLowerInvariant() + ".png");
+
+	private string PlaceholderPortraitPath => ImageHelper.GetImagePath("timeline/epoch_portraits/placeholder/" + Id.ToLowerInvariant() + ".png");
+
+	public string ResolvedPortraitPath
+	{
+		get
+		{
+			if (_resolvedPortraitPath != null)
+			{
+				return _resolvedPortraitPath;
+			}
+			if (ResourceLoader.Exists(RealPortraitPath))
+			{
+				_resolvedPortraitPath = RealPortraitPath;
+			}
+			else
+			{
+				_resolvedPortraitPath = PlaceholderPortraitPath;
+			}
+			return _resolvedPortraitPath;
+		}
+	}
+
+	/// <summary>
+	/// Grabs the index of a given Epoch. If invalid, returns -1
+	/// </summary>
 	public int ChapterIndex
 	{
 		get
@@ -166,15 +228,26 @@ public abstract class EpochModel
 		}
 	}
 
+	/// <summary>
+	/// Returns the list of epochs whose slots are revealed when this epoch is revealed on the timeline.
+	/// Used by <see cref="M:MegaCrit.Sts2.Core.Timeline.EpochModel.QueueTimelineExpansion(MegaCrit.Sts2.Core.Timeline.EpochModel[])" /> at runtime and by save validation to detect missing slots.
+	/// </summary>
 	public virtual EpochModel[] GetTimelineExpansion()
 	{
 		return Array.Empty<EpochModel>();
 	}
 
+	/// <summary>
+	/// WARN: Currently, every Epoch MUST unlock something. Whether it be information, cards, relics, etc.
+	/// Without an unlock, if the player slots 2 Epochs at once, the game will function incorrectly.
+	/// </summary>
 	public virtual void QueueUnlocks()
 	{
 	}
 
+	/// <summary>
+	/// Static method to get the Id for a given type
+	/// </summary>
 	public static string GetId<T>() where T : EpochModel
 	{
 		return _typeToIdDictionary[typeof(T)];
@@ -239,6 +312,9 @@ public abstract class EpochModel
 		return locString.GetFormattedText();
 	}
 
+	/// <summary>
+	/// Little helper method for coloring the text.
+	/// </summary>
 	private string GetColoredCardName(CardModel card)
 	{
 		if (card.Rarity == CardRarity.Common)
@@ -267,6 +343,9 @@ public abstract class EpochModel
 		return locString.GetFormattedText();
 	}
 
+	/// <summary>
+	/// Little helper method for coloring the text.
+	/// </summary>
 	private string GetColoredRelicName(RelicModel relic)
 	{
 		if (relic.Rarity == RelicRarity.Common)
@@ -295,6 +374,9 @@ public abstract class EpochModel
 		return locString.GetFormattedText();
 	}
 
+	/// <summary>
+	/// Little helper method for coloring the text.
+	/// </summary>
 	private string GetColoredPotionName(PotionModel potion)
 	{
 		if (potion.Rarity == PotionRarity.Common)

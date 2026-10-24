@@ -42,7 +42,7 @@ public sealed class DyingStar : CardModel
 			.Execute(choiceContext);
 		foreach (Creature enemy in enemies)
 		{
-			await PowerCmd.Apply<DyingStarPower>(enemy, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<DyingStarPower>(choiceContext, enemy, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
 			VfxCmd.PlayOnCreature(enemy, "vfx/vfx_attack_slash");
 		}
 	}

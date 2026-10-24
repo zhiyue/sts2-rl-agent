@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -32,9 +33,8 @@ public sealed class BowlbugSilk : MonsterModel
 
 	public override string DeathSfx => "event:/sfx/enemy/enemy_attacks/workbug_silk/workbug_silk_die";
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
 		skeleton.SetSkin(skeleton.GetData().FindSkin("web"));
 		skeleton.SetSlotsToSetupPose();
 	}
@@ -42,8 +42,8 @@ public sealed class BowlbugSilk : MonsterModel
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
-		MoveState moveState = new MoveState("TRASH_MOVE", ThrashMove, new MultiAttackIntent(ThrashDamage, 2));
-		MoveState moveState2 = (MoveState)(moveState.FollowUpState = new MoveState("TOXIC_SPIT_MOVE", WebMove, new DebuffIntent()));
+		MoveState moveState = new MoveState("THRASH_MOVE", ThrashMove, new MultiAttackIntent(ThrashDamage, 2));
+		MoveState moveState2 = (MoveState)(moveState.FollowUpState = new MoveState("TOXIC_SPIT_MOVE", SpitMove, new DebuffIntent()));
 		moveState2.FollowUpState = moveState;
 		list.Add(moveState);
 		list.Add(moveState2);
@@ -60,7 +60,7 @@ public sealed class BowlbugSilk : MonsterModel
 			.Execute(null);
 	}
 
-	private async Task WebMove(IReadOnlyList<Creature> targets)
+	private async Task SpitMove(IReadOnlyList<Creature> targets)
 	{
 		if (TestMode.IsOff)
 		{
@@ -73,16 +73,16 @@ public sealed class BowlbugSilk : MonsterModel
 					vector = creatureNode.GlobalPosition;
 				}
 			}
-			NCreature creatureNode2 = NCombatRoom.Instance.GetCreatureNode(base.Creature);
-			Node2D specialNode = creatureNode2.GetSpecialNode<Node2D>("Visuals/SpineBoneNode");
-			if (specialNode != null)
+			NCreature creatureNode2 = base.Creature.GetCreatureNode();
+			Node2D node2D = creatureNode2?.GetSpecialNode<Node2D>("Visuals/SpineBoneNode");
+			if (node2D != null && creatureNode2 != null && vector.HasValue)
 			{
-				specialNode.Position = Vector2.Right * (vector.Value.X - creatureNode2.GlobalPosition.X) * 4f;
+				node2D.Position = Vector2.Right * (vector.Value.X - creatureNode2.GlobalPosition.X) * 4f;
 			}
 		}
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/workbug_silk/workbug_silk_spit");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.8f);
-		await PowerCmd.Apply<WeakPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

@@ -21,7 +21,7 @@ public class Orobas : AncientEventModel
 		OptionPool1,
 		OptionPool2,
 		OptionPool3,
-		DiscoveryTotems,
+		SeaGlassOptions,
 		new global::_003C_003Ez__ReadOnlySingleElementList<EventOption>(PrismaticGemOption)
 	}.SelectMany((IEnumerable<EventOption> x) => x);
 
@@ -39,7 +39,7 @@ public class Orobas : AncientEventModel
 		RelicOption<RadiantPearl>()
 	});
 
-	private IEnumerable<EventOption> DiscoveryTotems
+	private IEnumerable<EventOption> SeaGlassOptions
 	{
 		get
 		{

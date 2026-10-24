@@ -28,6 +28,11 @@ public abstract class StoryModel
 		}
 	}
 
+	/// <summary>
+	/// Given an Epoch, identifies the story and grabs the previous chapter if possible.
+	/// Returns null if out of bounds or if there's no previous chapter.
+	/// Will skip over chapters you haven't revealed.
+	/// </summary>
 	public static EpochModel? PrevChapter(EpochModel model)
 	{
 		if (model.StoryId == null)
@@ -55,6 +60,11 @@ public abstract class StoryModel
 		return null;
 	}
 
+	/// <summary>
+	/// Grabs the next chapter in the provided Epoch's story.
+	/// Returns null if out of bounds or if there's not a next chapter.
+	/// Will skip over unrevealed chapters in a story.
+	/// </summary>
 	public static EpochModel? NextChapter(EpochModel model)
 	{
 		if (model.StoryId == null)

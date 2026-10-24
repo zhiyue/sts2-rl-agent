@@ -10,24 +10,51 @@ namespace MegaCrit.Sts2.Core.Localization;
 [ScriptPath("res://src/Core/Localization/LocTextLabel.cs")]
 public class LocTextLabel : RichTextLabel
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : RichTextLabel.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'UpdateLocalization' method.
+		/// </summary>
 		public static readonly StringName UpdateLocalization = "UpdateLocalization";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : RichTextLabel.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'LocalizationTable' property.
+		/// </summary>
 		public static readonly StringName LocalizationTable = "LocalizationTable";
 
+		/// <summary>
+		/// Cached name for the 'LocalizationKey' property.
+		/// </summary>
 		public static readonly StringName LocalizationKey = "LocalizationKey";
 
+		/// <summary>
+		/// Cached name for the '_localizationTable' field.
+		/// </summary>
 		public static readonly StringName _localizationTable = "_localizationTable";
 
+		/// <summary>
+		/// Cached name for the '_localizationKey' field.
+		/// </summary>
 		public static readonly StringName _localizationKey = "_localizationKey";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : RichTextLabel.SignalName
 	{
 	}
@@ -96,6 +123,11 @@ public class LocTextLabel : RichTextLabel
 		UpdateLocalization();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -105,6 +137,7 @@ public class LocTextLabel : RichTextLabel
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -123,6 +156,7 @@ public class LocTextLabel : RichTextLabel
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -137,6 +171,7 @@ public class LocTextLabel : RichTextLabel
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -163,6 +198,7 @@ public class LocTextLabel : RichTextLabel
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -192,6 +228,11 @@ public class LocTextLabel : RichTextLabel
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -203,6 +244,7 @@ public class LocTextLabel : RichTextLabel
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -213,6 +255,7 @@ public class LocTextLabel : RichTextLabel
 		info.AddProperty(PropertyName._localizationKey, Variant.From(in _localizationKey));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

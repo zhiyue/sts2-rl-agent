@@ -10,7 +10,7 @@ public sealed class RazorTooth : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Rare;
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner != base.Owner)
 		{

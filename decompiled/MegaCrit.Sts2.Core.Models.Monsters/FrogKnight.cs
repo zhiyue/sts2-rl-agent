@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -59,7 +60,7 @@ public sealed class FrogKnight : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<PlatingPower>(base.Creature, PlatingAmount, base.Creature, null);
+		await PowerCmd.Apply<PlatingPower>(new ThrowingPlayerChoiceContext(), base.Creature, PlatingAmount, base.Creature, null);
 		HasBeetleCharged = false;
 	}
 
@@ -89,7 +90,7 @@ public sealed class FrogKnight : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/frog_knight/frog_knight_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "Buff", 0.4f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 5m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 5m, base.Creature, null);
 	}
 
 	private async Task StrikeDownEvilMove(IReadOnlyList<Creature> targets)
@@ -106,7 +107,7 @@ public sealed class FrogKnight : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/frog_knight/frog_knight_tongue_lash")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<FrailPower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	private async Task BeetleChargeMove(IReadOnlyList<Creature> targets)

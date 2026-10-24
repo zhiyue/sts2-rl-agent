@@ -8,37 +8,84 @@ using MegaCrit.Sts2.Core.Helpers;
 
 namespace MegaCrit.Sts2.Core.Nodes.Combat;
 
+/// <summary>
+/// Manages a set of <see cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NCombatCardPile" />s for a given player.
+/// Primarily used in  <see cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NCombatUi" />, but reused in other screens
+/// where we want to be able to check on the combat piles (ie <see cref="T:MegaCrit.Sts2.Core.Nodes.Screens.CardSelection.NChooseACardSelectionScreen" />)
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Combat/NCombatPilesContainer.cs")]
 public class NCombatPilesContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'AnimIn' method.
+		/// </summary>
 		public static readonly StringName AnimIn = "AnimIn";
 
+		/// <summary>
+		/// Cached name for the 'AnimOut' method.
+		/// </summary>
 		public static readonly StringName AnimOut = "AnimOut";
 
+		/// <summary>
+		/// Cached name for the 'Enable' method.
+		/// </summary>
 		public static readonly StringName Enable = "Enable";
 
+		/// <summary>
+		/// Cached name for the 'Disable' method.
+		/// </summary>
 		public static readonly StringName Disable = "Disable";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DrawPile' property.
+		/// </summary>
 		public static readonly StringName DrawPile = "DrawPile";
 
+		/// <summary>
+		/// Cached name for the 'DiscardPile' property.
+		/// </summary>
 		public static readonly StringName DiscardPile = "DiscardPile";
 
+		/// <summary>
+		/// Cached name for the 'ExhaustPile' property.
+		/// </summary>
 		public static readonly StringName ExhaustPile = "ExhaustPile";
 
+		/// <summary>
+		/// Cached name for the '_drawPile' field.
+		/// </summary>
 		public static readonly StringName _drawPile = "_drawPile";
 
+		/// <summary>
+		/// Cached name for the '_discardPile' field.
+		/// </summary>
 		public static readonly StringName _discardPile = "_discardPile";
 
+		/// <summary>
+		/// Cached name for the '_exhaustPile' field.
+		/// </summary>
 		public static readonly StringName _exhaustPile = "_exhaustPile";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -98,6 +145,11 @@ public class NCombatPilesContainer : Control
 		_exhaustPile.Disable();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -110,6 +162,7 @@ public class NCombatPilesContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -146,6 +199,7 @@ public class NCombatPilesContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -172,6 +226,7 @@ public class NCombatPilesContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -193,6 +248,7 @@ public class NCombatPilesContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -229,6 +285,11 @@ public class NCombatPilesContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -242,6 +303,7 @@ public class NCombatPilesContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -251,6 +313,7 @@ public class NCombatPilesContainer : Control
 		info.AddProperty(PropertyName._exhaustPile, Variant.From(in _exhaustPile));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

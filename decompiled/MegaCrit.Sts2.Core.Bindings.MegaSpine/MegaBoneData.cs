@@ -3,6 +3,9 @@ using Godot;
 
 namespace MegaCrit.Sts2.Core.Bindings.MegaSpine;
 
+/// <summary>
+/// C# bindings for SpineBoneData.
+/// </summary>
 public class MegaBoneData : MegaSpineBinding
 {
 	protected override string SpineClassName => "SpineBoneData";

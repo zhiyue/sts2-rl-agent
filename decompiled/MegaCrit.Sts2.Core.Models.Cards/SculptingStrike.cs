@@ -18,7 +18,7 @@ public sealed class SculptingStrike : CardModel
 
 	protected override HashSet<CardTag> CanonicalTags => new HashSet<CardTag> { CardTag.Strike };
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(8m, ValueProp.Move));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(9m, ValueProp.Move));
 
 	public SculptingStrike()
 		: base(1, CardType.Attack, CardRarity.Common, TargetType.AnyEnemy)
@@ -31,7 +31,7 @@ public sealed class SculptingStrike : CardModel
 		await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(choiceContext);
-		CardModel cardModel = (await CardSelectCmd.FromHand(prefs: new CardSelectorPrefs(base.SelectionScreenPrompt, 1), context: choiceContext, player: base.Owner, filter: (CardModel c) => !c.Keywords.Contains(CardKeyword.Ethereal), source: this)).FirstOrDefault();
+		CardModel cardModel = (await CardSelectCmd.FromHand(choiceContext, base.Owner, new CardSelectorPrefs(base.SelectionScreenPrompt, 1), (CardModel c) => !c.GetKeywordsWithSources(KeywordSources.Local).Contains(CardKeyword.Ethereal), this)).FirstOrDefault();
 		if (cardModel != null)
 		{
 			CardCmd.ApplyKeyword(cardModel, CardKeyword.Ethereal);

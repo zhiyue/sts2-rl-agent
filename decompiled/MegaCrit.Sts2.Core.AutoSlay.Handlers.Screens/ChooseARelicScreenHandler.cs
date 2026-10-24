@@ -9,6 +9,9 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles relic selection screens (e.g., from Jewelry Box event).
+/// </summary>
 public class ChooseARelicScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NChooseARelicSelection);

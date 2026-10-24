@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
@@ -7,7 +6,6 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
@@ -23,7 +21,7 @@ public sealed class RollingBoulderPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override bool IsInstanced => true;
+	public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(5m, ValueProp.Unpowered));
 
@@ -41,24 +39,17 @@ public sealed class RollingBoulderPower : PowerModel
 		else
 		{
 			List<Task> damageTasks = new List<Task>();
-			NRollingBoulderVfx vfx = NRollingBoulderVfx.Create(base.CombatState.HittableEnemies, base.Amount);
-			vfx.Connect(NRollingBoulderVfx.SignalName.HitCreature, Callable.From(delegate(NCreature c)
+			NRollingBoulderVfx nRollingBoulderVfx = NRollingBoulderVfx.Create(base.CombatState.HittableEnemies, base.Amount);
+			nRollingBoulderVfx.Connect(NRollingBoulderVfx.SignalName.HitCreature, Callable.From(delegate(NCreature c)
 			{
 				damageTasks.Add(DoDamage(choiceContext, new global::_003C_003Ez__ReadOnlySingleElementList<Creature>(c.Entity)));
 			}));
-			Callable.From(delegate
-			{
-				NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(vfx);
-				if (!vfx.IsInsideTree())
-				{
-					throw new InvalidOperationException("VFX is not inside tree after adding it to combat room!");
-				}
-			}).CallDeferred();
-			await vfx.ToSignal(vfx, Node.SignalName.TreeExiting);
+			SignalAwaiter signalAwaiter = nRollingBoulderVfx.ToSignal(nRollingBoulderVfx, NRollingBoulderVfx.SignalName.Finished);
+			NCombatRoom.Instance?.CombatVfxContainer.CallDeferred(Node.MethodName.AddChild, nRollingBoulderVfx);
+			await signalAwaiter;
 			await Task.WhenAll(damageTasks);
 		}
-		base.Amount += base.DynamicVars.Damage.IntValue;
-		InvokeDisplayAmountChanged();
+		SetAmount(base.Amount + base.DynamicVars.Damage.IntValue);
 	}
 
 	private Task<IEnumerable<DamageResult>> DoDamage(PlayerChoiceContext choiceContext, IEnumerable<Creature> targets)

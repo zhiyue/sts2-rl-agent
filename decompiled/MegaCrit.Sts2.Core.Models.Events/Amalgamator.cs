@@ -24,7 +24,7 @@ public sealed class Amalgamator : EventModel
 		new StringVar("Card2", ModelDb.Card<UltimateDefend>().Title)
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		return runState.Players.All((Player p) => p.Deck.Cards.Count((CardModel c) => IsValid(CardTag.Strike, c)) >= 2 && p.Deck.Cards.Count((CardModel c) => IsValid(CardTag.Defend, c)) >= 2);
 	}

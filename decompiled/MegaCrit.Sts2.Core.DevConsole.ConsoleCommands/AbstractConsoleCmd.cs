@@ -22,6 +22,14 @@ public abstract class AbstractConsoleCmd
 
 	public abstract CmdResult Process(Player? issuingPlayer, string[] args);
 
+	/// <summary>
+	/// Provides argument completion candidates for console commands.
+	/// Commands should override this method to provide context-aware completion suggestions.
+	/// Returns an empty result by default for commands that don't require argument completion.
+	/// </summary>
+	/// <param name="player">The player invoking the command</param>
+	/// <param name="args">Current command arguments being typed</param>
+	/// <returns>Completion result containing candidates and context information</returns>
 	public virtual CompletionResult GetArgumentCompletions(Player? player, string[] args)
 	{
 		return new CompletionResult
@@ -33,6 +41,16 @@ public abstract class AbstractConsoleCmd
 		};
 	}
 
+	/// <summary>
+	/// Creates a completion result for command arguments with explicit separation of completed vs partial arguments.
+	/// This makes the completion logic clear and prevents bugs from implicit argument slicing.
+	/// </summary>
+	/// <param name="candidates">All possible completion candidates</param>
+	/// <param name="completedArgs">Arguments that are already fully typed (e.g., ["OFFERING"] when completing second arg)</param>
+	/// <param name="partialArg">The argument currently being typed (e.g., "de" when typing "deck")</param>
+	/// <param name="type">The type of completion being performed</param>
+	/// <param name="matchPredicate">Optional custom matching predicate (defaults to StartsWith)</param>
+	/// <returns>CompletionResult with filtered candidates and completion prefix</returns>
 	protected CompletionResult CompleteArgument(IEnumerable<string> candidates, string[] completedArgs, string partialArg, CompletionType type = CompletionType.Argument, Func<string, string, bool>? matchPredicate = null)
 	{
 		List<string> list = candidates.ToList();
@@ -54,6 +72,10 @@ public abstract class AbstractConsoleCmd
 		};
 	}
 
+	/// <summary>
+	/// Builds the command prefix from completed arguments (not including the partial arg being typed).
+	/// Example: BuildPrefix(["OFFERING"]) returns "card OFFERING "
+	/// </summary>
 	protected string BuildPrefix(string[] completedArgs)
 	{
 		if (completedArgs.Length == 0)
@@ -63,6 +85,10 @@ public abstract class AbstractConsoleCmd
 		return CmdName + " " + string.Join(" ", completedArgs) + " ";
 	}
 
+	/// <summary>
+	/// Parses a string into an enum value, rejecting numeric strings and undefined values.
+	/// Use this instead of Enum.TryParse to avoid accepting raw integers as valid enum values.
+	/// </summary>
 	protected static bool TryParseEnum<T>(string input, out T result) where T : struct, Enum
 	{
 		if (Enum.TryParse<T>(input, ignoreCase: true, out result))
@@ -72,6 +98,10 @@ public abstract class AbstractConsoleCmd
 		return false;
 	}
 
+	/// <summary>
+	/// Calculates the common completion string from filtered candidates.
+	/// Single match gets trailing space, multiple matches get longest common prefix.
+	/// </summary>
 	private string CalculateCommonCompletion(List<string> filtered, string prefix)
 	{
 		if (filtered.Count == 0)

@@ -31,7 +31,7 @@ public sealed class PanicButton : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<NoBlockPower>(base.Owner.Creature, base.DynamicVars["Turns"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<NoBlockPower>(choiceContext, base.Owner.Creature, base.DynamicVars["Turns"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

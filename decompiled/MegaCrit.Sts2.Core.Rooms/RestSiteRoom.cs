@@ -22,7 +22,7 @@ public class RestSiteRoom : AbstractRoom
 
 	public IReadOnlyList<RestSiteOption> Options => _synchronizer?.GetLocalOptions() ?? Array.Empty<RestSiteOption>();
 
-	public override async Task Enter(IRunState? runState, bool isRestoringRoomStackBase)
+	public override async Task EnterInternal(IRunState? runState, bool isRestoringRoomStackBase)
 	{
 		if (isRestoringRoomStackBase)
 		{

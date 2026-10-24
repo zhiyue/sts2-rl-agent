@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Bigger Prey: The other sisters judge the fourth one in silence...
+/// </summary>
 public class Silent6Epoch : EpochModel
 {
 	public override string Id => "SILENT6_EPOCH";
@@ -16,8 +19,6 @@ public class Silent6Epoch : EpochModel
 	public override int EraPosition => 1;
 
 	public override string StoryId => "Silent";
-
-	public override bool IsArtPlaceholder => false;
 
 	public static List<RelicModel> Relics
 	{

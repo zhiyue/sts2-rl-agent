@@ -15,7 +15,7 @@ public sealed class Shatter : CardModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.Static(StaticHoverTip.Evoke));
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(11m, ValueProp.Move));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(7m, ValueProp.Move));
 
 	public Shatter()
 		: base(1, CardType.Attack, CardRarity.Rare, TargetType.AllEnemies)
@@ -30,6 +30,7 @@ public sealed class Shatter : CardModel
 		int orbCount = base.Owner.PlayerCombatState.OrbQueue.Orbs.Count;
 		for (int i = 0; i < orbCount; i++)
 		{
+			await OrbCmd.EvokeNext(choiceContext, base.Owner, dequeue: false);
 			await OrbCmd.EvokeNext(choiceContext, base.Owner);
 		}
 	}

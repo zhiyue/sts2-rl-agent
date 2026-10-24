@@ -14,7 +14,7 @@ public sealed class SelfFormingClayPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new IHoverTip[1] { HoverTipFactory.Static(StaticHoverTip.Block) };
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.Static(StaticHoverTip.Block));
 
 	public override async Task AfterBlockCleared(Creature creature)
 	{

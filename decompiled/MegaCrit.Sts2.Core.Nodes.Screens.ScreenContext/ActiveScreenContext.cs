@@ -8,15 +8,24 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
+using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 
+/// <summary>
+/// Manages the screen contexts that is currently active (the top-most screen that the player is interacting with).
+/// This is used to span between all of our different screen systems (overlays, capstones, submenus, even rooms).
+/// </summary>
 public class ActiveScreenContext
 {
 	private static ActiveScreenContext? _instance;
 
 	public static ActiveScreenContext Instance => _instance ?? (_instance = new ActiveScreenContext());
 
+	/// <summary>
+	/// Event used to let listeners know that the Current Active Screen may have changed
+	/// Useful for screens that needs to hide/show certain UX depending on if it is the Current Screen or not.
+	/// </summary>
 	public event Action? Updated;
 
 	public void Update()
@@ -24,6 +33,11 @@ public class ActiveScreenContext
 		this.Updated?.Invoke();
 	}
 
+	/// <summary>
+	/// Looks through all of our screen systems in order of priority to determine what the active screen context currently
+	/// is.
+	/// </summary>
+	/// <returns>The screen context that is currently active.</returns>
 	public IScreenContext? GetCurrentScreen()
 	{
 		if (NGame.Instance?.FeedbackScreen != null && NGame.Instance.FeedbackScreen.Visible)
@@ -56,6 +70,10 @@ public class ActiveScreenContext
 			NMainMenuSubmenuStack submenuStack = mainMenu.SubmenuStack;
 			if (submenuStack.SubmenusOpen)
 			{
+				if (submenuStack.Peek() is NTimelineScreen { CurrentUnlockScreen: not null } nTimelineScreen)
+				{
+					return nTimelineScreen.CurrentUnlockScreen;
+				}
 				return submenuStack.Peek();
 			}
 			return NGame.Instance.MainMenu;

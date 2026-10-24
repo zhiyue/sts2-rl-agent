@@ -12,6 +12,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 
@@ -20,36 +21,81 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 [ScriptPath("res://src/Core/Nodes/Screens/Shops/NMerchantCard.cs")]
 public class NMerchantCard : NMerchantSlot
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NMerchantSlot.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'UpdateVisual' method.
+		/// </summary>
 		public new static readonly StringName UpdateVisual = "UpdateVisual";
 
+		/// <summary>
+		/// Cached name for the 'OnInventoryOpened' method.
+		/// </summary>
 		public static readonly StringName OnInventoryOpened = "OnInventoryOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnPreview' method.
+		/// </summary>
 		public new static readonly StringName OnPreview = "OnPreview";
 
+		/// <summary>
+		/// Cached name for the 'CreateHoverTip' method.
+		/// </summary>
 		public new static readonly StringName CreateHoverTip = "CreateHoverTip";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NMerchantSlot.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsShowingUpgradedCard' property.
+		/// </summary>
 		public static readonly StringName IsShowingUpgradedCard = "IsShowingUpgradedCard";
 
+		/// <summary>
+		/// Cached name for the 'Visual' property.
+		/// </summary>
 		public new static readonly StringName Visual = "Visual";
 
+		/// <summary>
+		/// Cached name for the '_saleVisual' field.
+		/// </summary>
 		public static readonly StringName _saleVisual = "_saleVisual";
 
+		/// <summary>
+		/// Cached name for the '_cardHolder' field.
+		/// </summary>
 		public static readonly StringName _cardHolder = "_cardHolder";
 
+		/// <summary>
+		/// Cached name for the '_cardNode' field.
+		/// </summary>
 		public static readonly StringName _cardNode = "_cardNode";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public new static readonly StringName _hoverTween = "_hoverTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NMerchantSlot.SignalName
 	{
 	}
@@ -130,8 +176,8 @@ public class NMerchantCard : NMerchantSlot
 
 	private async Task DoRelicFlash()
 	{
-		SceneTreeTimer sceneTreeTimer = GetTree().CreateTimer(0.4);
-		await sceneTreeTimer.ToSignal(sceneTreeTimer, SceneTreeTimer.SignalName.Timeout);
+		SceneTreeTimer source = GetTree().CreateTimer(0.4);
+		await source.AwaitSignal(SceneTreeTimer.SignalName.Timeout, this);
 		foreach (RelicModel modifyingRelic in _cardEntry.CreationResult.ModifyingRelics)
 		{
 			modifyingRelic.Flash();
@@ -148,7 +194,7 @@ public class NMerchantCard : NMerchantSlot
 	{
 		TriggerMerchantHandToPointHere();
 		NRun.Instance?.GlobalUi.ReparentCard(_cardNode);
-		NRun.Instance?.GlobalUi.TopBar.TrailContainer.AddChildSafely(NCardFlyVfx.Create(_cardNode, PileType.Deck.GetTargetPosition(_cardNode), isAddingToPile: true, _cardNode.Model.Owner.Character.TrailPath));
+		NRun.Instance?.GlobalUi.TopBar.TrailContainer.AddChildSafely(NCardFlyVfx.Create(_cardNode, PileType.Deck, isAddingToPile: true, _cardNode.Model.Owner.Character.TrailPath));
 		_cardNode = null;
 		UpdateVisual();
 	}
@@ -168,8 +214,7 @@ public class NMerchantCard : NMerchantSlot
 
 	protected override void CreateHoverTip()
 	{
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _cardEntry.CreationResult.Card.HoverTips);
-		nHoverTipSet.SetAlignment(_hitbox, HoverTip.GetHoverTipAlignment(this));
+		NHoverTipSet.CreateAndShow(this, _cardEntry.CreationResult.Card.HoverTips)?.SetAlignment(_hitbox, HoverTip.GetHoverTipAlignment(this));
 	}
 
 	public override void _ExitTree()
@@ -181,6 +226,11 @@ public class NMerchantCard : NMerchantSlot
 		_cardEntry.PurchaseCompleted -= OnSuccessfulPurchase;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -194,6 +244,7 @@ public class NMerchantCard : NMerchantSlot
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -236,6 +287,7 @@ public class NMerchantCard : NMerchantSlot
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -266,6 +318,7 @@ public class NMerchantCard : NMerchantSlot
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -292,6 +345,7 @@ public class NMerchantCard : NMerchantSlot
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -328,6 +382,11 @@ public class NMerchantCard : NMerchantSlot
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -341,6 +400,7 @@ public class NMerchantCard : NMerchantSlot
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -351,6 +411,7 @@ public class NMerchantCard : NMerchantSlot
 		info.AddProperty(PropertyName._hoverTween, Variant.From(in _hoverTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

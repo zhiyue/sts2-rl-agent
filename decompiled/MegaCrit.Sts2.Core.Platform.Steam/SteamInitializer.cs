@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using Steamworks;
 
 namespace MegaCrit.Sts2.Core.Platform.Steam;
@@ -14,11 +15,24 @@ public static class SteamInitializer
 {
 	public const ulong steamAppId = 2868840uL;
 
+	private static CancellationTokenSource _disconnectCts = new CancellationTokenSource();
+
 	public static bool Initialized { get; private set; }
 
+	/// <summary>
+	/// Initialization result. Failure code if Initialization was called and Initialized is false.
+	/// </summary>
 	public static ESteamAPIInitResult? InitResult { get; private set; }
 
 	public static string? InitErrorMessage { get; private set; }
+
+	/// <summary>
+	/// Cancellation token that is cancelled when Steam disconnects. Pass this to SteamCallResult
+	/// to prevent async Steam API calls from hanging indefinitely when the callback pump stops.
+	/// </summary>
+	public static CancellationToken DisconnectToken => _disconnectCts.Token;
+
+	public static event Action? SteamNoLongerRunning;
 
 	private static nint SteamDebugResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
 	{
@@ -109,11 +123,13 @@ public static class SteamInitializer
 	{
 		while (Initialized)
 		{
-			await node.ToSignal(node.GetTree(), SceneTree.SignalName.ProcessFrame);
+			await node.AwaitProcessFrame();
 			if (!SteamAPI.IsSteamRunning())
 			{
 				Log.Warn("Steam is no longer running. Stopping callbacks.");
 				Initialized = false;
+				_disconnectCts.Cancel();
+				SteamInitializer.SteamNoLongerRunning?.Invoke();
 				break;
 			}
 			SteamAPI.RunCallbacks();

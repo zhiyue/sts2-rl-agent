@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
@@ -10,12 +9,16 @@ using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Runs.History;
 using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Rewards;
 
+/// <summary>
+/// A reward that adds a specific card to the player's deck.
+/// Good for events like <see cref="T:MegaCrit.Sts2.Core.Models.Events.TheLanternKey" /> that give specific quest cards, and for other miscellaneous spots
+/// that offer specific cards as rewards (like <see cref="T:MegaCrit.Sts2.Core.Models.Monsters.ThievingHopper" /> giving you your stolen card back as a reward).
+/// </summary>
 public class SpecialCardReward : Reward
 {
 	private bool _wasTaken;
@@ -63,6 +66,10 @@ public class SpecialCardReward : Reward
 		_card = card;
 	}
 
+	/// <summary>
+	/// Set an encounter to use for this reward's description.
+	/// If this is not set, the default description will be used.
+	/// </summary>
 	public void SetCustomDescriptionEncounterSource(ModelId encounterId)
 	{
 		if (ModelDb.GetByIdOrNull<EncounterModel>(encounterId) == null)
@@ -72,18 +79,16 @@ public class SpecialCardReward : Reward
 		_customDescriptionEncounterSourceId = encounterId;
 	}
 
-	public override Task Populate()
+	public override void Populate()
 	{
-		return Task.CompletedTask;
 	}
 
 	protected override async Task<bool> OnSelect()
 	{
-		Log.Info($"Obtained {_card.Id} from special card reward");
+		Log.Info($"Player {base.Player.NetId} obtained {_card.Id} from special card reward");
 		CardPileAddResult result = await CardPileCmd.Add(_card, PileType.Deck);
 		if (result.success)
 		{
-			RunManager.Instance.RewardSynchronizer.SyncLocalObtainedCard(_card);
 			CardCmd.PreviewCardPileAdd(result, 2f);
 		}
 		_wasTaken = true;
@@ -94,8 +99,7 @@ public class SpecialCardReward : Reward
 	{
 		if (!_wasTaken)
 		{
-			base.Player.RunState.CurrentMapPointHistoryEntry.GetEntry(LocalContext.NetId.Value).CardChoices.Add(new CardChoiceHistoryEntry(_card, wasPicked: false));
-			RunManager.Instance.RewardSynchronizer.SyncLocalSkippedCard(_card);
+			base.Player.RunState.CurrentMapPointHistoryEntry.GetEntry(base.Player.NetId).CardChoices.Add(new CardChoiceHistoryEntry(_card, wasPicked: false));
 		}
 	}
 

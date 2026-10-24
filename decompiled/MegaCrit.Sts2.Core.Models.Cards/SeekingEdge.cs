@@ -22,9 +22,9 @@ public sealed class SeekingEdge : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<SeekingEdgePower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 		await ForgeCmd.Forge(base.DynamicVars.Forge.IntValue, base.Owner, this);
-		await PowerCmd.Apply<SeekingEdgePower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

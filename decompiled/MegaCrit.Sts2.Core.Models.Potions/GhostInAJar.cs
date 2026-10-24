@@ -26,6 +26,6 @@ public sealed class GhostInAJar : PotionModel
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
-		await PowerCmd.Apply<IntangiblePower>(target, base.DynamicVars["IntangiblePower"].BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<IntangiblePower>(choiceContext, target, base.DynamicVars["IntangiblePower"].BaseValue, base.Owner.Creature, null);
 	}
 }

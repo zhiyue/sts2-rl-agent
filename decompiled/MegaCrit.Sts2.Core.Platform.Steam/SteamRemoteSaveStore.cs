@@ -10,6 +10,29 @@ using Steamworks;
 
 namespace MegaCrit.Sts2.Core.Platform.Steam;
 
+/// <summary>
+/// Implementation of ISaveStore which saves files to Steam remote storage for syncing across devices.
+///
+/// Note that the usage of Steam API in here can be confusing. Here's what I've actually observed happens when we write
+/// files:
+/// - Steam ALWAYS writes the file to a directory on the local computer (C:/Program Files (x86)/Steam/userdata/[appid])
+/// - If the user has enabled steam cloud saves, then Steam additionally uploads them to the cloud
+///
+/// In addition, if the user re-enables steam cloud saves after having them disabled, then Steam immediately looks into
+/// the local userdata directory and tries to upload those files if they're there. So, while we always write to this
+/// save store while Steam is initialized. Whether those saves get uploaded to the cloud is up to the user's settings.
+///
+/// EXCEPTION BEHAVIOR: Methods in this class can fail in two ways:
+/// 1. Managed exceptions: Our wrapper code throws InvalidOperationException (write/read failures),
+///    FileNotFoundException (missing files), or SteamRemoteSaveStoreException (async read with non-OK EResult).
+///    The Steam API can return arbitrary EResult codes (see https://partner.steamgames.com/doc/api/steam_api#EResult),
+///    including unexpected ones after Cloud conflict resolution (e.g. k_EResultRemoteFileConflict, k_EResultBusy).
+/// 2. Native exceptions: Every method delegates through Steamworks.NET's NativeMethods P/Invoke layer into Valve's
+///    native steam_api DLL. If the native code faults, the CLR raises SEHException, which cannot be predicted or
+///    prevented from managed code.
+/// Callers must not assume a fixed set of exception types. All callers on startup-critical or gameplay paths
+/// should catch broadly to avoid fatal errors.
+/// </summary>
 public class SteamRemoteSaveStore : ICloudSaveStore, ISaveStore
 {
 	public string ReadFile(string path)
@@ -50,11 +73,12 @@ public class SteamRemoteSaveStore : ICloudSaveStore, ISaveStore
 		{
 			throw new InvalidOperationException($"Steam remote storage async read request returned invalid API call for path {path} (bytes {byteCount})");
 		}
-		using SteamCallResult<RemoteStorageFileReadAsyncComplete_t> callResult = new SteamCallResult<RemoteStorageFileReadAsyncComplete_t>(steamAPICall_t);
+		using SteamCallResult<RemoteStorageFileReadAsyncComplete_t> callResult = new SteamCallResult<RemoteStorageFileReadAsyncComplete_t>(steamAPICall_t, SteamInitializer.DisconnectToken);
 		RemoteStorageFileReadAsyncComplete_t remoteStorageFileReadAsyncComplete_t = await callResult.Task;
 		if (remoteStorageFileReadAsyncComplete_t.m_eResult != EResult.k_EResultOK)
 		{
-			throw new InvalidOperationException($"Steam remote storage async read request returned error {remoteStorageFileReadAsyncComplete_t.m_eResult} for path {path}");
+			SteamRemoteSaveStoreException ex = new SteamRemoteSaveStoreException($"Steam remote storage async read request returned error {remoteStorageFileReadAsyncComplete_t.m_eResult} for path {path}", remoteStorageFileReadAsyncComplete_t.m_eResult);
+			throw ex;
 		}
 		byte[] array = new byte[byteCount];
 		SteamRemoteStorage.FileReadAsyncComplete(remoteStorageFileReadAsyncComplete_t.m_hFileReadAsync, array, remoteStorageFileReadAsyncComplete_t.m_cubRead);
@@ -89,7 +113,7 @@ public class SteamRemoteSaveStore : ICloudSaveStore, ISaveStore
 		{
 			throw new InvalidOperationException($"Steam remote storage async write request returned invalid API call for path {path} ({bytes.Length} bytes)");
 		}
-		using SteamCallResult<RemoteStorageFileWriteAsyncComplete_t> callResult = new SteamCallResult<RemoteStorageFileWriteAsyncComplete_t>(steamAPICall_t);
+		using SteamCallResult<RemoteStorageFileWriteAsyncComplete_t> callResult = new SteamCallResult<RemoteStorageFileWriteAsyncComplete_t>(steamAPICall_t, SteamInitializer.DisconnectToken);
 		RemoteStorageFileWriteAsyncComplete_t remoteStorageFileWriteAsyncComplete_t = await callResult.Task;
 		if (remoteStorageFileWriteAsyncComplete_t.m_eResult != EResult.k_EResultOK)
 		{
@@ -236,5 +260,26 @@ public class SteamRemoteSaveStore : ICloudSaveStore, ISaveStore
 		{
 			Log.Warn("SteamRemoteStorage.EndFileWriteBatch returned false (no batch was in progress)");
 		}
+	}
+
+	/// <summary>
+	/// This controls whether files are synced from cloud to local.
+	/// When the user disables steam cloud:
+	///  - We still want to write files to the user's local steam cloud cache, to handle cloud conflicts later
+	///  - But we never want to sync files from the user's steam cloud cache to our file storage.
+	///
+	/// In essence: If the user has enabled cloud sync, then Steam cloud is the authority. If the user has disabled
+	/// cloud sync, then our local storage becomes the authority. But in both instances, we wish to keep the two
+	/// storages in sync.
+	///
+	/// This allows players to turn off steam cloud sync in order to modify their save files.
+	/// </summary>
+	public bool HasUserEnabledCloudSync()
+	{
+		if (SteamRemoteStorage.IsCloudEnabledForAccount())
+		{
+			return SteamRemoteStorage.IsCloudEnabledForApp();
+		}
+		return false;
 	}
 }

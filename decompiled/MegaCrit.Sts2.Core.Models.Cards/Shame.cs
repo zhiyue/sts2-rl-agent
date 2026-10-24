@@ -28,10 +28,10 @@ public sealed class Shame : CardModel
 	{
 	}
 
-	public override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
+	protected override async Task OnTurnEndInHand(PlayerChoiceContext choiceContext)
 	{
 		bool alreadyHasFrail = base.Owner.Creature.HasPower<FrailPower>();
-		PowerModel powerModel = await PowerCmd.Apply<FrailPower>(base.Owner.Creature, base.DynamicVars["Frail"].BaseValue, null, this);
+		PowerModel powerModel = await PowerCmd.Apply<FrailPower>(choiceContext, base.Owner.Creature, base.DynamicVars["Frail"].BaseValue, null, this);
 		if (powerModel != null && !alreadyHasFrail)
 		{
 			powerModel.SkipNextDurationTick = true;

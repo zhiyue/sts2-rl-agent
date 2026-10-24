@@ -9,18 +9,44 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 
+/// <summary>
+/// Sent from the host to the client as the first message after the client connects.
+/// </summary>
 public struct InitialGameInfoMessage : INetMessage, IPacketSerializable
 {
+	/// <summary>
+	/// The version of the game the host is running.
+	/// </summary>
 	public string version;
 
+	/// <summary>
+	/// A hash of all the IDs in the model database.
+	/// </summary>
 	public uint idDatabaseHash;
 
-	public List<string>? mods;
+	/// <summary>
+	/// A list of all the gameplay-affecting mods that the host has installed, if any.
+	/// </summary>
+	public List<string>? gameplayAffectingMods;
 
+	/// <summary>
+	/// A list of all the non-gameplay-affecting mods that the host has installed, if any.
+	/// </summary>
+	public List<string>? otherMods;
+
+	/// <summary>
+	/// What kind of run this is (standard, daily, custom).
+	/// </summary>
 	public GameMode gameMode;
 
+	/// <summary>
+	/// What state the run is currently in.
+	/// </summary>
 	public RunSessionState sessionState;
 
+	/// <summary>
+	/// If the host is about to disconnect the client, why.
+	/// </summary>
 	public ConnectionFailureReason? connectionFailureReason;
 
 	public bool ShouldBroadcast => false;
@@ -29,13 +55,19 @@ public struct InitialGameInfoMessage : INetMessage, IPacketSerializable
 
 	public LogLevel LogLevel => LogLevel.Info;
 
+	public bool ShouldBuffer => true;
+
+	/// <summary>
+	/// Returns an InitialGameInfoMessage with the version and idDatabaseHash filled in.
+	/// </summary>
 	public static InitialGameInfoMessage Basic()
 	{
 		return new InitialGameInfoMessage
 		{
 			version = (ReleaseInfoManager.Instance.ReleaseInfo?.Version ?? GitHelper.ShortCommitId ?? "UNKNOWN"),
 			idDatabaseHash = ModelIdSerializationCache.Hash,
-			mods = ModManager.GetModNameList()
+			gameplayAffectingMods = ModManager.GetGameplayRelevantModNameList(),
+			otherMods = ModManager.GetNonGameplayRelevantModNameList()
 		};
 	}
 
@@ -50,15 +82,24 @@ public struct InitialGameInfoMessage : INetMessage, IPacketSerializable
 		{
 			writer.WriteEnum(connectionFailureReason.Value);
 		}
-		writer.WriteBool(mods != null);
-		if (mods == null)
+		writer.WriteBool(gameplayAffectingMods != null);
+		if (gameplayAffectingMods != null)
+		{
+			writer.WriteInt(gameplayAffectingMods.Count);
+			foreach (string gameplayAffectingMod in gameplayAffectingMods)
+			{
+				writer.WriteString(gameplayAffectingMod);
+			}
+		}
+		writer.WriteBool(otherMods != null);
+		if (otherMods == null)
 		{
 			return;
 		}
-		writer.WriteInt(mods.Count);
-		foreach (string mod in mods)
+		writer.WriteInt(otherMods.Count);
+		foreach (string otherMod in otherMods)
 		{
-			writer.WriteString(mod);
+			writer.WriteString(otherMod);
 		}
 	}
 
@@ -75,10 +116,19 @@ public struct InitialGameInfoMessage : INetMessage, IPacketSerializable
 		if (reader.ReadBool())
 		{
 			int num = reader.ReadInt();
-			mods = new List<string>();
+			gameplayAffectingMods = new List<string>();
 			for (int i = 0; i < num; i++)
 			{
-				mods.Add(reader.ReadString());
+				gameplayAffectingMods.Add(reader.ReadString());
+			}
+		}
+		if (reader.ReadBool())
+		{
+			int num2 = reader.ReadInt();
+			otherMods = new List<string>();
+			for (int j = 0; j < num2; j++)
+			{
+				otherMods.Add(reader.ReadString());
 			}
 		}
 	}

@@ -11,20 +11,41 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NSettingsGradientMask.cs")]
 public class NSettingsGradientMask : TextureRect
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : TextureRect.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnResized' method.
+		/// </summary>
 		public static readonly StringName OnResized = "OnResized";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : TextureRect.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_tabContainer' field.
+		/// </summary>
 		public static readonly StringName _tabContainer = "_tabContainer";
 
+		/// <summary>
+		/// Cached name for the '_texture' field.
+		/// </summary>
 		public static readonly StringName _texture = "_texture";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : TextureRect.SignalName
 	{
 	}
@@ -56,6 +77,11 @@ public class NSettingsGradientMask : TextureRect
 		_texture.Gradient.SetColor(3, StsColors.transparentWhite);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -65,6 +91,7 @@ public class NSettingsGradientMask : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -83,6 +110,7 @@ public class NSettingsGradientMask : TextureRect
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -97,6 +125,7 @@ public class NSettingsGradientMask : TextureRect
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -113,6 +142,7 @@ public class NSettingsGradientMask : TextureRect
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -129,6 +159,11 @@ public class NSettingsGradientMask : TextureRect
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -138,6 +173,7 @@ public class NSettingsGradientMask : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -146,6 +182,7 @@ public class NSettingsGradientMask : TextureRect
 		info.AddProperty(PropertyName._texture, Variant.From(in _texture));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

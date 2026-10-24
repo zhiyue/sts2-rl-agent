@@ -6,7 +6,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Godot;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
+using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
 
@@ -14,8 +16,10 @@ namespace MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 public static class ModelIdSerializationCache
 {
+	/// For serializing over the network, to save space, we map the string names statically to integers...
 	private static readonly Dictionary<string, int> _categoryNameToNetIdMap = new Dictionary<string, int> { [ModelId.none.Category] = 0 };
 
+	/// ...and vice-versa.
 	private static readonly List<string> _netIdToCategoryNameMap;
 
 	private static readonly Dictionary<string, int> _entryNameToNetIdMap;
@@ -40,15 +44,67 @@ public static class ModelIdSerializationCache
 
 	public static uint Hash { get; private set; }
 
+	/// <summary>
+	/// Initializes the serialization cache.
+	/// Note that the alternative is to initialize in a static initializer, but if we do this we don't control the time
+	/// at which it gets initialized, and it usually happens at a bad time during gameplay.
+	/// </summary>
 	public static void Init()
 	{
 		byte[] array = new byte[512];
 		XxHash32 xxHash = new XxHash32();
-		List<Type> list = ModelDb.AllAbstractModelSubtypes.ToList();
-		list.Sort((Type t1, Type t2) => string.CompareOrdinal(t1.Name, t2.Name));
-		foreach (Type item in list)
+		List<(Type, Mod)> list = new List<(Type, Mod)>();
+		foreach (Type item5 in AbstractModelSubtypes.All)
 		{
-			ModelId id = ModelDb.GetId(item);
+			list.Add((item5, null));
+		}
+		foreach (Mod mod in ModManager.Mods)
+		{
+			if (mod.state != ModLoadState.Loaded || !(mod.assembly != null))
+			{
+				continue;
+			}
+			foreach (Type item6 in ReflectionHelper.GetSubtypesFromAssembly(mod.assembly, typeof(AbstractModel)))
+			{
+				list.Add((item6, mod));
+			}
+		}
+		list.Sort(delegate((Type, Mod?) p1, (Type, Mod?) p2)
+		{
+			(Type, Mod?) tuple = p1;
+			Type item = tuple.Item1;
+			Mod item2 = tuple.Item2;
+			(Type, Mod?) tuple2 = p2;
+			Type item3 = tuple2.Item1;
+			Mod item4 = tuple2.Item2;
+			int num = string.CompareOrdinal(item.Name, item3.Name);
+			if (num != 0)
+			{
+				return num;
+			}
+			if (item2 != null && item4 == null)
+			{
+				return 1;
+			}
+			if (item2 == null && item4 != null)
+			{
+				return -1;
+			}
+			if (item2 == null && item4 == null)
+			{
+				return 0;
+			}
+			int num2 = string.CompareOrdinal(item2.manifest.id, item4.manifest.id);
+			if (num2 == 0)
+			{
+				Log.Warn($"Two AbstractModels {item} and {item3} from mod {item2.manifest?.id} share an ID! This might break multiplayer.");
+			}
+			return num2;
+		});
+		List<Type> list2 = list.Select(((Type, Mod) p) => p.Item1).ToList();
+		foreach (Type item7 in list2)
+		{
+			ModelId id = ModelDb.GetId(item7);
 			if (!_categoryNameToNetIdMap.ContainsKey(id.Category))
 			{
 				_categoryNameToNetIdMap[id.Category] = _netIdToCategoryNameMap.Count;
@@ -94,6 +150,11 @@ public static class ModelIdSerializationCache
 			throw new ArgumentException("ModelId category " + category + " could not be mapped to any net ID!");
 		}
 		return value;
+	}
+
+	public static bool TryGetNetIdForCategory(string category, out int netId)
+	{
+		return _categoryNameToNetIdMap.TryGetValue(category, out netId);
 	}
 
 	public static string GetCategoryForNetId(int netId)

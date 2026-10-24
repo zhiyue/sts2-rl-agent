@@ -27,7 +27,7 @@ public sealed class Turbo : CardModel
 	{
 		await PlayerCmd.GainEnergy(base.DynamicVars.Energy.IntValue, base.Owner);
 		CardModel card = base.CombatState.CreateCard<Void>(base.Owner);
-		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, addedByPlayer: true));
+		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, base.Owner));
 		await Cmd.Wait(0.5f);
 	}
 

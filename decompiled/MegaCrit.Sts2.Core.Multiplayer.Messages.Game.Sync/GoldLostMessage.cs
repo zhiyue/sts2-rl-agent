@@ -17,6 +17,8 @@ public struct GoldLostMessage : INetMessage, IPacketSerializable, IRunLocationTa
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
 
+	public bool ShouldBuffer => true;
+
 	public RunLocation Location => location;
 
 	public void Serialize(PacketWriter writer)
@@ -29,5 +31,10 @@ public struct GoldLostMessage : INetMessage, IPacketSerializable, IRunLocationTa
 	{
 		goldLost = reader.ReadInt();
 		location = reader.Read<RunLocation>();
+	}
+
+	public override string ToString()
+	{
+		return $"{"GoldLostMessage"} gold: {goldLost} location: {location}";
 	}
 }

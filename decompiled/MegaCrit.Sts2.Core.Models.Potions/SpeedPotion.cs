@@ -27,6 +27,6 @@ public sealed class SpeedPotion : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		decimal baseValue = base.DynamicVars.Dexterity.BaseValue;
-		await PowerCmd.Apply<SpeedPotionPower>(target, baseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<SpeedPotionPower>(choiceContext, target, baseValue, base.Owner.Creature, null);
 	}
 }

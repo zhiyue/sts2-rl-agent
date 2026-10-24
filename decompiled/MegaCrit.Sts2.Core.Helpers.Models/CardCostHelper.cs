@@ -6,7 +6,16 @@ namespace MegaCrit.Sts2.Core.Helpers.Models;
 
 public static class CardCostHelper
 {
-	public static CardCostColor GetEnergyCostColor(CardModel card, CombatState? state)
+	/// <summary>
+	/// Get the color that should be used for the text in a card's energy cost.
+	/// Depends on a whole bunch of tricky rules, see comments and tests for details.
+	/// WARNING: If you make a change to this method, you should probably make a similar change to
+	/// <see cref="M:MegaCrit.Sts2.Core.Helpers.Models.CardCostHelper.GetStarCostColor(MegaCrit.Sts2.Core.Models.CardModel,MegaCrit.Sts2.Core.Combat.ICombatState)" />, or write a comment explaining why the two methods are different.
+	/// </summary>
+	/// <param name="card">Card whose energy cost color we want.</param>
+	/// <param name="state">Combat state that the color depends on. Null outside of combat (like in the Card Library).</param>
+	/// <returns>Energy cost color for the specified card in the specified combat state.</returns>
+	public static CardCostColor GetEnergyCostColor(CardModel card, ICombatState? state)
 	{
 		if (state == null)
 		{
@@ -31,7 +40,16 @@ public static class CardCostHelper
 		return CardCostColor.Unmodified;
 	}
 
-	public static CardCostColor GetStarCostColor(CardModel card, CombatState? state)
+	/// <summary>
+	/// Get the color that should be used for the text in a card's star cost.
+	/// Depends on a whole bunch of tricky rules, see comments and tests for details.
+	/// WARNING: If you make a change to this method, you should probably make a similar change to
+	/// <see cref="M:MegaCrit.Sts2.Core.Helpers.Models.CardCostHelper.GetEnergyCostColor(MegaCrit.Sts2.Core.Models.CardModel,MegaCrit.Sts2.Core.Combat.ICombatState)" />, or write a comment explaining why the two methods are different.
+	/// </summary>
+	/// <param name="card">Card whose star cost color we want.</param>
+	/// <param name="state">Combat state that the color depends on. Null outside of combat (like in the Card Library).</param>
+	/// <returns>Star cost color for the specified card in the specified combat state.</returns>
+	public static CardCostColor GetStarCostColor(CardModel card, ICombatState? state)
 	{
 		if (state == null)
 		{
@@ -82,7 +100,7 @@ public static class CardCostHelper
 		return CardCostColor.Unmodified;
 	}
 
-	private static bool TryModifyEnergyCostWithHooks(CardModel card, CombatState state, out decimal hookModifiedCost)
+	private static bool TryModifyEnergyCostWithHooks(CardModel card, ICombatState state, out decimal hookModifiedCost)
 	{
 		hookModifiedCost = card.EnergyCost.GetWithModifiers(CostModifiers.None);
 		bool flag = false;
@@ -90,10 +108,14 @@ public static class CardCostHelper
 		{
 			flag |= item.TryModifyEnergyCostInCombat(card, hookModifiedCost, out hookModifiedCost);
 		}
+		foreach (AbstractModel item2 in state.IterateHookListeners())
+		{
+			flag |= item2.TryModifyEnergyCostInCombatLate(card, hookModifiedCost, out hookModifiedCost);
+		}
 		return flag;
 	}
 
-	private static bool TryModifyStarCostWithHooks(CardModel card, CombatState state, out decimal hookModifiedCost)
+	private static bool TryModifyStarCostWithHooks(CardModel card, ICombatState state, out decimal hookModifiedCost)
 	{
 		hookModifiedCost = card.BaseStarCost;
 		bool flag = false;

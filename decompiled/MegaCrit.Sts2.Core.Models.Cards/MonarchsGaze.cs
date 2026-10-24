@@ -18,14 +18,14 @@ public sealed class MonarchsGaze : CardModel
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromPower<StrengthPower>());
 
 	public MonarchsGaze()
-		: base(3, CardType.Power, CardRarity.Rare, TargetType.Self)
+		: base(2, CardType.Power, CardRarity.Rare, TargetType.Self)
 	{
 	}
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<MonarchsGazePower>(base.Owner.Creature, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<MonarchsGazePower>(choiceContext, base.Owner.Creature, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

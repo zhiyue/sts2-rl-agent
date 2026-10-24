@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Audio.Debug;
-using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -17,6 +16,7 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rewards;
+using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Models.Events;
@@ -25,15 +25,33 @@ public sealed class DenseVegetation : EventModel
 {
 	public override bool IsShared => true;
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[3]
 	{
+		new GoldVar(0),
 		new HealVar(0m),
-		new HpLossVar(11m)
+		new HpLossVar(8m)
 	});
 
 	public override void CalculateVars()
 	{
+		base.DynamicVars.Gold.BaseValue = base.Rng.NextInt(61, 100);
 		base.DynamicVars.Heal.BaseValue = ((base.Owner != null) ? HealRestSiteOption.GetHealAmount(base.Owner) : 0m);
+	}
+
+	public override bool IsAllowed(IRunState runState)
+	{
+		if (runState.Players.Count == 1)
+		{
+			return true;
+		}
+		foreach (Player player in runState.Players)
+		{
+			if ((decimal)player.Creature.CurrentHp <= base.DynamicVars.HpLoss.BaseValue)
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	protected override IReadOnlyList<EventOption> GenerateInitialOptions()
@@ -47,8 +65,6 @@ public sealed class DenseVegetation : EventModel
 
 	private async Task TrudgeOn()
 	{
-		List<CardModel> cards = (await CardSelectCmd.FromDeckForRemoval(prefs: new CardSelectorPrefs(CardSelectorPrefs.RemoveSelectionPrompt, 1), player: base.Owner)).ToList();
-		await CardPileCmd.RemoveFromDeck(cards);
 		Control container = NEventRoom.Instance?.VfxContainer;
 		if (LocalContext.IsMe(base.Owner) && container != null)
 		{
@@ -65,6 +81,7 @@ public sealed class DenseVegetation : EventModel
 			}
 		}
 		await CreatureCmd.Damage(new ThrowingPlayerChoiceContext(), base.Owner.Creature, base.DynamicVars.HpLoss.BaseValue, ValueProp.Unblockable | ValueProp.Unpowered, null, null);
+		await PlayerCmd.GainGold(base.DynamicVars.Gold.BaseValue, base.Owner);
 		SetEventFinished(L10NLookup("DENSE_VEGETATION.pages.TRUDGE_ON.description"));
 	}
 

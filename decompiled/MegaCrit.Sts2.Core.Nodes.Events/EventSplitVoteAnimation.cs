@@ -5,11 +5,15 @@ using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Audio.Debug;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Nodes.Events;
 
+/// <summary>
+/// Represents the animation which plays when players don't all vote for the same shared event option.
+/// </summary>
 public class EventSplitVoteAnimation
 {
 	private NEventLayout _eventLayout;
@@ -30,6 +34,12 @@ public class EventSplitVoteAnimation
 		_runState = runState;
 	}
 
+	/// <summary>
+	/// Plays the animation if necessary.
+	/// The animation is not played if all players voted for the same event option.
+	/// Note that we are using the votes as indicated by the nodes and not by EventSynchronizer. This is on purpose -
+	/// the votes contained in EventSynchronizer have already been cleared by this point in time.
+	/// </summary>
 	public async Task TryPlay(NEventOptionButton chosenButton)
 	{
 		if (_eventLayout.OptionButtons.Count((NEventOptionButton b) => b.VoteContainer.Players.Any()) == 1)
@@ -47,8 +57,10 @@ public class EventSplitVoteAnimation
 		Tween tween = _eventLayout.CreateTween();
 		tween.TweenMethod(Callable.From<float>(TickSplitVoteAnimation), 0f, 1f, 1.2000000476837158).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
 		tween.TweenInterval(num);
-		await _eventLayout.ToSignal(tween, Tween.SignalName.Finished);
-		chosenButton.VoteContainer.BouncePlayers();
+		if (await tween.AwaitFinished(_eventLayout))
+		{
+			chosenButton.VoteContainer.BouncePlayers();
+		}
 	}
 
 	private void TickSplitVoteAnimation(float value)

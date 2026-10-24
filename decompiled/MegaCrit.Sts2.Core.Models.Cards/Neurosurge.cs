@@ -31,10 +31,10 @@ public sealed class Neurosurge : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
 		await PlayerCmd.GainEnergy(base.DynamicVars.Energy.BaseValue, base.Owner);
 		await CardPileCmd.Draw(choiceContext, base.DynamicVars.Cards.BaseValue, base.Owner);
-		await PowerCmd.Apply<NeurosurgePower>(base.Owner.Creature, base.DynamicVars["NeurosurgePower"].IntValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<NeurosurgePower>(choiceContext, base.Owner.Creature, base.DynamicVars["NeurosurgePower"].IntValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

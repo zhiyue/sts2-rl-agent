@@ -5,68 +5,153 @@ using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Nodes.Rooms;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
 [ScriptPath("res://src/Core/Nodes/Vfx/NKaiserCrabBossVfx.cs")]
 public class NKaiserCrabBossVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationStart' method.
+		/// </summary>
 		public static readonly StringName OnAnimationStart = "OnAnimationStart";
 
+		/// <summary>
+		/// Cached name for the 'OnChargeSteamStart' method.
+		/// </summary>
 		public static readonly StringName OnChargeSteamStart = "OnChargeSteamStart";
 
+		/// <summary>
+		/// Cached name for the 'OnChargeSteamEnd' method.
+		/// </summary>
 		public static readonly StringName OnChargeSteamEnd = "OnChargeSteamEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnDeathSpitStart' method.
+		/// </summary>
 		public static readonly StringName OnDeathSpitStart = "OnDeathSpitStart";
 
+		/// <summary>
+		/// Cached name for the 'OnDeathSpitEnd' method.
+		/// </summary>
 		public static readonly StringName OnDeathSpitEnd = "OnDeathSpitEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnLeftEmbersStart' method.
+		/// </summary>
 		public static readonly StringName OnLeftEmbersStart = "OnLeftEmbersStart";
 
+		/// <summary>
+		/// Cached name for the 'OnPlowChunksStart' method.
+		/// </summary>
 		public static readonly StringName OnPlowChunksStart = "OnPlowChunksStart";
 
+		/// <summary>
+		/// Cached name for the 'OnPlowChunksEnd' method.
+		/// </summary>
 		public static readonly StringName OnPlowChunksEnd = "OnPlowChunksEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnRegenSplatsStart' method.
+		/// </summary>
 		public static readonly StringName OnRegenSplatsStart = "OnRegenSplatsStart";
 
+		/// <summary>
+		/// Cached name for the 'OnRegenSplatsEnd' method.
+		/// </summary>
 		public static readonly StringName OnRegenSplatsEnd = "OnRegenSplatsEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnRocketThrustStart' method.
+		/// </summary>
 		public static readonly StringName OnRocketThrustStart = "OnRocketThrustStart";
 
+		/// <summary>
+		/// Cached name for the 'OnRocketThrustEnd' method.
+		/// </summary>
 		public static readonly StringName OnRocketThrustEnd = "OnRocketThrustEnd";
 
+		/// <summary>
+		/// Cached name for the 'OnClawLExplode' method.
+		/// </summary>
 		public static readonly StringName OnClawLExplode = "OnClawLExplode";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_regenSplatParticles' field.
+		/// </summary>
 		public static readonly StringName _regenSplatParticles = "_regenSplatParticles";
 
+		/// <summary>
+		/// Cached name for the '_plowChunkParticles' field.
+		/// </summary>
 		public static readonly StringName _plowChunkParticles = "_plowChunkParticles";
 
+		/// <summary>
+		/// Cached name for the '_steamParticles1' field.
+		/// </summary>
 		public static readonly StringName _steamParticles1 = "_steamParticles1";
 
+		/// <summary>
+		/// Cached name for the '_steamParticles2' field.
+		/// </summary>
 		public static readonly StringName _steamParticles2 = "_steamParticles2";
 
+		/// <summary>
+		/// Cached name for the '_steamParticles3' field.
+		/// </summary>
 		public static readonly StringName _steamParticles3 = "_steamParticles3";
 
+		/// <summary>
+		/// Cached name for the '_smokeParticles' field.
+		/// </summary>
 		public static readonly StringName _smokeParticles = "_smokeParticles";
 
+		/// <summary>
+		/// Cached name for the '_sparkParticles' field.
+		/// </summary>
 		public static readonly StringName _sparkParticles = "_sparkParticles";
 
+		/// <summary>
+		/// Cached name for the '_spittleParticles' field.
+		/// </summary>
 		public static readonly StringName _spittleParticles = "_spittleParticles";
 
+		/// <summary>
+		/// Cached name for the '_leftArmExplosionPosition' field.
+		/// </summary>
 		public static readonly StringName _leftArmExplosionPosition = "_leftArmExplosionPosition";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -217,12 +302,12 @@ public class NKaiserCrabBossVfx : Node
 
 	private void OnAnimationStart(GodotObject spineSprite, GodotObject animationState, GodotObject trackEntry)
 	{
-		string name = new MegaAnimationState(animationState).GetCurrent(2).GetAnimation().GetName();
-		if (name != "right/charged_loop" && name != "right/charge_up")
+		string currentAnimationName = new MegaAnimationState(animationState).GetCurrentAnimationName(2);
+		if (currentAnimationName != "right/charged_loop" && currentAnimationName != "right/charge_up" && currentAnimationName != "right/hurt_charged")
 		{
 			OnChargeSteamEnd();
 		}
-		if (name != "right/attack_heavy")
+		if (currentAnimationName != "right/attack_heavy")
 		{
 			OnRocketThrustEnd();
 		}
@@ -290,9 +375,14 @@ public class NKaiserCrabBossVfx : Node
 
 	private void OnClawLExplode()
 	{
-		VfxCmd.PlayVfx(_leftArmExplosionPosition.GlobalPosition, "vfx/monsters/kaiser_crab_boss_explosion");
+		VfxCmd.PlayVfx(_leftArmExplosionPosition.GlobalPosition, "vfx/monsters/kaiser_crab_boss_explosion", NCombatRoom.Instance?.CombatVfxContainer);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -326,6 +416,7 @@ public class NKaiserCrabBossVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -422,6 +513,7 @@ public class NKaiserCrabBossVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -488,6 +580,7 @@ public class NKaiserCrabBossVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -544,6 +637,7 @@ public class NKaiserCrabBossVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -600,6 +694,11 @@ public class NKaiserCrabBossVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -617,6 +716,7 @@ public class NKaiserCrabBossVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -633,6 +733,7 @@ public class NKaiserCrabBossVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
+using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
@@ -20,89 +21,241 @@ namespace MegaCrit.Sts2.Core.Nodes.Debug;
 [ScriptPath("res://src/Core/Nodes/Debug/NDevConsole.cs")]
 public class NDevConsole : Panel
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Panel.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
+		public static readonly StringName Create = "Create";
+
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
+		public new static readonly StringName _EnterTree = "_EnterTree";
+
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'PrintUsage' method.
+		/// </summary>
 		public static readonly StringName PrintUsage = "PrintUsage";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'HandleReadlineKeybinding' method.
+		/// </summary>
 		public static readonly StringName HandleReadlineKeybinding = "HandleReadlineKeybinding";
 
+		/// <summary>
+		/// Cached name for the 'DeleteWordBackward' method.
+		/// </summary>
 		public static readonly StringName DeleteWordBackward = "DeleteWordBackward";
 
+		/// <summary>
+		/// Cached name for the 'KillToEndOfLine' method.
+		/// </summary>
 		public static readonly StringName KillToEndOfLine = "KillToEndOfLine";
 
+		/// <summary>
+		/// Cached name for the 'Yank' method.
+		/// </summary>
 		public static readonly StringName Yank = "Yank";
 
+		/// <summary>
+		/// Cached name for the 'EnableTabBuffer' method.
+		/// </summary>
 		public static readonly StringName EnableTabBuffer = "EnableTabBuffer";
 
+		/// <summary>
+		/// Cached name for the 'DisableTabBuffer' method.
+		/// </summary>
 		public static readonly StringName DisableTabBuffer = "DisableTabBuffer";
 
+		/// <summary>
+		/// Cached name for the 'SetBackgroundColor' method.
+		/// </summary>
 		public static readonly StringName SetBackgroundColor = "SetBackgroundColor";
 
+		/// <summary>
+		/// Cached name for the 'HideGhostText' method.
+		/// </summary>
 		public static readonly StringName HideGhostText = "HideGhostText";
 
+		/// <summary>
+		/// Cached name for the 'ShowGhostText' method.
+		/// </summary>
 		public static readonly StringName ShowGhostText = "ShowGhostText";
 
+		/// <summary>
+		/// Cached name for the 'UpdateGhostText' method.
+		/// </summary>
 		public static readonly StringName UpdateGhostText = "UpdateGhostText";
 
+		/// <summary>
+		/// Cached name for the 'AutocompleteCommand' method.
+		/// </summary>
 		public static readonly StringName AutocompleteCommand = "AutocompleteCommand";
 
+		/// <summary>
+		/// Cached name for the 'RenderSelectionMenu' method.
+		/// </summary>
 		public static readonly StringName RenderSelectionMenu = "RenderSelectionMenu";
 
+		/// <summary>
+		/// Cached name for the 'OnInputTextChanged' method.
+		/// </summary>
 		public static readonly StringName OnInputTextChanged = "OnInputTextChanged";
 
+		/// <summary>
+		/// Cached name for the 'ExitSelectionMode' method.
+		/// </summary>
 		public static readonly StringName ExitSelectionMode = "ExitSelectionMode";
 
+		/// <summary>
+		/// Cached name for the 'NavigateSelection' method.
+		/// </summary>
 		public static readonly StringName NavigateSelection = "NavigateSelection";
 
+		/// <summary>
+		/// Cached name for the 'AcceptSelection' method.
+		/// </summary>
 		public static readonly StringName AcceptSelection = "AcceptSelection";
 
+		/// <summary>
+		/// Cached name for the 'ProcessCommand' method.
+		/// </summary>
 		public static readonly StringName ProcessCommand = "ProcessCommand";
 
+		/// <summary>
+		/// Cached name for the 'ShowConsole' method.
+		/// </summary>
 		public static readonly StringName ShowConsole = "ShowConsole";
 
+		/// <summary>
+		/// Cached name for the 'HideConsole' method.
+		/// </summary>
 		public static readonly StringName HideConsole = "HideConsole";
 
+		/// <summary>
+		/// Cached name for the 'MakeHalfScreen' method.
+		/// </summary>
 		public static readonly StringName MakeHalfScreen = "MakeHalfScreen";
 
+		/// <summary>
+		/// Cached name for the 'MakeFullScreen' method.
+		/// </summary>
 		public static readonly StringName MakeFullScreen = "MakeFullScreen";
 
+		/// <summary>
+		/// Cached name for the 'OnToggleMaximizeButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnToggleMaximizeButtonPressed = "OnToggleMaximizeButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'MoveInputCursorToEndOfLine' method.
+		/// </summary>
 		public static readonly StringName MoveInputCursorToEndOfLine = "MoveInputCursorToEndOfLine";
 
+		/// <summary>
+		/// Cached name for the 'UpdatePromptStyle' method.
+		/// </summary>
 		public static readonly StringName UpdatePromptStyle = "UpdatePromptStyle";
 
+		/// <summary>
+		/// Cached name for the 'AddChildToTree' method.
+		/// </summary>
 		public static readonly StringName AddChildToTree = "AddChildToTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Panel.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_outputBuffer' field.
+		/// </summary>
 		public static readonly StringName _outputBuffer = "_outputBuffer";
 
+		/// <summary>
+		/// Cached name for the '_tabBuffer' field.
+		/// </summary>
 		public static readonly StringName _tabBuffer = "_tabBuffer";
 
+		/// <summary>
+		/// Cached name for the '_inputContainer' field.
+		/// </summary>
 		public static readonly StringName _inputContainer = "_inputContainer";
 
+		/// <summary>
+		/// Cached name for the '_inputBuffer' field.
+		/// </summary>
 		public static readonly StringName _inputBuffer = "_inputBuffer";
 
+		/// <summary>
+		/// Cached name for the '_promptLabel' field.
+		/// </summary>
 		public static readonly StringName _promptLabel = "_promptLabel";
 
+		/// <summary>
+		/// Cached name for the '_ghostTextLabel' field.
+		/// </summary>
 		public static readonly StringName _ghostTextLabel = "_ghostTextLabel";
 
+		/// <summary>
+		/// Cached name for the '_isFullscreen' field.
+		/// </summary>
 		public static readonly StringName _isFullscreen = "_isFullscreen";
 
+		/// <summary>
+		/// Cached name for the '_yankBuffer' field.
+		/// </summary>
 		public static readonly StringName _yankBuffer = "_yankBuffer";
+
+		/// <summary>
+		/// Cached name for the '_symbolPrompt' field.
+		/// </summary>
+		public static readonly StringName _symbolPrompt = "_symbolPrompt";
+
+		/// <summary>
+		/// Cached name for the '_symbolWarning' field.
+		/// </summary>
+		public static readonly StringName _symbolWarning = "_symbolWarning";
+
+		/// <summary>
+		/// Cached name for the '_symbolUp' field.
+		/// </summary>
+		public static readonly StringName _symbolUp = "_symbolUp";
+
+		/// <summary>
+		/// Cached name for the '_symbolDown' field.
+		/// </summary>
+		public static readonly StringName _symbolDown = "_symbolDown";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Panel.SignalName
 	{
 	}
+
+	public static readonly string assetPath = SceneHelper.GetScenePath("debug/dev_console");
 
 	private static NDevConsole? _instance;
 
@@ -128,37 +281,76 @@ public class NDevConsole : Panel
 
 	private string _yankBuffer = string.Empty;
 
+	private string _symbolPrompt = ">";
+
+	private string _symbolWarning = "[!]";
+
+	private string _symbolUp = "^";
+
+	private string _symbolDown = "v";
+
 	public static NDevConsole Instance => _instance ?? throw new InvalidOperationException("Dev console used before being created.");
 
-	public override void _Ready()
+	public static CanvasLayer? Create()
+	{
+		if (TestMode.IsOn)
+		{
+			return null;
+		}
+		return PreloadManager.Cache.GetScene(assetPath).Instantiate<CanvasLayer>(PackedScene.GenEditState.Disabled);
+	}
+
+	public override void _EnterTree()
 	{
 		if (TestMode.IsOn)
 		{
 			this.QueueFreeSafely();
-			return;
 		}
-		if (_instance != null)
+		else if (_instance != null)
 		{
 			this.QueueFreeSafely();
-			return;
 		}
-		_instance = this;
-		bool shouldAllowDebugCommands = OS.HasFeature("editor") || TestMode.IsOn || ModManager.LoadedMods.Count > 0 || SaveManager.Instance.SettingsSave.FullConsole;
-		HideConsole();
-		_devConsole = new MegaCrit.Sts2.Core.DevConsole.DevConsole(shouldAllowDebugCommands);
+		else
+		{
+			_instance = this;
+		}
+	}
+
+	public override void _Ready()
+	{
 		_outputBuffer = GetNode<RichTextLabel>("OutputContainer/OutputBuffer");
 		_tabBuffer = GetNode<RichTextLabel>("OutputContainer/TabBuffer");
 		_inputContainer = GetNode<Control>("InputContainer");
 		_inputBuffer = GetNode<LineEdit>("InputContainer/InputBufferContainer/InputBuffer");
 		_promptLabel = GetNode<Label>("InputContainer/PromptLabel");
 		_ghostTextLabel = GetNode<Label>("InputContainer/InputBufferContainer/GhostText");
+		HideConsole();
 		MakeHalfScreen();
 		DisableTabBuffer();
 		HideGhostText();
 		_inputBuffer.CaretBlink = true;
+		Font themeFont = _promptLabel.GetThemeFont(ThemeConstants.Label.Font);
+		if (themeFont.HasChar(10140L))
+		{
+			_symbolPrompt = "➜";
+		}
+		if (themeFont.HasChar(9888L))
+		{
+			_symbolWarning = "⚠";
+		}
+		if (themeFont.HasChar(8593L))
+		{
+			_symbolUp = "↑";
+		}
+		if (themeFont.HasChar(8595L))
+		{
+			_symbolDown = "↓";
+		}
 		UpdatePromptStyle();
 		_inputBuffer.TextChanged += OnInputTextChanged;
 		PrintUsage();
+		bool shouldAllowDebugCommands = OS.HasFeature("editor") || TestMode.IsOn || ModManager.IsRunningModded() || SaveManager.Instance.SettingsSave.FullConsole;
+		_devConsole = new MegaCrit.Sts2.Core.DevConsole.DevConsole(shouldAllowDebugCommands);
 	}
 
 	public override void _ExitTree()
@@ -537,7 +729,7 @@ public class NDevConsole : Panel
 			CompletionType.Argument => "Select " + _tabCompletion.LastCompletionResult.ArgumentContext + " argument:", 
 			_ => "Select option:", 
 		});
-		list.Add("[color=gray]Tab/↑↓: navigate, Enter: accept, Esc: cancel, Type to filter[/color]");
+		list.Add("[color=gray]Tab/" + _symbolUp + _symbolDown + ": navigate, Enter: accept, Esc: cancel, Type to filter[/color]");
 		list.Add("");
 		int count = _tabCompletion.CompletionCandidates.Count;
 		if (count <= 12)
@@ -557,7 +749,7 @@ public class NDevConsole : Panel
 			}
 			if (num > 0)
 			{
-				list.Add($"[color=gray]↑ {num} more above ↑[/color]");
+				list.Add($"[color=gray]{_symbolUp} {num} more above {_symbolUp}[/color]");
 			}
 			for (int j = num; j < num2; j++)
 			{
@@ -566,7 +758,7 @@ public class NDevConsole : Panel
 			if (num2 < count)
 			{
 				int value = count - num2;
-				list.Add($"[color=gray]↓ {value} more below ↓[/color]");
+				list.Add($"[color=gray]{_symbolDown} {value} more below {_symbolDown}[/color]");
 			}
 		}
 		list.Add("");
@@ -580,7 +772,7 @@ public class NDevConsole : Panel
 		if (index >= 0 && index < _tabCompletion.CompletionCandidates.Count)
 		{
 			string text = _tabCompletion.CompletionCandidates[index];
-			string item = ((index == _tabCompletion.SelectionIndex) ? ("[color=yellow]➜ " + text + "[/color]") : ("  " + text));
+			string item = ((index == _tabCompletion.SelectionIndex) ? $"[color=yellow]{_symbolPrompt} {text}[/color]" : ("  " + text));
 			displayLines.Add(item);
 		}
 	}
@@ -685,8 +877,7 @@ public class NDevConsole : Panel
 		{
 			return;
 		}
-		RichTextLabel outputBuffer = _outputBuffer;
-		outputBuffer.Text = outputBuffer.Text + "[color=#00ff00]➜[/color] " + _inputBuffer.Text + "\n";
+		_outputBuffer.Text += $"[color=#00ff00]{_symbolPrompt}[/color] {_inputBuffer.Text}\n";
 		if (_inputBuffer.Text.Trim().Equals("clear"))
 		{
 			_outputBuffer.Text = string.Empty;
@@ -711,13 +902,12 @@ public class NDevConsole : Panel
 		}
 		if (cmdResult.success)
 		{
-			RichTextLabel outputBuffer2 = _outputBuffer;
-			outputBuffer2.Text = outputBuffer2.Text + cmdResult.msg + "\n";
+			RichTextLabel outputBuffer = _outputBuffer;
+			outputBuffer.Text = outputBuffer.Text + cmdResult.msg + "\n";
 		}
 		else
 		{
-			RichTextLabel outputBuffer3 = _outputBuffer;
-			outputBuffer3.Text = outputBuffer3.Text + "[color=#ff5555]⚠ " + cmdResult.msg + "[/color]\n";
+			_outputBuffer.Text += $"[color=#ff5555]{_symbolWarning} {cmdResult.msg}[/color]\n";
 		}
 		_inputBuffer.Text = string.Empty;
 		_tabBuffer.Text = string.Empty;
@@ -749,8 +939,7 @@ public class NDevConsole : Panel
 		}
 		else
 		{
-			RichTextLabel outputBuffer2 = _outputBuffer;
-			outputBuffer2.Text = outputBuffer2.Text + "[color=#ff5555]⚠ " + cmdResult.msg + "[/color]\n";
+			_outputBuffer.Text += $"[color=#ff5555]{_symbolWarning} {cmdResult.msg}[/color]\n";
 		}
 		if (ex != null)
 		{
@@ -814,9 +1003,9 @@ public class NDevConsole : Panel
 
 	private void UpdatePromptStyle()
 	{
-		_promptLabel.Text = "➜";
-		_promptLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, new Color(0f, 0.831f, 1f));
-		_promptLabel.AddThemeFontSizeOverride(ThemeConstants.Label.fontSize, 18);
+		_promptLabel.Text = _symbolPrompt;
+		_promptLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, new Color(0f, 0.831f, 1f));
+		_promptLabel.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 18);
 	}
 
 	public void AddChildToTree(Node node)
@@ -824,10 +1013,17 @@ public class NDevConsole : Panel
 		this.AddChildSafely(node);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(29);
+		List<MethodInfo> list = new List<MethodInfo>(31);
+		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("CanvasLayer"), exported: false), MethodFlags.Normal | MethodFlags.Static, null, null));
+		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.PrintUsage, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -881,9 +1077,21 @@ public class NDevConsole : Panel
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
+		if (method == MethodName.Create && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<CanvasLayer>(Create());
+			return true;
+		}
+		if (method == MethodName._EnterTree && args.Count == 0)
+		{
+			_EnterTree();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
@@ -1062,8 +1270,29 @@ public class NDevConsole : Panel
 	}
 
 	[EditorBrowsable(EditorBrowsableState.Never)]
+	internal static bool InvokeGodotClassStaticMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
+	{
+		if (method == MethodName.Create && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<CanvasLayer>(Create());
+			return true;
+		}
+		ret = default(godot_variant);
+		return false;
+	}
+
+	/// <inheritdoc />
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
+		if (method == MethodName.Create)
+		{
+			return true;
+		}
+		if (method == MethodName._EnterTree)
+		{
+			return true;
+		}
 		if (method == MethodName._Ready)
 		{
 			return true;
@@ -1183,6 +1412,7 @@ public class NDevConsole : Panel
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1226,9 +1456,30 @@ public class NDevConsole : Panel
 			_yankBuffer = VariantUtils.ConvertTo<string>(in value);
 			return true;
 		}
+		if (name == PropertyName._symbolPrompt)
+		{
+			_symbolPrompt = VariantUtils.ConvertTo<string>(in value);
+			return true;
+		}
+		if (name == PropertyName._symbolWarning)
+		{
+			_symbolWarning = VariantUtils.ConvertTo<string>(in value);
+			return true;
+		}
+		if (name == PropertyName._symbolUp)
+		{
+			_symbolUp = VariantUtils.ConvertTo<string>(in value);
+			return true;
+		}
+		if (name == PropertyName._symbolDown)
+		{
+			_symbolDown = VariantUtils.ConvertTo<string>(in value);
+			return true;
+		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1272,9 +1523,34 @@ public class NDevConsole : Panel
 			value = VariantUtils.CreateFrom(in _yankBuffer);
 			return true;
 		}
+		if (name == PropertyName._symbolPrompt)
+		{
+			value = VariantUtils.CreateFrom(in _symbolPrompt);
+			return true;
+		}
+		if (name == PropertyName._symbolWarning)
+		{
+			value = VariantUtils.CreateFrom(in _symbolWarning);
+			return true;
+		}
+		if (name == PropertyName._symbolUp)
+		{
+			value = VariantUtils.CreateFrom(in _symbolUp);
+			return true;
+		}
+		if (name == PropertyName._symbolDown)
+		{
+			value = VariantUtils.CreateFrom(in _symbolDown);
+			return true;
+		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1287,9 +1563,14 @@ public class NDevConsole : Panel
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ghostTextLabel, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._isFullscreen, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.String, PropertyName._yankBuffer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.String, PropertyName._symbolPrompt, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.String, PropertyName._symbolWarning, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.String, PropertyName._symbolUp, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.String, PropertyName._symbolDown, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1302,8 +1583,13 @@ public class NDevConsole : Panel
 		info.AddProperty(PropertyName._ghostTextLabel, Variant.From(in _ghostTextLabel));
 		info.AddProperty(PropertyName._isFullscreen, Variant.From(in _isFullscreen));
 		info.AddProperty(PropertyName._yankBuffer, Variant.From(in _yankBuffer));
+		info.AddProperty(PropertyName._symbolPrompt, Variant.From(in _symbolPrompt));
+		info.AddProperty(PropertyName._symbolWarning, Variant.From(in _symbolWarning));
+		info.AddProperty(PropertyName._symbolUp, Variant.From(in _symbolUp));
+		info.AddProperty(PropertyName._symbolDown, Variant.From(in _symbolDown));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1339,6 +1625,22 @@ public class NDevConsole : Panel
 		if (info.TryGetProperty(PropertyName._yankBuffer, out var value8))
 		{
 			_yankBuffer = value8.As<string>();
+		}
+		if (info.TryGetProperty(PropertyName._symbolPrompt, out var value9))
+		{
+			_symbolPrompt = value9.As<string>();
+		}
+		if (info.TryGetProperty(PropertyName._symbolWarning, out var value10))
+		{
+			_symbolWarning = value10.As<string>();
+		}
+		if (info.TryGetProperty(PropertyName._symbolUp, out var value11))
+		{
+			_symbolUp = value11.As<string>();
+		}
+		if (info.TryGetProperty(PropertyName._symbolDown, out var value12))
+		{
+			_symbolDown = value12.As<string>();
 		}
 	}
 }

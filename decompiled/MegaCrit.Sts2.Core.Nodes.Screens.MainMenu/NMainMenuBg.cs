@@ -9,30 +9,66 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NMainMenuBg.cs")]
 public class NMainMenuBg : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnWindowChange' method.
+		/// </summary>
 		public static readonly StringName OnWindowChange = "OnWindowChange";
 
+		/// <summary>
+		/// Cached name for the 'ScaleBgIfNarrow' method.
+		/// </summary>
 		public static readonly StringName ScaleBgIfNarrow = "ScaleBgIfNarrow";
 
+		/// <summary>
+		/// Cached name for the 'HideLogo' method.
+		/// </summary>
 		public static readonly StringName HideLogo = "HideLogo";
 
+		/// <summary>
+		/// Cached name for the 'ShowLogo' method.
+		/// </summary>
 		public static readonly StringName ShowLogo = "ShowLogo";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_window' field.
+		/// </summary>
 		public static readonly StringName _window = "_window";
 
+		/// <summary>
+		/// Cached name for the '_bg' field.
+		/// </summary>
 		public static readonly StringName _bg = "_bg";
 
+		/// <summary>
+		/// Cached name for the '_logo' field.
+		/// </summary>
 		public static readonly StringName _logo = "_logo";
 
+		/// <summary>
+		/// Cached name for the '_logoTween' field.
+		/// </summary>
 		public static readonly StringName _logoTween = "_logoTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -88,6 +124,11 @@ public class NMainMenuBg : Control
 		_logoTween.TweenProperty(_logo, "modulate:a", 1f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -103,6 +144,7 @@ public class NMainMenuBg : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -139,6 +181,7 @@ public class NMainMenuBg : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -165,6 +208,7 @@ public class NMainMenuBg : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -191,6 +235,7 @@ public class NMainMenuBg : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -217,6 +262,11 @@ public class NMainMenuBg : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -228,6 +278,7 @@ public class NMainMenuBg : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -238,6 +289,7 @@ public class NMainMenuBg : Control
 		info.AddProperty(PropertyName._logoTween, Variant.From(in _logoTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

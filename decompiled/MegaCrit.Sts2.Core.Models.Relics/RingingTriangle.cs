@@ -18,6 +18,6 @@ public sealed class RingingTriangle : RelicModel
 		{
 			return true;
 		}
-		return player.Creature.CombatState.RoundNumber > 1;
+		return base.Owner.PlayerCombatState.TurnNumber > 1;
 	}
 }

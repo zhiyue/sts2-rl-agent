@@ -31,36 +31,100 @@ public class NControllerCardPlay : NCardPlay
 	[Signal]
 	public delegate void CanceledEventHandler();
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NCardPlay.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'Start' method.
+		/// </summary>
 		public new static readonly StringName Start = "Start";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'DisconnectTargetingSignals' method.
+		/// </summary>
+		public static readonly StringName DisconnectTargetingSignals = "DisconnectTargetingSignals";
+
+		/// <summary>
+		/// Cached name for the 'MultiCreatureTargeting' method.
+		/// </summary>
 		public static readonly StringName MultiCreatureTargeting = "MultiCreatureTargeting";
 
+		/// <summary>
+		/// Cached name for the 'OnCancelPlayCard' method.
+		/// </summary>
 		public new static readonly StringName OnCancelPlayCard = "OnCancelPlayCard";
 
+		/// <summary>
+		/// Cached name for the 'Cleanup' method.
+		/// </summary>
 		public new static readonly StringName Cleanup = "Cleanup";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NCardPlay.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_onCreatureHoverCallable' field.
+		/// </summary>
+		public static readonly StringName _onCreatureHoverCallable = "_onCreatureHoverCallable";
+
+		/// <summary>
+		/// Cached name for the '_onCreatureUnhoverCallable' field.
+		/// </summary>
+		public static readonly StringName _onCreatureUnhoverCallable = "_onCreatureUnhoverCallable";
+
+		/// <summary>
+		/// Cached name for the '_signalsConnected' field.
+		/// </summary>
+		public static readonly StringName _signalsConnected = "_signalsConnected";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NCardPlay.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Confirmed' signal.
+		/// </summary>
 		public static readonly StringName Confirmed = "Confirmed";
 
+		/// <summary>
+		/// Cached name for the 'Canceled' signal.
+		/// </summary>
 		public static readonly StringName Canceled = "Canceled";
 	}
+
+	private Callable _onCreatureHoverCallable;
+
+	private Callable _onCreatureUnhoverCallable;
+
+	private bool _signalsConnected;
 
 	private ConfirmedEventHandler backing_Confirmed;
 
 	private CanceledEventHandler backing_Canceled;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NControllerCardPlay.ConfirmedEventHandler" />
 	public event ConfirmedEventHandler Confirmed
 	{
 		add
@@ -73,6 +137,7 @@ public class NControllerCardPlay : NCardPlay
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Combat.NControllerCardPlay.CanceledEventHandler" />
 	public event CanceledEventHandler Canceled
 	{
 		add
@@ -87,15 +152,21 @@ public class NControllerCardPlay : NCardPlay
 
 	public override void _Input(InputEvent inputEvent)
 	{
-		if (inputEvent is InputEventAction inputEventAction)
+		if (!(inputEvent is InputEventAction inputEventAction))
 		{
-			if (inputEventAction.IsActionPressed(MegaInput.select))
+			return;
+		}
+		if (inputEventAction.IsActionPressed(MegaInput.select))
+		{
+			EmitSignal(SignalName.Confirmed);
+			GetViewport()?.SetInputAsHandled();
+		}
+		if (inputEventAction.IsActionPressed(MegaInput.cancel) || inputEventAction.IsActionPressed(MegaInput.topPanel))
+		{
+			EmitSignal(SignalName.Canceled);
+			if (inputEvent.IsActionPressed(MegaInput.cancel))
 			{
-				EmitSignal(SignalName.Confirmed);
-			}
-			if (inputEventAction.IsActionPressed(MegaInput.cancel))
-			{
-				EmitSignal(SignalName.Canceled);
+				GetViewport().SetInputAsHandled();
 			}
 		}
 	}
@@ -116,6 +187,8 @@ public class NControllerCardPlay : NCardPlay
 		}
 		NDebugAudioManager.Instance?.Play("card_select.mp3");
 		NHoverTipSet.Remove(base.Holder);
+		_onCreatureHoverCallable = Callable.From<NCreature>(base.OnCreatureHover);
+		_onCreatureUnhoverCallable = Callable.From<NCreature>(base.OnCreatureUnhover);
 		if (!base.Card.CanPlay(out UnplayableReason reason, out AbstractModel preventer))
 		{
 			CannotPlayThisCardFtueCheck(base.Card);
@@ -143,10 +216,6 @@ public class NControllerCardPlay : NCardPlay
 
 	private async Task SingleCreatureTargeting(TargetType targetType)
 	{
-		NTargetManager targetManager = NTargetManager.Instance;
-		targetManager.Connect(NTargetManager.SignalName.CreatureHovered, Callable.From<NCreature>(base.OnCreatureHover));
-		targetManager.Connect(NTargetManager.SignalName.CreatureUnhovered, Callable.From<NCreature>(base.OnCreatureUnhover));
-		targetManager.StartTargeting(targetType, base.CardNode, TargetMode.Controller, () => !GodotObject.IsInstanceValid(this) || !NControllerManager.Instance.IsUsingController, null);
 		Creature owner = base.Card.Owner.Creature;
 		List<Creature> list = new List<Creature>();
 		switch (targetType)
@@ -165,20 +234,65 @@ public class NControllerCardPlay : NCardPlay
 			CancelPlayCard();
 			return;
 		}
-		NCombatRoom.Instance.RestrictControllerNavigation(list.Select((Creature c) => NCombatRoom.Instance.GetCreatureNode(c).Hitbox));
-		NCombatRoom.Instance.GetCreatureNode(list.First()).Hitbox.TryGrabFocus();
-		NCreature nCreature = (NCreature)(await targetManager.SelectionFinished());
-		if (GodotObject.IsInstanceValid(this))
+		List<NCreature> list2 = list.Select((Creature c) => NCombatRoom.Instance.GetCreatureNode(c)).OfType<NCreature>().ToList();
+		if (list2.Count == 0)
 		{
-			targetManager.Disconnect(NTargetManager.SignalName.CreatureHovered, Callable.From<NCreature>(base.OnCreatureHover));
-			targetManager.Disconnect(NTargetManager.SignalName.CreatureUnhovered, Callable.From<NCreature>(base.OnCreatureUnhover));
-			if (nCreature != null)
+			CancelPlayCard();
+			return;
+		}
+		NTargetManager instance = NTargetManager.Instance;
+		instance.Connect(NTargetManager.SignalName.CreatureHovered, _onCreatureHoverCallable);
+		instance.Connect(NTargetManager.SignalName.CreatureUnhovered, _onCreatureUnhoverCallable);
+		_signalsConnected = true;
+		try
+		{
+			instance.StartTargeting(targetType, base.CardNode, TargetMode.Controller, () => !GodotObject.IsInstanceValid(this) || !NControllerManager.Instance.IsUsingController, null);
+			NCombatRoom.Instance.RestrictControllerNavigation(list2.Select((NCreature n) => n.Hitbox));
+			NCreature nCreature = list2.First();
+			if (NCombatRoom.Instance.LastTargetedCreature != null && NCombatRoom.Instance.LastTargetedCreature.IsHittable)
 			{
-				TryPlayCard(nCreature.Entity);
+				NCreature nCreature2 = list2.FirstOrDefault((NCreature c) => c.Entity == NCombatRoom.Instance.LastTargetedCreature);
+				if (nCreature2 != null)
+				{
+					nCreature = nCreature2;
+				}
 			}
-			else
+			nCreature.Hitbox.TryGrabFocus();
+			NCreature nCreature3 = (NCreature)(await instance.SelectionFinished());
+			NCombatRoom.Instance.EnableControllerNavigation();
+			if (GodotObject.IsInstanceValid(this))
 			{
-				CancelPlayCard();
+				if (nCreature3 != null)
+				{
+					TryPlayCard(nCreature3.Entity);
+				}
+				else
+				{
+					CancelPlayCard();
+				}
+			}
+		}
+		finally
+		{
+			DisconnectTargetingSignals();
+		}
+	}
+
+	public override void _ExitTree()
+	{
+		DisconnectTargetingSignals();
+	}
+
+	private void DisconnectTargetingSignals()
+	{
+		if (_signalsConnected)
+		{
+			_signalsConnected = false;
+			if (NRun.Instance != null)
+			{
+				NTargetManager instance = NTargetManager.Instance;
+				instance.Disconnect(NTargetManager.SignalName.CreatureHovered, _onCreatureHoverCallable);
+				instance.Disconnect(NTargetManager.SignalName.CreatureUnhovered, _onCreatureUnhoverCallable);
 			}
 		}
 	}
@@ -189,9 +303,14 @@ public class NControllerCardPlay : NCardPlay
 		ShowMultiCreatureTargetingVisuals();
 		Connect(SignalName.Confirmed, Callable.From(delegate
 		{
+			NCombatRoom.Instance.EnableControllerNavigation();
 			TryPlayCard(null);
 		}));
-		Connect(SignalName.Canceled, Callable.From(base.CancelPlayCard));
+		Connect(SignalName.Canceled, Callable.From(delegate
+		{
+			NCombatRoom.Instance.EnableControllerNavigation();
+			CancelPlayCard();
+		}));
 	}
 
 	protected override void OnCancelPlayCard()
@@ -199,17 +318,21 @@ public class NControllerCardPlay : NCardPlay
 		base.Holder.TryGrabFocus();
 	}
 
-	protected override void Cleanup()
+	protected override void Cleanup(bool isFinished)
 	{
-		base.Cleanup();
-		NCombatRoom.Instance.EnableControllerNavigation();
+		base.Cleanup(isFinished);
 		NCombatRoom.Instance.Ui.Hand.DefaultFocusedControl.TryGrabFocus();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(6);
+		List<MethodInfo> list = new List<MethodInfo>(8);
 		list.Add(new MethodInfo(MethodName._Input, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "inputEvent", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("InputEvent"), exported: false)
@@ -219,12 +342,18 @@ public class NControllerCardPlay : NCardPlay
 			new PropertyInfo(Variant.Type.Object, "holder", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.Start, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.DisconnectTargetingSignals, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.MultiCreatureTargeting, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnCancelPlayCard, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
-		list.Add(new MethodInfo(MethodName.Cleanup, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.Cleanup, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Bool, "isFinished", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+		}, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -245,6 +374,18 @@ public class NControllerCardPlay : NCardPlay
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.DisconnectTargetingSignals && args.Count == 0)
+		{
+			DisconnectTargetingSignals();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName.MultiCreatureTargeting && args.Count == 0)
 		{
 			MultiCreatureTargeting();
@@ -257,9 +398,9 @@ public class NControllerCardPlay : NCardPlay
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.Cleanup && args.Count == 0)
+		if (method == MethodName.Cleanup && args.Count == 1)
 		{
-			Cleanup();
+			Cleanup(VariantUtils.ConvertTo<bool>(in args[0]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -278,6 +419,7 @@ public class NControllerCardPlay : NCardPlay
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -290,6 +432,14 @@ public class NControllerCardPlay : NCardPlay
 			return true;
 		}
 		if (method == MethodName.Start)
+		{
+			return true;
+		}
+		if (method == MethodName._ExitTree)
+		{
+			return true;
+		}
+		if (method == MethodName.DisconnectTargetingSignals)
 		{
 			return true;
 		}
@@ -308,28 +458,109 @@ public class NControllerCardPlay : NCardPlay
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
+	{
+		if (name == PropertyName._onCreatureHoverCallable)
+		{
+			_onCreatureHoverCallable = VariantUtils.ConvertTo<Callable>(in value);
+			return true;
+		}
+		if (name == PropertyName._onCreatureUnhoverCallable)
+		{
+			_onCreatureUnhoverCallable = VariantUtils.ConvertTo<Callable>(in value);
+			return true;
+		}
+		if (name == PropertyName._signalsConnected)
+		{
+			_signalsConnected = VariantUtils.ConvertTo<bool>(in value);
+			return true;
+		}
+		return base.SetGodotClassPropertyValue(in name, in value);
+	}
+
+	/// <inheritdoc />
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
+	{
+		if (name == PropertyName._onCreatureHoverCallable)
+		{
+			value = VariantUtils.CreateFrom(in _onCreatureHoverCallable);
+			return true;
+		}
+		if (name == PropertyName._onCreatureUnhoverCallable)
+		{
+			value = VariantUtils.CreateFrom(in _onCreatureUnhoverCallable);
+			return true;
+		}
+		if (name == PropertyName._signalsConnected)
+		{
+			value = VariantUtils.CreateFrom(in _signalsConnected);
+			return true;
+		}
+		return base.GetGodotClassPropertyValue(in name, out value);
+	}
+
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	internal new static List<PropertyInfo> GetGodotPropertyList()
+	{
+		List<PropertyInfo> list = new List<PropertyInfo>();
+		list.Add(new PropertyInfo(Variant.Type.Callable, PropertyName._onCreatureHoverCallable, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Callable, PropertyName._onCreatureUnhoverCallable, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._signalsConnected, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		return list;
+	}
+
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
+		info.AddProperty(PropertyName._onCreatureHoverCallable, Variant.From(in _onCreatureHoverCallable));
+		info.AddProperty(PropertyName._onCreatureUnhoverCallable, Variant.From(in _onCreatureUnhoverCallable));
+		info.AddProperty(PropertyName._signalsConnected, Variant.From(in _signalsConnected));
 		info.AddSignalEventDelegate(SignalName.Confirmed, backing_Confirmed);
 		info.AddSignalEventDelegate(SignalName.Canceled, backing_Canceled);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
 		base.RestoreGodotObjectData(info);
-		if (info.TryGetSignalEventDelegate<ConfirmedEventHandler>(SignalName.Confirmed, out var value))
+		if (info.TryGetProperty(PropertyName._onCreatureHoverCallable, out var value))
 		{
-			backing_Confirmed = value;
+			_onCreatureHoverCallable = value.As<Callable>();
 		}
-		if (info.TryGetSignalEventDelegate<CanceledEventHandler>(SignalName.Canceled, out var value2))
+		if (info.TryGetProperty(PropertyName._onCreatureUnhoverCallable, out var value2))
 		{
-			backing_Canceled = value2;
+			_onCreatureUnhoverCallable = value2.As<Callable>();
+		}
+		if (info.TryGetProperty(PropertyName._signalsConnected, out var value3))
+		{
+			_signalsConnected = value3.As<bool>();
+		}
+		if (info.TryGetSignalEventDelegate<ConfirmedEventHandler>(SignalName.Confirmed, out var value4))
+		{
+			backing_Confirmed = value4;
+		}
+		if (info.TryGetSignalEventDelegate<CanceledEventHandler>(SignalName.Canceled, out var value5))
+		{
+			backing_Canceled = value5;
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotSignalList()
 	{
@@ -349,6 +580,7 @@ public class NControllerCardPlay : NCardPlay
 		EmitSignal(SignalName.Canceled);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -366,6 +598,7 @@ public class NControllerCardPlay : NCardPlay
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

@@ -28,7 +28,7 @@ public sealed class Snakebite : CardModel
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		VfxCmd.PlayOnCreatureCenter(cardPlay.Target, "vfx/vfx_bite");
-		await PowerCmd.Apply<PoisonPower>(cardPlay.Target, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<PoisonPower>(choiceContext, cardPlay.Target, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

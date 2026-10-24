@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -39,7 +41,7 @@ public sealed class VoidFormPower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override bool TryModifyEnergyCostInCombat(CardModel card, decimal originalCost, out decimal modifiedCost)
+	public override bool TryModifyEnergyCostInCombatLate(CardModel card, decimal originalCost, out decimal modifiedCost)
 	{
 		modifiedCost = originalCost;
 		if (ShouldSkip(card))
@@ -61,7 +63,7 @@ public sealed class VoidFormPower : PowerModel
 		return true;
 	}
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner.Creature == base.Owner && cardPlay != null && !cardPlay.IsAutoPlay && cardPlay.IsLastInSeries)
 		{
@@ -70,12 +72,13 @@ public sealed class VoidFormPower : PowerModel
 		return Task.CompletedTask;
 	}
 
-	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, CombatState combatState)
+	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Side)
+		if (!participants.Contains(base.Owner))
 		{
-			GetInternalData<Data>().cardsPlayedThisTurn = 0;
+			return Task.CompletedTask;
 		}
+		GetInternalData<Data>().cardsPlayedThisTurn = 0;
 		return Task.CompletedTask;
 	}
 
@@ -105,6 +108,11 @@ public sealed class VoidFormPower : PowerModel
 		return true;
 	}
 
+	/// <summary>
+	/// HACK: If Void Form is the first card played in a turn, there's a brief period before the turn is auto-ended
+	/// where we show a zero energy cost on all cards.
+	/// To avoid this, we max out cardsPlayedThisTurn, which doesn't matter anyways since the turn is ending.
+	/// </summary>
 	private void HideTemporaryZeroCostVisual()
 	{
 		GetInternalData<Data>().cardsPlayedThisTurn = 999999999;

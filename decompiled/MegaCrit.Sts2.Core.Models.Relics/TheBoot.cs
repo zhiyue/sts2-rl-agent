@@ -23,9 +23,13 @@ public sealed class TheBoot : RelicModel
 		new DynamicVar("DamageThreshold", 4m)
 	});
 
-	public override decimal ModifyHpLostBeforeOsty(Creature target, decimal amount, ValueProp props, Creature? dealer, CardModel? cardSource)
+	public override decimal ModifyHpLostAfterOstyLate(Creature target, decimal amount, ValueProp props, Creature? dealer, CardModel? cardSource)
 	{
-		if (dealer != base.Owner.Creature)
+		if (dealer != base.Owner.Creature && dealer != base.Owner.Osty)
+		{
+			return amount;
+		}
+		if (target == base.Owner.Creature)
 		{
 			return amount;
 		}
@@ -44,7 +48,7 @@ public sealed class TheBoot : RelicModel
 		return base.DynamicVars["DamageMinimum"].BaseValue;
 	}
 
-	public override Task AfterModifyingHpLostBeforeOsty()
+	public override Task AfterModifyingHpLostAfterOsty()
 	{
 		Flash();
 		return Task.CompletedTask;

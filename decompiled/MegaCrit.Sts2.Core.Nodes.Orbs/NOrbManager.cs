@@ -20,44 +20,101 @@ namespace MegaCrit.Sts2.Core.Nodes.Orbs;
 [ScriptPath("res://src/Core/Nodes/Orbs/NOrbManager.cs")]
 public class NOrbManager : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'RemoveSlotAnim' method.
+		/// </summary>
 		public static readonly StringName RemoveSlotAnim = "RemoveSlotAnim";
 
+		/// <summary>
+		/// Cached name for the 'AddSlotAnim' method.
+		/// </summary>
 		public static readonly StringName AddSlotAnim = "AddSlotAnim";
 
+		/// <summary>
+		/// Cached name for the 'AddOrbAnim' method.
+		/// </summary>
 		public static readonly StringName AddOrbAnim = "AddOrbAnim";
 
+		/// <summary>
+		/// Cached name for the 'UpdateControllerNavigation' method.
+		/// </summary>
 		public static readonly StringName UpdateControllerNavigation = "UpdateControllerNavigation";
 
+		/// <summary>
+		/// Cached name for the 'TweenLayout' method.
+		/// </summary>
 		public static readonly StringName TweenLayout = "TweenLayout";
 
+		/// <summary>
+		/// Cached name for the 'UpdateVisuals' method.
+		/// </summary>
 		public static readonly StringName UpdateVisuals = "UpdateVisuals";
 
+		/// <summary>
+		/// Cached name for the 'ClearOrbs' method.
+		/// </summary>
 		public static readonly StringName ClearOrbs = "ClearOrbs";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsLocal' property.
+		/// </summary>
 		public static readonly StringName IsLocal = "IsLocal";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusOwner' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusOwner = "DefaultFocusOwner";
 
+		/// <summary>
+		/// Cached name for the '_orbContainer' field.
+		/// </summary>
 		public static readonly StringName _orbContainer = "_orbContainer";
 
+		/// <summary>
+		/// Cached name for the '_creatureNode' field.
+		/// </summary>
 		public static readonly StringName _creatureNode = "_creatureNode";
 
+		/// <summary>
+		/// Cached name for the '_curTween' field.
+		/// </summary>
 		public static readonly StringName _curTween = "_curTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -194,7 +251,7 @@ public class NOrbManager : Control
 			nOrb = (NOrb)_orbContainer.GetChildren().First((Node node) => ((NOrb)node).Model == null);
 		}
 		NOrb nOrb2 = NOrb.Create(LocalContext.IsMe(Player), model);
-		nOrb.AddSibling(nOrb2);
+		nOrb.AddSiblingSafely(nOrb2);
 		_orbs.Insert(_orbs.IndexOf(nOrb), nOrb2);
 		nOrb2.Position = nOrb.Position;
 		_orbContainer.RemoveChildSafely(nOrb);
@@ -320,6 +377,11 @@ public class NOrbManager : Control
 		_orbs.Clear();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -351,6 +413,7 @@ public class NOrbManager : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -434,6 +497,7 @@ public class NOrbManager : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -484,6 +548,7 @@ public class NOrbManager : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -510,6 +575,7 @@ public class NOrbManager : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -541,6 +607,11 @@ public class NOrbManager : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -553,6 +624,7 @@ public class NOrbManager : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -563,6 +635,7 @@ public class NOrbManager : Control
 		info.AddProperty(PropertyName._curTween, Variant.From(in _curTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -16,27 +16,25 @@ public sealed class Seance : CardModel
 
 	public override IEnumerable<CardKeyword> CanonicalKeywords => new global::_003C_003Ez__ReadOnlySingleElementList<CardKeyword>(CardKeyword.Ethereal);
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Soul>(base.IsUpgraded));
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Soul>());
 
 	public Seance()
-		: base(0, CardType.Skill, CardRarity.Rare, TargetType.Self)
+		: base(1, CardType.Skill, CardRarity.Rare, TargetType.Self)
 	{
 	}
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
+		List<CardModel> selection = (await CardSelectCmd.FromCombatPile(choiceContext, PileType.Draw.GetPile(base.Owner), base.Owner, new CardSelectorPrefs(CardSelectorPrefs.TransformSelectionPrompt, base.DynamicVars.Cards.IntValue))).ToList();
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		List<CardModel> cards = (from c in PileType.Draw.GetPile(base.Owner).Cards
-			orderby c.Rarity, c.Id
-			select c).ToList();
-		List<CardModel> list = (await CardSelectCmd.FromSimpleGrid(choiceContext, cards, base.Owner, new CardSelectorPrefs(CardSelectorPrefs.TransformSelectionPrompt, base.DynamicVars.Cards.IntValue))).ToList();
-		foreach (CardModel item in list)
+		foreach (CardModel item in selection)
 		{
-			CardPileAddResult? cardPileAddResult = await CardCmd.TransformTo<Soul>(item);
-			if (base.IsUpgraded && cardPileAddResult.HasValue)
-			{
-				CardCmd.Upgrade(cardPileAddResult.Value.cardAdded);
-			}
+			await CardCmd.TransformTo<Soul>(item);
 		}
+	}
+
+	protected override void OnUpgrade()
+	{
+		base.EnergyCost.UpgradeBy(-1);
 	}
 }

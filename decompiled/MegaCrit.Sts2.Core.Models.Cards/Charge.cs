@@ -12,7 +12,7 @@ namespace MegaCrit.Sts2.Core.Models.Cards;
 
 public sealed class Charge : CardModel
 {
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<MinionStrike>(base.IsUpgraded));
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<MinionDiveBomb>(base.IsUpgraded));
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new CardsVar(2));
 
@@ -23,14 +23,11 @@ public sealed class Charge : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
+		List<CardModel> selection = (await CardSelectCmd.FromCombatPile(choiceContext, PileType.Draw.GetPile(base.Owner), base.Owner, new CardSelectorPrefs(CardSelectorPrefs.TransformSelectionPrompt, base.DynamicVars.Cards.IntValue))).ToList();
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		List<CardModel> cards = (from c in PileType.Draw.GetPile(base.Owner).Cards
-			orderby c.Rarity, c.Id
-			select c).ToList();
-		List<CardModel> list = (await CardSelectCmd.FromSimpleGrid(choiceContext, cards, base.Owner, new CardSelectorPrefs(CardSelectorPrefs.TransformSelectionPrompt, base.DynamicVars.Cards.IntValue))).ToList();
-		foreach (CardModel item in list)
+		foreach (CardModel item in selection)
 		{
-			CardPileAddResult? cardPileAddResult = await CardCmd.TransformTo<MinionStrike>(item);
+			CardPileAddResult? cardPileAddResult = await CardCmd.TransformTo<MinionDiveBomb>(item);
 			if (base.IsUpgraded && cardPileAddResult.HasValue)
 			{
 				CardCmd.Upgrade(cardPileAddResult.Value.cardAdded);

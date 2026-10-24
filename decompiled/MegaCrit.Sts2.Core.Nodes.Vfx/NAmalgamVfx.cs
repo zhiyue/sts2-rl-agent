@@ -11,60 +11,141 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NAmalgamVfx.cs")]
 public class NAmalgamVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'PoofToDeath' method.
+		/// </summary>
 		public static readonly StringName PoofToDeath = "PoofToDeath";
 
+		/// <summary>
+		/// Cached name for the 'RestartTorches' method.
+		/// </summary>
 		public static readonly StringName RestartTorches = "RestartTorches";
 
+		/// <summary>
+		/// Cached name for the 'KillTorches' method.
+		/// </summary>
 		public static readonly StringName KillTorches = "KillTorches";
 
+		/// <summary>
+		/// Cached name for the 'PlayHit1' method.
+		/// </summary>
 		public static readonly StringName PlayHit1 = "PlayHit1";
 
+		/// <summary>
+		/// Cached name for the 'PlayHit2' method.
+		/// </summary>
 		public static readonly StringName PlayHit2 = "PlayHit2";
 
+		/// <summary>
+		/// Cached name for the 'PlayHit3' method.
+		/// </summary>
 		public static readonly StringName PlayHit3 = "PlayHit3";
 
+		/// <summary>
+		/// Cached name for the 'PlayLaserBase' method.
+		/// </summary>
 		public static readonly StringName PlayLaserBase = "PlayLaserBase";
 
+		/// <summary>
+		/// Cached name for the 'PlayLaserHit' method.
+		/// </summary>
 		public static readonly StringName PlayLaserHit = "PlayLaserHit";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_hitFxParticles' field.
+		/// </summary>
 		public static readonly StringName _hitFxParticles = "_hitFxParticles";
 
+		/// <summary>
+		/// Cached name for the '_hitBoneNode' field.
+		/// </summary>
 		public static readonly StringName _hitBoneNode = "_hitBoneNode";
 
+		/// <summary>
+		/// Cached name for the '_deathBodyParticles' field.
+		/// </summary>
 		public static readonly StringName _deathBodyParticles = "_deathBodyParticles";
 
+		/// <summary>
+		/// Cached name for the '_laserBaseParticles' field.
+		/// </summary>
 		public static readonly StringName _laserBaseParticles = "_laserBaseParticles";
 
+		/// <summary>
+		/// Cached name for the '_hitParticles1' field.
+		/// </summary>
 		public static readonly StringName _hitParticles1 = "_hitParticles1";
 
+		/// <summary>
+		/// Cached name for the '_hitParticles2' field.
+		/// </summary>
 		public static readonly StringName _hitParticles2 = "_hitParticles2";
 
+		/// <summary>
+		/// Cached name for the '_hitParticles3' field.
+		/// </summary>
 		public static readonly StringName _hitParticles3 = "_hitParticles3";
 
+		/// <summary>
+		/// Cached name for the '_constantSparks1' field.
+		/// </summary>
 		public static readonly StringName _constantSparks1 = "_constantSparks1";
 
+		/// <summary>
+		/// Cached name for the '_constantSparks2' field.
+		/// </summary>
 		public static readonly StringName _constantSparks2 = "_constantSparks2";
 
+		/// <summary>
+		/// Cached name for the '_constantSparks3' field.
+		/// </summary>
 		public static readonly StringName _constantSparks3 = "_constantSparks3";
 
+		/// <summary>
+		/// Cached name for the '_torch1Node' field.
+		/// </summary>
 		public static readonly StringName _torch1Node = "_torch1Node";
 
+		/// <summary>
+		/// Cached name for the '_torch2Node' field.
+		/// </summary>
 		public static readonly StringName _torch2Node = "_torch2Node";
 
+		/// <summary>
+		/// Cached name for the '_torch3Node' field.
+		/// </summary>
 		public static readonly StringName _torch3Node = "_torch3Node";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -289,6 +370,11 @@ public class NAmalgamVfx : Node
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -318,6 +404,7 @@ public class NAmalgamVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -384,6 +471,7 @@ public class NAmalgamVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -430,6 +518,7 @@ public class NAmalgamVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -506,6 +595,7 @@ public class NAmalgamVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -582,6 +672,11 @@ public class NAmalgamVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -603,6 +698,7 @@ public class NAmalgamVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -623,6 +719,7 @@ public class NAmalgamVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

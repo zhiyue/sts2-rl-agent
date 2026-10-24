@@ -36,7 +36,7 @@ public sealed class LightningRod : CardModel
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<LightningRodPower>(base.Owner.Creature, base.DynamicVars["LightningRodPower"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<LightningRodPower>(choiceContext, base.Owner.Creature, base.DynamicVars["LightningRodPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

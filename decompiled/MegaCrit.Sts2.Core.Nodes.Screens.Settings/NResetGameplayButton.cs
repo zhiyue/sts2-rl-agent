@@ -19,17 +19,32 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NResetGameplayButton.cs")]
 public class NResetGameplayButton : NSettingsButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSettingsButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSettingsButton.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSettingsButton.SignalName
 	{
 	}
@@ -58,9 +73,12 @@ public class NResetGameplayButton : NSettingsButton
 		prefsSave.FastMode = FastModeType.Normal;
 		prefsSave.ShowRunTimer = false;
 		prefsSave.ShowCardIndices = false;
+		prefsSave.PhobiaMode = false;
 		prefsSave.IsLongPressEnabled = false;
 		prefsSave.UploadData = true;
 		prefsSave.TextEffectsEnabled = true;
+		prefsSave.ShowMultiplayerDrawings = true;
+		NGame.Instance?.EmitSignal(NGame.SignalName.PhobiaModeToggled);
 		NSettingsPanel ancestorOfType = this.GetAncestorOfType<NSettingsPanel>();
 		foreach (IResettableSettingNode item in ancestorOfType.GetChildrenRecursive<IResettableSettingNode>())
 		{
@@ -74,6 +92,11 @@ public class NResetGameplayButton : NSettingsButton
 		TaskHelper.RunSafely(ResetSettingsAfterConfirmation());
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -83,6 +106,7 @@ public class NResetGameplayButton : NSettingsButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -101,6 +125,7 @@ public class NResetGameplayButton : NSettingsButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -115,12 +140,14 @@ public class NResetGameplayButton : NSettingsButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

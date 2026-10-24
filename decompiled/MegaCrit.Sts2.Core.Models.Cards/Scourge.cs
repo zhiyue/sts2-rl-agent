@@ -29,7 +29,7 @@ public sealed class Scourge : CardModel
 	{
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<DoomPower>(cardPlay.Target, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<DoomPower>(choiceContext, cardPlay.Target, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, this);
 		await CardPileCmd.Draw(choiceContext, base.DynamicVars.Cards.BaseValue, base.Owner);
 	}
 

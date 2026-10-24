@@ -12,66 +12,156 @@ namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NRemoteMouseCursor.cs")]
 public class NRemoteMouseCursor : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetNextPosition' method.
+		/// </summary>
 		public static readonly StringName SetNextPosition = "SetNextPosition";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'UpdateImage' method.
+		/// </summary>
 		public static readonly StringName UpdateImage = "UpdateImage";
 
+		/// <summary>
+		/// Cached name for the 'GetHotspot' method.
+		/// </summary>
 		public static readonly StringName GetHotspot = "GetHotspot";
 
+		/// <summary>
+		/// Cached name for the 'GetTexture' method.
+		/// </summary>
 		public static readonly StringName GetTexture = "GetTexture";
 
+		/// <summary>
+		/// Cached name for the 'RefreshSize' method.
+		/// </summary>
 		public static readonly StringName RefreshSize = "RefreshSize";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'PlayerId' property.
+		/// </summary>
 		public static readonly StringName PlayerId = "PlayerId";
 
+		/// <summary>
+		/// Cached name for the '_textureRect' field.
+		/// </summary>
 		public static readonly StringName _textureRect = "_textureRect";
 
+		/// <summary>
+		/// Cached name for the '_lastPositionUpdateMsec' field.
+		/// </summary>
 		public static readonly StringName _lastPositionUpdateMsec = "_lastPositionUpdateMsec";
 
+		/// <summary>
+		/// Cached name for the '_defaultHotspot' field.
+		/// </summary>
 		public static readonly StringName _defaultHotspot = "_defaultHotspot";
 
+		/// <summary>
+		/// Cached name for the '_drawingHotspot' field.
+		/// </summary>
 		public static readonly StringName _drawingHotspot = "_drawingHotspot";
 
+		/// <summary>
+		/// Cached name for the '_erasingHotspot' field.
+		/// </summary>
 		public static readonly StringName _erasingHotspot = "_erasingHotspot";
 
+		/// <summary>
+		/// Cached name for the '_defaultCursorImage' field.
+		/// </summary>
 		public static readonly StringName _defaultCursorImage = "_defaultCursorImage";
 
+		/// <summary>
+		/// Cached name for the '_tiltedCursorImage' field.
+		/// </summary>
 		public static readonly StringName _tiltedCursorImage = "_tiltedCursorImage";
 
+		/// <summary>
+		/// Cached name for the '_defaultDrawingImage' field.
+		/// </summary>
 		public static readonly StringName _defaultDrawingImage = "_defaultDrawingImage";
 
+		/// <summary>
+		/// Cached name for the '_tiltedDrawingImage' field.
+		/// </summary>
 		public static readonly StringName _tiltedDrawingImage = "_tiltedDrawingImage";
 
+		/// <summary>
+		/// Cached name for the '_defaultErasingImage' field.
+		/// </summary>
 		public static readonly StringName _defaultErasingImage = "_defaultErasingImage";
 
+		/// <summary>
+		/// Cached name for the '_tiltedErasingImage' field.
+		/// </summary>
 		public static readonly StringName _tiltedErasingImage = "_tiltedErasingImage";
 
+		/// <summary>
+		/// Cached name for the '_defaultCursorTexture' field.
+		/// </summary>
 		public static readonly StringName _defaultCursorTexture = "_defaultCursorTexture";
 
+		/// <summary>
+		/// Cached name for the '_tiltedCursorTexture' field.
+		/// </summary>
 		public static readonly StringName _tiltedCursorTexture = "_tiltedCursorTexture";
 
+		/// <summary>
+		/// Cached name for the '_defaultDrawingTexture' field.
+		/// </summary>
 		public static readonly StringName _defaultDrawingTexture = "_defaultDrawingTexture";
 
+		/// <summary>
+		/// Cached name for the '_tiltedDrawingTexture' field.
+		/// </summary>
 		public static readonly StringName _tiltedDrawingTexture = "_tiltedDrawingTexture";
 
+		/// <summary>
+		/// Cached name for the '_defaultErasingTexture' field.
+		/// </summary>
 		public static readonly StringName _defaultErasingTexture = "_defaultErasingTexture";
 
+		/// <summary>
+		/// Cached name for the '_tiltedErasingTexture' field.
+		/// </summary>
 		public static readonly StringName _tiltedErasingTexture = "_tiltedErasingTexture";
 
+		/// <summary>
+		/// Cached name for the '_drawingMode' field.
+		/// </summary>
 		public static readonly StringName _drawingMode = "_drawingMode";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -219,6 +309,9 @@ public class NRemoteMouseCursor : Control
 		}
 	}
 
+	/// <summary>
+	/// Resizes remote cursors to match our cursor size.
+	/// </summary>
 	public void RefreshSize()
 	{
 		if (OS.GetName() == "Windows")
@@ -238,6 +331,11 @@ public class NRemoteMouseCursor : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -273,6 +371,7 @@ public class NRemoteMouseCursor : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -336,6 +435,7 @@ public class NRemoteMouseCursor : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -374,6 +474,7 @@ public class NRemoteMouseCursor : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -475,6 +576,7 @@ public class NRemoteMouseCursor : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -576,6 +678,11 @@ public class NRemoteMouseCursor : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -602,6 +709,7 @@ public class NRemoteMouseCursor : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -627,6 +735,7 @@ public class NRemoteMouseCursor : Control
 		info.AddProperty(PropertyName._drawingMode, Variant.From(in _drawingMode));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

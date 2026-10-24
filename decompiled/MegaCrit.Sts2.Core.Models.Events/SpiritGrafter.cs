@@ -21,7 +21,7 @@ public sealed class SpiritGrafter : EventModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new HpLossVar("RejectionHpLoss", 9m),
+		new HpLossVar("RejectionHpLoss", 10m),
 		new HealVar("LetItInHealAmount", 25m)
 	});
 
@@ -29,12 +29,12 @@ public sealed class SpiritGrafter : EventModel
 	{
 		return new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[2]
 		{
-			new EventOption(this, StepInside, "SPIRIT_GRAFTER.pages.INITIAL.options.LET_IT_IN", HoverTipFactory.FromCardWithCardHoverTips<Metamorphosis>()),
-			new EventOption(this, StickArmIn, "SPIRIT_GRAFTER.pages.INITIAL.options.REJECTION").ThatDoesDamage(base.DynamicVars["RejectionHpLoss"].BaseValue)
+			new EventOption(this, LetItIn, "SPIRIT_GRAFTER.pages.INITIAL.options.LET_IT_IN", HoverTipFactory.FromCardWithCardHoverTips<Metamorphosis>()),
+			new EventOption(this, Rejection, "SPIRIT_GRAFTER.pages.INITIAL.options.REJECTION").ThatDoesDamage(base.DynamicVars["RejectionHpLoss"].BaseValue)
 		});
 	}
 
-	private async Task StepInside()
+	private async Task LetItIn()
 	{
 		await CreatureCmd.Heal(base.Owner.Creature, base.DynamicVars["LetItInHealAmount"].BaseValue);
 		CardModel card = base.Owner.RunState.CreateCard<Metamorphosis>(base.Owner);
@@ -42,10 +42,13 @@ public sealed class SpiritGrafter : EventModel
 		SetEventFinished(L10NLookup("SPIRIT_GRAFTER.pages.LET_IT_IN.description"));
 	}
 
-	private async Task StickArmIn()
+	private async Task Rejection()
 	{
-		List<CardModel> cards = (await CardSelectCmd.FromDeckForRemoval(prefs: new CardSelectorPrefs(CardSelectorPrefs.RemoveSelectionPrompt, 1), player: base.Owner)).ToList();
-		await CardPileCmd.RemoveFromDeck(cards);
+		CardModel cardModel = (await CardSelectCmd.FromDeckForUpgrade(base.Owner, new CardSelectorPrefs(CardSelectorPrefs.UpgradeSelectionPrompt, 1))).FirstOrDefault();
+		if (cardModel != null)
+		{
+			CardCmd.Upgrade(cardModel);
+		}
 		await CreatureCmd.Damage(new ThrowingPlayerChoiceContext(), base.Owner.Creature, base.DynamicVars["RejectionHpLoss"].BaseValue, ValueProp.Unblockable | ValueProp.Unpowered, null, null);
 		SetEventFinished(L10NLookup("SPIRIT_GRAFTER.pages.REJECTION.description"));
 	}

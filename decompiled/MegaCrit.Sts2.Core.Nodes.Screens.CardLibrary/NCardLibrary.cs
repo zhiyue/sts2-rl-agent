@@ -32,118 +32,286 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 [ScriptPath("res://src/Core/Nodes/Screens/CardLibrary/NCardLibrary.cs")]
 public sealed class NCardLibrary : NSubmenu
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnCardTypeSort' method.
+		/// </summary>
 		public static readonly StringName OnCardTypeSort = "OnCardTypeSort";
 
+		/// <summary>
+		/// Cached name for the 'OnRaritySort' method.
+		/// </summary>
 		public static readonly StringName OnRaritySort = "OnRaritySort";
 
+		/// <summary>
+		/// Cached name for the 'OnCostSort' method.
+		/// </summary>
 		public static readonly StringName OnCostSort = "OnCostSort";
 
+		/// <summary>
+		/// Cached name for the 'OnAlphabetSort' method.
+		/// </summary>
 		public static readonly StringName OnAlphabetSort = "OnAlphabetSort";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuClosed' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuClosed = "OnSubmenuClosed";
 
+		/// <summary>
+		/// Cached name for the 'ToggleShowStats' method.
+		/// </summary>
 		public static readonly StringName ToggleShowStats = "ToggleShowStats";
 
+		/// <summary>
+		/// Cached name for the 'ToggleShowUpgrades' method.
+		/// </summary>
 		public static readonly StringName ToggleShowUpgrades = "ToggleShowUpgrades";
 
+		/// <summary>
+		/// Cached name for the 'ToggleFilterMultiplayerCards' method.
+		/// </summary>
 		public static readonly StringName ToggleFilterMultiplayerCards = "ToggleFilterMultiplayerCards";
 
+		/// <summary>
+		/// Cached name for the 'UpdateCardPoolFilter' method.
+		/// </summary>
 		public static readonly StringName UpdateCardPoolFilter = "UpdateCardPoolFilter";
 
+		/// <summary>
+		/// Cached name for the 'UpdateTypeFilter' method.
+		/// </summary>
 		public static readonly StringName UpdateTypeFilter = "UpdateTypeFilter";
 
+		/// <summary>
+		/// Cached name for the 'UpdateRarityFilter' method.
+		/// </summary>
 		public static readonly StringName UpdateRarityFilter = "UpdateRarityFilter";
 
+		/// <summary>
+		/// Cached name for the 'UpdateCostFilter' method.
+		/// </summary>
 		public static readonly StringName UpdateCostFilter = "UpdateCostFilter";
 
+		/// <summary>
+		/// Cached name for the 'SearchBarQueryChanged' method.
+		/// </summary>
 		public static readonly StringName SearchBarQueryChanged = "SearchBarQueryChanged";
 
+		/// <summary>
+		/// Cached name for the 'SearchBarQuerySubmitted' method.
+		/// </summary>
 		public static readonly StringName SearchBarQuerySubmitted = "SearchBarQuerySubmitted";
 
+		/// <summary>
+		/// Cached name for the 'UpdateFilter' method.
+		/// </summary>
 		public static readonly StringName UpdateFilter = "UpdateFilter";
 
+		/// <summary>
+		/// Cached name for the 'ShowCardDetail' method.
+		/// </summary>
 		public static readonly StringName ShowCardDetail = "ShowCardDetail";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_grid' field.
+		/// </summary>
 		public static readonly StringName _grid = "_grid";
 
+		/// <summary>
+		/// Cached name for the '_searchBar' field.
+		/// </summary>
 		public static readonly StringName _searchBar = "_searchBar";
 
+		/// <summary>
+		/// Cached name for the '_ironcladFilter' field.
+		/// </summary>
 		public static readonly StringName _ironcladFilter = "_ironcladFilter";
 
+		/// <summary>
+		/// Cached name for the '_silentFilter' field.
+		/// </summary>
 		public static readonly StringName _silentFilter = "_silentFilter";
 
+		/// <summary>
+		/// Cached name for the '_defectFilter' field.
+		/// </summary>
 		public static readonly StringName _defectFilter = "_defectFilter";
 
+		/// <summary>
+		/// Cached name for the '_regentFilter' field.
+		/// </summary>
 		public static readonly StringName _regentFilter = "_regentFilter";
 
+		/// <summary>
+		/// Cached name for the '_necrobinderFilter' field.
+		/// </summary>
 		public static readonly StringName _necrobinderFilter = "_necrobinderFilter";
 
+		/// <summary>
+		/// Cached name for the '_colorlessFilter' field.
+		/// </summary>
 		public static readonly StringName _colorlessFilter = "_colorlessFilter";
 
+		/// <summary>
+		/// Cached name for the '_ancientsFilter' field.
+		/// </summary>
 		public static readonly StringName _ancientsFilter = "_ancientsFilter";
 
+		/// <summary>
+		/// Cached name for the '_miscPoolFilter' field.
+		/// </summary>
 		public static readonly StringName _miscPoolFilter = "_miscPoolFilter";
 
+		/// <summary>
+		/// Cached name for the '_typeSorter' field.
+		/// </summary>
 		public static readonly StringName _typeSorter = "_typeSorter";
 
+		/// <summary>
+		/// Cached name for the '_attackFilter' field.
+		/// </summary>
 		public static readonly StringName _attackFilter = "_attackFilter";
 
+		/// <summary>
+		/// Cached name for the '_skillFilter' field.
+		/// </summary>
 		public static readonly StringName _skillFilter = "_skillFilter";
 
+		/// <summary>
+		/// Cached name for the '_powerFilter' field.
+		/// </summary>
 		public static readonly StringName _powerFilter = "_powerFilter";
 
+		/// <summary>
+		/// Cached name for the '_otherTypeFilter' field.
+		/// </summary>
 		public static readonly StringName _otherTypeFilter = "_otherTypeFilter";
 
+		/// <summary>
+		/// Cached name for the '_raritySorter' field.
+		/// </summary>
 		public static readonly StringName _raritySorter = "_raritySorter";
 
+		/// <summary>
+		/// Cached name for the '_commonFilter' field.
+		/// </summary>
 		public static readonly StringName _commonFilter = "_commonFilter";
 
+		/// <summary>
+		/// Cached name for the '_uncommonFilter' field.
+		/// </summary>
 		public static readonly StringName _uncommonFilter = "_uncommonFilter";
 
+		/// <summary>
+		/// Cached name for the '_rareFilter' field.
+		/// </summary>
 		public static readonly StringName _rareFilter = "_rareFilter";
 
+		/// <summary>
+		/// Cached name for the '_otherFilter' field.
+		/// </summary>
 		public static readonly StringName _otherFilter = "_otherFilter";
 
+		/// <summary>
+		/// Cached name for the '_costSorter' field.
+		/// </summary>
 		public static readonly StringName _costSorter = "_costSorter";
 
+		/// <summary>
+		/// Cached name for the '_zeroFilter' field.
+		/// </summary>
 		public static readonly StringName _zeroFilter = "_zeroFilter";
 
+		/// <summary>
+		/// Cached name for the '_oneFilter' field.
+		/// </summary>
 		public static readonly StringName _oneFilter = "_oneFilter";
 
+		/// <summary>
+		/// Cached name for the '_twoFilter' field.
+		/// </summary>
 		public static readonly StringName _twoFilter = "_twoFilter";
 
+		/// <summary>
+		/// Cached name for the '_threePlusFilter' field.
+		/// </summary>
 		public static readonly StringName _threePlusFilter = "_threePlusFilter";
 
+		/// <summary>
+		/// Cached name for the '_xFilter' field.
+		/// </summary>
 		public static readonly StringName _xFilter = "_xFilter";
 
+		/// <summary>
+		/// Cached name for the '_alphabetSorter' field.
+		/// </summary>
 		public static readonly StringName _alphabetSorter = "_alphabetSorter";
 
+		/// <summary>
+		/// Cached name for the '_viewMultiplayerCards' field.
+		/// </summary>
 		public static readonly StringName _viewMultiplayerCards = "_viewMultiplayerCards";
 
+		/// <summary>
+		/// Cached name for the '_viewStats' field.
+		/// </summary>
 		public static readonly StringName _viewStats = "_viewStats";
 
+		/// <summary>
+		/// Cached name for the '_viewUpgrades' field.
+		/// </summary>
 		public static readonly StringName _viewUpgrades = "_viewUpgrades";
 
+		/// <summary>
+		/// Cached name for the '_cardCountLabel' field.
+		/// </summary>
 		public static readonly StringName _cardCountLabel = "_cardCountLabel";
 
+		/// <summary>
+		/// Cached name for the '_noResultsLabel' field.
+		/// </summary>
 		public static readonly StringName _noResultsLabel = "_noResultsLabel";
 
+		/// <summary>
+		/// Cached name for the '_lastHoveredControl' field.
+		/// </summary>
 		public static readonly StringName _lastHoveredControl = "_lastHoveredControl";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
 	}
@@ -612,6 +780,10 @@ public sealed class NCardLibrary : NSubmenu
 		_grid.ClearGrid();
 	}
 
+	/// <summary>
+	/// Called when the player changes the text in the search box.
+	/// If this was already called recently, then the previous one is cancelled and a new delay starts.
+	/// </summary>
 	private async Task DisplayCardsAfterShortDelay()
 	{
 		if (_displayCardsShortDelayCancelToken != null)
@@ -662,6 +834,10 @@ public sealed class NCardLibrary : NSubmenu
 		UpdateFilter();
 	}
 
+	/// <summary>
+	/// The only filter in this screen that acts like radio buttons rather than tickboxes.
+	/// </summary>
+	/// <param name="filter"></param>
 	private void UpdateCardPoolFilter(NCardPoolFilter filter)
 	{
 		if (filter.IsSelected)
@@ -850,6 +1026,11 @@ public sealed class NCardLibrary : NSubmenu
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -921,6 +1102,7 @@ public sealed class NCardLibrary : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -1052,6 +1234,7 @@ public sealed class NCardLibrary : NSubmenu
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -1134,6 +1317,7 @@ public sealed class NCardLibrary : NSubmenu
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1305,6 +1489,7 @@ public sealed class NCardLibrary : NSubmenu
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1481,6 +1666,11 @@ public sealed class NCardLibrary : NSubmenu
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1522,6 +1712,7 @@ public sealed class NCardLibrary : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1561,6 +1752,7 @@ public sealed class NCardLibrary : NSubmenu
 		info.AddProperty(PropertyName._lastHoveredControl, Variant.From(in _lastHoveredControl));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

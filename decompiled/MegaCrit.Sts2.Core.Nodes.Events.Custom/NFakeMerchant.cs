@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -13,7 +14,6 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Events;
-using MegaCrit.Sts2.Core.Models.Potions;
 using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -30,50 +30,116 @@ namespace MegaCrit.Sts2.Core.Nodes.Events.Custom;
 [ScriptPath("res://src/Core/Nodes/Events/Custom/NFakeMerchant.cs")]
 public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'ToggleMerchantTrack' method.
+		/// </summary>
 		public static readonly StringName ToggleMerchantTrack = "ToggleMerchantTrack";
 
+		/// <summary>
+		/// Cached name for the 'AfterRoomIsLoaded' method.
+		/// </summary>
 		public static readonly StringName AfterRoomIsLoaded = "AfterRoomIsLoaded";
 
+		/// <summary>
+		/// Cached name for the 'StartCharacterAnimation' method.
+		/// </summary>
 		public static readonly StringName StartCharacterAnimation = "StartCharacterAnimation";
 
+		/// <summary>
+		/// Cached name for the 'HideScreen' method.
+		/// </summary>
 		public static readonly StringName HideScreen = "HideScreen";
 
+		/// <summary>
+		/// Cached name for the 'OnMerchantOpened' method.
+		/// </summary>
 		public static readonly StringName OnMerchantOpened = "OnMerchantOpened";
 
+		/// <summary>
+		/// Cached name for the 'OpenInventory' method.
+		/// </summary>
 		public static readonly StringName OpenInventory = "OpenInventory";
 
+		/// <summary>
+		/// Cached name for the 'ShowProceedButton' method.
+		/// </summary>
 		public static readonly StringName ShowProceedButton = "ShowProceedButton";
 
+		/// <summary>
+		/// Cached name for the 'OnActiveScreenUpdated' method.
+		/// </summary>
 		public static readonly StringName OnActiveScreenUpdated = "OnActiveScreenUpdated";
 
+		/// <summary>
+		/// Cached name for the 'BlockInput' method.
+		/// </summary>
 		public static readonly StringName BlockInput = "BlockInput";
 
+		/// <summary>
+		/// Cached name for the 'UnblockInput' method.
+		/// </summary>
 		public static readonly StringName UnblockInput = "UnblockInput";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Inventory' property.
+		/// </summary>
+		public static readonly StringName Inventory = "Inventory";
+
+		/// <summary>
+		/// Cached name for the 'MerchantButton' property.
+		/// </summary>
 		public static readonly StringName MerchantButton = "MerchantButton";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_proceedButton' field.
+		/// </summary>
 		public static readonly StringName _proceedButton = "_proceedButton";
 
+		/// <summary>
+		/// Cached name for the '_characterContainer' field.
+		/// </summary>
 		public static readonly StringName _characterContainer = "_characterContainer";
 
+		/// <summary>
+		/// Cached name for the '_inputBlocker' field.
+		/// </summary>
 		public static readonly StringName _inputBlocker = "_inputBlocker";
-
-		public static readonly StringName _inventory = "_inventory";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -86,13 +152,15 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 
 	private MerchantDialogueSet _dialogue;
 
+	private CancellationTokenSource _cts = new CancellationTokenSource();
+
 	private NProceedButton _proceedButton;
 
 	private Control _characterContainer;
 
 	private Control _inputBlocker;
 
-	private NMerchantInventory _inventory;
+	public NMerchantInventory Inventory { get; private set; }
 
 	public NMerchantButton MerchantButton { get; private set; }
 
@@ -100,11 +168,11 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 	{
 		get
 		{
-			if (!_inventory.IsOpen)
+			if (!Inventory.IsOpen)
 			{
 				return this;
 			}
-			return _inventory;
+			return Inventory;
 		}
 	}
 
@@ -132,7 +200,7 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 			if (me.GetRelic<FakeMerchantsRug>() != null)
 			{
 				MegaSprite megaSprite = new MegaSprite(GetNode<Node2D>("%FakeMerchantBackground"));
-				megaSprite.GetSkeleton().FindBone("rug").Hide();
+				megaSprite.GetSkeleton()?.FindBone("rug")?.Hide();
 			}
 		}
 		else
@@ -141,9 +209,9 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 			MerchantButton.PlayerDeadLines = _dialogue.PlayerDeadLines;
 			MerchantButton.Connect(NMerchantButton.SignalName.MerchantOpened, Callable.From<NMerchantButton>(OnMerchantOpened));
 		}
-		_inventory = GetNode<NMerchantInventory>("%Inventory");
-		_inventory.MouseFilter = MouseFilterEnum.Ignore;
-		_inventory.Initialize(_event.Inventory, _dialogue);
+		Inventory = GetNode<NMerchantInventory>("%Inventory");
+		Inventory.MouseFilter = MouseFilterEnum.Ignore;
+		Inventory.Initialize(_event.Inventory, _dialogue);
 		_characterContainer = GetNode<Control>("%CharacterContainer");
 		_inputBlocker = GetNode<Control>("%InputBlocker");
 		NMapScreen.Instance.SetTravelEnabled(enabled: true);
@@ -153,6 +221,7 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 
 	public override void _EnterTree()
 	{
+		_cts = new CancellationTokenSource();
 		ActiveScreenContext.Instance.Updated += OnActiveScreenUpdated;
 		NMapScreen.Instance.Connect(NMapScreen.SignalName.Opened, Callable.From(ToggleMerchantTrack));
 		NMapScreen.Instance.Connect(NMapScreen.SignalName.Closed, Callable.From(ToggleMerchantTrack));
@@ -160,13 +229,14 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 
 	public override void _ExitTree()
 	{
+		_cts.Cancel();
 		NGame.Instance.ClearScreenShakeTarget();
 		ActiveScreenContext.Instance.Updated -= OnActiveScreenUpdated;
 		NMapScreen.Instance.Disconnect(NMapScreen.SignalName.Opened, Callable.From(ToggleMerchantTrack));
 		NMapScreen.Instance.Disconnect(NMapScreen.SignalName.Closed, Callable.From(ToggleMerchantTrack));
 	}
 
-	public async Task FoulPotionThrown(FoulPotion potion)
+	public async Task FoulPotionThrown()
 	{
 		LocString locString = Rng.Chaotic.NextItem(_dialogue.FoulPotionLines);
 		if (locString != null)
@@ -174,7 +244,7 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 			NSpeechBubbleVfx nSpeechBubbleVfx = MerchantButton.PlayDialogue(locString);
 			if (nSpeechBubbleVfx != null)
 			{
-				await Cmd.Wait((float)nSpeechBubbleVfx.SecondsToDisplay - 1f);
+				await Cmd.Wait((float)nSpeechBubbleVfx.SecondsToDisplay - 1f, _cts.Token);
 			}
 		}
 	}
@@ -202,7 +272,7 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 				NCreatureVisuals nCreatureVisuals = _players[num3].Character.CreateVisuals();
 				_characterContainer.AddChildSafely(nCreatureVisuals);
 				StartCharacterAnimation(nCreatureVisuals);
-				_characterContainer.MoveChild(nCreatureVisuals, 0);
+				_characterContainer.MoveChildSafely(nCreatureVisuals, 0);
 				nCreatureVisuals.Position = new Vector2(num2, -50f * (float)i);
 				if (i > 0)
 				{
@@ -222,7 +292,7 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 		LocString line = Rng.Chaotic.NextItem(_dialogue.WelcomeLines);
 		if (line != null)
 		{
-			await Cmd.Wait(0.75f);
+			await Cmd.Wait(0.75f, _cts.Token);
 			SfxCmd.Play("event:/sfx/npcs/reverse_merchant/reverse_merchant_laugh");
 			MerchantButton.PlayDialogue(line, 4.0);
 		}
@@ -230,7 +300,7 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 
 	private void StartCharacterAnimation(NCreatureVisuals visuals)
 	{
-		MegaTrackEntry megaTrackEntry = visuals.SpineBody.GetAnimationState().SetAnimation("relaxed_loop");
+		MegaTrackEntry megaTrackEntry = visuals.SpineAnimation.SetAnimation("relaxed_loop");
 		if (megaTrackEntry != null)
 		{
 			megaTrackEntry.SetLoop(loop: true);
@@ -252,12 +322,12 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 
 	private void OpenInventory()
 	{
-		if (!_inventory.IsOpen)
+		if (!Inventory.IsOpen)
 		{
 			_proceedButton.Disable();
-			_inventory.Open();
+			Inventory.Open();
 			MerchantButton.Disable();
-			_inventory.Connect(NMerchantInventory.SignalName.InventoryClosed, Callable.From(delegate
+			Inventory.Connect(NMerchantInventory.SignalName.InventoryClosed, Callable.From(delegate
 			{
 				MerchantButton.Enable();
 				ShowProceedButton();
@@ -301,6 +371,11 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 		NHotkeyManager.Instance.RemoveBlockingScreen(_inputBlocker);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -330,6 +405,7 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -414,6 +490,7 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -472,9 +549,15 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
+		if (name == PropertyName.Inventory)
+		{
+			Inventory = VariantUtils.ConvertTo<NMerchantInventory>(in value);
+			return true;
+		}
 		if (name == PropertyName.MerchantButton)
 		{
 			MerchantButton = VariantUtils.ConvertTo<NMerchantButton>(in value);
@@ -495,17 +578,18 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 			_inputBlocker = VariantUtils.ConvertTo<Control>(in value);
 			return true;
 		}
-		if (name == PropertyName._inventory)
-		{
-			_inventory = VariantUtils.ConvertTo<NMerchantInventory>(in value);
-			return true;
-		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
+		if (name == PropertyName.Inventory)
+		{
+			value = VariantUtils.CreateFrom<NMerchantInventory>(Inventory);
+			return true;
+		}
 		if (name == PropertyName.MerchantButton)
 		{
 			value = VariantUtils.CreateFrom<NMerchantButton>(MerchantButton);
@@ -531,14 +615,14 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 			value = VariantUtils.CreateFrom(in _inputBlocker);
 			return true;
 		}
-		if (name == PropertyName._inventory)
-		{
-			value = VariantUtils.CreateFrom(in _inventory);
-			return true;
-		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -546,46 +630,48 @@ public class NFakeMerchant : Control, ICustomEventNode, IScreenContext
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._proceedButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._characterContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._inputBlocker, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._inventory, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.Inventory, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.MerchantButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.DefaultFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
+		info.AddProperty(PropertyName.Inventory, Variant.From<NMerchantInventory>(Inventory));
 		info.AddProperty(PropertyName.MerchantButton, Variant.From<NMerchantButton>(MerchantButton));
 		info.AddProperty(PropertyName._proceedButton, Variant.From(in _proceedButton));
 		info.AddProperty(PropertyName._characterContainer, Variant.From(in _characterContainer));
 		info.AddProperty(PropertyName._inputBlocker, Variant.From(in _inputBlocker));
-		info.AddProperty(PropertyName._inventory, Variant.From(in _inventory));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
 		base.RestoreGodotObjectData(info);
-		if (info.TryGetProperty(PropertyName.MerchantButton, out var value))
+		if (info.TryGetProperty(PropertyName.Inventory, out var value))
 		{
-			MerchantButton = value.As<NMerchantButton>();
+			Inventory = value.As<NMerchantInventory>();
 		}
-		if (info.TryGetProperty(PropertyName._proceedButton, out var value2))
+		if (info.TryGetProperty(PropertyName.MerchantButton, out var value2))
 		{
-			_proceedButton = value2.As<NProceedButton>();
+			MerchantButton = value2.As<NMerchantButton>();
 		}
-		if (info.TryGetProperty(PropertyName._characterContainer, out var value3))
+		if (info.TryGetProperty(PropertyName._proceedButton, out var value3))
 		{
-			_characterContainer = value3.As<Control>();
+			_proceedButton = value3.As<NProceedButton>();
 		}
-		if (info.TryGetProperty(PropertyName._inputBlocker, out var value4))
+		if (info.TryGetProperty(PropertyName._characterContainer, out var value4))
 		{
-			_inputBlocker = value4.As<Control>();
+			_characterContainer = value4.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._inventory, out var value5))
+		if (info.TryGetProperty(PropertyName._inputBlocker, out var value5))
 		{
-			_inventory = value5.As<NMerchantInventory>();
+			_inputBlocker = value5.As<Control>();
 		}
 	}
 }

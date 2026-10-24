@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 namespace MegaCrit.Sts2.Core.DevConsole;
 
+/// <summary>
+/// Encapsulates all state for interactive tab completion in the dev console.
+/// </summary>
 public class TabCompletionState
 {
 	public int SelectionIndex { get; set; } = -1;

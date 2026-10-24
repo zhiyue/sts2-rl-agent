@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -15,11 +16,13 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class TerrorEel : MonsterModel
 {
+	private const string _stunMove = "STUN_MOVE";
+
 	private const string _debuffSfx = "event:/sfx/enemy/enemy_attacks/terror_eel/terror_eel_debuff";
 
 	private const string _attackMultiSfx = "event:/sfx/enemy/enemy_attacks/terror_eel/terror_eel_attack_multi";
 
-	private const string _thrashMoveId = "ThrashMove";
+	private const string _thrashMoveId = "THRASH_MOVE";
 
 	private const int _hpNormal = 140;
 
@@ -35,7 +38,7 @@ public sealed class TerrorEel : MonsterModel
 
 	private int ShriekAmount => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 75, 70);
 
-	private int CrashDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 19, 17);
+	private int CrashDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 18, 16);
 
 	private int ThrashDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 4, 3);
 
@@ -59,14 +62,14 @@ public sealed class TerrorEel : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<ShriekPower>(base.Creature, ShriekAmount, base.Creature, null);
+		await PowerCmd.Apply<ShriekPower>(new ThrowingPlayerChoiceContext(), base.Creature, ShriekAmount, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
 		MoveState moveState = new MoveState("CRASH_MOVE", CrashMove, new SingleAttackIntent(CrashDamage));
-		MoveState moveState2 = new MoveState("ThrashMove", ThrashMove, new MultiAttackIntent(ThrashDamage, ThrashRepeat), new BuffIntent());
+		MoveState moveState2 = new MoveState("THRASH_MOVE", ThrashMove, new MultiAttackIntent(ThrashDamage, ThrashRepeat), new BuffIntent());
 		MoveState moveState3 = new MoveState("STUN_MOVE", StunMove, new StunIntent());
 		TerrorState = new MoveState("TERROR_MOVE", TerrorMove, new DebuffIntent());
 		moveState.FollowUpState = moveState2;
@@ -96,7 +99,7 @@ public sealed class TerrorEel : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/terror_eel/terror_eel_attack_multi")
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
-		await PowerCmd.Apply<VigorPower>(base.Creature, 7m, base.Creature, null);
+		await PowerCmd.Apply<VigorPower>(new ThrowingPlayerChoiceContext(), base.Creature, 6m, base.Creature, null);
 	}
 
 	private Task StunMove(IReadOnlyList<Creature> targets)
@@ -111,7 +114,7 @@ public sealed class TerrorEel : MonsterModel
 		await Cmd.Wait(0.7f);
 		VfxCmd.PlayOnCreatureCenter(base.Creature, "vfx/vfx_scream");
 		await Cmd.CustomScaledWait(0.1f, 0.3f);
-		await PowerCmd.Apply<VulnerablePower>(targets, 99m, base.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(new ThrowingPlayerChoiceContext(), targets, 99m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
@@ -133,5 +136,10 @@ public sealed class TerrorEel : MonsterModel
 		creatureAnimator.AddAnyState("Dead", state);
 		creatureAnimator.AddAnyState("Hit", animState5);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "STUN_MOVE";
 	}
 }

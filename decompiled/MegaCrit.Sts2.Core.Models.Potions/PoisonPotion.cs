@@ -37,6 +37,6 @@ public sealed class PoisonPotion : PotionModel
 			NGaseousImpactVfx child = NGaseousImpactVfx.Create(nCreature.VfxSpawnPosition, new Color("83eb85"));
 			NCombatRoom.Instance.CombatVfxContainer.AddChildSafely(child);
 		}
-		await PowerCmd.Apply<PoisonPower>(target, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<PoisonPower>(choiceContext, target, base.DynamicVars.Poison.BaseValue, base.Owner.Creature, null);
 	}
 }

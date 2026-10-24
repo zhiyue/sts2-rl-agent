@@ -34,8 +34,8 @@ public sealed class Putrefy : CardModel
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		int amount = base.DynamicVars["Power"].IntValue;
-		await PowerCmd.Apply<WeakPower>(cardPlay.Target, amount, base.Owner.Creature, this);
-		await PowerCmd.Apply<VulnerablePower>(cardPlay.Target, amount, base.Owner.Creature, this);
+		await PowerCmd.Apply<WeakPower>(choiceContext, cardPlay.Target, amount, base.Owner.Creature, this);
+		await PowerCmd.Apply<VulnerablePower>(choiceContext, cardPlay.Target, amount, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

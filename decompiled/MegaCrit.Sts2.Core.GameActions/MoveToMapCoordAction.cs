@@ -10,6 +10,12 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.GameActions;
 
+/// <summary>
+/// An action enqueued by the host after all players have issued a vote at the map screen.
+/// This needs to be enqueued, instead of depending on everyone picking the same map point, because a random map point
+/// may be chosen in the event that two or more map points receive the same number of votes. We do not depend on RNGs
+/// being deterministic outside of combat.
+/// </summary>
 public class MoveToMapCoordAction : GameAction
 {
 	private readonly Player _player;

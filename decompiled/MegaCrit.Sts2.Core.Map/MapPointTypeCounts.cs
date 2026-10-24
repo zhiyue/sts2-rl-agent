@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Random;
@@ -10,24 +11,37 @@ public class MapPointTypeCounts
 {
 	public HashSet<MapPointType> PointTypesThatIgnoreRules { get; init; } = new HashSet<MapPointType>();
 
-	public int NumOfElites { get; init; }
+	public int NumOfElites { get; init; } = (int)Math.Round(5f * (AscensionHelper.HasAscension(AscensionLevel.SwarmingElites) ? 1.6f : 1f));
 
-	public int NumOfShops { get; init; }
+	public int NumOfShops { get; } = 3;
 
-	public int NumOfUnknowns { get; init; }
+	public int NumOfUnknowns { get; }
 
-	public int NumOfRests { get; init; }
+	public int NumOfRests { get; }
 
+	/// <summary>
+	/// Whether the map generation MapPointType assignment ignores the rules or follows the rules.
+	/// </summary>
 	public bool ShouldIgnoreMapPointRulesForMapPointType(MapPointType pointType)
 	{
 		return PointTypesThatIgnoreRules.Contains(pointType);
 	}
 
-	public MapPointTypeCounts(Rng rng)
+	public static int StandardRandomUnknownCount(Rng rng)
 	{
-		NumOfElites = (int)Math.Round(5f * (AscensionHelper.HasAscension(AscensionLevel.SwarmingElites) ? 1.6f : 1f));
-		NumOfShops = 3;
-		NumOfUnknowns = rng.NextGaussianInt(12, 1, 10, 14);
-		NumOfRests = rng.NextGaussianInt(5, 1, 3, 6);
+		return rng.NextGaussianInt(12, 1, 10, 14);
+	}
+
+	public MapPointTypeCounts(int unknownCount, int restCount)
+	{
+		NumOfUnknowns = unknownCount;
+		NumOfRests = restCount;
+	}
+
+	public MapPointTypeCounts(ActMap existingMap)
+	{
+		MapPoint[] source = existingMap.GetAllMapPoints().ToArray();
+		NumOfUnknowns = source.Count((MapPoint p) => p.PointType == MapPointType.Unknown);
+		NumOfRests = source.Count((MapPoint p) => p.PointType == MapPointType.RestSite);
 	}
 }

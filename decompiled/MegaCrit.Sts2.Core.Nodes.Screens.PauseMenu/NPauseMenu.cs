@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
+using MegaCrit.Sts2.Core.Audio.Debug;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
@@ -24,58 +25,136 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.PauseMenu;
 [ScriptPath("res://src/Core/Nodes/Screens/PauseMenu/NPauseMenu.cs")]
 public class NPauseMenu : NSubmenu
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RefreshLabels' method.
+		/// </summary>
 		public static readonly StringName RefreshLabels = "RefreshLabels";
 
+		/// <summary>
+		/// Cached name for the 'OnBackOrResumeButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnBackOrResumeButtonPressed = "OnBackOrResumeButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnSettingsButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnSettingsButtonPressed = "OnSettingsButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnCompendiumButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnCompendiumButtonPressed = "OnCompendiumButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnGiveUpButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnGiveUpButtonPressed = "OnGiveUpButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnDisconnectButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnDisconnectButtonPressed = "OnDisconnectButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnSaveAndQuitButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnSaveAndQuitButtonPressed = "OnSaveAndQuitButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuClosed' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuClosed = "OnSubmenuClosed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the 'Buttons' property.
+		/// </summary>
 		public static readonly StringName Buttons = "Buttons";
 
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the 'ScreenType' property.
+		/// </summary>
 		public static readonly StringName ScreenType = "ScreenType";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public new static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_buttonContainer' field.
+		/// </summary>
 		public static readonly StringName _buttonContainer = "_buttonContainer";
 
+		/// <summary>
+		/// Cached name for the '_resumeButton' field.
+		/// </summary>
 		public static readonly StringName _resumeButton = "_resumeButton";
 
+		/// <summary>
+		/// Cached name for the '_settingsButton' field.
+		/// </summary>
 		public static readonly StringName _settingsButton = "_settingsButton";
 
+		/// <summary>
+		/// Cached name for the '_compendiumButton' field.
+		/// </summary>
 		public static readonly StringName _compendiumButton = "_compendiumButton";
 
+		/// <summary>
+		/// Cached name for the '_giveUpButton' field.
+		/// </summary>
 		public static readonly StringName _giveUpButton = "_giveUpButton";
 
+		/// <summary>
+		/// Cached name for the '_disconnectButton' field.
+		/// </summary>
 		public static readonly StringName _disconnectButton = "_disconnectButton";
 
+		/// <summary>
+		/// Cached name for the '_saveAndQuitButton' field.
+		/// </summary>
 		public static readonly StringName _saveAndQuitButton = "_saveAndQuitButton";
 
+		/// <summary>
+		/// Cached name for the '_pausedLabel' field.
+		/// </summary>
 		public static readonly StringName _pausedLabel = "_pausedLabel";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
 	}
@@ -150,8 +229,8 @@ public class NPauseMenu : NSubmenu
 		{
 			Buttons[i].FocusNeighborLeft = Buttons[i].GetPath();
 			Buttons[i].FocusNeighborRight = Buttons[i].GetPath();
-			Buttons[i].FocusNeighborTop = ((i > 0) ? Buttons[i - 1].GetPath() : Buttons[i].GetPath());
-			Buttons[i].FocusNeighborBottom = ((i < Buttons.Length - 1) ? Buttons[i + 1].GetPath() : Buttons[i].GetPath());
+			Buttons[i].FocusNeighborTop = ((i > 0) ? Buttons[i - 1].GetPath() : Buttons[^1].GetPath());
+			Buttons[i].FocusNeighborBottom = ((i < Buttons.Length - 1) ? Buttons[i + 1].GetPath() : Buttons[0].GetPath());
 		}
 	}
 
@@ -204,6 +283,9 @@ public class NPauseMenu : NSubmenu
 		NModalContainer.Instance.Add(NAbandonRunConfirmPopup.Create(null));
 	}
 
+	/// <summary>
+	/// For multiplayer!
+	/// </summary>
 	private void OnDisconnectButtonPressed(NButton _)
 	{
 		if (RunManager.Instance.NetService.IsConnected)
@@ -221,6 +303,9 @@ public class NPauseMenu : NSubmenu
 		TaskHelper.RunSafely(CloseToMenu());
 	}
 
+	/// <summary>
+	/// Helper method to quit to main menu as we require an async Task.
+	/// </summary>
 	private async Task CloseToMenu()
 	{
 		_resumeButton.Disable();
@@ -230,8 +315,8 @@ public class NPauseMenu : NSubmenu
 		_disconnectButton.Disable();
 		_saveAndQuitButton.Disable();
 		_backButton.Disable();
-		RunManager.Instance.ActionQueueSet.Reset();
 		NRunMusicController.Instance.StopMusic();
+		NDebugAudioManager.Instance?.StopAll();
 		await NGame.Instance.ReturnToMainMenu();
 	}
 
@@ -248,6 +333,11 @@ public class NPauseMenu : NSubmenu
 		NHotkeyManager.Instance.RemoveBlockingScreen(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -283,6 +373,7 @@ public class NPauseMenu : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -349,6 +440,7 @@ public class NPauseMenu : NSubmenu
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -395,6 +487,7 @@ public class NPauseMenu : NSubmenu
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -446,6 +539,7 @@ public class NPauseMenu : NSubmenu
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -518,6 +612,11 @@ public class NPauseMenu : NSubmenu
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -538,6 +637,7 @@ public class NPauseMenu : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -553,6 +653,7 @@ public class NPauseMenu : NSubmenu
 		info.AddProperty(PropertyName._pausedLabel, Variant.From(in _pausedLabel));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

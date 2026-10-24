@@ -4,6 +4,9 @@ using MegaCrit.Sts2.Core.Logging;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// Contains utilities for moving files around during a migration of the save directory location.
+/// </summary>
 public static class MigrationUtil
 {
 	public static bool MigrateDirectory(string directoryName, string legacyBasePath, string newBasePath)

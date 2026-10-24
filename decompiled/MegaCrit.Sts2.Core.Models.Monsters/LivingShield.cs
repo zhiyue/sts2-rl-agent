@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Audio;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -31,7 +32,7 @@ public sealed class LivingShield : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<RampartPower>(base.Creature, 25m, base.Creature, null);
+		await PowerCmd.Apply<RampartPower>(new ThrowingPlayerChoiceContext(), base.Creature, 25m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -64,7 +65,7 @@ public sealed class LivingShield : MonsterModel
 			.WithAttackerFx(null, AttackSfx)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, EnrageStr, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, EnrageStr, base.Creature, null);
 	}
 
 	private int GetAllyCount()

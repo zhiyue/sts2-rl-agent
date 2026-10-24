@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -6,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
+using MegaCrit.Sts2.Core.Models.Monsters;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.ValueProps;
 
@@ -45,7 +47,14 @@ public sealed class ShrinkPower : PowerModel
 
 	public override Task AfterApplied(Creature? applier, CardModel? cardSource)
 	{
-		NCombatRoom.Instance?.GetCreatureNode(base.Owner)?.ScaleTo(0.5f, 0.75f);
+		if (base.Owner.Monster is Vantom vantom)
+		{
+			vantom.ScaleTo(0.5f, 0.75f);
+		}
+		else
+		{
+			NCombatRoom.Instance?.GetCreatureNode(base.Owner)?.ScaleTo(0.5f, 0.75);
+		}
 		Creature applier2 = base.Applier;
 		if (applier2 != null && applier2.IsMonster)
 		{
@@ -56,13 +65,20 @@ public sealed class ShrinkPower : PowerModel
 
 	public override Task AfterRemoved(Creature oldOwner)
 	{
-		NCombatRoom.Instance?.GetCreatureNode(oldOwner)?.ScaleTo(1f, 0.75f);
+		if (oldOwner.Monster is Vantom vantom)
+		{
+			vantom.ScaleTo(1f, 0.75f);
+		}
+		else
+		{
+			NCombatRoom.Instance?.GetCreatureNode(oldOwner)?.ScaleTo(1f, 0.75);
+		}
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (!IsInfinite && side == base.Owner.Side)
+		if (!IsInfinite && participants.Contains(base.Owner))
 		{
 			await PowerCmd.Decrement(this);
 		}

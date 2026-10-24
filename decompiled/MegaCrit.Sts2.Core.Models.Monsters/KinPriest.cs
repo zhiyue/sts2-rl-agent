@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Audio;
@@ -6,6 +7,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -19,7 +21,7 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class KinPriest : MonsterModel
 {
-	public const string theKinCustomTrackName = "the_kin_progress";
+	private const string _theKinCustomTrackName = "the_kin_progress";
 
 	private static readonly LocString _ritualApplyLine = MonsterModel.L10NMonsterLookup("KIN_PRIEST.moves.RITUAL.speakLine1");
 
@@ -42,8 +44,6 @@ public sealed class KinPriest : MonsterModel
 	private const int _beamRepeat = 3;
 
 	private bool _speechUsed;
-
-	public override string BestiaryAttackAnimId => "attack_grenade";
 
 	protected override string CastSfx => "event:/sfx/enemy/enemy_attacks/the_kin_priest/the_kin_priest_cast";
 
@@ -78,16 +78,34 @@ public sealed class KinPriest : MonsterModel
 		}
 	}
 
-	public override async Task AfterAddedToRoom()
+	public override Task AfterDeath(PlayerChoiceContext choiceContext, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
 	{
-		await base.AfterAddedToRoom();
-		base.Creature.Died += AfterDeath;
-	}
-
-	private void AfterDeath(Creature _)
-	{
-		base.Creature.Died -= AfterDeath;
-		NRunMusicController.Instance?.UpdateMusicParameter("the_kin_progress", 5f);
+		if (creature.Monster is KinFollower)
+		{
+			if (base.Creature.IsDead)
+			{
+				return Task.CompletedTask;
+			}
+			IReadOnlyList<Creature> readOnlyList = base.Creature.CombatState?.GetTeammatesOf(base.Creature);
+			if (readOnlyList == null)
+			{
+				return Task.CompletedTask;
+			}
+			NRunMusicController.Instance?.UpdateMusicParameter("the_kin_progress", 1f);
+			if (!readOnlyList.Any((Creature c) => c != null && c.Monster is KinFollower && c.IsAlive))
+			{
+				Creature creature2 = readOnlyList.FirstOrDefault((Creature c) => c != null && c.Monster is KinPriest && c.IsAlive);
+				if (creature2 != null && creature2.Monster is KinPriest kinPriest)
+				{
+					kinPriest.AllFollowerDeathResponse();
+				}
+			}
+		}
+		else if (creature == base.Creature)
+		{
+			NRunMusicController.Instance?.UpdateMusicParameter("the_kin_progress", 5f);
+		}
+		return Task.CompletedTask;
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -115,7 +133,7 @@ public sealed class KinPriest : MonsterModel
 			.WithWaitBeforeHit(1f, 1f)
 			.WithHitVfxNode((Creature t) => NKinPriestGrenadeVfx.Create(t))
 			.Execute(null);
-		await PowerCmd.Apply<FrailPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
 	}
 
 	private async Task OrbOfWeaknessMove(IReadOnlyList<Creature> targets)
@@ -125,7 +143,7 @@ public sealed class KinPriest : MonsterModel
 			.WithWaitBeforeHit(1f, 1f)
 			.WithHitVfxNode((Creature t) => NKinPriestGrenadeVfx.Create(t))
 			.Execute(null);
-		await PowerCmd.Apply<WeakPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
 	}
 
 	private async Task BeamMove(IReadOnlyList<Creature> targets)
@@ -148,11 +166,11 @@ public sealed class KinPriest : MonsterModel
 		if (!SpeechUsed)
 		{
 			SpeechUsed = true;
-			TalkCmd.Play(_ritualApplyLine, base.Creature, 1.0);
+			TalkCmd.Play(_ritualApplyLine, base.Creature, VfxColor.Purple, VfxDuration.Standard);
 		}
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/the_kin_priest/the_kin_priest_rally");
 		await CreatureCmd.TriggerAnim(base.Creature, "Rally", 1f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, RitualStrength, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, RitualStrength, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
@@ -178,6 +196,6 @@ public sealed class KinPriest : MonsterModel
 
 	public void AllFollowerDeathResponse()
 	{
-		TalkCmd.Play(_followersDeathLine, base.Creature, 1.0);
+		TalkCmd.Play(_followersDeathLine, base.Creature, VfxColor.Purple, VfxDuration.Standard);
 	}
 }

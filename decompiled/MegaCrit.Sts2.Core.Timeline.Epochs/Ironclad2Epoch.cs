@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// The Ironclad
+/// </summary>
 public class Ironclad2Epoch : EpochModel
 {
 	public override string Id => "IRONCLAD2_EPOCH";
@@ -16,8 +19,6 @@ public class Ironclad2Epoch : EpochModel
 	public override int EraPosition => 1;
 
 	public override string StoryId => "Ironclad";
-
-	public override bool IsArtPlaceholder => false;
 
 	public static List<CardModel> Cards
 	{

@@ -7,23 +7,11 @@ using MegaCrit.Sts2.Core.Models.Powers;
 
 namespace MegaCrit.Sts2.Core.Models.Afflictions;
 
+/// <summary>
+/// Most of this Affliction's logic lives in <see cref="T:MegaCrit.Sts2.Core.Models.Powers.HexPower" />.
+/// </summary>
 public sealed class Hexed : AfflictionModel
 {
-	private bool _appliedEthereal;
-
-	public bool AppliedEthereal
-	{
-		get
-		{
-			return _appliedEthereal;
-		}
-		set
-		{
-			AssertMutable();
-			_appliedEthereal = value;
-		}
-	}
-
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromKeyword(CardKeyword.Ethereal));
 
 	public override Task AfterCardEnteredCombat(CardModel card)
@@ -35,10 +23,6 @@ public sealed class Hexed : AfflictionModel
 		if (card.Owner.Creature.HasPower<HexPower>())
 		{
 			return Task.CompletedTask;
-		}
-		if (AppliedEthereal)
-		{
-			CardCmd.RemoveKeyword(base.Card, CardKeyword.Ethereal);
 		}
 		CardCmd.ClearAffliction(base.Card);
 		return Task.CompletedTask;

@@ -29,7 +29,7 @@ public sealed class Blur : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<BlurPower>(base.Owner.Creature, base.DynamicVars["Blur"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<BlurPower>(choiceContext, base.Owner.Creature, base.DynamicVars["Blur"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

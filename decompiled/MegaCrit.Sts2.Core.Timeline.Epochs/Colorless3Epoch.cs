@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Traitors: One of the many Ancients, Neow, grows jealous of the awe-inspiring will of the Architect.
+/// </summary>
 public class Colorless3Epoch : EpochModel
 {
 	public override string Id => "COLORLESS3_EPOCH";

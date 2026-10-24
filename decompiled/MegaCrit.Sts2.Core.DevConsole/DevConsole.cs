@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Godot;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -69,6 +70,9 @@ public class DevConsole
 		}
 	}
 
+	/// <summary>
+	/// Gets structured completion results for interactive selection
+	/// </summary>
 	public CompletionResult GetCompletionResults(string inputBuffer)
 	{
 		string[] array = (inputBuffer.EndsWith(' ') ? inputBuffer.Trim().Split(' ').Append(string.Empty)
@@ -146,11 +150,11 @@ public class DevConsole
 		List<string> list2 = new List<string>();
 		foreach (string possibleToken in possibleTokens)
 		{
-			if (possibleToken.StartsWith(partialToken, StringComparison.CurrentCultureIgnoreCase))
+			if (possibleToken.StartsWith(partialToken, StringComparison.OrdinalIgnoreCase))
 			{
 				list.Add(possibleToken);
 			}
-			else if (possibleToken.Contains(partialToken, StringComparison.CurrentCultureIgnoreCase))
+			else if (possibleToken.Contains(partialToken, StringComparison.OrdinalIgnoreCase))
 			{
 				list2.Add(possibleToken);
 			}
@@ -231,6 +235,12 @@ public class DevConsole
 		return string.Empty;
 	}
 
+	/// <summary>
+	/// Call this to attempt to execute a command that is issued locally.
+	/// If the command must be networked and a run is in progress, a GameAction will be enqueued to all peers before
+	/// the command is executed.
+	/// </summary>
+	/// <param name="inputValue">The command input by the player.</param>
 	public CmdResult ProcessCommand(string inputValue)
 	{
 		inputValue = inputValue.Trim();
@@ -239,9 +249,9 @@ public class DevConsole
 		SaveCommandHistory();
 		string[] array = inputValue.Split(' ');
 		Player me = LocalContext.GetMe(RunManager.Instance.DebugOnlyGetState());
-		if (!RunManager.Instance.IsSinglePlayerOrFakeMultiplayer && _commands.TryGetValue(array[0].ToLowerInvariant(), out AbstractConsoleCmd value) && value.IsNetworked && me != null)
+		if (!RunManager.Instance.IsSingleplayerOrFakeMultiplayer && _commands.TryGetValue(array[0].ToLowerInvariant(), out AbstractConsoleCmd value) && value.IsNetworked && me != null)
 		{
-			RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new ConsoleCmdGameAction(me, inputValue));
+			RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new ConsoleCmdGameAction(me, inputValue, CombatManager.Instance.IsInProgress));
 			return new CmdResult(success: true, $"Enqueued {array[0]} command: '{inputValue}'");
 		}
 		CmdResult result = ProcessCommandInternal(me, array);
@@ -252,6 +262,12 @@ public class DevConsole
 		return result;
 	}
 
+	/// <summary>
+	/// Call this when a networked console command is received.
+	/// You are expected to await CmdResult.task.
+	/// </summary>
+	/// <param name="player">The player that sent the command.</param>
+	/// <param name="inputValue">The command input by the player.</param>
 	public CmdResult ProcessNetCommand(Player? player, string inputValue)
 	{
 		Log.Info($"Executing DevConsole command (player {player?.NetId}): `{inputValue}`");
@@ -275,6 +291,7 @@ public class DevConsole
 		}
 		if (_commands.TryGetValue(cmdName.ToLowerInvariant(), out AbstractConsoleCmd value))
 		{
+			Log.Info("DevConsole: " + cmdName + " " + string.Join(" ", args));
 			return value.Process(player, args);
 		}
 		return new CmdResult(success: false, "The command '" + cmdName + "' does not exist.\nYou can use the 'help' to get a list of all possible commands.\n");

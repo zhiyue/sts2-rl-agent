@@ -29,15 +29,14 @@ public class CardRemovalReward : Reward
 	{
 	}
 
-	public override Task Populate()
+	public override void Populate()
 	{
-		return Task.CompletedTask;
 	}
 
 	protected override async Task<bool> OnSelect()
 	{
-		Log.Info("Obtained card removal from reward");
-		return await RunManager.Instance.RewardSynchronizer.DoLocalCardRemoval();
+		Log.Info($"Player {base.Player.NetId} obtained card removal from reward");
+		return await RunManager.Instance.RewardSynchronizer.DoUnsyncedCardRemoval(base.Player);
 	}
 
 	public override void MarkContentAsSeen()

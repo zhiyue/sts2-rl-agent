@@ -6,6 +6,11 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game.PeerInput;
 
+/// <summary>
+/// Works with the PeerInputSynchronizer to synchronize the intent shown over the player's head during combat.
+/// Note that this doesn't do any message sending itself - PeerInputSynchronizer does the message sending and handling
+/// to reduce bandwidth. This is here only to separate out some of the state tracking from PeerInputSynchronizer.
+/// </summary>
 public class HoveredModelTracker
 {
 	private readonly PeerInputSynchronizer _inputSynchronizer;

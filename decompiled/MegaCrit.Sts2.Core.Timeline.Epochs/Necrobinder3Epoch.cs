@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Futility
+/// </summary>
 public class Necrobinder3Epoch : EpochModel
 {
 	public override string Id => "NECROBINDER3_EPOCH";

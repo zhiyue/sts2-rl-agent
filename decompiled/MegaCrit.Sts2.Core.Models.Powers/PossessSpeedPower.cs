@@ -28,7 +28,7 @@ public sealed class PossessSpeedPower : PowerModel
 		return new Data();
 	}
 
-	public override Task AfterPowerAmountChanged(PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
+	public override Task AfterPowerAmountChanged(PlayerChoiceContext choiceContext, PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
 	{
 		if (applier != base.Owner)
 		{
@@ -62,7 +62,7 @@ public sealed class PossessSpeedPower : PowerModel
 		}
 		foreach (KeyValuePair<Creature, decimal> item in StolenDexterity)
 		{
-			await PowerCmd.Apply<DexterityPower>(item.Key, -item.Value, null, null);
+			await PowerCmd.Apply<DexterityPower>(choiceContext, item.Key, -item.Value, null, null);
 		}
 	}
 }

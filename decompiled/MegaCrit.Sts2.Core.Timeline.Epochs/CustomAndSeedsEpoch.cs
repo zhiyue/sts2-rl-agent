@@ -3,6 +3,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Seeds: Enamored by the growth and stability of flora and fauna.
+/// </summary>
 public class CustomAndSeedsEpoch : EpochModel
 {
 	public override string Id => "CUSTOM_AND_SEEDS_EPOCH";

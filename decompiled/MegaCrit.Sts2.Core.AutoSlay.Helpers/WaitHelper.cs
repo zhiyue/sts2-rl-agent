@@ -7,8 +7,15 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Helpers;
 
+/// <summary>
+/// Async waiting utilities for AutoSlay.
+/// </summary>
 public static class WaitHelper
 {
+	/// <summary>
+	/// Waits until a condition becomes true, with timeout.
+	/// Also checks the watchdog periodically to detect stuck states.
+	/// </summary>
 	public static async Task Until(Func<bool> condition, CancellationToken ct, TimeSpan? timeout = null, string? timeoutMessage = null)
 	{
 		TimeSpan actualTimeout = timeout ?? AutoSlayConfig.nodeWaitTimeout;
@@ -29,6 +36,9 @@ public static class WaitHelper
 		}
 	}
 
+	/// <summary>
+	/// Waits for a node to exist at the given path.
+	/// </summary>
 	public static async Task<T> ForNode<T>(Node root, string nodePath, CancellationToken ct, TimeSpan? timeout = null) where T : Node
 	{
 		try
@@ -70,6 +80,9 @@ public static class WaitHelper
 		return node;
 	}
 
+	/// <summary>
+	/// Dumps scene tree context when a wait times out, to help debug what's actually there.
+	/// </summary>
 	private static void DumpSceneTreeContext(Node root, string nodePath, string reason)
 	{
 		StringBuilder stringBuilder = new StringBuilder();
@@ -216,6 +229,9 @@ public static class WaitHelper
 		}
 	}
 
+	/// <summary>
+	/// Waits for a task to complete while periodically checking the watchdog.
+	/// </summary>
 	public static async Task ForTask(Task task, CancellationToken ct, TimeSpan? timeout = null, string? timeoutMessage = null)
 	{
 		TimeSpan actualTimeout = timeout ?? AutoSlayConfig.nodeWaitTimeout;
@@ -239,10 +255,12 @@ public static class WaitHelper
 		}
 	}
 
+	/// <summary>
+	/// Runs a task with a timeout, combining with an existing cancellation token.
+	/// </summary>
 	public static async Task WithTimeout(Func<CancellationToken, Task> action, TimeSpan timeout, CancellationToken ct)
 	{
-		using CancellationTokenSource timeoutCts = new CancellationTokenSource();
-		using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, ct);
+		using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		Task task = action(linkedCts.Token);
 		Task task2 = Task.Delay(timeout, linkedCts.Token);
 		Task completedTask = await Task.WhenAny(task, task2);

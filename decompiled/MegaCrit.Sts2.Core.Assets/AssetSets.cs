@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Debug;
 using MegaCrit.Sts2.Core.Nodes.Events;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Multiplayer;
@@ -43,8 +44,16 @@ using MegaCrit.Sts2.Core.Rewards;
 
 namespace MegaCrit.Sts2.Core.Assets;
 
+/// <summary>
+/// The asset sets tend to get really large so this class just holds the big statically defined sets so they don't
+/// clutter the PreloadManager class.
+/// </summary>
 public static class AssetSets
 {
+	/// <summary>
+	/// Minimal assets needed to display main menu immediately after logo animation.
+	/// Does NOT include compendium screens, character select, or other submenus.
+	/// </summary>
 	public static IReadOnlySet<string> MainMenuEssentials { get; }
 
 	public static IReadOnlySet<string> IntroLogoAssets { get; }
@@ -76,7 +85,7 @@ public static class AssetSets
 		list2.AddRange(NTransition.AssetPaths);
 		list2.AddRange(NLogoAnimation.AssetPaths);
 		IntroLogoAssets = new HashSet<string>(new _003C_003Ez__ReadOnlyList<string>(list2));
-		CommonAssets = new HashSet<string>(new IEnumerable<string>[92]
+		CommonAssets = new HashSet<string>(new IEnumerable<string>[100]
 		{
 			NActBanner.AssetPaths,
 			NActHistoryEntry.AssetPaths,
@@ -88,10 +97,12 @@ public static class AssetSets
 			NInspectCardScreen.AssetPaths,
 			NInspectRelicScreen.AssetPaths,
 			NSettingsScreen.AssetPaths,
+			new global::_003C_003Ez__ReadOnlySingleElementList<string>(NDevConsole.assetPath),
 			NCardPileScreen.AssetPaths,
 			NCardRewardSelectionScreen.AssetPaths,
 			NChooseABundleSelectionScreen.AssetPaths,
 			NChooseACardSelectionScreen.AssetPaths,
+			NCombatPileCardSelectScreen.AssetPaths,
 			NCombatStartBanner.AssetPaths,
 			NCreature.AssetPaths,
 			NDailyRunLeaderboard.AssetPaths,
@@ -169,7 +180,13 @@ public static class AssetSets
 			ControllerConfig.AllAssetPaths,
 			NTransition.AssetPaths,
 			Enum.GetValues<RewardType>().SelectMany((RewardType t) => t.GetAssetPaths()),
-			TmpSfx.assetPaths
+			TmpSfx.assetPaths,
+			NPowerAppliedBuffVfx.AssetPaths,
+			NPowerAppliedDebuffVfx.AssetPaths,
+			PlayerFullscreenHealVfx.AssetPaths,
+			NFireSmokePuffVfx.AssetPaths,
+			NThinSliceVfx.AssetPaths,
+			new string[1] { "res://materials/vfx/hsv.tres" }
 		}.SelectMany((IEnumerable<string> s) => s).Concat(CardMaterialPaths));
 		MainMenuSet = new HashSet<string>(new IEnumerable<string>[23]
 		{

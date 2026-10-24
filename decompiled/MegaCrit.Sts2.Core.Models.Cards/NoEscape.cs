@@ -40,7 +40,8 @@ public sealed class NoEscape : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
-		await PowerCmd.Apply<DoomPower>(cardPlay.Target, ((CalculatedVar)base.DynamicVars["CalculatedDoom"]).Calculate(cardPlay.Target), base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		await PowerCmd.Apply<DoomPower>(choiceContext, cardPlay.Target, ((CalculatedVar)base.DynamicVars["CalculatedDoom"]).Calculate(cardPlay.Target), base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

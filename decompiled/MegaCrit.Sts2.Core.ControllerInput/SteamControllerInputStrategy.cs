@@ -6,6 +6,7 @@ using Godot;
 using MegaCrit.Sts2.Core.ControllerInput.ControllerConfigs;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Platform.Steam;
 using Steamworks;
 
@@ -433,11 +434,11 @@ public class SteamControllerInputStrategy : IControllerInputStrategy
 		},
 		{
 			EInputActionOrigin.k_EInputActionOrigin_Switch_X,
-			Controller.faceButtonWest
+			Controller.faceButtonNorth
 		},
 		{
 			EInputActionOrigin.k_EInputActionOrigin_Switch_Y,
-			Controller.faceButtonNorth
+			Controller.faceButtonWest
 		},
 		{
 			EInputActionOrigin.k_EInputActionOrigin_Switch_LeftBumper,
@@ -541,6 +542,8 @@ public class SteamControllerInputStrategy : IControllerInputStrategy
 
 	private InputActionSetHandle_t? _currentActionSetHandle;
 
+	private ESteamInputType? _currentInputType;
+
 	private ControllerConfig? _controllerConfig;
 
 	private readonly List<string> _pressedInputs = new List<string>();
@@ -599,7 +602,7 @@ public class SteamControllerInputStrategy : IControllerInputStrategy
 
 	public async Task Init()
 	{
-		await NControllerManager.Instance.ToSignal(NControllerManager.Instance.GetTree(), SceneTree.SignalName.ProcessFrame);
+		await NControllerManager.Instance.AwaitProcessFrame();
 		if (SteamInitializer.Initialized)
 		{
 			try
@@ -621,7 +624,6 @@ public class SteamControllerInputStrategy : IControllerInputStrategy
 				_left = new StringName("Left");
 				_right = new StringName("Right");
 				_joystickActionHandle = SteamInput.GetAnalogActionHandle("Joystick");
-				NInputManager.Instance.ResetToDefaultControllerMapping();
 			}
 			catch (InvalidOperationException ex)
 			{
@@ -785,6 +787,7 @@ public class SteamControllerInputStrategy : IControllerInputStrategy
 			if (SteamInput.GetConnectedControllers(array) == 0)
 			{
 				_currentControllerHandle = null;
+				_currentInputType = null;
 				if (_controllerConfig == null)
 				{
 					UpdateControllerConfig(ESteamInputType.k_ESteamInputType_SteamDeckController);
@@ -797,10 +800,10 @@ public class SteamControllerInputStrategy : IControllerInputStrategy
 				eSteamInputType = SteamInput.GetInputTypeForHandle(_currentControllerHandle.Value);
 			}
 			_currentControllerHandle = array[0];
-			ESteamInputType inputTypeForHandle = SteamInput.GetInputTypeForHandle(_currentControllerHandle.Value);
-			if (eSteamInputType != inputTypeForHandle)
+			_currentInputType = SteamInput.GetInputTypeForHandle(_currentControllerHandle.Value);
+			if (eSteamInputType != _currentInputType)
 			{
-				UpdateControllerConfig(inputTypeForHandle);
+				UpdateControllerConfig(_currentInputType.Value);
 				UpdateInputMap();
 			}
 			_currentActionSetHandle = SteamInput.GetActionSetHandle("Controls");
@@ -842,6 +845,15 @@ public class SteamControllerInputStrategy : IControllerInputStrategy
 		{
 			NControllerManager.Instance?.OnControllerTypeChanged();
 		}
+	}
+
+	public string GetControllerName()
+	{
+		if (_currentInputType.HasValue)
+		{
+			return _currentInputType.Value.ToString();
+		}
+		return _fallbackStrategy.GetControllerName();
 	}
 
 	private void UpdateInputMap()

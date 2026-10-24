@@ -11,81 +11,192 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// Proceed Button. The Man. The Myth. The Legend. A Button.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NProceedButton.cs")]
 public class NProceedButton : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnEnable' method.
+		/// </summary>
 		public new static readonly StringName OnEnable = "OnEnable";
 
+		/// <summary>
+		/// Cached name for the 'OnDisable' method.
+		/// </summary>
 		public new static readonly StringName OnDisable = "OnDisable";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'DebugToggleVisibility' method.
+		/// </summary>
 		public static readonly StringName DebugToggleVisibility = "DebugToggleVisibility";
 
+		/// <summary>
+		/// Cached name for the 'SetPulseState' method.
+		/// </summary>
 		public static readonly StringName SetPulseState = "SetPulseState";
 
+		/// <summary>
+		/// Cached name for the 'StartGlowTween' method.
+		/// </summary>
 		public static readonly StringName StartGlowTween = "StartGlowTween";
 
+		/// <summary>
+		/// Cached name for the 'StopGlowTween' method.
+		/// </summary>
 		public static readonly StringName StopGlowTween = "StopGlowTween";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderS' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderS = "UpdateShaderS";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderV' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderV = "UpdateShaderV";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsSkip' property.
+		/// </summary>
 		public static readonly StringName IsSkip = "IsSkip";
 
+		/// <summary>
+		/// Cached name for the 'Hotkeys' property.
+		/// </summary>
 		public new static readonly StringName Hotkeys = "Hotkeys";
 
+		/// <summary>
+		/// Cached name for the 'ShowPos' property.
+		/// </summary>
 		public static readonly StringName ShowPos = "ShowPos";
 
+		/// <summary>
+		/// Cached name for the 'HidePos' property.
+		/// </summary>
 		public static readonly StringName HidePos = "HidePos";
 
+		/// <summary>
+		/// Cached name for the '_outline' field.
+		/// </summary>
 		public static readonly StringName _outline = "_outline";
 
+		/// <summary>
+		/// Cached name for the '_buttonImage' field.
+		/// </summary>
 		public static readonly StringName _buttonImage = "_buttonImage";
 
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_viewport' field.
+		/// </summary>
 		public static readonly StringName _viewport = "_viewport";
 
+		/// <summary>
+		/// Cached name for the '_defaultOutlineColor' field.
+		/// </summary>
 		public static readonly StringName _defaultOutlineColor = "_defaultOutlineColor";
 
+		/// <summary>
+		/// Cached name for the '_hoveredOutlineColor' field.
+		/// </summary>
 		public static readonly StringName _hoveredOutlineColor = "_hoveredOutlineColor";
 
+		/// <summary>
+		/// Cached name for the '_downColor' field.
+		/// </summary>
 		public static readonly StringName _downColor = "_downColor";
 
+		/// <summary>
+		/// Cached name for the '_outlineColor' field.
+		/// </summary>
 		public static readonly StringName _outlineColor = "_outlineColor";
 
+		/// <summary>
+		/// Cached name for the '_outlineTransparentColor' field.
+		/// </summary>
 		public static readonly StringName _outlineTransparentColor = "_outlineTransparentColor";
 
+		/// <summary>
+		/// Cached name for the '_animTween' field.
+		/// </summary>
 		public static readonly StringName _animTween = "_animTween";
 
+		/// <summary>
+		/// Cached name for the '_glowTween' field.
+		/// </summary>
 		public static readonly StringName _glowTween = "_glowTween";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_elapsedTime' field.
+		/// </summary>
 		public static readonly StringName _elapsedTime = "_elapsedTime";
 
+		/// <summary>
+		/// Cached name for the '_shouldPulse' field.
+		/// </summary>
 		public static readonly StringName _shouldPulse = "_shouldPulse";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -157,9 +268,15 @@ public class NProceedButton : NButton
 
 	public override void _ExitTree()
 	{
+		base._ExitTree();
 		NGame.Instance.DebugToggleProceedButton -= DebugToggleVisibility;
 	}
 
+	/// <summary>
+	/// Call when we want this button to animate in.
+	/// We refresh a lot of values here as the screen may not have been disposed and we reuse the button.
+	/// May need to separate this logic into a Refresh() call for organization.
+	/// </summary>
 	protected override void OnEnable()
 	{
 		base.OnEnable();
@@ -184,6 +301,9 @@ public class NProceedButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// Call when we want this button to hide this button (Disables clickability/hotkeys)
+	/// </summary>
 	protected override void OnDisable()
 	{
 		base.OnDisable();
@@ -297,6 +417,11 @@ public class NProceedButton : NButton
 		_hsv.SetShaderParameter(_v, value);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -327,6 +452,7 @@ public class NProceedButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -417,6 +543,7 @@ public class NProceedButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -479,6 +606,7 @@ public class NProceedButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -565,6 +693,7 @@ public class NProceedButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -669,6 +798,11 @@ public class NProceedButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -695,6 +829,7 @@ public class NProceedButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -717,6 +852,7 @@ public class NProceedButton : NButton
 		info.AddProperty(PropertyName._shouldPulse, Variant.From(in _shouldPulse));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

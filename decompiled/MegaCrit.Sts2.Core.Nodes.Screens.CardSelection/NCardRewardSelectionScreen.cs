@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -13,7 +14,7 @@ using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Entities.CardRewardAlternatives;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
-using MegaCrit.Sts2.Core.Entities.Rewards;
+using MegaCrit.Sts2.Core.Extensions;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
@@ -30,59 +31,144 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 
+/// <summary>
+/// Selection screen for card rewards after winning combat.
+/// NOTE: The card reward selection screen is only set up to look good with exactly 3 cards right now. Any more or less
+/// than that and things may start to look wonky. We'll need do some UI work to make it look nicer if that's required.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/CardSelection/NCardRewardSelectionScreen.cs")]
 public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
+		public new static readonly StringName _EnterTree = "_EnterTree";
+
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnAlternateRewardSelected' method.
+		/// </summary>
 		public static readonly StringName OnAlternateRewardSelected = "OnAlternateRewardSelected";
 
+		/// <summary>
+		/// Cached name for the 'SelectCard' method.
+		/// </summary>
 		public static readonly StringName SelectCard = "SelectCard";
 
+		/// <summary>
+		/// Cached name for the 'InspectCard' method.
+		/// </summary>
 		public static readonly StringName InspectCard = "InspectCard";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayOpened' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayOpened = "AfterOverlayOpened";
 
+		/// <summary>
+		/// Cached name for the 'PowerCardFtueCheck' method.
+		/// </summary>
 		public static readonly StringName PowerCardFtueCheck = "PowerCardFtueCheck";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayClosed' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayClosed = "AfterOverlayClosed";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayShown' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayShown = "AfterOverlayShown";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayHidden' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayHidden = "AfterOverlayHidden";
 
+		/// <summary>
+		/// Cached name for the 'UpdateControllerIcons' method.
+		/// </summary>
 		public static readonly StringName UpdateControllerIcons = "UpdateControllerIcons";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ScreenType' property.
+		/// </summary>
 		public static readonly StringName ScreenType = "ScreenType";
 
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_ui' field.
+		/// </summary>
 		public static readonly StringName _ui = "_ui";
 
+		/// <summary>
+		/// Cached name for the '_banner' field.
+		/// </summary>
 		public static readonly StringName _banner = "_banner";
 
+		/// <summary>
+		/// Cached name for the '_cardRow' field.
+		/// </summary>
 		public static readonly StringName _cardRow = "_cardRow";
 
+		/// <summary>
+		/// Cached name for the '_rewardAlternativesContainer' field.
+		/// </summary>
 		public static readonly StringName _rewardAlternativesContainer = "_rewardAlternativesContainer";
 
+		/// <summary>
+		/// Cached name for the '_inspectPrompt' field.
+		/// </summary>
 		public static readonly StringName _inspectPrompt = "_inspectPrompt";
 
+		/// <summary>
+		/// Cached name for the '_cardTween' field.
+		/// </summary>
 		public static readonly StringName _cardTween = "_cardTween";
 
+		/// <summary>
+		/// Cached name for the '_buttonTween' field.
+		/// </summary>
 		public static readonly StringName _buttonTween = "_buttonTween";
 
+		/// <summary>
+		/// Cached name for the '_lastFocusedControl' field.
+		/// </summary>
 		public static readonly StringName _lastFocusedControl = "_lastFocusedControl";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -103,7 +189,7 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 
 	private Control _inspectPrompt;
 
-	private TaskCompletionSource<Tuple<IEnumerable<NCardHolder>, bool>>? _completionSource;
+	private TaskCompletionSource<int?>? _completionSource;
 
 	private Tween? _cardTween;
 
@@ -112,6 +198,8 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 	private const float _cardXOffset = 350f;
 
 	private static readonly Vector2 _bannerAnimPosOffset = new Vector2(0f, 50f);
+
+	private CancellationTokenSource _cts = new CancellationTokenSource();
 
 	private Control? _lastFocusedControl;
 
@@ -150,6 +238,11 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		return nCardRewardSelectionScreen;
 	}
 
+	public override void _EnterTree()
+	{
+		_cts = new CancellationTokenSource();
+	}
+
 	public override void _Ready()
 	{
 		_ui = GetNode<Control>("UI");
@@ -166,6 +259,9 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		NInputManager.Instance.Connect(NInputManager.SignalName.InputRebound, Callable.From(UpdateControllerIcons));
 	}
 
+	/// <summary>
+	/// Called both in _Ready and if someone re-rolls the options of the associated CardReward.
+	/// </summary>
 	public void RefreshOptions(IReadOnlyList<CardCreationResult> options, IReadOnlyList<CardRewardAlternative> extraOptions)
 	{
 		_options = options;
@@ -202,40 +298,38 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 				nCard.FlashRelicOnCard(modifyingRelic);
 			}
 		}
-		foreach (CardRewardAlternative rewardOption in _extraOptions)
+		for (int num = 0; num < _extraOptions.Count; num++)
 		{
-			NCardRewardAlternativeButton nCardRewardAlternativeButton = NCardRewardAlternativeButton.Create(rewardOption.Title.GetFormattedText(), rewardOption.Hotkey);
+			int capturedIndex = num;
+			CardRewardAlternative cardRewardAlternative = _extraOptions[num];
+			NCardRewardAlternativeButton nCardRewardAlternativeButton = NCardRewardAlternativeButton.Create(cardRewardAlternative.Title.GetFormattedText(), cardRewardAlternative.Hotkey);
 			_rewardAlternativesContainer.AddChildSafely(nCardRewardAlternativeButton);
 			nCardRewardAlternativeButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(delegate
 			{
-				OnAlternateRewardSelected(rewardOption.AfterSelected);
-				TaskHelper.RunSafely(rewardOption.OnSelect());
+				OnAlternateRewardSelected(capturedIndex);
 			}));
 		}
-		List<NGridCardHolder> list = _cardRow.GetChildren().OfType<NGridCardHolder>().ToList();
-		for (int num = 0; num < _cardRow.GetChildCount(); num++)
+		for (int num2 = 0; num2 < _cardRow.GetChildCount(); num2++)
 		{
-			Control child = _cardRow.GetChild<Control>(num);
+			Control child = _cardRow.GetChild<Control>(num2);
 			child.FocusNeighborBottom = child.GetPath();
 			child.FocusNeighborTop = child.GetPath();
-			child.FocusNeighborLeft = ((num > 0) ? _cardRow.GetChild(num - 1).GetPath() : _cardRow.GetChild(_cardRow.GetChildCount() - 1).GetPath());
-			child.FocusNeighborRight = ((num < _cardRow.GetChildCount() - 1) ? _cardRow.GetChild(num + 1).GetPath() : _cardRow.GetChild(0).GetPath());
+			child.FocusNeighborLeft = ((num2 > 0) ? _cardRow.GetChild(num2 - 1).GetPath() : _cardRow.GetChild(_cardRow.GetChildCount() - 1).GetPath());
+			child.FocusNeighborRight = ((num2 < _cardRow.GetChildCount() - 1) ? _cardRow.GetChild(num2 + 1).GetPath() : _cardRow.GetChild(0).GetPath());
 		}
-		if (NControllerManager.Instance.IsUsingController)
-		{
-			list[list.Count / 2].TryGrabFocus();
-		}
+		ActiveScreenContext.Instance.FocusOnDefaultControl();
 	}
 
 	public override void _ExitTree()
 	{
-		TaskCompletionSource<Tuple<IEnumerable<NCardHolder>, bool>> completionSource = _completionSource;
+		_cts.Cancel();
+		TaskCompletionSource<int?> completionSource = _completionSource;
 		if (completionSource != null)
 		{
-			Task<Tuple<IEnumerable<NCardHolder>, bool>> task = completionSource.Task;
+			Task<int?> task = completionSource.Task;
 			if (task != null && !task.IsCompleted)
 			{
-				_completionSource.SetResult(new Tuple<IEnumerable<NCardHolder>, bool>(Array.Empty<NCardHolder>(), item2: false));
+				_completionSource.SetResult(null);
 			}
 		}
 		foreach (NGridCardHolder item in _cardRow.GetChildren().OfType<NGridCardHolder>())
@@ -244,12 +338,14 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		}
 	}
 
-	private void OnAlternateRewardSelected(PostAlternateCardRewardAction afterSelected)
+	public NCardHolder GetCardHolder(CardModel card)
 	{
-		if ((afterSelected != PostAlternateCardRewardAction.None && afterSelected != PostAlternateCardRewardAction.DoNothing) || 1 == 0)
-		{
-			_completionSource?.SetResult(new Tuple<IEnumerable<NCardHolder>, bool>(Array.Empty<NCardHolder>(), afterSelected == PostAlternateCardRewardAction.DismissScreenAndRemoveReward));
-		}
+		return _cardRow.GetChildren().OfType<NGridCardHolder>().First((NGridCardHolder h) => h.CardModel == card);
+	}
+
+	private void OnAlternateRewardSelected(int index)
+	{
+		_completionSource?.SetResult(_options.Count + index);
 	}
 
 	private void SelectCard(NCardHolder cardHolder)
@@ -258,7 +354,7 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		{
 			throw new InvalidOperationException("CardsSelected must be awaited before a card is selected!");
 		}
-		_completionSource.SetResult(new Tuple<IEnumerable<NCardHolder>, bool>(new global::_003C_003Ez__ReadOnlySingleElementList<NCardHolder>(cardHolder), item2: true));
+		_completionSource.SetResult(_options.FirstIndex((CardCreationResult o) => o.Card == cardHolder.CardModel));
 	}
 
 	private void InspectCard(NCardHolder cardHolder)
@@ -276,9 +372,11 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		}
 	}
 
-	public async Task<Tuple<IEnumerable<NCardHolder>, bool>> CardsSelected()
+	/// <returns>The index of the selected option. If the index is greater than or equal to the number of cards, then
+	/// it represents the index of an alternative option.</returns>
+	public async Task<int?> OptionSelected()
 	{
-		_completionSource = new TaskCompletionSource<Tuple<IEnumerable<NCardHolder>, bool>>();
+		_completionSource = new TaskCompletionSource<int?>();
 		return await _completionSource.Task;
 	}
 
@@ -293,13 +391,18 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		TaskHelper.RunSafely(DisableCardsForShortTimeAfterOpening());
 	}
 
+	/// <summary>
+	/// For a short time after opening the screen, set the cards to unselectable.
+	/// Common mistake is for the player to click right after opening the screen, selecting a reward by mistake.
+	/// Note that this only makes it so the player cannot select the cards. They can still navigate
+	/// </summary>
 	private async Task DisableCardsForShortTimeAfterOpening()
 	{
 		foreach (NGridCardHolder item in _cardRow.GetChildren().OfType<NGridCardHolder>())
 		{
 			item.SetClickable(isClickable: false);
 		}
-		await Cmd.Wait(0.35f);
+		await Cmd.Wait(0.35f, _cts.Token);
 		if (!_cardRow.IsValid())
 		{
 			return;
@@ -346,15 +449,21 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		_inspectPrompt.GetNode<MegaLabel>("Label").SetTextAutoSize(new LocString("gameplay_ui", "TO_INSPECT_PROMPT").GetFormattedText());
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(11);
+		List<MethodInfo> list = new List<MethodInfo>(12);
+		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnAlternateRewardSelected, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
-			new PropertyInfo(Variant.Type.Int, "afterSelected", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			new PropertyInfo(Variant.Type.Int, "index", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.SelectCard, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -373,9 +482,16 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
+		if (method == MethodName._EnterTree && args.Count == 0)
+		{
+			_EnterTree();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
@@ -390,7 +506,7 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		}
 		if (method == MethodName.OnAlternateRewardSelected && args.Count == 1)
 		{
-			OnAlternateRewardSelected(VariantUtils.ConvertTo<PostAlternateCardRewardAction>(in args[0]));
+			OnAlternateRewardSelected(VariantUtils.ConvertTo<int>(in args[0]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -445,9 +561,14 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
+		if (method == MethodName._EnterTree)
+		{
+			return true;
+		}
 		if (method == MethodName._Ready)
 		{
 			return true;
@@ -495,6 +616,7 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -541,6 +663,7 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -602,6 +725,11 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -620,6 +748,7 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -634,6 +763,7 @@ public class NCardRewardSelectionScreen : Control, IOverlayScreen, IScreenContex
 		info.AddProperty(PropertyName._lastFocusedControl, Variant.From(in _lastFocusedControl));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

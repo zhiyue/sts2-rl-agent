@@ -11,74 +11,196 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NWaterfallGiantVfx.cs")]
 public class NWaterfallGiantVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'StartSteam1' method.
+		/// </summary>
 		public static readonly StringName StartSteam1 = "StartSteam1";
 
+		/// <summary>
+		/// Cached name for the 'EndSteam1' method.
+		/// </summary>
 		public static readonly StringName EndSteam1 = "EndSteam1";
 
+		/// <summary>
+		/// Cached name for the 'StartSteam2' method.
+		/// </summary>
 		public static readonly StringName StartSteam2 = "StartSteam2";
 
+		/// <summary>
+		/// Cached name for the 'EndSteam2' method.
+		/// </summary>
 		public static readonly StringName EndSteam2 = "EndSteam2";
 
+		/// <summary>
+		/// Cached name for the 'StartSteam3' method.
+		/// </summary>
 		public static readonly StringName StartSteam3 = "StartSteam3";
 
+		/// <summary>
+		/// Cached name for the 'EndSteam3' method.
+		/// </summary>
 		public static readonly StringName EndSteam3 = "EndSteam3";
 
+		/// <summary>
+		/// Cached name for the 'StartSteam5' method.
+		/// </summary>
 		public static readonly StringName StartSteam5 = "StartSteam5";
 
+		/// <summary>
+		/// Cached name for the 'EndSteam5' method.
+		/// </summary>
 		public static readonly StringName EndSteam5 = "EndSteam5";
 
+		/// <summary>
+		/// Cached name for the 'StartWaterfall' method.
+		/// </summary>
 		public static readonly StringName StartWaterfall = "StartWaterfall";
 
+		/// <summary>
+		/// Cached name for the 'EndWaterfall' method.
+		/// </summary>
 		public static readonly StringName EndWaterfall = "EndWaterfall";
 
+		/// <summary>
+		/// Cached name for the 'Explode' method.
+		/// </summary>
 		public static readonly StringName Explode = "Explode";
 
+		/// <summary>
+		/// Cached name for the 'Buildup1' method.
+		/// </summary>
 		public static readonly StringName Buildup1 = "Buildup1";
 
+		/// <summary>
+		/// Cached name for the 'Buildup2' method.
+		/// </summary>
 		public static readonly StringName Buildup2 = "Buildup2";
 
+		/// <summary>
+		/// Cached name for the 'Buildup3' method.
+		/// </summary>
 		public static readonly StringName Buildup3 = "Buildup3";
 
+		/// <summary>
+		/// Cached name for the 'ClearDeathSteam' method.
+		/// </summary>
+		public static readonly StringName ClearDeathSteam = "ClearDeathSteam";
+
+		/// <summary>
+		/// Cached name for the 'EmitGracefully' method.
+		/// </summary>
 		public static readonly StringName EmitGracefully = "EmitGracefully";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_steam1Particles' field.
+		/// </summary>
 		public static readonly StringName _steam1Particles = "_steam1Particles";
 
+		/// <summary>
+		/// Cached name for the '_steam2Particles' field.
+		/// </summary>
 		public static readonly StringName _steam2Particles = "_steam2Particles";
 
+		/// <summary>
+		/// Cached name for the '_steam3Particles' field.
+		/// </summary>
 		public static readonly StringName _steam3Particles = "_steam3Particles";
 
+		/// <summary>
+		/// Cached name for the '_steam4Particles' field.
+		/// </summary>
 		public static readonly StringName _steam4Particles = "_steam4Particles";
 
+		/// <summary>
+		/// Cached name for the '_steam5Particles' field.
+		/// </summary>
 		public static readonly StringName _steam5Particles = "_steam5Particles";
 
+		/// <summary>
+		/// Cached name for the '_steam6Particles' field.
+		/// </summary>
 		public static readonly StringName _steam6Particles = "_steam6Particles";
 
+		/// <summary>
+		/// Cached name for the '_steamLeakParticles1' field.
+		/// </summary>
 		public static readonly StringName _steamLeakParticles1 = "_steamLeakParticles1";
 
+		/// <summary>
+		/// Cached name for the '_steamLeakParticles2' field.
+		/// </summary>
 		public static readonly StringName _steamLeakParticles2 = "_steamLeakParticles2";
 
+		/// <summary>
+		/// Cached name for the '_steamLeakParticles3' field.
+		/// </summary>
 		public static readonly StringName _steamLeakParticles3 = "_steamLeakParticles3";
 
+		/// <summary>
+		/// Cached name for the '_mistParticles' field.
+		/// </summary>
 		public static readonly StringName _mistParticles = "_mistParticles";
 
+		/// <summary>
+		/// Cached name for the '_mouthParticles' field.
+		/// </summary>
 		public static readonly StringName _mouthParticles = "_mouthParticles";
 
+		/// <summary>
+		/// Cached name for the '_dropletParticles' field.
+		/// </summary>
 		public static readonly StringName _dropletParticles = "_dropletParticles";
 
+		/// <summary>
+		/// Cached name for the '_leakProcMat1' field.
+		/// </summary>
+		public static readonly StringName _leakProcMat1 = "_leakProcMat1";
+
+		/// <summary>
+		/// Cached name for the '_leakProcMat2' field.
+		/// </summary>
+		public static readonly StringName _leakProcMat2 = "_leakProcMat2";
+
+		/// <summary>
+		/// Cached name for the '_leakProcMat3' field.
+		/// </summary>
+		public static readonly StringName _leakProcMat3 = "_leakProcMat3";
+
+		/// <summary>
+		/// Cached name for the '_isDead' field.
+		/// </summary>
 		public static readonly StringName _isDead = "_isDead";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -107,6 +229,12 @@ public class NWaterfallGiantVfx : Node
 
 	private GpuParticles2D _dropletParticles;
 
+	private ParticleProcessMaterial _leakProcMat1;
+
+	private ParticleProcessMaterial _leakProcMat2;
+
+	private ParticleProcessMaterial _leakProcMat3;
+
 	private bool _isDead;
 
 	private Node2D _parent;
@@ -130,6 +258,9 @@ public class NWaterfallGiantVfx : Node
 		_mistParticles = _parent.GetNode<GpuParticles2D>("MistSlot/MistParticles");
 		_dropletParticles = _parent.GetNode<GpuParticles2D>("MistSlot/Droplets");
 		_mouthParticles = _parent.GetNode<GpuParticles2D>("MouthDropletsSlot/MouthDroplets");
+		_leakProcMat1 = (ParticleProcessMaterial)_steamLeakParticles1.ProcessMaterial;
+		_leakProcMat2 = (ParticleProcessMaterial)_steamLeakParticles2.ProcessMaterial;
+		_leakProcMat3 = (ParticleProcessMaterial)_steamLeakParticles3.ProcessMaterial;
 		_steam1Particles.Emitting = false;
 		_steam2Particles.Emitting = false;
 		_steam3Particles.Emitting = false;
@@ -251,10 +382,17 @@ public class NWaterfallGiantVfx : Node
 				Explode();
 			}
 			break;
+		case 17:
+			if (eventName == "clear_death_steam")
+			{
+				ClearDeathSteam();
+			}
+			break;
 		case 9:
 		case 10:
 		case 12:
 		case 14:
+		case 16:
 			break;
 		}
 	}
@@ -339,15 +477,25 @@ public class NWaterfallGiantVfx : Node
 			EmitGracefully(_steamLeakParticles1);
 			EmitGracefully(_steamLeakParticles2);
 			EmitGracefully(_steamLeakParticles3);
+			ParticleProcessMaterial leakProcMat = _leakProcMat1;
+			ParticleProcessMaterial leakProcMat2 = _leakProcMat2;
+			float num = (_leakProcMat3.ScaleMin = 0.2f);
+			float scaleMin = (leakProcMat2.ScaleMin = num);
+			leakProcMat.ScaleMin = scaleMin;
+			ParticleProcessMaterial leakProcMat3 = _leakProcMat1;
+			ParticleProcessMaterial leakProcMat4 = _leakProcMat2;
+			num = (_leakProcMat3.ScaleMax = 0.4f);
+			scaleMin = (leakProcMat4.ScaleMax = num);
+			leakProcMat3.ScaleMax = scaleMin;
 			GpuParticles2D steamLeakParticles = _steamLeakParticles1;
 			GpuParticles2D steamLeakParticles2 = _steamLeakParticles2;
-			int num = (_steamLeakParticles3.Amount = 8);
-			int amount = (steamLeakParticles2.Amount = num);
+			int num6 = (_steamLeakParticles3.Amount = 10);
+			int amount = (steamLeakParticles2.Amount = num6);
 			steamLeakParticles.Amount = amount;
 			GpuParticles2D steamLeakParticles3 = _steamLeakParticles1;
 			GpuParticles2D steamLeakParticles4 = _steamLeakParticles2;
-			double num4 = (_steamLeakParticles3.Lifetime = 0.3700000047683716);
-			double lifetime = (steamLeakParticles4.Lifetime = num4);
+			double num9 = (_steamLeakParticles3.Lifetime = 0.3700000047683716);
+			double lifetime = (steamLeakParticles4.Lifetime = num9);
 			steamLeakParticles3.Lifetime = lifetime;
 		}
 	}
@@ -359,15 +507,25 @@ public class NWaterfallGiantVfx : Node
 			EmitGracefully(_steamLeakParticles1);
 			EmitGracefully(_steamLeakParticles2);
 			EmitGracefully(_steamLeakParticles3);
+			ParticleProcessMaterial leakProcMat = _leakProcMat1;
+			ParticleProcessMaterial leakProcMat2 = _leakProcMat2;
+			float num = (_leakProcMat3.ScaleMin = 0.3f);
+			float scaleMin = (leakProcMat2.ScaleMin = num);
+			leakProcMat.ScaleMin = scaleMin;
+			ParticleProcessMaterial leakProcMat3 = _leakProcMat1;
+			ParticleProcessMaterial leakProcMat4 = _leakProcMat2;
+			num = (_leakProcMat3.ScaleMax = 0.6f);
+			scaleMin = (leakProcMat4.ScaleMax = num);
+			leakProcMat3.ScaleMax = scaleMin;
 			GpuParticles2D steamLeakParticles = _steamLeakParticles1;
 			GpuParticles2D steamLeakParticles2 = _steamLeakParticles2;
-			int num = (_steamLeakParticles3.Amount = 15);
-			int amount = (steamLeakParticles2.Amount = num);
+			int num6 = (_steamLeakParticles3.Amount = 20);
+			int amount = (steamLeakParticles2.Amount = num6);
 			steamLeakParticles.Amount = amount;
 			GpuParticles2D steamLeakParticles3 = _steamLeakParticles1;
 			GpuParticles2D steamLeakParticles4 = _steamLeakParticles2;
-			double num4 = (_steamLeakParticles3.Lifetime = 0.44999998807907104);
-			double lifetime = (steamLeakParticles4.Lifetime = num4);
+			double num9 = (_steamLeakParticles3.Lifetime = 0.75);
+			double lifetime = (steamLeakParticles4.Lifetime = num9);
 			steamLeakParticles3.Lifetime = lifetime;
 		}
 	}
@@ -379,17 +537,40 @@ public class NWaterfallGiantVfx : Node
 			EmitGracefully(_steamLeakParticles1);
 			EmitGracefully(_steamLeakParticles2);
 			EmitGracefully(_steamLeakParticles3);
+			ParticleProcessMaterial leakProcMat = _leakProcMat1;
+			ParticleProcessMaterial leakProcMat2 = _leakProcMat2;
+			float num = (_leakProcMat3.ScaleMin = 0.4f);
+			float scaleMin = (leakProcMat2.ScaleMin = num);
+			leakProcMat.ScaleMin = scaleMin;
+			ParticleProcessMaterial leakProcMat3 = _leakProcMat1;
+			ParticleProcessMaterial leakProcMat4 = _leakProcMat2;
+			num = (_leakProcMat3.ScaleMax = 0.8f);
+			scaleMin = (leakProcMat4.ScaleMax = num);
+			leakProcMat3.ScaleMax = scaleMin;
 			GpuParticles2D steamLeakParticles = _steamLeakParticles1;
 			GpuParticles2D steamLeakParticles2 = _steamLeakParticles2;
-			int num = (_steamLeakParticles3.Amount = 20);
-			int amount = (steamLeakParticles2.Amount = num);
+			int num6 = (_steamLeakParticles3.Amount = 28);
+			int amount = (steamLeakParticles2.Amount = num6);
 			steamLeakParticles.Amount = amount;
 			GpuParticles2D steamLeakParticles3 = _steamLeakParticles1;
 			GpuParticles2D steamLeakParticles4 = _steamLeakParticles2;
-			double num4 = (_steamLeakParticles3.Lifetime = 0.6000000238418579);
-			double lifetime = (steamLeakParticles4.Lifetime = num4);
+			double num9 = (_steamLeakParticles3.Lifetime = 1.2);
+			double lifetime = (steamLeakParticles4.Lifetime = num9);
 			steamLeakParticles3.Lifetime = lifetime;
 		}
+	}
+
+	private void ClearDeathSteam()
+	{
+		_steam3Particles.Emitting = false;
+		_steam4Particles.Emitting = false;
+		_steam5Particles.Emitting = false;
+		_steam6Particles.Emitting = false;
+		_steam3Particles.Visible = false;
+		_steam4Particles.Visible = false;
+		_steam5Particles.Visible = false;
+		_steam6Particles.Visible = false;
+		_isDead = false;
 	}
 
 	private void EmitGracefully(GpuParticles2D emitter)
@@ -405,10 +586,15 @@ public class NWaterfallGiantVfx : Node
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(17);
+		List<MethodInfo> list = new List<MethodInfo>(18);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnAnimationEvent, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -431,6 +617,7 @@ public class NWaterfallGiantVfx : Node
 		list.Add(new MethodInfo(MethodName.Buildup1, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.Buildup2, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.Buildup3, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.ClearDeathSteam, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.EmitGracefully, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "emitter", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("GPUParticles2D"), exported: false)
@@ -438,6 +625,7 @@ public class NWaterfallGiantVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -537,6 +725,12 @@ public class NWaterfallGiantVfx : Node
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.ClearDeathSteam && args.Count == 0)
+		{
+			ClearDeathSteam();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName.EmitGracefully && args.Count == 1)
 		{
 			EmitGracefully(VariantUtils.ConvertTo<GpuParticles2D>(in args[0]));
@@ -546,6 +740,7 @@ public class NWaterfallGiantVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -613,6 +808,10 @@ public class NWaterfallGiantVfx : Node
 		{
 			return true;
 		}
+		if (method == MethodName.ClearDeathSteam)
+		{
+			return true;
+		}
 		if (method == MethodName.EmitGracefully)
 		{
 			return true;
@@ -620,6 +819,7 @@ public class NWaterfallGiantVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -683,6 +883,21 @@ public class NWaterfallGiantVfx : Node
 			_dropletParticles = VariantUtils.ConvertTo<GpuParticles2D>(in value);
 			return true;
 		}
+		if (name == PropertyName._leakProcMat1)
+		{
+			_leakProcMat1 = VariantUtils.ConvertTo<ParticleProcessMaterial>(in value);
+			return true;
+		}
+		if (name == PropertyName._leakProcMat2)
+		{
+			_leakProcMat2 = VariantUtils.ConvertTo<ParticleProcessMaterial>(in value);
+			return true;
+		}
+		if (name == PropertyName._leakProcMat3)
+		{
+			_leakProcMat3 = VariantUtils.ConvertTo<ParticleProcessMaterial>(in value);
+			return true;
+		}
 		if (name == PropertyName._isDead)
 		{
 			_isDead = VariantUtils.ConvertTo<bool>(in value);
@@ -696,6 +911,7 @@ public class NWaterfallGiantVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -759,6 +975,21 @@ public class NWaterfallGiantVfx : Node
 			value = VariantUtils.CreateFrom(in _dropletParticles);
 			return true;
 		}
+		if (name == PropertyName._leakProcMat1)
+		{
+			value = VariantUtils.CreateFrom(in _leakProcMat1);
+			return true;
+		}
+		if (name == PropertyName._leakProcMat2)
+		{
+			value = VariantUtils.CreateFrom(in _leakProcMat2);
+			return true;
+		}
+		if (name == PropertyName._leakProcMat3)
+		{
+			value = VariantUtils.CreateFrom(in _leakProcMat3);
+			return true;
+		}
 		if (name == PropertyName._isDead)
 		{
 			value = VariantUtils.CreateFrom(in _isDead);
@@ -772,6 +1003,11 @@ public class NWaterfallGiantVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -788,11 +1024,15 @@ public class NWaterfallGiantVfx : Node
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._mistParticles, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._mouthParticles, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._dropletParticles, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._leakProcMat1, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._leakProcMat2, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._leakProcMat3, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._isDead, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._parent, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -809,10 +1049,14 @@ public class NWaterfallGiantVfx : Node
 		info.AddProperty(PropertyName._mistParticles, Variant.From(in _mistParticles));
 		info.AddProperty(PropertyName._mouthParticles, Variant.From(in _mouthParticles));
 		info.AddProperty(PropertyName._dropletParticles, Variant.From(in _dropletParticles));
+		info.AddProperty(PropertyName._leakProcMat1, Variant.From(in _leakProcMat1));
+		info.AddProperty(PropertyName._leakProcMat2, Variant.From(in _leakProcMat2));
+		info.AddProperty(PropertyName._leakProcMat3, Variant.From(in _leakProcMat3));
 		info.AddProperty(PropertyName._isDead, Variant.From(in _isDead));
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -865,13 +1109,25 @@ public class NWaterfallGiantVfx : Node
 		{
 			_dropletParticles = value12.As<GpuParticles2D>();
 		}
-		if (info.TryGetProperty(PropertyName._isDead, out var value13))
+		if (info.TryGetProperty(PropertyName._leakProcMat1, out var value13))
 		{
-			_isDead = value13.As<bool>();
+			_leakProcMat1 = value13.As<ParticleProcessMaterial>();
 		}
-		if (info.TryGetProperty(PropertyName._parent, out var value14))
+		if (info.TryGetProperty(PropertyName._leakProcMat2, out var value14))
 		{
-			_parent = value14.As<Node2D>();
+			_leakProcMat2 = value14.As<ParticleProcessMaterial>();
+		}
+		if (info.TryGetProperty(PropertyName._leakProcMat3, out var value15))
+		{
+			_leakProcMat3 = value15.As<ParticleProcessMaterial>();
+		}
+		if (info.TryGetProperty(PropertyName._isDead, out var value16))
+		{
+			_isDead = value16.As<bool>();
+		}
+		if (info.TryGetProperty(PropertyName._parent, out var value17))
+		{
+			_parent = value17.As<Node2D>();
 		}
 	}
 }

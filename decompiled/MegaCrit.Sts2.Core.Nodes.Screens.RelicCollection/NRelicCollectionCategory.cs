@@ -1,9 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
@@ -14,7 +11,6 @@ using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Models.Acts;
 using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Saves;
@@ -26,34 +22,76 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 [ScriptPath("res://src/Core/Nodes/Screens/RelicCollection/NRelicCollectionCategory.cs")]
 public class NRelicCollectionCategory : VBoxContainer
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : VBoxContainer.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'CreateForSubcategory' method.
+		/// </summary>
 		public static readonly StringName CreateForSubcategory = "CreateForSubcategory";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'LoadIcon' method.
+		/// </summary>
 		public static readonly StringName LoadIcon = "LoadIcon";
 
+		/// <summary>
+		/// Cached name for the 'ClearRelics' method.
+		/// </summary>
 		public static readonly StringName ClearRelics = "ClearRelics";
 
+		/// <summary>
+		/// Cached name for the 'OnRelicEntryPressed' method.
+		/// </summary>
 		public static readonly StringName OnRelicEntryPressed = "OnRelicEntryPressed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : VBoxContainer.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_collection' field.
+		/// </summary>
 		public static readonly StringName _collection = "_collection";
 
+		/// <summary>
+		/// Cached name for the '_headerLabel' field.
+		/// </summary>
 		public static readonly StringName _headerLabel = "_headerLabel";
 
+		/// <summary>
+		/// Cached name for the '_relicsContainer' field.
+		/// </summary>
 		public static readonly StringName _relicsContainer = "_relicsContainer";
 
+		/// <summary>
+		/// Cached name for the '_spacer' field.
+		/// </summary>
 		public static readonly StringName _spacer = "_spacer";
 
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : VBoxContainer.SignalName
 	{
 	}
@@ -104,6 +142,9 @@ public class NRelicCollectionCategory : VBoxContainer
 		_icon.Visible = false;
 	}
 
+	/// <summary>
+	/// Instantiates a relic category by sorting and categorizing relics by ancient, character specific, and unlock/seen status.
+	/// </summary>
 	public void LoadRelics(RelicRarity relicRarity, NRelicCollection collection, LocString header, HashSet<RelicModel> seenRelics, UnlockState unlockState, HashSet<RelicModel> allUnlockedRelics)
 	{
 		_subCategories.Clear();
@@ -117,7 +158,7 @@ public class NRelicCollectionCategory : VBoxContainer
 			NRelicCollectionCategory nRelicCollectionCategory = CreateForSubcategory();
 			_subCategories.Add(nRelicCollectionCategory);
 			this.AddChildSafely(nRelicCollectionCategory);
-			MoveChild(nRelicCollectionCategory, _headerLabel.GetIndex() + 1);
+			this.MoveChildSafely(nRelicCollectionCategory, _headerLabel.GetIndex() + 1);
 			nRelicCollectionCategory._spacer.Visible = false;
 			nRelicCollectionCategory._headerLabel.Visible = false;
 			nRelicCollectionCategory.LoadSubcategory(_collection, null, list, seenRelics, allUnlockedRelics);
@@ -125,50 +166,33 @@ public class NRelicCollectionCategory : VBoxContainer
 			NRelicCollectionCategory nRelicCollectionCategory2 = CreateForSubcategory();
 			_subCategories.Add(nRelicCollectionCategory2);
 			this.AddChildSafely(nRelicCollectionCategory2);
-			MoveChild(nRelicCollectionCategory2, _headerLabel.GetIndex() + 2);
+			this.MoveChildSafely(nRelicCollectionCategory2, _headerLabel.GetIndex() + 2);
 			nRelicCollectionCategory2._headerLabel.Visible = false;
 			nRelicCollectionCategory2.LoadSubcategory(_collection, null, relics, seenRelics, allUnlockedRelics);
 			return;
 		}
 		if (relicRarity == RelicRarity.Ancient)
 		{
-			int num = 4;
-			List<ActModel> list2 = new List<ActModel>(num);
-			CollectionsMarshal.SetCount(list2, num);
-			Span<ActModel> span = CollectionsMarshal.AsSpan(list2);
-			int num2 = 0;
-			span[num2] = ModelDb.Act<Overgrowth>();
-			num2++;
-			span[num2] = ModelDb.Act<Underdocks>();
-			num2++;
-			span[num2] = ModelDb.Act<Hive>();
-			num2++;
-			span[num2] = ModelDb.Act<Glory>();
-			List<ActModel> list3 = list2;
-			if (ModelDb.Acts.Except(list3).Any())
-			{
-				throw new InvalidOperationException("The act list in NRelicCollectionCategory is out of date!");
-			}
-			List<AncientEventModel> list4 = list3.Select((ActModel a) => a.AllAncients).SelectMany((IEnumerable<AncientEventModel> a) => a).Concat(ModelDb.AllSharedAncients)
+			List<ActModel> source = ModelDb.Acts.ToList();
+			List<AncientEventModel> list2 = source.Select((ActModel a) => a.AllAncients).SelectMany((IEnumerable<AncientEventModel> a) => a).Concat(ModelDb.AllSharedAncients)
 				.Distinct()
 				.ToList();
-			HashSet<AncientEventModel> hashSet = list3.Select((ActModel a) => a.GetUnlockedAncients(unlockState)).SelectMany((IEnumerable<AncientEventModel> a) => a).Concat(unlockState.SharedAncients)
+			HashSet<AncientEventModel> hashSet = source.Select((ActModel a) => a.GetUnlockedAncients(unlockState)).SelectMany((IEnumerable<AncientEventModel> a) => a).Concat(unlockState.SharedAncients)
 				.Distinct()
 				.ToHashSet();
 			IReadOnlyDictionary<ModelId, AncientStats> ancientStats = SaveManager.Instance.Progress.AncientStats;
 			LocString locString = new LocString("relic_collection", "UNKNOWN_ANCIENT");
-			for (int num3 = 0; num3 < list4.Count; num3++)
+			for (int num = 0; num < list2.Count; num++)
 			{
-				AncientEventModel ancientEventModel = list4[num3];
+				AncientEventModel ancientEventModel = list2[num];
 				if (hashSet.Contains(ancientEventModel))
 				{
 					NRelicCollectionCategory nRelicCollectionCategory3 = CreateForSubcategory();
 					_subCategories.Add(nRelicCollectionCategory3);
 					this.AddChildSafely(nRelicCollectionCategory3);
-					MoveChild(nRelicCollectionCategory3, _headerLabel.GetIndex() + num3 + 1);
-					StringComparer comparer = StringComparer.Create(LocManager.Instance.CultureInfo, CompareOptions.None);
+					this.MoveChildSafely(nRelicCollectionCategory3, _headerLabel.GetIndex() + num + 1);
 					RelicModel[] array = ancientEventModel.AllPossibleOptions.Select((EventOption o) => o.Relic?.CanonicalInstance).OfType<RelicModel>().Intersect(_relicModelCache)
-						.OrderBy<RelicModel, string>((RelicModel r) => r.Title.GetFormattedText(), comparer)
+						.OrderBy<RelicModel, string>((RelicModel r) => r.Title.GetFormattedText(), LocManager.Instance.StringComparer)
 						.ToArray();
 					bool flag = ancientStats.ContainsKey(ancientEventModel.Id) || array.Any((RelicModel r) => seenRelics.Contains(r));
 					LocString locString2 = new LocString("relic_collection", "ANCIENT_SUBCATEGORY");
@@ -179,30 +203,29 @@ public class NRelicCollectionCategory : VBoxContainer
 			}
 			return;
 		}
-		List<RelicModel> list5 = new List<RelicModel>();
-		List<RelicModel> list6 = new List<RelicModel>();
+		List<RelicModel> list3 = new List<RelicModel>();
+		List<RelicModel> list4 = new List<RelicModel>();
 		foreach (RelicPoolModel allCharacterRelicPool in ModelDb.AllCharacterRelicPools)
 		{
 			foreach (RelicModel item in _relicModelCache)
 			{
 				if (allCharacterRelicPool.AllRelicIds.Contains(item.Id))
 				{
-					list5.Add(item);
+					list3.Add(item);
 				}
 			}
 		}
 		foreach (RelicModel item2 in _relicModelCache)
 		{
-			if (!list5.Contains(item2))
+			if (!list3.Contains(item2))
 			{
-				list6.Add(item2);
+				list4.Add(item2);
 			}
 		}
-		StringComparer comparer2 = StringComparer.Create(LocManager.Instance.CultureInfo, CompareOptions.None);
-		list6.Sort((RelicModel p1, RelicModel p2) => comparer2.Compare(p1.Title.GetFormattedText(), p2.Title.GetFormattedText()));
-		LoadRelicNodes(list6.Concat(list5), seenRelics, allUnlockedRelics);
-		_collection.AddRelics(list6);
-		_collection.AddRelics(list5);
+		list4.Sort((RelicModel p1, RelicModel p2) => LocManager.Instance.StringComparer.Compare(p1.Title.GetFormattedText(), p2.Title.GetFormattedText()));
+		LoadRelicNodes(list4.Concat(list3), seenRelics, allUnlockedRelics);
+		_collection.AddRelics(list4);
+		_collection.AddRelics(list3);
 	}
 
 	private void LoadSubcategory(NRelicCollection collection, LocString? header, IEnumerable<RelicModel> relics, HashSet<RelicModel> seenRelics, HashSet<RelicModel> unlockedRelics)
@@ -219,6 +242,9 @@ public class NRelicCollectionCategory : VBoxContainer
 		_icon.Visible = true;
 	}
 
+	/// <summary>
+	/// Helper method to hook up relic nodes.
+	/// </summary>
 	private void LoadRelicNodes(IEnumerable<RelicModel> relics, HashSet<RelicModel> seenRelics, HashSet<RelicModel> unlockedRelics)
 	{
 		foreach (Node child in _relicsContainer.GetChildren())
@@ -274,6 +300,11 @@ public class NRelicCollectionCategory : VBoxContainer
 		return list;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -292,6 +323,7 @@ public class NRelicCollectionCategory : VBoxContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -327,6 +359,7 @@ public class NRelicCollectionCategory : VBoxContainer
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -353,6 +386,7 @@ public class NRelicCollectionCategory : VBoxContainer
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -384,6 +418,7 @@ public class NRelicCollectionCategory : VBoxContainer
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -420,6 +455,11 @@ public class NRelicCollectionCategory : VBoxContainer
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -433,6 +473,7 @@ public class NRelicCollectionCategory : VBoxContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -444,6 +485,7 @@ public class NRelicCollectionCategory : VBoxContainer
 		info.AddProperty(PropertyName._icon, Variant.From(in _icon));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

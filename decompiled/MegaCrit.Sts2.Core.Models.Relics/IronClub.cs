@@ -80,7 +80,7 @@ public sealed class IronClub : RelicModel
 		InvokeDisplayAmountChanged();
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner)
 		{
@@ -89,7 +89,7 @@ public sealed class IronClub : RelicModel
 			if (CombatManager.Instance.IsInProgress && CardsPlayed % intValue == 0)
 			{
 				TaskHelper.RunSafely(DoActivateVisuals());
-				await CardPileCmd.Draw(context, 1m, base.Owner);
+				await CardPileCmd.Draw(choiceContext, 1m, base.Owner);
 			}
 		}
 	}

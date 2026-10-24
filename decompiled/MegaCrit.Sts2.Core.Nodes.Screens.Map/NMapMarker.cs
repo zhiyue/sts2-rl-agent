@@ -8,29 +8,62 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
+/// <summary>
+/// The little arrow which indicates where you are on the map.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Map/NMapMarker.cs")]
 public class NMapMarker : TextureRect
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : TextureRect.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ResetMapPoint' method.
+		/// </summary>
 		public static readonly StringName ResetMapPoint = "ResetMapPoint";
 
+		/// <summary>
+		/// Cached name for the 'HideMapPoint' method.
+		/// </summary>
 		public static readonly StringName HideMapPoint = "HideMapPoint";
 
+		/// <summary>
+		/// Cached name for the 'SetMapPoint' method.
+		/// </summary>
 		public static readonly StringName SetMapPoint = "SetMapPoint";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : TextureRect.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_posOffset' field.
+		/// </summary>
 		public static readonly StringName _posOffset = "_posOffset";
 
+		/// <summary>
+		/// Cached name for the '_isEnabled' field.
+		/// </summary>
 		public static readonly StringName _isEnabled = "_isEnabled";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : TextureRect.SignalName
 	{
 	}
@@ -92,6 +125,11 @@ public class NMapMarker : TextureRect
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -106,6 +144,7 @@ public class NMapMarker : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -136,6 +175,7 @@ public class NMapMarker : TextureRect
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -158,6 +198,7 @@ public class NMapMarker : TextureRect
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -179,6 +220,7 @@ public class NMapMarker : TextureRect
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -200,6 +242,11 @@ public class NMapMarker : TextureRect
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -210,6 +257,7 @@ public class NMapMarker : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -219,6 +267,7 @@ public class NMapMarker : TextureRect
 		info.AddProperty(PropertyName._isEnabled, Variant.From(in _isEnabled));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

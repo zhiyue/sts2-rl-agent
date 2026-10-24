@@ -16,7 +16,11 @@ public sealed class TheObscuraNormal : EncounterModel
 
 	public override bool HasScene => true;
 
-	public override IEnumerable<MonsterModel> AllPossibleMonsters => new global::_003C_003Ez__ReadOnlySingleElementList<MonsterModel>(ModelDb.Monster<TheObscura>());
+	public override IEnumerable<MonsterModel> AllPossibleMonsters => new global::_003C_003Ez__ReadOnlyArray<MonsterModel>(new MonsterModel[2]
+	{
+		ModelDb.Monster<TheObscura>(),
+		ModelDb.Monster<Parafright>()
+	});
 
 	protected override IReadOnlyList<(MonsterModel, string?)> GenerateMonsters()
 	{

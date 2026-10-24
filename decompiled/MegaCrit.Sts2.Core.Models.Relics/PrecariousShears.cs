@@ -18,7 +18,7 @@ public sealed class PrecariousShears : RelicModel
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
 		new CardsVar(2),
-		new DamageVar(13m, ValueProp.Unpowered)
+		new DamageVar(16m, ValueProp.Unpowered)
 	});
 
 	public override async Task AfterObtained()

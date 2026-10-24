@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -19,6 +20,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class FuzzyWurmCrawler : MonsterModel
 {
+	private const string _firstAcidGoopMove = "FIRST_ACID_GOOP";
+
 	private const string _inhaleTrigger = "Inhale";
 
 	private bool _isPuffed;
@@ -58,13 +61,16 @@ public sealed class FuzzyWurmCrawler : MonsterModel
 
 	private async Task AcidGoop(IReadOnlyList<Creature> targets)
 	{
-		if (TestMode.IsOff)
+		if (TestMode.IsOff && targets.Any())
 		{
-			NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(base.Creature);
-			Node2D specialNode = creatureNode.GetSpecialNode<Node2D>("Visuals/SpineBoneNode");
-			if (specialNode != null)
+			NCreature creatureNode = base.Creature.GetCreatureNode();
+			if (creatureNode != null)
 			{
-				specialNode.Position = Vector2.Left * (creatureNode.GlobalPosition.X - NCombatRoom.Instance.GetCreatureNode(targets.First()).GlobalPosition.X);
+				Node2D specialNode = creatureNode.GetSpecialNode<Node2D>("Visuals/SpineBoneNode");
+				if (specialNode != null)
+				{
+					specialNode.Position = Vector2.Left * (creatureNode.GlobalPosition.X - NCombatRoom.Instance.GetCreatureNode(targets.First()).GlobalPosition.X);
+				}
 			}
 		}
 		IsPuffed = false;
@@ -79,7 +85,7 @@ public sealed class FuzzyWurmCrawler : MonsterModel
 		IsPuffed = true;
 		SfxCmd.Play(CastSfx);
 		await CreatureCmd.TriggerAnim(base.Creature, "Inhale", 0.6f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 7m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 7m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
@@ -104,5 +110,10 @@ public sealed class FuzzyWurmCrawler : MonsterModel
 		creatureAnimator.AddAnyState("Hit", animState3, () => !IsPuffed);
 		creatureAnimator.AddAnyState("Hit", animState5, () => IsPuffed);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "FIRST_ACID_GOOP";
 	}
 }

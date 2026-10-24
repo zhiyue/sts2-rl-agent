@@ -13,26 +13,56 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NWindowResizeTickbox.cs")]
 public class NWindowResizeTickbox : NSettingsTickbox, IResettableSettingNode
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSettingsTickbox.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnTick' method.
+		/// </summary>
 		public new static readonly StringName OnTick = "OnTick";
 
+		/// <summary>
+		/// Cached name for the 'OnUntick' method.
+		/// </summary>
 		public new static readonly StringName OnUntick = "OnUntick";
 
+		/// <summary>
+		/// Cached name for the 'SetFromSettings' method.
+		/// </summary>
 		public static readonly StringName SetFromSettings = "SetFromSettings";
 
+		/// <summary>
+		/// Cached name for the 'OnWindowChange' method.
+		/// </summary>
 		public static readonly StringName OnWindowChange = "OnWindowChange";
 
+		/// <summary>
+		/// Cached name for the 'RefreshEnabled' method.
+		/// </summary>
 		public static readonly StringName RefreshEnabled = "RefreshEnabled";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSettingsTickbox.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_settingsScreen' field.
+		/// </summary>
 		public new static readonly StringName _settingsScreen = "_settingsScreen";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSettingsTickbox.SignalName
 	{
 	}
@@ -84,6 +114,11 @@ public class NWindowResizeTickbox : NSettingsTickbox, IResettableSettingNode
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -100,6 +135,7 @@ public class NWindowResizeTickbox : NSettingsTickbox, IResettableSettingNode
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -142,6 +178,7 @@ public class NWindowResizeTickbox : NSettingsTickbox, IResettableSettingNode
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -172,6 +209,7 @@ public class NWindowResizeTickbox : NSettingsTickbox, IResettableSettingNode
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -183,6 +221,7 @@ public class NWindowResizeTickbox : NSettingsTickbox, IResettableSettingNode
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -194,6 +233,11 @@ public class NWindowResizeTickbox : NSettingsTickbox, IResettableSettingNode
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -202,6 +246,7 @@ public class NWindowResizeTickbox : NSettingsTickbox, IResettableSettingNode
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -209,6 +254,7 @@ public class NWindowResizeTickbox : NSettingsTickbox, IResettableSettingNode
 		info.AddProperty(PropertyName._settingsScreen, Variant.From(in _settingsScreen));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

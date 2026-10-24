@@ -21,6 +21,9 @@ public sealed class VulnerablePower : PowerModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DynamicVar("DamageIncrease", 1.5m));
 
+	/// <summary>
+	/// Multiplies damage received by 1.5x.
+	/// </summary>
 	public override decimal ModifyDamageMultiplicative(Creature? target, decimal amount, ValueProp props, Creature? dealer, CardModel? cardSource)
 	{
 		if (target != base.Owner)
@@ -53,7 +56,7 @@ public sealed class VulnerablePower : PowerModel
 		return num;
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
 		if (side == CombatSide.Enemy)
 		{

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -26,74 +27,186 @@ namespace MegaCrit.Sts2.Core.Nodes.Events;
 [ScriptPath("res://src/Core/Nodes/Events/NAncientEventLayout.cs")]
 public class NAncientEventLayout : NEventLayout
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NEventLayout.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'InitializeVisuals' method.
+		/// </summary>
 		public new static readonly StringName InitializeVisuals = "InitializeVisuals";
 
+		/// <summary>
+		/// Cached name for the 'AnimateIn' method.
+		/// </summary>
 		public new static readonly StringName AnimateIn = "AnimateIn";
 
+		/// <summary>
+		/// Cached name for the 'OnDialogueLineFocused' method.
+		/// </summary>
+		public static readonly StringName OnDialogueLineFocused = "OnDialogueLineFocused";
+
+		/// <summary>
+		/// Cached name for the 'OnDialogueLineUnfocused' method.
+		/// </summary>
+		public static readonly StringName OnDialogueLineUnfocused = "OnDialogueLineUnfocused";
+
+		/// <summary>
+		/// Cached name for the 'ClearDialogue' method.
+		/// </summary>
 		public static readonly StringName ClearDialogue = "ClearDialogue";
 
+		/// <summary>
+		/// Cached name for the 'OnSetupComplete' method.
+		/// </summary>
 		public new static readonly StringName OnSetupComplete = "OnSetupComplete";
 
+		/// <summary>
+		/// Cached name for the 'AnimateButtonsIn' method.
+		/// </summary>
 		public new static readonly StringName AnimateButtonsIn = "AnimateButtonsIn";
 
+		/// <summary>
+		/// Cached name for the 'OnDialogueHitboxClicked' method.
+		/// </summary>
 		public static readonly StringName OnDialogueHitboxClicked = "OnDialogueHitboxClicked";
 
+		/// <summary>
+		/// Cached name for the 'SetDialogueLineAndAnimate' method.
+		/// </summary>
 		public static readonly StringName SetDialogueLineAndAnimate = "SetDialogueLineAndAnimate";
 
+		/// <summary>
+		/// Cached name for the 'UpdateFakeNextButton' method.
+		/// </summary>
 		public static readonly StringName UpdateFakeNextButton = "UpdateFakeNextButton";
 
+		/// <summary>
+		/// Cached name for the 'HideNameBanner' method.
+		/// </summary>
 		public static readonly StringName HideNameBanner = "HideNameBanner";
 
+		/// <summary>
+		/// Cached name for the 'ShowNameBanner' method.
+		/// </summary>
 		public static readonly StringName ShowNameBanner = "ShowNameBanner";
 
+		/// <summary>
+		/// Cached name for the 'UpdateBannerVisibility' method.
+		/// </summary>
 		public static readonly StringName UpdateBannerVisibility = "UpdateBannerVisibility";
 
+		/// <summary>
+		/// Cached name for the 'UpdateHotkeyDisplay' method.
+		/// </summary>
 		public static readonly StringName UpdateHotkeyDisplay = "UpdateHotkeyDisplay";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NEventLayout.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsDialogueOnLastLine' property.
+		/// </summary>
 		public static readonly StringName IsDialogueOnLastLine = "IsDialogueOnLastLine";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_currentDialogueLine' field.
+		/// </summary>
 		public static readonly StringName _currentDialogueLine = "_currentDialogueLine";
 
+		/// <summary>
+		/// Cached name for the '_ancientBgContainer' field.
+		/// </summary>
 		public static readonly StringName _ancientBgContainer = "_ancientBgContainer";
 
+		/// <summary>
+		/// Cached name for the '_ancientNameBanner' field.
+		/// </summary>
 		public static readonly StringName _ancientNameBanner = "_ancientNameBanner";
 
+		/// <summary>
+		/// Cached name for the '_bannerTween' field.
+		/// </summary>
 		public static readonly StringName _bannerTween = "_bannerTween";
 
+		/// <summary>
+		/// Cached name for the '_contentContainer' field.
+		/// </summary>
 		public static readonly StringName _contentContainer = "_contentContainer";
 
+		/// <summary>
+		/// Cached name for the '_originalContentContainerHeight' field.
+		/// </summary>
 		public static readonly StringName _originalContentContainerHeight = "_originalContentContainerHeight";
 
+		/// <summary>
+		/// Cached name for the '_content' field.
+		/// </summary>
 		public static readonly StringName _content = "_content";
 
+		/// <summary>
+		/// Cached name for the '_dialogueContainer' field.
+		/// </summary>
 		public static readonly StringName _dialogueContainer = "_dialogueContainer";
 
+		/// <summary>
+		/// Cached name for the '_dialogueHitbox' field.
+		/// </summary>
 		public static readonly StringName _dialogueHitbox = "_dialogueHitbox";
 
+		/// <summary>
+		/// Cached name for the '_fakeNextButtonContainer' field.
+		/// </summary>
 		public static readonly StringName _fakeNextButtonContainer = "_fakeNextButtonContainer";
 
+		/// <summary>
+		/// Cached name for the '_fakeNextButton' field.
+		/// </summary>
 		public static readonly StringName _fakeNextButton = "_fakeNextButton";
 
+		/// <summary>
+		/// Cached name for the '_fakeNextButtonControllerIcon' field.
+		/// </summary>
 		public static readonly StringName _fakeNextButtonControllerIcon = "_fakeNextButtonControllerIcon";
 
+		/// <summary>
+		/// Cached name for the '_fakeNextButtonLabel' field.
+		/// </summary>
 		public static readonly StringName _fakeNextButtonLabel = "_fakeNextButtonLabel";
 
+		/// <summary>
+		/// Cached name for the '_contentTween' field.
+		/// </summary>
 		public static readonly StringName _contentTween = "_contentTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NEventLayout.SignalName
 	{
 	}
@@ -114,18 +227,42 @@ public class NAncientEventLayout : NEventLayout
 
 	private Tween? _bannerTween;
 
+	/// <summary>
+	/// Parent node for the content container.
+	/// We need this because we want to auto-scroll parts of the content container into view as the player progresses
+	/// the dialogue.
+	/// </summary>
 	private Control _contentContainer;
 
+	/// <summary>
+	/// We temporarily resize this container based on some other things happening in the layout, but we eventually want
+	/// to restore it to its original height, so we set this during creation.
+	/// </summary>
 	private float _originalContentContainerHeight;
 
+	/// <summary>
+	/// Contains the dialogue and the option buttons.
+	/// </summary>
 	private VBoxContainer _content;
 
 	private VBoxContainer _dialogueContainer;
 
+	/// <summary>
+	/// The invisible hitbox that the player needs to click inside to advance the dialogue.
+	/// </summary>
 	private NAncientDialogueHitbox _dialogueHitbox;
 
+	/// <summary>
+	/// The container for the fake "next button".
+	/// We use this to size the bottom margin of the content container while the button is showing.
+	/// </summary>
 	private Control _fakeNextButtonContainer;
 
+	/// <summary>
+	/// The "button" that lets the player advance the dialogue.
+	/// This is fake because <see cref="F:MegaCrit.Sts2.Core.Nodes.Events.NAncientEventLayout._dialogueHitbox" /> is what's really listening for these clicks. The button is
+	/// just to let the player know that they can continue, and to show some flavorful text for continuing.
+	/// </summary>
 	private Control _fakeNextButton;
 
 	private TextureRect _fakeNextButtonControllerIcon;
@@ -134,6 +271,11 @@ public class NAncientEventLayout : NEventLayout
 
 	private Tween? _contentTween;
 
+	private CancellationTokenSource _cts = new CancellationTokenSource();
+
+	/// <summary>
+	/// Is the player on the last line of dialogue?
+	/// </summary>
 	private bool IsDialogueOnLastLine => _currentDialogueLine >= _dialogue.Count - 1;
 
 	public override Control? DefaultFocusedControl
@@ -174,12 +316,14 @@ public class NAncientEventLayout : NEventLayout
 	public override void _EnterTree()
 	{
 		base._EnterTree();
+		_cts = new CancellationTokenSource();
 		ActiveScreenContext.Instance.Updated += UpdateBannerVisibility;
 	}
 
 	public override void _ExitTree()
 	{
 		base._ExitTree();
+		_cts.Cancel();
 		if (_ancientEvent.HasAmbientBgm)
 		{
 			SfxCmd.StopLoop(_ancientEvent.AmbientBgm);
@@ -239,15 +383,52 @@ public class NAncientEventLayout : NEventLayout
 		_currentDialogueLine = 0;
 		foreach (AncientDialogueLine line in lines)
 		{
-			NAncientDialogueLine child = NAncientDialogueLine.Create(line, _ancientEvent, _ancientEvent.Owner.Character);
-			_dialogueContainer.AddChildSafely(child);
+			NAncientDialogueLine nAncientDialogueLine = NAncientDialogueLine.Create(line, _ancientEvent, _ancientEvent.Owner.Character);
+			nAncientDialogueLine.Connect(NClickableControl.SignalName.Focused, Callable.From<NClickableControl>(OnDialogueLineFocused));
+			nAncientDialogueLine.Connect(NClickableControl.SignalName.Unfocused, Callable.From<NClickableControl>(OnDialogueLineUnfocused));
+			_dialogueContainer.AddChildSafely(nAncientDialogueLine);
+		}
+	}
+
+	/// <summary>
+	/// Makes the stale dialogue lines all visible at once.
+	/// </summary>
+	private void OnDialogueLineFocused(NClickableControl dialogueLine)
+	{
+		if (_dialogueContainer.GetChild<NAncientDialogueLine>(_currentDialogueLine) != dialogueLine)
+		{
+			for (int i = 0; i < _currentDialogueLine; i++)
+			{
+				NAncientDialogueLine child = _dialogueContainer.GetChild<NAncientDialogueLine>(i);
+				child.FadeInStaleDialogue();
+			}
+		}
+	}
+
+	/// <summary>
+	/// Returns the stale dialogues to their original opacity.
+	/// </summary>
+	private void OnDialogueLineUnfocused(NClickableControl dialogueLine)
+	{
+		if (!_dialogueContainer.GetChild<NAncientDialogueLine>(_currentDialogueLine).Equals(dialogueLine))
+		{
+			for (int i = 0; i < _currentDialogueLine; i++)
+			{
+				NAncientDialogueLine child = _dialogueContainer.GetChild<NAncientDialogueLine>(i);
+				child.FadeOutStaleDialogue();
+			}
 		}
 	}
 
 	public void ClearDialogue()
 	{
 		_dialogue.Clear();
-		_dialogueContainer.FreeChildren();
+		_currentDialogueLine = 0;
+		foreach (Node item in _dialogueContainer.GetChildren().ToList())
+		{
+			_dialogueContainer.RemoveChildSafely(item);
+			item.QueueFreeSafely();
+		}
 	}
 
 	public override void OnSetupComplete()
@@ -270,7 +451,7 @@ public class NAncientEventLayout : NEventLayout
 
 	private async Task PlayHealVfxAfterFadeIn(Player player, decimal healAmount)
 	{
-		await Cmd.Wait(0.2f);
+		await Cmd.Wait(0.2f, _cts.Token);
 		PlayerFullscreenHealVfx.Play(player, healAmount, base.VfxContainer);
 	}
 
@@ -291,8 +472,13 @@ public class NAncientEventLayout : NEventLayout
 		}
 		UpdateFakeNextButton();
 		NAncientDialogueLine childOrNull = _dialogueContainer.GetChildOrNull<NAncientDialogueLine>(_currentDialogueLine);
-		childOrNull?.PlaySfx();
-		float num = ((childOrNull != null) ? (childOrNull.Position.Y + childOrNull.Size.Y) : 0f);
+		float num = 0f;
+		if (childOrNull != null)
+		{
+			childOrNull.OnAnimInSetVisible();
+			childOrNull.PlaySfx();
+			num = childOrNull.Position.Y + childOrNull.Size.Y;
+		}
 		if (IsDialogueOnLastLine)
 		{
 			_fakeNextButtonContainer.Visible = false;
@@ -352,6 +538,9 @@ public class NAncientEventLayout : NEventLayout
 		}
 	}
 
+	/// <summary>
+	/// Used to hide the banner when you open a screen above this (like the map)
+	/// </summary>
 	private void HideNameBanner()
 	{
 		if (_ancientNameBanner != null)
@@ -362,6 +551,9 @@ public class NAncientEventLayout : NEventLayout
 		}
 	}
 
+	/// <summary>
+	/// Used to show the banner when you return focus to the event room
+	/// </summary>
 	private void ShowNameBanner()
 	{
 		if (_ancientNameBanner != null)
@@ -397,15 +589,28 @@ public class NAncientEventLayout : NEventLayout
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(15);
+		List<MethodInfo> list = new List<MethodInfo>(17);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.InitializeVisuals, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.AnimateIn, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.OnDialogueLineFocused, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Object, "dialogueLine", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
+		}, null));
+		list.Add(new MethodInfo(MethodName.OnDialogueLineUnfocused, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Object, "dialogueLine", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
+		}, null));
 		list.Add(new MethodInfo(MethodName.ClearDialogue, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnSetupComplete, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.AnimateButtonsIn, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -425,6 +630,7 @@ public class NAncientEventLayout : NEventLayout
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -455,6 +661,18 @@ public class NAncientEventLayout : NEventLayout
 		if (method == MethodName.AnimateIn && args.Count == 0)
 		{
 			AnimateIn();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.OnDialogueLineFocused && args.Count == 1)
+		{
+			OnDialogueLineFocused(VariantUtils.ConvertTo<NClickableControl>(in args[0]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.OnDialogueLineUnfocused && args.Count == 1)
+		{
+			OnDialogueLineUnfocused(VariantUtils.ConvertTo<NClickableControl>(in args[0]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -521,6 +739,7 @@ public class NAncientEventLayout : NEventLayout
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -541,6 +760,14 @@ public class NAncientEventLayout : NEventLayout
 			return true;
 		}
 		if (method == MethodName.AnimateIn)
+		{
+			return true;
+		}
+		if (method == MethodName.OnDialogueLineFocused)
+		{
+			return true;
+		}
+		if (method == MethodName.OnDialogueLineUnfocused)
 		{
 			return true;
 		}
@@ -587,6 +814,7 @@ public class NAncientEventLayout : NEventLayout
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -663,6 +891,7 @@ public class NAncientEventLayout : NEventLayout
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -749,6 +978,11 @@ public class NAncientEventLayout : NEventLayout
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -772,6 +1006,7 @@ public class NAncientEventLayout : NEventLayout
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -792,6 +1027,7 @@ public class NAncientEventLayout : NEventLayout
 		info.AddProperty(PropertyName._contentTween, Variant.From(in _contentTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -23,7 +23,7 @@ public sealed class BulletTime : CardModel
 				card.SetToFreeThisTurn();
 			}
 		}
-		await PowerCmd.Apply<NoDrawPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		await PowerCmd.Apply<NoDrawPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

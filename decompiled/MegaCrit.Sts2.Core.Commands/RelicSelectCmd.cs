@@ -39,8 +39,8 @@ public static class RelicSelectCmd
 				}
 			}
 			relicModel = (await nChooseARelicSelection.RelicsSelected()).FirstOrDefault();
-			int index = relics.IndexOf(relicModel);
-			PlayerChoiceResult result = PlayerChoiceResult.FromIndex(index);
+			int value = relics.IndexOf(relicModel);
+			PlayerChoiceResult result = PlayerChoiceResult.FromIndex(value);
 			RunManager.Instance.PlayerChoiceSynchronizer.SyncLocalChoice(player, choiceId, result);
 		}
 		else

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -11,11 +12,16 @@ using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.TreasureRelicPicking;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.TreasureRoomRelic;
 
+/// <summary>
+/// Image of a literal hand.
+/// This name is kind of wonky because it's definitely not the same as NPlayerHand.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/TreasureRoomRelic/NHandImage.cs")]
 public class NHandImage : Control
 {
@@ -26,56 +32,151 @@ public class NHandImage : Control
 		GrabbingRelic
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
+		public new static readonly StringName _EnterTree = "_EnterTree";
+
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'SetIsInFight' method.
+		/// </summary>
 		public static readonly StringName SetIsInFight = "SetIsInFight";
 
+		/// <summary>
+		/// Cached name for the 'SetFrozenForRelicAwards' method.
+		/// </summary>
 		public static readonly StringName SetFrozenForRelicAwards = "SetFrozenForRelicAwards";
 
+		/// <summary>
+		/// Cached name for the 'DoFightMove' method.
+		/// </summary>
 		public static readonly StringName DoFightMove = "DoFightMove";
 
+		/// <summary>
+		/// Cached name for the 'SetTextureToFightMove' method.
+		/// </summary>
 		public static readonly StringName SetTextureToFightMove = "SetTextureToFightMove";
 
+		/// <summary>
+		/// Cached name for the 'SetPointingPosition' method.
+		/// </summary>
 		public static readonly StringName SetPointingPosition = "SetPointingPosition";
 
+		/// <summary>
+		/// Cached name for the 'AnimateAway' method.
+		/// </summary>
 		public static readonly StringName AnimateAway = "AnimateAway";
 
+		/// <summary>
+		/// Cached name for the 'AnimateIn' method.
+		/// </summary>
 		public static readonly StringName AnimateIn = "AnimateIn";
 
+		/// <summary>
+		/// Cached name for the 'SetIsDown' method.
+		/// </summary>
 		public static readonly StringName SetIsDown = "SetIsDown";
 
+		/// <summary>
+		/// Cached name for the 'SetSkipped' method.
+		/// </summary>
+		public static readonly StringName SetSkipped = "SetSkipped";
+
+		/// <summary>
+		/// Cached name for the 'SetAnimateInProgress' method.
+		/// </summary>
 		public static readonly StringName SetAnimateInProgress = "SetAnimateInProgress";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Index' property.
+		/// </summary>
 		public static readonly StringName Index = "Index";
 
+		/// <summary>
+		/// Cached name for the 'IsDown' property.
+		/// </summary>
 		public static readonly StringName IsDown = "IsDown";
 
+		/// <summary>
+		/// Cached name for the 'IsShown' property.
+		/// </summary>
+		public static readonly StringName IsShown = "IsShown";
+
+		/// <summary>
+		/// Cached name for the '_grabMarker' field.
+		/// </summary>
 		public static readonly StringName _grabMarker = "_grabMarker";
 
+		/// <summary>
+		/// Cached name for the '_textureRect' field.
+		/// </summary>
 		public static readonly StringName _textureRect = "_textureRect";
 
+		/// <summary>
+		/// Cached name for the '_currentVelocity' field.
+		/// </summary>
 		public static readonly StringName _currentVelocity = "_currentVelocity";
 
+		/// <summary>
+		/// Cached name for the '_desiredPosition' field.
+		/// </summary>
 		public static readonly StringName _desiredPosition = "_desiredPosition";
 
+		/// <summary>
+		/// Cached name for the '_downTween' field.
+		/// </summary>
 		public static readonly StringName _downTween = "_downTween";
 
+		/// <summary>
+		/// Cached name for the '_state' field.
+		/// </summary>
 		public static readonly StringName _state = "_state";
 
+		/// <summary>
+		/// Cached name for the '_isInFight' field.
+		/// </summary>
 		public static readonly StringName _isInFight = "_isInFight";
 
+		/// <summary>
+		/// Cached name for the '_originalPosition' field.
+		/// </summary>
 		public static readonly StringName _originalPosition = "_originalPosition";
 
+		/// <summary>
+		/// Cached name for the '_handAnimateInProgress' field.
+		/// </summary>
 		public static readonly StringName _handAnimateInProgress = "_handAnimateInProgress";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -85,6 +186,8 @@ public class NHandImage : Control
 	private static readonly Vector2 _pointingPivot = new Vector2(163f, 10f);
 
 	private static readonly Vector2 _fightingPivot = new Vector2(197f, 600f);
+
+	private CancellationTokenSource _cts = new CancellationTokenSource();
 
 	private Marker2D _grabMarker;
 
@@ -109,6 +212,8 @@ public class NHandImage : Control
 	public int Index { get; private set; }
 
 	public bool IsDown { get; private set; }
+
+	public bool IsShown { get; private set; }
 
 	public static NHandImage Create(Player player, int slotIndex)
 	{
@@ -138,6 +243,22 @@ public class NHandImage : Control
 		_textureRect.Texture = Player.Character.ArmPointingTexture;
 	}
 
+	public override void _EnterTree()
+	{
+		_cts = new CancellationTokenSource();
+	}
+
+	public override void _ExitTree()
+	{
+		_cts.Cancel();
+	}
+
+	/// <summary>
+	/// If true: Z-indexes hand to 1 so that they appear above the fight backdrop, modulates them to white regardless of
+	/// whether they belong to the local player, and adjusts their pivot in preparation for throwing RPS moves.
+	/// If false: undoes all the above.
+	/// </summary>
+	/// <param name="inFight"></param>
 	public void SetIsInFight(bool inFight)
 	{
 		_isInFight = inFight;
@@ -156,6 +277,10 @@ public class NHandImage : Control
 		base.ZIndex = 0;
 	}
 
+	/// <summary>
+	/// If true is passed, stops the hand from following the mouse cursor (local or remote), and tweens the hand towards
+	/// the edge of the screen.
+	/// </summary>
 	public void SetFrozenForRelicAwards(bool frozenForRelicAwards)
 	{
 		if (frozenForRelicAwards)
@@ -171,6 +296,12 @@ public class NHandImage : Control
 		}
 	}
 
+	/// <summary>
+	/// Emulates a person throwing a rock-paper-scissors move; that is, the hand shakes three times, then shows an image
+	/// that looks like a fist, a peace sign, or a hand with all fingers spread.
+	/// </summary>
+	/// <param name="move">The RPS move to show.</param>
+	/// <param name="duration">How long, in total, the three shakes should take to animate.</param>
 	public Tween DoFightMove(RelicPickingFightMove move, float duration)
 	{
 		float num = 0.666f * duration / 3f;
@@ -231,6 +362,11 @@ public class NHandImage : Control
 		};
 	}
 
+	/// <summary>
+	/// Sets the position at which the hand will point.
+	/// If SetFrozenForRelicAwards has been called with true, then this does nothing.
+	/// </summary>
+	/// <param name="position"></param>
 	public void SetPointingPosition(Vector2 position)
 	{
 		if (_state == State.None)
@@ -239,13 +375,20 @@ public class NHandImage : Control
 		}
 	}
 
+	/// <summary>
+	/// Called after relic picking is done and the hand should go away.
+	/// </summary>
 	public void AnimateAway()
 	{
 		Rect2 viewportRect = GetViewportRect();
 		Vector2 vector = Vector2.Down.Rotated(base.Rotation);
 		_desiredPosition = viewportRect.Size / 2f + viewportRect.Size * vector * 0.8f;
+		IsShown = false;
 	}
 
+	/// <summary>
+	/// Called when the hand is shown and we should animate it in from off-screen.
+	/// </summary>
 	public void AnimateIn()
 	{
 		Tween tween = CreateTween();
@@ -254,8 +397,14 @@ public class NHandImage : Control
 		{
 			_handAnimateInProgress = v;
 		}), 0f, 1f, 0.6000000238418579).SetTrans(Tween.TransitionType.Expo).SetEase(Tween.EaseType.Out);
+		IsShown = true;
 	}
 
+	/// <summary>
+	/// Does a small tween: scale down if true, scale up if false.
+	/// Should be called when the left mouse button (local or remote) is pressed down.
+	/// </summary>
+	/// <param name="isDown"></param>
 	public void SetIsDown(bool isDown)
 	{
 		if (IsDown != isDown)
@@ -272,6 +421,10 @@ public class NHandImage : Control
 		}
 	}
 
+	/// <summary>
+	/// Shakes the hand very dramatically and fades it out.
+	/// </summary>
+	/// <param name="duration">The amount of time to shake and fade.</param>
 	public async Task DoLoseShake(float duration)
 	{
 		CreateTween().TweenProperty(this, "modulate", new Color(0.5f, 0.5f, 0.5f, 0.5f), duration * 0.333f).SetDelay(duration * 0.667f);
@@ -280,11 +433,16 @@ public class NHandImage : Control
 		{
 			Vector2 vector = rumble.Update(GetProcessDeltaTime());
 			_textureRect.Position = _originalPosition + vector;
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrame(_cts.Token);
 		}
 		_textureRect.Position = _originalPosition;
 	}
 
+	/// <summary>
+	/// Does a tween that looks like the hand is grabbing the holder.
+	/// After the tween is complete, the holder will be parented to the hand.
+	/// </summary>
+	/// <param name="holder">The relic holder to grab.</param>
 	public async Task GrabRelic(NTreasureRoomRelicHolder holder)
 	{
 		State oldState = _state;
@@ -292,17 +450,30 @@ public class NHandImage : Control
 		SetTextureToFightMove(RelicPickingFightMove.Paper);
 		Tween tween = CreateTween();
 		tween.TweenProperty(this, "global_position", holder.GlobalPosition - _grabMarker.Position.Rotated(base.Rotation) + holder.Size * 0.5f, 0.5).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-		await ToSignal(tween, Tween.SignalName.Finished);
+		await tween.AwaitFinished(_cts.Token);
 		SetTextureToFightMove(RelicPickingFightMove.Rock);
 		holder.Reparent(this);
 		holder.Rotation = 0f - base.Rotation;
 		holder.Position = _grabMarker.Position - holder.Size * 0.5f;
 		tween = CreateTween();
 		tween.TweenProperty(this, "global_position", _desiredPosition, 0.5).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-		await ToSignal(tween, Tween.SignalName.Finished);
+		await tween.AwaitFinished(_cts.Token);
 		_state = oldState;
 	}
 
+	/// <summary>
+	/// Sets hand to fist.
+	/// </summary>
+	public void SetSkipped()
+	{
+		SetTextureToFightMove(RelicPickingFightMove.Rock);
+	}
+
+	/// <summary>
+	/// Sets the progress of the slide-in animation, from 0 to 1.
+	/// This should be used when the treasure room is opened for the first time, so that the hands do not immediately
+	/// spawn on-screen.
+	/// </summary>
 	public void SetAnimateInProgress(float animateInProgress)
 	{
 		_handAnimateInProgress = animateInProgress;
@@ -350,11 +521,18 @@ public class NHandImage : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(11);
+		List<MethodInfo> list = new List<MethodInfo>(14);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.SetIsInFight, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Bool, "inFight", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
@@ -382,6 +560,7 @@ public class NHandImage : Control
 		{
 			new PropertyInfo(Variant.Type.Bool, "isDown", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.SetSkipped, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.SetAnimateInProgress, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Float, "animateInProgress", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
@@ -393,12 +572,25 @@ public class NHandImage : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._EnterTree && args.Count == 0)
+		{
+			_EnterTree();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -449,6 +641,12 @@ public class NHandImage : Control
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.SetSkipped && args.Count == 0)
+		{
+			SetSkipped();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName.SetAnimateInProgress && args.Count == 1)
 		{
 			SetAnimateInProgress(VariantUtils.ConvertTo<float>(in args[0]));
@@ -464,10 +662,19 @@ public class NHandImage : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
 		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName._EnterTree)
+		{
+			return true;
+		}
+		if (method == MethodName._ExitTree)
 		{
 			return true;
 		}
@@ -503,6 +710,10 @@ public class NHandImage : Control
 		{
 			return true;
 		}
+		if (method == MethodName.SetSkipped)
+		{
+			return true;
+		}
 		if (method == MethodName.SetAnimateInProgress)
 		{
 			return true;
@@ -514,6 +725,7 @@ public class NHandImage : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -525,6 +737,11 @@ public class NHandImage : Control
 		if (name == PropertyName.IsDown)
 		{
 			IsDown = VariantUtils.ConvertTo<bool>(in value);
+			return true;
+		}
+		if (name == PropertyName.IsShown)
+		{
+			IsShown = VariantUtils.ConvertTo<bool>(in value);
 			return true;
 		}
 		if (name == PropertyName._grabMarker)
@@ -575,6 +792,7 @@ public class NHandImage : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -583,9 +801,17 @@ public class NHandImage : Control
 			value = VariantUtils.CreateFrom<int>(Index);
 			return true;
 		}
+		bool from;
 		if (name == PropertyName.IsDown)
 		{
-			value = VariantUtils.CreateFrom<bool>(IsDown);
+			from = IsDown;
+			value = VariantUtils.CreateFrom(in from);
+			return true;
+		}
+		if (name == PropertyName.IsShown)
+		{
+			from = IsShown;
+			value = VariantUtils.CreateFrom(in from);
 			return true;
 		}
 		if (name == PropertyName._grabMarker)
@@ -636,6 +862,11 @@ public class NHandImage : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -651,15 +882,18 @@ public class NHandImage : Control
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName._handAnimateInProgress, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Int, PropertyName.Index, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.IsDown, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.IsShown, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 		info.AddProperty(PropertyName.Index, Variant.From<int>(Index));
 		info.AddProperty(PropertyName.IsDown, Variant.From<bool>(IsDown));
+		info.AddProperty(PropertyName.IsShown, Variant.From<bool>(IsShown));
 		info.AddProperty(PropertyName._grabMarker, Variant.From(in _grabMarker));
 		info.AddProperty(PropertyName._textureRect, Variant.From(in _textureRect));
 		info.AddProperty(PropertyName._currentVelocity, Variant.From(in _currentVelocity));
@@ -671,6 +905,7 @@ public class NHandImage : Control
 		info.AddProperty(PropertyName._handAnimateInProgress, Variant.From(in _handAnimateInProgress));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -683,41 +918,45 @@ public class NHandImage : Control
 		{
 			IsDown = value2.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._grabMarker, out var value3))
+		if (info.TryGetProperty(PropertyName.IsShown, out var value3))
 		{
-			_grabMarker = value3.As<Marker2D>();
+			IsShown = value3.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._textureRect, out var value4))
+		if (info.TryGetProperty(PropertyName._grabMarker, out var value4))
 		{
-			_textureRect = value4.As<TextureRect>();
+			_grabMarker = value4.As<Marker2D>();
 		}
-		if (info.TryGetProperty(PropertyName._currentVelocity, out var value5))
+		if (info.TryGetProperty(PropertyName._textureRect, out var value5))
 		{
-			_currentVelocity = value5.As<Vector2>();
+			_textureRect = value5.As<TextureRect>();
 		}
-		if (info.TryGetProperty(PropertyName._desiredPosition, out var value6))
+		if (info.TryGetProperty(PropertyName._currentVelocity, out var value6))
 		{
-			_desiredPosition = value6.As<Vector2>();
+			_currentVelocity = value6.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName._downTween, out var value7))
+		if (info.TryGetProperty(PropertyName._desiredPosition, out var value7))
 		{
-			_downTween = value7.As<Tween>();
+			_desiredPosition = value7.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName._state, out var value8))
+		if (info.TryGetProperty(PropertyName._downTween, out var value8))
 		{
-			_state = value8.As<State>();
+			_downTween = value8.As<Tween>();
 		}
-		if (info.TryGetProperty(PropertyName._isInFight, out var value9))
+		if (info.TryGetProperty(PropertyName._state, out var value9))
 		{
-			_isInFight = value9.As<bool>();
+			_state = value9.As<State>();
 		}
-		if (info.TryGetProperty(PropertyName._originalPosition, out var value10))
+		if (info.TryGetProperty(PropertyName._isInFight, out var value10))
 		{
-			_originalPosition = value10.As<Vector2>();
+			_isInFight = value10.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._handAnimateInProgress, out var value11))
+		if (info.TryGetProperty(PropertyName._originalPosition, out var value11))
 		{
-			_handAnimateInProgress = value11.As<float>();
+			_originalPosition = value11.As<Vector2>();
+		}
+		if (info.TryGetProperty(PropertyName._handAnimateInProgress, out var value12))
+		{
+			_handAnimateInProgress = value12.As<float>();
 		}
 	}
 }

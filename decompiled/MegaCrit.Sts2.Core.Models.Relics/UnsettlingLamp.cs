@@ -103,28 +103,32 @@ public sealed class UnsettlingLamp : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override decimal ModifyPowerAmountGiven(PowerModel power, Creature giver, decimal amount, Creature? target, CardModel? cardSource)
+	public override decimal ModifyPowerAmountGivenMultiplicative(PowerModel power, Creature giver, decimal amount, Creature? target, CardModel? cardSource)
 	{
 		if (TriggeringCard == null)
 		{
-			return amount;
+			return 1m;
 		}
 		if (cardSource != TriggeringCard)
 		{
-			return amount;
+			return 1m;
 		}
 		if (IsFinishedTriggering)
 		{
-			return amount;
+			return 1m;
 		}
 		if (HasDoubledTemporaryPowerSource(power))
 		{
-			return amount;
+			return 1m;
 		}
-		return amount * 2m;
+		if (power.GetTypeForAmount(amount) != PowerType.Debuff)
+		{
+			return 1m;
+		}
+		return 2m;
 	}
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card != TriggeringCard)
 		{
@@ -149,6 +153,14 @@ public sealed class UnsettlingLamp : RelicModel
 		return Task.CompletedTask;
 	}
 
+	/// <summary>
+	/// If we've doubled an <see cref="T:MegaCrit.Sts2.Core.Models.ITemporaryPower" /> and now we're trying to double its internal debuff,
+	/// skip it so we don't double-dip.
+	/// </summary>
+	/// <example>
+	/// If we've doubled <see cref="T:MegaCrit.Sts2.Core.Models.Powers.PiercingWailPower" />, we don't also want to double negative <see cref="T:MegaCrit.Sts2.Core.Models.Powers.DexterityPower" />,
+	/// because that'll end up quadrupling it.
+	/// </example>
 	private bool HasDoubledTemporaryPowerSource(PowerModel power)
 	{
 		return DoubledPowers.OfType<ITemporaryPower>().Any((ITemporaryPower p) => p.InternallyAppliedPower.GetType() == power.GetType());

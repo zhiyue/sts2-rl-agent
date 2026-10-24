@@ -20,28 +20,61 @@ public class NCustomRunModifiersList : Control
 	[Signal]
 	public delegate void ModifiersChangedEventHandler();
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Initialize' method.
+		/// </summary>
 		public static readonly StringName Initialize = "Initialize";
 
+		/// <summary>
+		/// Cached name for the 'UntickMutuallyExclusiveModifiersForTickbox' method.
+		/// </summary>
 		public static readonly StringName UntickMutuallyExclusiveModifiersForTickbox = "UntickMutuallyExclusiveModifiersForTickbox";
 
+		/// <summary>
+		/// Cached name for the 'AfterModifiersChanged' method.
+		/// </summary>
 		public static readonly StringName AfterModifiersChanged = "AfterModifiersChanged";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_container' field.
+		/// </summary>
 		public static readonly StringName _container = "_container";
 
+		/// <summary>
+		/// Cached name for the '_mode' field.
+		/// </summary>
 		public static readonly StringName _mode = "_mode";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'ModifiersChanged' signal.
+		/// </summary>
 		public static readonly StringName ModifiersChanged = "ModifiersChanged";
 	}
 
@@ -55,6 +88,7 @@ public class NCustomRunModifiersList : Control
 
 	public Control? DefaultFocusedControl => _modifierTickboxes.FirstOrDefault();
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NCustomRunModifiersList.ModifiersChangedEventHandler" />
 	public event ModifiersChangedEventHandler ModifiersChanged
 	{
 		add
@@ -83,6 +117,10 @@ public class NCustomRunModifiersList : Control
 		}
 	}
 
+	/// <summary>
+	/// Call this once when the menu opens with the appropriate mode for the screen we're displayed on.
+	/// </summary>
+	/// <param name="mode">See the documentation for the enumeration for the correct value to pass.</param>
 	public void Initialize(MultiplayerUiMode mode)
 	{
 		_mode = mode;
@@ -96,6 +134,12 @@ public class NCustomRunModifiersList : Control
 		}
 	}
 
+	/// <summary>
+	/// Call this when:
+	/// - We are in client mode and the host changes the modifiers that are selected
+	/// - Once when the game is loaded from a multiplayer save
+	/// </summary>
+	/// <param name="modifiers">The modifiers to display as checked.</param>
 	public void SyncModifierList(IReadOnlyList<ModifierModel> modifiers)
 	{
 		MultiplayerUiMode mode = _mode;
@@ -155,6 +199,9 @@ public class NCustomRunModifiersList : Control
 		EmitSignal(SignalName.ModifiersChanged);
 	}
 
+	/// <summary>
+	/// Returns the list of modifiers that are ticked on.
+	/// </summary>
 	public List<ModifierModel> GetModifiersTickedOn()
 	{
 		return (from t in _modifierTickboxes
@@ -162,6 +209,11 @@ public class NCustomRunModifiersList : Control
 			select t.Modifier).ToList();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -182,6 +234,7 @@ public class NCustomRunModifiersList : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -212,6 +265,7 @@ public class NCustomRunModifiersList : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -234,6 +288,7 @@ public class NCustomRunModifiersList : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -250,6 +305,7 @@ public class NCustomRunModifiersList : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -271,6 +327,11 @@ public class NCustomRunModifiersList : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -281,6 +342,7 @@ public class NCustomRunModifiersList : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -290,6 +352,7 @@ public class NCustomRunModifiersList : Control
 		info.AddSignalEventDelegate(SignalName.ModifiersChanged, backing_ModifiersChanged);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -308,6 +371,11 @@ public class NCustomRunModifiersList : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -321,6 +389,7 @@ public class NCustomRunModifiersList : Control
 		EmitSignal(SignalName.ModifiersChanged);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -334,6 +403,7 @@ public class NCustomRunModifiersList : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

@@ -206,6 +206,9 @@ public class RestSiteSynchronizer : IDisposable
 		return _restSites[playerSlotIndex].options;
 	}
 
+	/// <summary>
+	/// Sends a hover message if enough time has passed since the last one, or buffers it to be sent otherwise.
+	/// </summary>
 	private void TrySendHoverMessage()
 	{
 		if (_hoverMessageTask == null)

@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -30,7 +32,7 @@ public sealed class Pocketwatch : RelicModel
 		new CardsVar(3)
 	});
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner != base.Owner)
 		{
@@ -47,11 +49,11 @@ public sealed class Pocketwatch : RelicModel
 
 	public override decimal ModifyHandDraw(Player player, decimal count)
 	{
-		if (player.Creature.CombatState.RoundNumber == 1)
+		if (player != base.Owner)
 		{
 			return count;
 		}
-		if (player != base.Owner)
+		if (base.Owner.PlayerCombatState.TurnNumber == 1)
 		{
 			return count;
 		}
@@ -68,22 +70,24 @@ public sealed class Pocketwatch : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, CombatState combatState)
+	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Creature.Side)
+		if (!participants.Contains(base.Owner.Creature))
 		{
-			_cardsPlayedLastTurn = _cardsPlayedThisTurn;
-			_cardsPlayedThisTurn = 0;
+			return Task.CompletedTask;
 		}
+		_cardsPlayedLastTurn = _cardsPlayedThisTurn;
+		_cardsPlayedThisTurn = 0;
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Creature.Side)
+		if (!participants.Contains(base.Owner.Creature))
 		{
-			RefreshCounter();
+			return Task.CompletedTask;
 		}
+		RefreshCounter();
 		return Task.CompletedTask;
 	}
 

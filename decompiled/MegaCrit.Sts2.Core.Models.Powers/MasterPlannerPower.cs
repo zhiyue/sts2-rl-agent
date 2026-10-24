@@ -12,7 +12,7 @@ public sealed class MasterPlannerPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Single;
 
-	public override Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner != base.Owner.Player)
 		{

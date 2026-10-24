@@ -33,7 +33,7 @@ public sealed class WoodCarvings : EventModel
 		new StringVar("ToricCard", ModelDb.Card<ToricToughness>().Title)
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		return runState.Players.All((Player p) => CardPile.Get(PileType.Deck, p).Cards.Any((CardModel c) => c != null && c.Rarity == CardRarity.Basic && c.IsRemovable));
 	}

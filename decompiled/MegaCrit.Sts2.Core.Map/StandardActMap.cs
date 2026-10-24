@@ -32,6 +32,7 @@ public sealed class StandardActMap : ActMap
 
 	private static readonly HashSet<MapPointType> _upperMapPointRestrictions = new HashSet<MapPointType> { MapPointType.RestSite };
 
+	/// These cannot be 2 times in a row.
 	private static readonly HashSet<MapPointType> _parentMapPointRestrictions = new HashSet<MapPointType>
 	{
 		MapPointType.Elite,
@@ -40,6 +41,7 @@ public sealed class StandardActMap : ActMap
 		MapPointType.Shop
 	};
 
+	/// These cannot be 2 times in a row.
 	private static readonly HashSet<MapPointType> _childMapPointRestrictions = new HashSet<MapPointType>
 	{
 		MapPointType.Elite,
@@ -48,6 +50,7 @@ public sealed class StandardActMap : ActMap
 		MapPointType.Shop
 	};
 
+	/// Only these point types are allowed to be siblings
 	private static readonly HashSet<MapPointType> _siblingPointTypeRestrictions = new HashSet<MapPointType>
 	{
 		MapPointType.RestSite,
@@ -63,10 +66,24 @@ public sealed class StandardActMap : ActMap
 
 	public override MapPoint? SecondBossMapPoint { get; }
 
+	/// <summary>
+	/// Flags this map to generate elite nodes where the treasure nodes would be in the middle of the act map.
+	/// Is set in the constructor, typically for the Warden Ascension (replace act 3 chests with elites)
+	/// </summary>
 	public bool ShouldReplaceTreasureWithElites { get; }
 
 	protected override MapPoint?[,] Grid { get; }
 
+	/// <summary>
+	/// Creates a standard map used for most acts.
+	/// </summary>
+	/// <param name="mapRng">The rng for the map.</param>
+	/// <param name="actModel">The act to generate the map for </param>
+	/// <param name="isMultiplayer">In multiplayer, we remove one node from each map.</param>
+	/// <param name="shouldReplaceTreasureWithElites">Replaces the treasure row with elites. This is for the Warden ascension.</param>
+	/// <param name="hasSecondBoss">Whether this act has a second boss (Double Boss ascension mode)</param>
+	/// <param name="mapPointTypeCountsOverride">Overrides the map point type counts from the map passed in</param>
+	/// <param name="enablePruning">Used for tests, should always be true if used for gameplay logic</param>
 	public StandardActMap(Rng mapRng, ActModel actModel, bool isMultiplayer, bool shouldReplaceTreasureWithElites, bool hasSecondBoss = false, MapPointTypeCounts? mapPointTypeCountsOverride = null, bool enablePruning = true)
 	{
 		_mapLength = actModel.GetNumberOfRooms(isMultiplayer) + 1;
@@ -84,7 +101,7 @@ public sealed class StandardActMap : ActMap
 		AssignPointTypes();
 		if (enablePruning)
 		{
-			MapPathPruning.PruneDuplicateSegments(Grid, startMapPoints, StartingMapPoint, _rng);
+			MapPathPruning.PruneAndRepair(Grid, startMapPoints, this, _pointTypeCounts, _rng, IsValidPointType);
 		}
 		Grid = MapPostProcessing.CenterGrid(Grid);
 		Grid = MapPostProcessing.SpreadAdjacentMapPoints(Grid);
@@ -254,6 +271,7 @@ public sealed class StandardActMap : ActMap
 		ForEachInRow(Grid, 1, delegate(MapPoint p)
 		{
 			p.PointType = MapPointType.Monster;
+			p.CanBeModified = false;
 		});
 		List<MapPointType> list = new List<MapPointType>();
 		for (int num = 0; num < _pointTypeCounts.NumOfRests; num++)
@@ -322,6 +340,11 @@ public sealed class StandardActMap : ActMap
 		return list;
 	}
 
+	/// <summary>
+	/// Assigns point types to the map by row to ensure that the point types are more evenly distributed.
+	/// </summary>
+	/// <param name="pointTypesToBeAssigned">Point types left to be assigned.</param>
+	/// <param name="rows">Rows of map points to assign the types to.</param>
 	private void AssignPointTypesToRandomRows(Queue<MapPointType> pointTypesToBeAssigned, List<List<MapPoint>> rows)
 	{
 		rows.UnstableShuffle(_rng);
@@ -340,11 +363,24 @@ public sealed class StandardActMap : ActMap
 
 	private void AssignRemainingTypesToRandomPoints(Queue<MapPointType> pointTypesToBeAssigned)
 	{
-		List<MapPoint> list = GetAllMapPoints().ToList();
-		list.StableShuffle(_rng);
-		foreach (MapPoint item in list.Where((MapPoint p) => p.PointType == MapPointType.Unassigned))
+		for (int i = 0; i < 3; i++)
 		{
-			item.PointType = GetNextValidPointType(pointTypesToBeAssigned, item);
+			if (pointTypesToBeAssigned.Count <= 0)
+			{
+				break;
+			}
+			List<MapPoint> list = (from p in GetAllMapPoints()
+				where p.PointType == MapPointType.Unassigned
+				select p).ToList();
+			list.StableShuffle(_rng);
+			foreach (MapPoint item in list)
+			{
+				if (pointTypesToBeAssigned.Count == 0)
+				{
+					break;
+				}
+				item.PointType = GetNextValidPointType(pointTypesToBeAssigned, item);
+			}
 		}
 	}
 
@@ -391,15 +427,17 @@ public sealed class StandardActMap : ActMap
 		return true;
 	}
 
+	/// These point types cannot be in the lower part of the map
 	private static bool IsValidForLower(MapPointType pointType, MapPoint mapPoint)
 	{
-		if (mapPoint.coord.row < 5)
+		if (mapPoint.coord.row < 6)
 		{
 			return !_lowerMapPointRestrictions.Contains(pointType);
 		}
 		return true;
 	}
 
+	/// These point types cannot be in the upper part of the map
 	private bool IsValidForUpper(MapPointType pointType, MapPoint mapPoint)
 	{
 		if (mapPoint.coord.row >= _mapLength - 3)
@@ -409,6 +447,7 @@ public sealed class StandardActMap : ActMap
 		return true;
 	}
 
+	/// These cannot be 2 times in a row.
 	private static bool IsValidWithParents(MapPointType pointType, MapPoint mapPoint)
 	{
 		if (_parentMapPointRestrictions.Contains(pointType))
@@ -418,6 +457,7 @@ public sealed class StandardActMap : ActMap
 		return true;
 	}
 
+	/// Checks if a point type is valid by ensuring it doesn't appear twice in a row among children
 	private static bool IsValidWithChildren(MapPointType pointType, MapPoint mapPoint)
 	{
 		if (_childMapPointRestrictions.Contains(pointType))
@@ -427,6 +467,7 @@ public sealed class StandardActMap : ActMap
 		return true;
 	}
 
+	/// These point types cannot be siblings of each other.
 	private static bool IsValidWithSiblings(MapPointType pointType, MapPoint mapPoint)
 	{
 		if (_siblingPointTypeRestrictions.Contains(pointType))

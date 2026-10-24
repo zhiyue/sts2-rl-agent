@@ -1,38 +1,59 @@
 using System;
+using System.Collections.Generic;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Runs;
 
+/// <summary>
+/// Uniquely identifies a location within a run for RunLocationTargetedMessageBuffer.
+/// This location takes into account which room the player is in, which is important for multi-room locations, like
+/// those that happen in combat events.
+/// Make sure you look at <see cref="T:MegaCrit.Sts2.Core.Runs.MapLocation" /> as well, which identifies locations on the map without considering
+/// the room.
+/// </summary>
 public struct RunLocation : IEquatable<RunLocation>, IComparable<RunLocation>, IPacketSerializable
 {
-	public int actIndex;
+	/// <summary>
+	/// The act and map coordinate that the location is at.
+	/// </summary>
+	public MapLocation mapLocation;
 
-	public MapCoord? coord;
+	/// <summary>
+	/// The room index that this location is in.
+	/// Zero is the root room. Any room other than zero is a sub-room, entered using RunManager.EnterRoomWithoutExitingCurrentRoom.
+	/// </summary>
+	public int? roomId;
 
-	public RunLocation(MapCoord? coord, int actIndex)
+	public RunLocation(MapLocation mapLocation, int? roomId)
 	{
-		this.coord = coord;
-		this.actIndex = actIndex;
+		this.mapLocation = mapLocation;
+		this.roomId = roomId;
+	}
+
+	public RunLocation(int actIndex, MapCoord? coord, int? roomId)
+	{
+		mapLocation = new MapLocation(coord, actIndex);
+		this.roomId = roomId;
 	}
 
 	public void Serialize(PacketWriter writer)
 	{
-		writer.WriteInt(actIndex, 4);
-		writer.WriteBool(coord.HasValue);
-		if (coord.HasValue)
+		writer.WriteBool(roomId.HasValue);
+		if (roomId.HasValue)
 		{
-			writer.Write(coord.Value);
+			writer.WriteInt(roomId.Value, 4);
 		}
+		writer.Write(mapLocation);
 	}
 
 	public void Deserialize(PacketReader reader)
 	{
-		actIndex = reader.ReadInt(4);
 		if (reader.ReadBool())
 		{
-			coord = reader.Read<MapCoord>();
+			roomId = reader.ReadInt(4);
 		}
+		mapLocation = reader.Read<MapLocation>();
 	}
 
 	public static bool operator ==(RunLocation first, RunLocation second)
@@ -47,19 +68,9 @@ public struct RunLocation : IEquatable<RunLocation>, IComparable<RunLocation>, I
 
 	public bool Equals(RunLocation other)
 	{
-		if (actIndex == other.actIndex)
+		if (roomId == other.roomId)
 		{
-			MapCoord? mapCoord = coord;
-			MapCoord? mapCoord2 = other.coord;
-			if (mapCoord.HasValue != mapCoord2.HasValue)
-			{
-				return false;
-			}
-			if (!mapCoord.HasValue)
-			{
-				return true;
-			}
-			return mapCoord.GetValueOrDefault() == mapCoord2.GetValueOrDefault();
+			return mapLocation == other.mapLocation;
 		}
 		return false;
 	}
@@ -75,32 +86,20 @@ public struct RunLocation : IEquatable<RunLocation>, IComparable<RunLocation>, I
 
 	public override int GetHashCode()
 	{
-		return (actIndex, coord?.col, coord?.row).GetHashCode();
+		return (roomId, mapLocation.actIndex, mapLocation.coord?.col, mapLocation.coord?.row).GetHashCode();
 	}
 
 	public int CompareTo(RunLocation other)
 	{
-		if (actIndex != other.actIndex)
+		if (mapLocation != other.mapLocation)
 		{
-			return actIndex.CompareTo(other.actIndex);
+			return mapLocation.CompareTo(other.mapLocation);
 		}
-		if (!coord.HasValue && !other.coord.HasValue)
-		{
-			return 0;
-		}
-		if (!coord.HasValue && other.coord.HasValue)
-		{
-			return -1;
-		}
-		if (coord.HasValue && !other.coord.HasValue)
-		{
-			return 1;
-		}
-		return coord.Value.CompareTo(other.coord.Value);
+		return Comparer<int?>.Default.Compare(roomId, other.roomId);
 	}
 
 	public override string ToString()
 	{
-		return $"act {actIndex} coord ({(coord.HasValue ? $"{coord.Value.col}, {coord.Value.row}" : "null")})";
+		return $"{mapLocation} room {roomId}";
 	}
 }

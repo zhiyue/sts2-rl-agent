@@ -39,7 +39,7 @@ public sealed class BigMushroom : RelicModel
 		{
 			return cardsToDraw;
 		}
-		if (player.Creature.CombatState.RoundNumber != 1)
+		if (base.Owner.PlayerCombatState.TurnNumber != 1)
 		{
 			return cardsToDraw;
 		}
@@ -48,6 +48,6 @@ public sealed class BigMushroom : RelicModel
 
 	private void Grow()
 	{
-		NCombatRoom.Instance?.GetCreatureNode(base.Owner.Creature)?.ScaleTo(1.5f, 0f);
+		NCombatRoom.Instance?.GetCreatureNode(base.Owner.Creature)?.ScaleTo(1.5f, 0.0);
 	}
 }

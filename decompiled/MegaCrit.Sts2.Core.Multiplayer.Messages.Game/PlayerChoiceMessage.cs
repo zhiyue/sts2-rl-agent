@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Multiplayer.Transport;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Game;
 
+/// <summary>
+/// Broadcast from a peer to all other peers when that peer has made a choice in combat.
+/// </summary>
 public struct PlayerChoiceMessage : INetMessage, IPacketSerializable
 {
 	public uint choiceId;
@@ -16,6 +19,8 @@ public struct PlayerChoiceMessage : INetMessage, IPacketSerializable
 	public NetTransferMode Mode => NetTransferMode.Reliable;
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
+
+	public bool ShouldBuffer => true;
 
 	public void Serialize(PacketWriter writer)
 	{

@@ -13,57 +13,132 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
+/// <summary>
+/// The text buttons seen as a vertical list in the main menu.
+/// Buttons like Singleplayer, Multiplayer, Statistics, Options, Quit, etc
+/// Note that we tween the scale/modulate of the label instead of the entire button because stuff is parented to the
+/// continue button
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NMainMenuTextButton.cs")]
 public class NMainMenuTextButton : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public new static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'SetLocalization' method.
+		/// </summary>
 		public static readonly StringName SetLocalization = "SetLocalization";
 
+		/// <summary>
+		/// Cached name for the '_Notification' method.
+		/// </summary>
 		public new static readonly StringName _Notification = "_Notification";
 
+		/// <summary>
+		/// Cached name for the 'RefreshLabel' method.
+		/// </summary>
 		public static readonly StringName RefreshLabel = "RefreshLabel";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'AnimUnhover' method.
+		/// </summary>
 		public static readonly StringName AnimUnhover = "AnimUnhover";
 
+		/// <summary>
+		/// Cached name for the 'AnimPressDown' method.
+		/// </summary>
 		public static readonly StringName AnimPressDown = "AnimPressDown";
 
+		/// <summary>
+		/// Cached name for the 'AnimRelease' method.
+		/// </summary>
 		public static readonly StringName AnimRelease = "AnimRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnDisable' method.
+		/// </summary>
 		public new static readonly StringName OnDisable = "OnDisable";
 
+		/// <summary>
+		/// Cached name for the 'OnEnable' method.
+		/// </summary>
 		public new static readonly StringName OnEnable = "OnEnable";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'label' field.
+		/// </summary>
 		public static readonly StringName label = "label";
 
+		/// <summary>
+		/// Cached name for the '_defaultColor' field.
+		/// </summary>
 		public static readonly StringName _defaultColor = "_defaultColor";
 
+		/// <summary>
+		/// Cached name for the '_hoveredColor' field.
+		/// </summary>
 		public static readonly StringName _hoveredColor = "_hoveredColor";
 
+		/// <summary>
+		/// Cached name for the '_downColor' field.
+		/// </summary>
 		public static readonly StringName _downColor = "_downColor";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
 
+	/// <summary>
+	/// This is null at certain points when the scene is being loaded.
+	/// </summary>
 	public MegaLabel? label;
 
 	private Color _defaultColor = StsColors.cream;
@@ -99,7 +174,7 @@ public class NMainMenuTextButton : NButton
 	{
 		base.ConnectSignals();
 		label = GetChild<MegaLabel>(0);
-		label.AddThemeStyleboxOverride(ThemeConstants.Control.focus, _emptyStyleBox);
+		label.AddThemeStyleboxOverride(ThemeConstants.Control.Focus, _emptyStyleBox);
 		label.FocusMode = FocusModeEnum.None;
 	}
 
@@ -122,14 +197,17 @@ public class NMainMenuTextButton : NButton
 		if (label != null && _locString != null)
 		{
 			label.Text = _locString.GetFormattedText();
-			label.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.Label.font);
+			label.ApplyLocaleFontSubstitution(FontType.Regular, ThemeConstants.Label.Font);
 			TaskHelper.RunSafely(UpdatePivotOffset());
 		}
 	}
 
+	/// <summary>
+	/// Wait one frame before the text change affects the Control node's size so we can set the pivot accurately.
+	/// </summary>
 	private async Task UpdatePivotOffset()
 	{
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame();
 		if (label != null)
 		{
 			label.PivotOffset = label.Size * 0.5f;
@@ -213,6 +291,11 @@ public class NMainMenuTextButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -240,6 +323,7 @@ public class NMainMenuTextButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -330,6 +414,7 @@ public class NMainMenuTextButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -392,6 +477,7 @@ public class NMainMenuTextButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -423,6 +509,7 @@ public class NMainMenuTextButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -454,6 +541,11 @@ public class NMainMenuTextButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -466,6 +558,7 @@ public class NMainMenuTextButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -477,6 +570,7 @@ public class NMainMenuTextButton : NButton
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

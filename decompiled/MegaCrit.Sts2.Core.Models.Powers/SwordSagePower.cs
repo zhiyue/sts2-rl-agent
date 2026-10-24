@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models.Cards;
 
@@ -14,9 +15,18 @@ public sealed class SwordSagePower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => HoverTipFactory.FromCardWithCardHoverTips<SovereignBlade>();
+	protected override IEnumerable<IHoverTip> ExtraHoverTips
+	{
+		get
+		{
+			List<IHoverTip> list = new List<IHoverTip>();
+			list.AddRange(HoverTipFactory.FromCardWithCardHoverTips<SovereignBlade>());
+			list.Add(HoverTipFactory.Static(StaticHoverTip.ReplayStatic));
+			return new _003C_003Ez__ReadOnlyList<IHoverTip>(list);
+		}
+	}
 
-	public override Task AfterPowerAmountChanged(PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
+	public override Task AfterPowerAmountChanged(PlayerChoiceContext choiceContext, PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
 	{
 		if (!(power is SwordSagePower))
 		{
@@ -29,25 +39,18 @@ public sealed class SwordSagePower : PowerModel
 		IEnumerable<CardModel> enumerable = base.Owner.Player?.PlayerCombatState?.AllCards ?? Array.Empty<CardModel>();
 		foreach (CardModel item in enumerable)
 		{
-			if (item is SovereignBlade sovereignBlade)
-			{
-				sovereignBlade.SetRepeats(base.Amount + 1);
-			}
+			TryAddReplays(item, (int)amount);
 		}
 		return Task.CompletedTask;
 	}
 
 	public override Task AfterCardEnteredCombat(CardModel card)
 	{
-		if (card.Owner != base.Owner.Player)
+		if (card.IsClone)
 		{
 			return Task.CompletedTask;
 		}
-		if (!(card is SovereignBlade sovereignBlade))
-		{
-			return Task.CompletedTask;
-		}
-		sovereignBlade.SetRepeats(base.Amount + 1);
+		TryAddReplays(card, base.Amount);
 		return Task.CompletedTask;
 	}
 
@@ -58,24 +61,23 @@ public sealed class SwordSagePower : PowerModel
 		{
 			if (item is SovereignBlade sovereignBlade)
 			{
-				sovereignBlade.SetRepeats(1m);
+				sovereignBlade.BaseReplayCount -= base.Amount;
 			}
 		}
 		return Task.CompletedTask;
 	}
 
-	public override bool TryModifyEnergyCostInCombat(CardModel card, decimal originalCost, out decimal modifiedCost)
+	private bool TryAddReplays(CardModel card, int amount)
 	{
-		modifiedCost = originalCost;
-		if (card.Owner.Creature != base.Owner)
+		if (card.Owner != base.Owner.Player)
 		{
 			return false;
 		}
-		if (!(card is SovereignBlade))
+		if (!(card is SovereignBlade sovereignBlade))
 		{
 			return false;
 		}
-		modifiedCost += (decimal)base.Amount;
+		sovereignBlade.BaseReplayCount += amount;
 		return true;
 	}
 }

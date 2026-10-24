@@ -21,7 +21,7 @@ public sealed class FightMe : CardModel
 	{
 		new DamageVar(5m, ValueProp.Move),
 		new RepeatVar(2),
-		new PowerVar<StrengthPower>(2m),
+		new PowerVar<StrengthPower>(3m),
 		new DynamicVar("EnemyStrength", 1m)
 	});
 
@@ -37,8 +37,8 @@ public sealed class FightMe : CardModel
 			.Targeting(cardPlay.Target)
 			.WithHitFx("vfx/vfx_attack_blunt", null, "heavy_attack.mp3")
 			.Execute(choiceContext);
-		await PowerCmd.Apply<StrengthPower>(base.Owner.Creature, base.DynamicVars["StrengthPower"].BaseValue, base.Owner.Creature, this);
-		await PowerCmd.Apply<StrengthPower>(cardPlay.Target, base.DynamicVars["EnemyStrength"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner.Creature, base.DynamicVars["StrengthPower"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<StrengthPower>(choiceContext, cardPlay.Target, base.DynamicVars["EnemyStrength"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

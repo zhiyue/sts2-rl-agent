@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
@@ -38,12 +40,12 @@ public sealed class StoneCalendar : RelicModel
 			{
 				return intValue;
 			}
-			int roundNumber = base.Owner.Creature.CombatState.RoundNumber;
-			if (roundNumber >= intValue)
+			int turnNumber = base.Owner.PlayerCombatState.TurnNumber;
+			if (turnNumber >= intValue)
 			{
 				return -1;
 			}
-			return roundNumber;
+			return turnNumber;
 		}
 	}
 
@@ -67,13 +69,13 @@ public sealed class StoneCalendar : RelicModel
 		new DynamicVar("DamageTurn", 7m)
 	});
 
-	public override Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side != base.Owner.Creature.Side)
+		if (!participants.Contains(base.Owner.Creature))
 		{
 			return Task.CompletedTask;
 		}
-		if (combatState.RoundNumber == base.DynamicVars["DamageTurn"].IntValue)
+		if (base.Owner.PlayerCombatState.TurnNumber == base.DynamicVars["DamageTurn"].IntValue)
 		{
 			base.Status = RelicStatus.Active;
 		}
@@ -81,14 +83,14 @@ public sealed class StoneCalendar : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task BeforeTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task BeforeSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side == base.Owner.Creature.Side)
+		if (participants.Contains(base.Owner.Creature))
 		{
 			int intValue = base.DynamicVars["DamageTurn"].IntValue;
-			int roundNumber = base.Owner.Creature.CombatState.RoundNumber;
+			int turnNumber = base.Owner.PlayerCombatState.TurnNumber;
 			base.Status = RelicStatus.Normal;
-			if (roundNumber == intValue)
+			if (turnNumber == intValue)
 			{
 				TaskHelper.RunSafely(DoActivateVisuals());
 				await CreatureCmd.Damage(choiceContext, base.Owner.Creature.CombatState.HittableEnemies, base.DynamicVars.Damage, base.Owner.Creature);

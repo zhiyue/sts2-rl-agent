@@ -24,47 +24,108 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens;
 
+/// <summary>
+/// Used by Draw pile, Discard pile, and Exhaust pile screens during combat.
+/// Do not use it for anything else. You have been warned.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/NCardPileScreen.cs")]
 public class NCardPileScreen : Control, ICapstoneScreen, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnPileContentsChanged' method.
+		/// </summary>
 		public static readonly StringName OnPileContentsChanged = "OnPileContentsChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnReturnButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnReturnButtonPressed = "OnReturnButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'AfterCapstoneOpened' method.
+		/// </summary>
 		public static readonly StringName AfterCapstoneOpened = "AfterCapstoneOpened";
 
+		/// <summary>
+		/// Cached name for the 'AfterCapstoneClosed' method.
+		/// </summary>
 		public static readonly StringName AfterCapstoneClosed = "AfterCapstoneClosed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ScreenType' property.
+		/// </summary>
 		public static readonly StringName ScreenType = "ScreenType";
 
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_background' field.
+		/// </summary>
 		public static readonly StringName _background = "_background";
 
+		/// <summary>
+		/// Cached name for the '_grid' field.
+		/// </summary>
 		public static readonly StringName _grid = "_grid";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_bottomLabel' field.
+		/// </summary>
 		public static readonly StringName _bottomLabel = "_bottomLabel";
 
+		/// <summary>
+		/// Cached name for the '_currentTween' field.
+		/// </summary>
 		public static readonly StringName _currentTween = "_currentTween";
 
+		/// <summary>
+		/// Cached name for the '_closeHotkeys' field.
+		/// </summary>
 		public static readonly StringName _closeHotkeys = "_closeHotkeys";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -192,6 +253,11 @@ public class NCardPileScreen : Control, ICapstoneScreen, IScreenContext
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -209,6 +275,7 @@ public class NCardPileScreen : Control, ICapstoneScreen, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -257,6 +324,7 @@ public class NCardPileScreen : Control, ICapstoneScreen, IScreenContext
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -291,6 +359,7 @@ public class NCardPileScreen : Control, ICapstoneScreen, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -327,6 +396,7 @@ public class NCardPileScreen : Control, ICapstoneScreen, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -378,6 +448,11 @@ public class NCardPileScreen : Control, ICapstoneScreen, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -394,6 +469,7 @@ public class NCardPileScreen : Control, ICapstoneScreen, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -406,6 +482,7 @@ public class NCardPileScreen : Control, ICapstoneScreen, IScreenContext
 		info.AddProperty(PropertyName._closeHotkeys, Variant.From(in _closeHotkeys));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

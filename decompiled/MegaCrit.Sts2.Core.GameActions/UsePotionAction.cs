@@ -43,7 +43,14 @@ public class UsePotionAction : GameAction
 
 	public PlayerChoiceContext? PlayerChoiceContext { get; private set; }
 
-	public UsePotionAction(PotionModel potion, Creature? target, bool isCombatInIsProgress)
+	/// <summary>
+	/// Constructor to use for constructing the UsePotionAction outside of serialization.
+	/// </summary>
+	/// <param name="potion">The potion which will be used.</param>
+	/// <param name="target">The target which the player is using the potion on. Pass null if the potion is not targeted.</param>
+	/// <param name="isCombatInProgress">Pass true if the potion was played during combat. The GameAction will be cancelled at
+	/// the end of combat if it is still enqueued.</param>
+	public UsePotionAction(PotionModel potion, Creature? target, bool isCombatInProgress)
 	{
 		if (potion.Owner == null)
 		{
@@ -56,7 +63,7 @@ public class UsePotionAction : GameAction
 		}
 		Player = potion.Owner;
 		PotionIndex = (uint)potionSlotIndex;
-		WasEnqueuedInCombat = isCombatInIsProgress;
+		WasEnqueuedInCombat = isCombatInProgress;
 		if (target == null)
 		{
 			return;
@@ -76,6 +83,14 @@ public class UsePotionAction : GameAction
 		TargetPlayerId = target.Player?.NetId;
 	}
 
+	/// <summary>
+	/// Constructor to use when deserializing a NetUsePotionAction. Should not be used in other circumstances.
+	/// </summary>
+	/// <param name="player">The player who sent us the action.</param>
+	/// <param name="potionIndex">The index of the potion that will be used.</param>
+	/// <param name="targetId">The combat ID of the target.</param>
+	/// <param name="targetPlayerId">The NetID of the player that is targeted, if the potion was used outside of combat.</param>
+	/// <param name="isCombatInProgress">Whether or not combat was in progress when the potion was used.</param>
 	public UsePotionAction(Player player, uint potionIndex, uint? targetId, ulong? targetPlayerId, bool isCombatInProgress)
 	{
 		Player = player;
@@ -90,30 +105,29 @@ public class UsePotionAction : GameAction
 		PotionModel potion = Player.GetPotionAtSlotIndex((int)PotionIndex);
 		if (potion == null)
 		{
-			throw new InvalidOperationException($"Attempted to execute {"UsePotionAction"} with potion index {PotionIndex}, but the potion at that index was null!");
+			Log.Warn($"{"UsePotionAction"}: potion at index {PotionIndex} is null for player {Player.NetId}, canceling");
+			Cancel();
+			return;
 		}
 		Creature creature = null;
 		if (CombatManager.Instance.IsInProgress)
 		{
-			if (!TargetId.HasValue && potion.TargetType.IsSingleTarget())
-			{
-				throw new InvalidOperationException("Attempted to execute UsePotionAction with single target potion during combat, but the target ID is null!");
-			}
-			creature = await Player.Creature.CombatState.GetCreatureAsync(TargetId, 10.0);
+			creature = ((TargetId.HasValue || !potion.TargetType.IsSingleTarget()) ? (await Player.Creature.CombatState.GetCreatureAsync(TargetId, 10.0)) : Player.Creature);
 		}
-		else
+		else if (!TargetPlayerId.HasValue && potion.TargetType != TargetType.TargetedNoCreature)
 		{
-			if (!TargetPlayerId.HasValue && potion.TargetType != TargetType.TargetedNoCreature)
-			{
-				throw new InvalidOperationException("Attempted to execute UsePotionAction outside of combat, but the target player ID is null!");
-			}
-			if (TargetPlayerId.HasValue)
-			{
-				creature = Player.RunState.GetPlayer(TargetPlayerId.Value).Creature;
-			}
+			creature = Player.Creature;
 		}
-		string text = ((creature == null) ? null : (creature.IsPlayer ? $"Player {creature.Player.NetId}" : creature.Name));
-		string value = ((text != null) ? $"targeting {text} (index {Player.Creature.CombatState?.Creatures.IndexOf(creature)})" : "no target");
+		else if (TargetPlayerId.HasValue)
+		{
+			creature = Player.RunState.GetPlayer(TargetPlayerId.Value).Creature;
+		}
+		if (!potion.IsValidTarget(creature))
+		{
+			Cancel();
+			return;
+		}
+		string value = ((creature != null) ? $"targeting {creature.LogName} (index {Player.Creature.CombatState?.Creatures.IndexOf(creature)})" : "no target");
 		Log.Info($"Player {potion.Owner.NetId} using potion {potion.Id.Entry} ({value})");
 		PlayerChoiceContext = new GameActionPlayerChoiceContext(this);
 		await potion.OnUseWrapper(PlayerChoiceContext, creature);
@@ -124,7 +138,7 @@ public class UsePotionAction : GameAction
 		PotionModel potionAtSlotIndex = Player.GetPotionAtSlotIndex((int)PotionIndex);
 		if (TestMode.IsOff && NRun.Instance != null && LocalContext.IsMe(Player) && potionAtSlotIndex != null)
 		{
-			NRun.Instance.GlobalUi.TopBar.PotionContainer.OnPotionUseCanceled(potionAtSlotIndex);
+			NRun.Instance.GlobalUi.TopBar.PotionContainer.OnPotionUseOrDiscardCanceled(potionAtSlotIndex);
 		}
 		potionAtSlotIndex?.AfterUsageCanceled();
 	}

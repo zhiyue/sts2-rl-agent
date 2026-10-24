@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -14,23 +15,53 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx.Cards;
 
+/// <summary>
+/// Vfx for Hellraiser card.
+/// Spawns many swords and tints the screen red.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Vfx/Cards/NHellraiserVfx.cs")]
 public class NHellraiserVfx : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_duration' field.
+		/// </summary>
 		public static readonly StringName _duration = "_duration";
 
+		/// <summary>
+		/// Cached name for the '_swordAmount' field.
+		/// </summary>
 		public static readonly StringName _swordAmount = "_swordAmount";
 
+		/// <summary>
+		/// Cached name for the '_spawnPosition' field.
+		/// </summary>
 		public static readonly StringName _spawnPosition = "_spawnPosition";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -47,7 +78,14 @@ public class NHellraiserVfx : Control
 
 	private const string _hellraiserSfxPath = "event:/sfx/characters/ironclad/ironclad_hellraiser";
 
+	private CancellationTokenSource? _cts;
+
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(_scenePath);
+
+	public override void _ExitTree()
+	{
+		_cts?.Cancel();
+	}
 
 	public static NHellraiserVfx? Create(Creature target)
 	{
@@ -99,21 +137,35 @@ public class NHellraiserVfx : Control
 
 	private async Task SelfDestruct()
 	{
-		await Task.Delay(2000);
+		_cts = new CancellationTokenSource();
+		await Task.Delay(2000, _cts.Token);
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(1);
+		List<MethodInfo> list = new List<MethodInfo>(2);
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
@@ -123,9 +175,14 @@ public class NHellraiserVfx : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
+		if (method == MethodName._ExitTree)
+		{
+			return true;
+		}
 		if (method == MethodName._Ready)
 		{
 			return true;
@@ -133,6 +190,7 @@ public class NHellraiserVfx : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -154,6 +212,7 @@ public class NHellraiserVfx : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -175,6 +234,11 @@ public class NHellraiserVfx : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -185,6 +249,7 @@ public class NHellraiserVfx : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -194,6 +259,7 @@ public class NHellraiserVfx : Control
 		info.AddProperty(PropertyName._spawnPosition, Variant.From(in _spawnPosition));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

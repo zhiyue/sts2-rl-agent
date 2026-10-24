@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 
+/// <summary>
+/// Console commands which manipulate the player's current gold.
+/// </summary>
 public class GoldConsoleCmd : AbstractConsoleCmd
 {
 	public override string CmdName => "gold";

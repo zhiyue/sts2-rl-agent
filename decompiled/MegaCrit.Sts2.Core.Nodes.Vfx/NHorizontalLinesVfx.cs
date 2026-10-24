@@ -6,6 +6,7 @@ using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
@@ -13,26 +14,56 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NHorizontalLinesVfx.cs")]
 public class NHorizontalLinesVfx : GpuParticles2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : GpuParticles2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : GpuParticles2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_duration' field.
+		/// </summary>
 		public static readonly StringName _duration = "_duration";
 
+		/// <summary>
+		/// Cached name for the '_mat' field.
+		/// </summary>
 		public static readonly StringName _mat = "_mat";
 
+		/// <summary>
+		/// Cached name for the '_isMovingRight' field.
+		/// </summary>
 		public static readonly StringName _isMovingRight = "_isMovingRight";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : GpuParticles2D.SignalName
 	{
 	}
@@ -90,9 +121,14 @@ public class NHorizontalLinesVfx : GpuParticles2D
 		_tween.TweenInterval(_duration - 0.9);
 		_tween.Chain();
 		_tween.TweenProperty(this, "modulate:a", 0f, 0.45);
-		await ToSignal(_tween, Tween.SignalName.Finished);
+		await _tween.AwaitFinished(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -108,6 +144,7 @@ public class NHorizontalLinesVfx : GpuParticles2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -143,6 +180,7 @@ public class NHorizontalLinesVfx : GpuParticles2D
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -161,6 +199,7 @@ public class NHorizontalLinesVfx : GpuParticles2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -187,6 +226,7 @@ public class NHorizontalLinesVfx : GpuParticles2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -213,6 +253,11 @@ public class NHorizontalLinesVfx : GpuParticles2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -224,6 +269,7 @@ public class NHorizontalLinesVfx : GpuParticles2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -234,6 +280,7 @@ public class NHorizontalLinesVfx : GpuParticles2D
 		info.AddProperty(PropertyName._isMovingRight, Variant.From(in _isMovingRight));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

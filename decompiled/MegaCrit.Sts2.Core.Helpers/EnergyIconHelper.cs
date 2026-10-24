@@ -8,16 +8,35 @@ namespace MegaCrit.Sts2.Core.Helpers;
 
 public static class EnergyIconHelper
 {
+	/// <summary>
+	/// Get the string that should be used as the prefix for a model's energy icon path.
+	///
+	/// The logic here is a little more complicated than you'd expect; it's easy if it's a card in the player's deck
+	/// during a run (just use the owner's card pool), but it gets trickier before the card is in the deck (like in
+	/// card rewards) or outside of a run entirely (like in the card library).
+	/// </summary>
+	/// <param name="model">Model whose energy icon we want.</param>
 	public static string GetPrefix(AbstractModel model)
 	{
 		return GetPool(model).EnergyColorName;
 	}
 
+	/// <summary>
+	/// Get the string that should be used as the specified model's energy icon path.
+	///
+	/// The logic here is a little more complicated than you'd expect; it's easy if it's a card in the player's deck
+	/// during a run (just use the owner's card pool), but it gets trickier before the card is in the deck (like in
+	/// card rewards) or outside of a run entirely (like in the card library).
+	/// </summary>
+	/// <param name="model">Model whose energy icon we want.</param>
 	public static string GetPath(AbstractModel model)
 	{
 		return GetPath(GetPrefix(model));
 	}
 
+	/// <summary>
+	/// Get the string that should be used as the energy icon path for the specified prefix.
+	/// </summary>
 	public static string GetPath(string prefix)
 	{
 		return ImageHelper.GetImagePath("atlases/ui_atlas.sprites/card/energy_" + prefix.ToLowerInvariant() + ".tres");

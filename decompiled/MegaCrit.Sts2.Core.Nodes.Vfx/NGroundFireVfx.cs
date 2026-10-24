@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.TestSupport;
 
@@ -17,28 +18,61 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NGroundFireVfx.cs")]
 public class NGroundFireVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ApplyColor' method.
+		/// </summary>
 		public static readonly StringName ApplyColor = "ApplyColor";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_mainFire' field.
+		/// </summary>
 		public static readonly StringName _mainFire = "_mainFire";
 
+		/// <summary>
+		/// Cached name for the '_ember' field.
+		/// </summary>
 		public static readonly StringName _ember = "_ember";
 
+		/// <summary>
+		/// Cached name for the '_flameSprites' field.
+		/// </summary>
 		public static readonly StringName _flameSprites = "_flameSprites";
 
+		/// <summary>
+		/// Cached name for the '_vfxColor' field.
+		/// </summary>
 		public static readonly StringName _vfxColor = "_vfxColor";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -136,21 +170,31 @@ public class NGroundFireVfx : Node2D
 		_mainFire.Modulate = Colors.Transparent;
 		_mainFire.Scale = Vector2.Zero;
 		_ember.Emitting = true;
+		Task emberDone = _ember.AwaitSignal(GpuParticles2D.SignalName.Finished, this);
 		_tween = CreateTween().SetParallel();
 		_tween.TweenProperty(_mainFire, "scale", Vector2.One * 4f, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back);
 		_tween.TweenProperty(_mainFire, "modulate:a", 0.9f, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		_flameSprites.Emitting = true;
-		_tween = CreateTween().SetParallel();
-		_tween.TweenProperty(_mainFire, "modulate:a", 0f, 0.5);
-		_tween.TweenProperty(_flameSprites, "modulate:a", 0f, 0.5);
-		_tween.TweenProperty(_mainFire, "scale", Vector2.One * 2f, 2.0).SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Cubic);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		_flameSprites.Emitting = false;
-		await ToSignal(_ember, GpuParticles2D.SignalName.Finished);
-		this.QueueFreeSafely();
+		if (await _tween.AwaitFinished(this))
+		{
+			_flameSprites.Emitting = true;
+			_tween = CreateTween().SetParallel();
+			_tween.TweenProperty(_mainFire, "modulate:a", 0f, 0.5);
+			_tween.TweenProperty(_flameSprites, "modulate:a", 0f, 0.5);
+			_tween.TweenProperty(_mainFire, "scale", Vector2.One * 2f, 2.0).SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Cubic);
+			if (await _tween.AwaitFinished(this))
+			{
+				_flameSprites.Emitting = false;
+				await emberDone;
+				this.QueueFreeSafely();
+			}
+		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -161,6 +205,7 @@ public class NGroundFireVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -185,6 +230,7 @@ public class NGroundFireVfx : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -203,6 +249,7 @@ public class NGroundFireVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -234,6 +281,7 @@ public class NGroundFireVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -265,6 +313,11 @@ public class NGroundFireVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -277,6 +330,7 @@ public class NGroundFireVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -288,6 +342,7 @@ public class NGroundFireVfx : Node2D
 		info.AddProperty(PropertyName._vfxColor, Variant.From(in _vfxColor));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

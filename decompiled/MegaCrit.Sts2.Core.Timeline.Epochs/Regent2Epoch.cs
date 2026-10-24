@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// I Arrive
+/// </summary>
 public class Regent2Epoch : EpochModel
 {
 	public override string Id => "REGENT2_EPOCH";

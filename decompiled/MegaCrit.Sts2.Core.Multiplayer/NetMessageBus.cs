@@ -27,6 +27,10 @@ public class NetMessageBus
 
 	private readonly List<CallbackPair> _cachedPairList = new List<CallbackPair>();
 
+	private bool _isBufferingMessages;
+
+	private readonly List<(INetMessage, ulong)> _bufferedMessages = new List<(INetMessage, ulong)>();
+
 	public byte[] SerializeMessage<T>(ulong senderId, T message, out int length) where T : INetMessage
 	{
 		_writer.Reset();
@@ -56,6 +60,12 @@ public class NetMessageBus
 
 	public void SendMessageToAllHandlers(INetMessage message, ulong senderId)
 	{
+		if (_isBufferingMessages && message.ShouldBuffer)
+		{
+			_logger.Debug($"Received message of type {message.GetType()} but we are currently buffering messages.");
+			_bufferedMessages.Add((message, senderId));
+			return;
+		}
 		if (!_messageHandlers.TryGetValue(message.GetType(), out List<CallbackPair> value) || value.Count == 0)
 		{
 			Log.Error($"Received message of type {message.GetType()}, but no message handlers are registered for that type!");
@@ -72,9 +82,29 @@ public class NetMessageBus
 			}
 			catch (Exception value2)
 			{
-				Log.Error($"Exception encountered while processing message {message}: {value2}");
+				_logger.Error($"Exception encountered while processing message {message}: {value2}");
 			}
 		}
+	}
+
+	public void SetBufferMessages(bool bufferMessages)
+	{
+		if (_isBufferingMessages == bufferMessages)
+		{
+			return;
+		}
+		_isBufferingMessages = bufferMessages;
+		if (bufferMessages)
+		{
+			_logger.Debug("NetMessageBus is starting to buffer messages.");
+			return;
+		}
+		_logger.Debug($"NetMessageBus is releasing {_bufferedMessages.Count} buffered messages.");
+		foreach (var (message, senderId) in _bufferedMessages)
+		{
+			SendMessageToAllHandlers(message, senderId);
+		}
+		_bufferedMessages.Clear();
 	}
 
 	public void RegisterMessageHandler<T>(MessageHandlerDelegate<T> handler) where T : INetMessage

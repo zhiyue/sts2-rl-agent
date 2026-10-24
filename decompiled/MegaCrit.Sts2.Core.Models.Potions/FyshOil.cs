@@ -34,7 +34,7 @@ public sealed class FyshOil : PotionModel
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
-		await PowerCmd.Apply<StrengthPower>(target, base.DynamicVars.Strength.BaseValue, base.Owner.Creature, null);
-		await PowerCmd.Apply<DexterityPower>(target, base.DynamicVars.Dexterity.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(choiceContext, target, base.DynamicVars.Strength.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<DexterityPower>(choiceContext, target, base.DynamicVars.Dexterity.BaseValue, base.Owner.Creature, null);
 	}
 }

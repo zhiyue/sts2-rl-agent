@@ -15,7 +15,7 @@ public class MapRoom : AbstractRoom
 
 	public override ModelId? ModelId => null;
 
-	public override Task Enter(IRunState? runState, bool isRestoringRoomStackBase)
+	public override Task EnterInternal(IRunState? runState, bool isRestoringRoomStackBase)
 	{
 		if (isRestoringRoomStackBase)
 		{

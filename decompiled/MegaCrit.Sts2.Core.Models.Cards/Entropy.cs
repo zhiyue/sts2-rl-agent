@@ -22,7 +22,7 @@ public sealed class Entropy : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<EntropyPower>(base.Owner.Creature, base.DynamicVars.Cards.IntValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<EntropyPower>(choiceContext, base.Owner.Creature, base.DynamicVars.Cards.IntValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

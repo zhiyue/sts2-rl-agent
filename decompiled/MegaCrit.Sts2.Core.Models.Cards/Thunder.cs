@@ -27,8 +27,8 @@ public sealed class Thunder : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<ThunderPower>(base.Owner.Creature, base.DynamicVars["ThunderPower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<ThunderPower>(choiceContext, base.Owner.Creature, base.DynamicVars["ThunderPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

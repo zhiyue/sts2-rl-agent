@@ -17,7 +17,7 @@ public sealed class CrescentSpear : CardModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[3]
 	{
-		new CalculationBaseVar(6m),
+		new CalculationBaseVar(8m),
 		new ExtraDamageVar(2m),
 		new CalculatedDamageVar(ValueProp.Move).WithMultiplier((CardModel card, Creature? _) => card.Owner.PlayerCombatState.AllCards.Count((CardModel c) => c.CanonicalStarCost >= 0 || c.HasStarCostX))
 	});

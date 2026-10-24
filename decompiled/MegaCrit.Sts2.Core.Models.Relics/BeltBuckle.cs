@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -62,7 +63,7 @@ public sealed class BeltBuckle : RelicModel
 	public override async Task AfterPotionProcured(PotionModel potion)
 	{
 		RefreshStatus();
-		if (CombatManager.Instance.IsInProgress)
+		if (CombatManager.Instance.IsInProgress && base.Owner.Potions.Any())
 		{
 			await RemoveDexterity();
 		}
@@ -99,7 +100,7 @@ public sealed class BeltBuckle : RelicModel
 		{
 			DexterityApplied = true;
 			Flash();
-			await PowerCmd.Apply<DexterityPower>(base.Owner.Creature, base.DynamicVars.Dexterity.BaseValue, null, null);
+			await PowerCmd.Apply<DexterityPower>(new ThrowingPlayerChoiceContext(), base.Owner.Creature, base.DynamicVars.Dexterity.BaseValue, null, null);
 		}
 	}
 
@@ -109,7 +110,7 @@ public sealed class BeltBuckle : RelicModel
 		{
 			DexterityApplied = false;
 			Flash();
-			await PowerCmd.Apply<DexterityPower>(base.Owner.Creature, -base.DynamicVars.Dexterity.BaseValue, null, null);
+			await PowerCmd.Apply<DexterityPower>(new ThrowingPlayerChoiceContext(), base.Owner.Creature, -base.DynamicVars.Dexterity.BaseValue, null, null);
 		}
 	}
 

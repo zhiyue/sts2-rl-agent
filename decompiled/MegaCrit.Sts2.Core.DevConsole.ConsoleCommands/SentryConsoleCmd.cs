@@ -6,6 +6,9 @@ using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 
+/// <summary>
+/// Debug console command for testing Sentry integration.
+/// </summary>
 public class SentryConsoleCmd : AbstractConsoleCmd
 {
 	public override string CmdName => "sentry";
@@ -127,6 +130,9 @@ public class SentryConsoleCmd : AbstractConsoleCmd
 		return new CmdResult(success: true, "Crash triggered");
 	}
 
+	/// <summary>
+	/// Force initializes Sentry for testing purposes, bypassing normal checks.
+	/// </summary>
 	private static void ForceInitializeForTesting()
 	{
 		SentryService.InitializeForTesting();

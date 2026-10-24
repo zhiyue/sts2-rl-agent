@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -30,21 +31,23 @@ public sealed class InfestedPrism : MonsterModel
 
 	protected override string AttackSfx => "event:/sfx/enemy/enemy_attacks/infested_prisms/infested_prisms_attack";
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 215, 200);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 171, 161);
 
 	public override int MaxInitialHp => MinInitialHp;
 
-	private int JabDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 24, 22);
+	private int JabDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 17, 15);
 
-	private int PulsatePowerAmount => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 5, 4);
+	private int VitalSparkAmount => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 3, 2);
+
+	private int PulsateDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 10, 8);
 
 	private int PulsateBlock => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 22, 20);
 
-	private int RadiateDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 18, 16);
+	private int RadiateDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 13, 11);
 
-	private int RadiateBlock => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 18, 16);
+	private int RadiateBlock => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 13, 11);
 
-	private int WhirlwindDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 10, 9);
+	private int WhirlwindDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 6, 5);
 
 	private int WhirlwindRepeat => 3;
 
@@ -53,7 +56,7 @@ public sealed class InfestedPrism : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<VitalSparkPower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<VitalSparkPower>(new ThrowingPlayerChoiceContext(), base.Creature, VitalSparkAmount, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -62,7 +65,7 @@ public sealed class InfestedPrism : MonsterModel
 		MoveState moveState = new MoveState("JAB_MOVE", JabMove, new SingleAttackIntent(JabDamage));
 		MoveState moveState2 = new MoveState("RADIATE_MOVE", RadiateMove, new SingleAttackIntent(RadiateDamage), new DefendIntent());
 		MoveState moveState3 = new MoveState("WHIRLWIND_MOVE", WhirlwindMove, new MultiAttackIntent(WhirlwindDamage, WhirlwindRepeat));
-		MoveState moveState4 = new MoveState("PULSATE_MOVE", PulsateMove, new BuffIntent(), new DefendIntent());
+		MoveState moveState4 = new MoveState("PULSATE_MOVE", PulsateMove, new SingleAttackIntent(PulsateDamage), new BuffIntent(), new DefendIntent());
 		moveState.FollowUpState = moveState2;
 		moveState2.FollowUpState = moveState3;
 		moveState3.FollowUpState = moveState4;
@@ -103,10 +106,12 @@ public sealed class InfestedPrism : MonsterModel
 
 	private async Task PulsateMove(IReadOnlyList<Creature> targets)
 	{
-		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/infested_prisms/infested_prisms_buff");
-		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.6f);
+		await DamageCmd.Attack(PulsateDamage).FromMonster(this).WithAttackerAnim("AttackBlock", 0.25f)
+			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/infested_prisms/infested_prisms_attack_defend")
+			.WithHitFx("vfx/vfx_attack_slash")
+			.Execute(null);
 		await CreatureCmd.GainBlock(base.Creature, PulsateBlock, ValueProp.Move, null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, PulsatePowerAmount, base.Creature, null);
+		await PowerCmd.Apply<VitalSparkPower>(new ThrowingPlayerChoiceContext(), base.Creature, VitalSparkAmount, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

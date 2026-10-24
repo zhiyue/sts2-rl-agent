@@ -3,6 +3,9 @@ using MegaCrit.Sts2.Core.Nodes;
 
 namespace MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 
+/// <summary>
+/// A command that toggles the 0 - 9 hotkeys for hiding UI and +/- for controlling speed
+/// </summary>
 public class TrailerConsoleCmd : AbstractConsoleCmd
 {
 	public override string CmdName => "trailer";

@@ -31,9 +31,10 @@ public sealed class SereTalon : RelicModel
 
 	public override async Task AfterObtained()
 	{
-		HashSet<CardModel> availableCurses = (from c in ModelDb.CardPool<CurseCardPool>().GetUnlockedCards(base.Owner.UnlockState, base.Owner.RunState.CardMultiplayerConstraint)
+		List<CardModel> availableCurses = (from c in ModelDb.CardPool<CurseCardPool>().GetUnlockedCards(base.Owner.UnlockState, base.Owner.RunState.CardMultiplayerConstraint)
 			where c.CanBeGeneratedByModifiers
-			select c).ToHashSet();
+			orderby c.Id
+			select c).ToList();
 		List<CardPileAddResult> curseResults = new List<CardPileAddResult>();
 		for (int i = 0; i < base.DynamicVars["Curses"].IntValue; i++)
 		{

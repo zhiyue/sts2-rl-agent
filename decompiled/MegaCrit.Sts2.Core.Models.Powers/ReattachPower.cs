@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -35,6 +34,9 @@ public sealed class ReattachPower : PowerModel
 		return new Data();
 	}
 
+	/// <summary>
+	/// Executed when Decimillipede Segment is reattaching at the end of its turn.
+	/// </summary>
 	public async Task DoReattach()
 	{
 		if (!AreAllOtherSegmentsDead())
@@ -68,6 +70,9 @@ public sealed class ReattachPower : PowerModel
 		}
 	}
 
+	/// <summary>
+	/// This is so the Decimillipede Segment doesn't receive powers while it is reviving
+	/// </summary>
 	public override bool ShouldAllowHitting(Creature creature)
 	{
 		if (creature != base.Owner)
@@ -95,6 +100,9 @@ public sealed class ReattachPower : PowerModel
 		return false;
 	}
 
+	/// <summary>
+	/// Killing Decimillipede Segment shouldn't trigger fatal unless all other segments are dead too.
+	/// </summary>
 	public override bool ShouldOwnerDeathTriggerFatal()
 	{
 		return AreAllOtherSegmentsDead();
@@ -102,7 +110,6 @@ public sealed class ReattachPower : PowerModel
 
 	private void DoFadeOutOnAllSegments()
 	{
-		float val = 0f;
 		List<NCreature> list = new List<NCreature>();
 		foreach (Creature enemy in base.CombatState.Enemies)
 		{
@@ -110,7 +117,6 @@ public sealed class ReattachPower : PowerModel
 			if (nCreature != null)
 			{
 				nCreature.AnimHideIntent();
-				val = Math.Max(val, nCreature.GetCurrentAnimationLength());
 				list.Add(nCreature);
 			}
 		}
@@ -121,7 +127,7 @@ public sealed class ReattachPower : PowerModel
 		}
 		Node parent = list[0].GetParent();
 		parent.AddChildSafely(nMonsterDeathVfx);
-		parent.MoveChild(nMonsterDeathVfx, list[0].GetIndex());
+		parent.MoveChildSafely(nMonsterDeathVfx, list[0].GetIndex());
 		Task deathAnimationTask = TaskHelper.RunSafely(PlayVfxAndThenRemoveNodes(nMonsterDeathVfx, list));
 		foreach (NCreature item in list)
 		{

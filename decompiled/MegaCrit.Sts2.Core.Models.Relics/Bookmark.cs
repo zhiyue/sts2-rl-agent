@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
-using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Models.Relics;
 
@@ -16,23 +15,19 @@ public sealed class Bookmark : RelicModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromKeyword(CardKeyword.Retain));
 
-	public override Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override Task AfterFlush(PlayerChoiceContext choiceContext, Player player, IReadOnlyCollection<CardModel> flushedCards, IReadOnlyCollection<CardModel> retainedCards)
 	{
-		if (side != base.Owner.Creature.Side)
+		if (player != base.Owner)
 		{
 			return Task.CompletedTask;
 		}
-		List<CardModel> list = (from c in CardPile.GetCards(base.Owner, PileType.Hand)
-			where c.ShouldRetainThisTurn && c.EnergyCost.GetWithModifiers(CostModifiers.Local) > 0 && !c.EnergyCost.CostsX
-			select c).ToList();
+		List<CardModel> list = retainedCards.Where((CardModel c) => !c.EnergyCost.CostsX && c.EnergyCost.GetWithModifiers(CostModifiers.Local) > 0).ToList();
 		if (list.Count == 0)
 		{
 			return Task.CompletedTask;
 		}
 		Flash();
-		Rng combatCardSelection = base.Owner.RunState.Rng.CombatCardSelection;
-		CardModel cardModel = combatCardSelection.NextItem(list);
-		cardModel.EnergyCost.AddUntilPlayed(-1);
+		base.Owner.RunState.Rng.CombatCardSelection.NextItem(list)?.EnergyCost.AddUntilPlayed(-1);
 		return Task.CompletedTask;
 	}
 }

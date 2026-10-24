@@ -47,12 +47,12 @@ public sealed class GalvanicPower : PowerModel
 		}
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Affliction is Galvanized)
 		{
 			VfxCmd.PlayOnCreature(cardPlay.Card.Owner.Creature, "vfx/vfx_attack_lightning");
-			await CreatureCmd.Damage(context, cardPlay.Card.Owner.Creature, base.Amount, ValueProp.Unpowered | ValueProp.Move, null, null);
+			await CreatureCmd.Damage(choiceContext, cardPlay.Card.Owner.Creature, base.Amount, ValueProp.Unpowered | ValueProp.Move, null, null);
 		}
 	}
 }

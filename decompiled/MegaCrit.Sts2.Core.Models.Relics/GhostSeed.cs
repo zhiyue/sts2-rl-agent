@@ -42,11 +42,11 @@ public sealed class GhostSeed : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public bool CanAffect(CardModel card)
+	private static bool CanAffect(CardModel card)
 	{
 		if (card.Rarity == CardRarity.Basic && (card.Tags.Contains(CardTag.Strike) || card.Tags.Contains(CardTag.Defend)))
 		{
-			return !card.Keywords.Contains(CardKeyword.Ethereal);
+			return !card.GetKeywordsWithSources(KeywordSources.Local).Contains(CardKeyword.Ethereal);
 		}
 		return false;
 	}

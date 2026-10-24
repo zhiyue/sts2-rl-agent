@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -118,7 +119,7 @@ public sealed class PaelsLegion : RelicModel
 
 	public override async Task AfterObtained()
 	{
-		Skin = new Rng((uint)(base.Owner.NetId + base.Owner.RunState.Rng.Seed)).NextItem(SkinOptions);
+		Skin = new Rng(base.Owner, base.Id).NextItem(SkinOptions);
 		if (CombatManager.Instance.IsInProgress)
 		{
 			await SummonPet();
@@ -140,7 +141,7 @@ public sealed class PaelsLegion : RelicModel
 		{
 			return 1m;
 		}
-		if (target != base.Owner.Creature)
+		if (cardSource.Owner != base.Owner)
 		{
 			return 1m;
 		}
@@ -169,7 +170,7 @@ public sealed class PaelsLegion : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (AffectedCardPlay != null && AffectedCardPlay == cardPlay)
 		{
@@ -183,9 +184,9 @@ public sealed class PaelsLegion : RelicModel
 		}
 	}
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Creature.Side)
+		if (participants.Contains(base.Owner.Creature))
 		{
 			bool flag = Cooldown > 0;
 			Cooldown--;

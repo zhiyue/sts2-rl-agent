@@ -15,12 +15,12 @@ public sealed class VexingPuzzlebox : RelicModel
 
 	public override async Task AfterPlayerTurnStart(PlayerChoiceContext choiceContext, Player player)
 	{
-		if (player == base.Owner && base.Owner.Creature.CombatState.RoundNumber == 1)
+		if (player == base.Owner && base.Owner.PlayerCombatState.TurnNumber == 1)
 		{
 			Flash();
 			CardModel cardModel = CardFactory.GetDistinctForCombat(base.Owner, base.Owner.Character.CardPool.GetUnlockedCards(base.Owner.UnlockState, base.Owner.RunState.CardMultiplayerConstraint), 1, base.Owner.RunState.Rng.CombatCardGeneration).First();
-			cardModel.EnergyCost.SetThisCombat(0);
-			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, addedByPlayer: true);
+			cardModel.SetToFreeThisTurn();
+			await CardPileCmd.AddGeneratedCardToCombat(cardModel, PileType.Hand, player);
 		}
 	}
 }

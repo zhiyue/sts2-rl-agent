@@ -17,7 +17,7 @@ public sealed class MonarchsGazePower : PowerModel
 	{
 		if (dealer == base.Owner && props.IsPoweredAttack())
 		{
-			await PowerCmd.Apply<MonarchsGazeStrengthDownPower>(target, base.Amount, base.Owner, null);
+			await PowerCmd.Apply<MonarchsGazeStrengthDownPower>(choiceContext, target, base.Amount, base.Owner, null);
 		}
 	}
 }

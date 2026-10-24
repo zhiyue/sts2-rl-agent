@@ -26,58 +26,136 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 [ScriptPath("res://src/Core/Nodes/Screens/CardSelection/NChooseABundleSelectionScreen.cs")]
 public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnBundleClicked' method.
+		/// </summary>
 		public static readonly StringName OnBundleClicked = "OnBundleClicked";
 
+		/// <summary>
+		/// Cached name for the 'OpenPreviewScreen' method.
+		/// </summary>
 		public static readonly StringName OpenPreviewScreen = "OpenPreviewScreen";
 
+		/// <summary>
+		/// Cached name for the 'CancelSelection' method.
+		/// </summary>
 		public static readonly StringName CancelSelection = "CancelSelection";
 
+		/// <summary>
+		/// Cached name for the 'ConfirmSelection' method.
+		/// </summary>
 		public static readonly StringName ConfirmSelection = "ConfirmSelection";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayOpened' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayOpened = "AfterOverlayOpened";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayClosed' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayClosed = "AfterOverlayClosed";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayShown' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayShown = "AfterOverlayShown";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayHidden' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayHidden = "AfterOverlayHidden";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ScreenType' property.
+		/// </summary>
 		public static readonly StringName ScreenType = "ScreenType";
 
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_bundleRow' field.
+		/// </summary>
 		public static readonly StringName _bundleRow = "_bundleRow";
 
+		/// <summary>
+		/// Cached name for the '_bundlePreviewContainer' field.
+		/// </summary>
 		public static readonly StringName _bundlePreviewContainer = "_bundlePreviewContainer";
 
+		/// <summary>
+		/// Cached name for the '_bundlePreviewCards' field.
+		/// </summary>
 		public static readonly StringName _bundlePreviewCards = "_bundlePreviewCards";
 
+		/// <summary>
+		/// Cached name for the '_previewCancelButton' field.
+		/// </summary>
 		public static readonly StringName _previewCancelButton = "_previewCancelButton";
 
+		/// <summary>
+		/// Cached name for the '_previewConfirmButton' field.
+		/// </summary>
 		public static readonly StringName _previewConfirmButton = "_previewConfirmButton";
 
+		/// <summary>
+		/// Cached name for the '_selectedBundle' field.
+		/// </summary>
 		public static readonly StringName _selectedBundle = "_selectedBundle";
 
+		/// <summary>
+		/// Cached name for the '_banner' field.
+		/// </summary>
 		public static readonly StringName _banner = "_banner";
 
+		/// <summary>
+		/// Cached name for the '_peekButton' field.
+		/// </summary>
 		public static readonly StringName _peekButton = "_peekButton";
 
+		/// <summary>
+		/// Cached name for the '_fadeTween' field.
+		/// </summary>
 		public static readonly StringName _fadeTween = "_fadeTween";
 
+		/// <summary>
+		/// Cached name for the '_cardTween' field.
+		/// </summary>
 		public static readonly StringName _cardTween = "_cardTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -179,7 +257,7 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		NChooseABundleSelectionScreen nChooseABundleSelectionScreen = PreloadManager.Cache.GetScene(ScenePath).Instantiate<NChooseABundleSelectionScreen>(PackedScene.GenEditState.Disabled);
 		nChooseABundleSelectionScreen.Name = "NChooseABundleSelectionScreen";
 		nChooseABundleSelectionScreen._bundles = bundles;
-		NOverlayStack.Instance.Push(nChooseABundleSelectionScreen);
+		NOverlayStack.Instance?.Push(nChooseABundleSelectionScreen);
 		return nChooseABundleSelectionScreen;
 	}
 
@@ -249,8 +327,7 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		foreach (NCard item in cardNodes)
 		{
 			NRun.Instance.GlobalUi.ReparentCard(item);
-			Vector2 targetPosition = PileType.Deck.GetTargetPosition(item);
-			NCardFlyVfx child = NCardFlyVfx.Create(item, targetPosition, isAddingToPile: true, item.Model.Owner.Character.TrailPath);
+			NCardFlyVfx child = NCardFlyVfx.Create(item, PileType.Deck, isAddingToPile: true, item.Model.Owner.Character.TrailPath);
 			NRun.Instance.GlobalUi.TopBar.TrailContainer.AddChildSafely(child);
 		}
 		_completionSource.SetResult(new global::_003C_003Ez__ReadOnlySingleElementList<IReadOnlyList<CardModel>>(_selectedBundle.Bundle));
@@ -294,6 +371,11 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		_previewConfirmButton.Disable();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -323,6 +405,7 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -389,6 +472,7 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -435,6 +519,7 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -491,6 +576,7 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -562,6 +648,11 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -582,6 +673,7 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -598,6 +690,7 @@ public class NChooseABundleSelectionScreen : Control, IOverlayScreen, IScreenCon
 		info.AddProperty(PropertyName._cardTween, Variant.From(in _cardTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -17,6 +17,9 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 
+/// <summary>
+/// UI wrapper class for MerchantEntry.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Shops/NMerchantSlot.cs")]
 public abstract class NMerchantSlot : Control
 {
@@ -26,70 +29,166 @@ public abstract class NMerchantSlot : Control
 	[Signal]
 	public delegate void UnhoveredEventHandler(NMerchantSlot slot);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Initialize' method.
+		/// </summary>
 		public static readonly StringName Initialize = "Initialize";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'OnMousePressed' method.
+		/// </summary>
 		public static readonly StringName OnMousePressed = "OnMousePressed";
 
+		/// <summary>
+		/// Cached name for the 'OnMouseReleased' method.
+		/// </summary>
 		public static readonly StringName OnMouseReleased = "OnMouseReleased";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'TriggerMerchantHandToPointHere' method.
+		/// </summary>
 		public static readonly StringName TriggerMerchantHandToPointHere = "TriggerMerchantHandToPointHere";
 
+		/// <summary>
+		/// Cached name for the 'OnPreview' method.
+		/// </summary>
 		public static readonly StringName OnPreview = "OnPreview";
 
+		/// <summary>
+		/// Cached name for the 'CreateHoverTip' method.
+		/// </summary>
 		public static readonly StringName CreateHoverTip = "CreateHoverTip";
 
+		/// <summary>
+		/// Cached name for the 'ClearHoverTip' method.
+		/// </summary>
 		public static readonly StringName ClearHoverTip = "ClearHoverTip";
 
+		/// <summary>
+		/// Cached name for the 'OnMerchantHandHovered' method.
+		/// </summary>
 		public static readonly StringName OnMerchantHandHovered = "OnMerchantHandHovered";
 
+		/// <summary>
+		/// Cached name for the 'OnMerchantHandUnhovered' method.
+		/// </summary>
 		public static readonly StringName OnMerchantHandUnhovered = "OnMerchantHandUnhovered";
 
+		/// <summary>
+		/// Cached name for the 'OnPurchaseFailed' method.
+		/// </summary>
 		public static readonly StringName OnPurchaseFailed = "OnPurchaseFailed";
 
+		/// <summary>
+		/// Cached name for the 'UpdateVisual' method.
+		/// </summary>
 		public static readonly StringName UpdateVisual = "UpdateVisual";
 
+		/// <summary>
+		/// Cached name for the 'WiggleAnimation' method.
+		/// </summary>
 		public static readonly StringName WiggleAnimation = "WiggleAnimation";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Hitbox' property.
+		/// </summary>
 		public static readonly StringName Hitbox = "Hitbox";
 
+		/// <summary>
+		/// Cached name for the 'Visual' property.
+		/// </summary>
 		public static readonly StringName Visual = "Visual";
 
+		/// <summary>
+		/// Cached name for the '_isHovered' field.
+		/// </summary>
 		public static readonly StringName _isHovered = "_isHovered";
 
+		/// <summary>
+		/// Cached name for the '_hitbox' field.
+		/// </summary>
 		public static readonly StringName _hitbox = "_hitbox";
 
+		/// <summary>
+		/// Cached name for the '_costLabel' field.
+		/// </summary>
 		public static readonly StringName _costLabel = "_costLabel";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_purchaseFailedTween' field.
+		/// </summary>
 		public static readonly StringName _purchaseFailedTween = "_purchaseFailedTween";
 
+		/// <summary>
+		/// Cached name for the '_merchantRug' field.
+		/// </summary>
 		public static readonly StringName _merchantRug = "_merchantRug";
 
+		/// <summary>
+		/// Cached name for the '_ignoreMouseRelease' field.
+		/// </summary>
 		public static readonly StringName _ignoreMouseRelease = "_ignoreMouseRelease";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Hovered' signal.
+		/// </summary>
 		public static readonly StringName Hovered = "Hovered";
 
+		/// <summary>
+		/// Cached name for the 'Unhovered' signal.
+		/// </summary>
 		public static readonly StringName Unhovered = "Unhovered";
 	}
 
@@ -125,6 +224,7 @@ public abstract class NMerchantSlot : Control
 
 	protected Player? Player => _merchantRug?.Inventory?.Player;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.Shops.NMerchantSlot.HoveredEventHandler" />
 	public event HoveredEventHandler Hovered
 	{
 		add
@@ -137,6 +237,7 @@ public abstract class NMerchantSlot : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.Shops.NMerchantSlot.UnhoveredEventHandler" />
 	public event UnhoveredEventHandler Unhovered
 	{
 		add
@@ -193,11 +294,11 @@ public abstract class NMerchantSlot : Control
 
 	public override void _GuiInput(InputEvent inputEvent)
 	{
-		if (inputEvent.IsActionReleased(MegaInput.select))
+		if (inputEvent.IsActionPressed(MegaInput.select))
 		{
-			TaskHelper.RunSafely(OnReleased());
+			TaskHelper.RunSafely(OnSelected());
 		}
-		else if (inputEvent.IsActionReleased(MegaInput.accept))
+		else if (inputEvent.IsActionPressed(MegaInput.accept))
 		{
 			OnPreview();
 			GetViewport().SetInputAsHandled();
@@ -215,7 +316,7 @@ public abstract class NMerchantSlot : Control
 		{
 			if (inputEventMouseButton.ButtonIndex == MouseButton.Left)
 			{
-				TaskHelper.RunSafely(OnReleased());
+				TaskHelper.RunSafely(OnSelected());
 			}
 			else
 			{
@@ -243,7 +344,7 @@ public abstract class NMerchantSlot : Control
 		EmitSignal(SignalName.Unhovered, this);
 	}
 
-	private async Task OnReleased()
+	private async Task OnSelected()
 	{
 		ClearHoverTip();
 		await OnTryPurchase(_merchantRug?.Inventory);
@@ -256,9 +357,13 @@ public abstract class NMerchantSlot : Control
 
 	protected abstract Task OnTryPurchase(MerchantInventory? inventory);
 
+	/// <summary>
+	/// Used when the entry slot is purchased to ensure that the hand tries to point at it.
+	/// Particularly useful for the Merchant Robes relic since purchasing the slots happens automatically.
+	/// </summary>
 	protected void TriggerMerchantHandToPointHere()
 	{
-		_merchantRug?.MerchantHand.PointAtTarget(base.GlobalPosition);
+		_merchantRug?.MerchantHand.PointAtTarget(this, Vector2.Zero);
 		_merchantRug?.MerchantHand.StopPointing(2f);
 	}
 
@@ -275,7 +380,7 @@ public abstract class NMerchantSlot : Control
 
 	private void OnMerchantHandHovered(NMerchantSlot _)
 	{
-		_merchantRug?.MerchantHand.PointAtTarget(base.GlobalPosition);
+		_merchantRug?.MerchantHand.PointAtTarget(this, Vector2.Zero);
 	}
 
 	private void OnMerchantHandUnhovered(NMerchantSlot _)
@@ -330,6 +435,11 @@ public abstract class NMerchantSlot : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -379,6 +489,7 @@ public abstract class NMerchantSlot : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -493,6 +604,7 @@ public abstract class NMerchantSlot : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -571,6 +683,7 @@ public abstract class NMerchantSlot : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -612,6 +725,7 @@ public abstract class NMerchantSlot : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -663,6 +777,11 @@ public abstract class NMerchantSlot : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -679,6 +798,7 @@ public abstract class NMerchantSlot : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -694,6 +814,7 @@ public abstract class NMerchantSlot : Control
 		info.AddSignalEventDelegate(SignalName.Unhovered, backing_Unhovered);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -736,6 +857,11 @@ public abstract class NMerchantSlot : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -761,6 +887,7 @@ public abstract class NMerchantSlot : Control
 		EmitSignal(SignalName.Unhovered, slot);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -778,6 +905,7 @@ public abstract class NMerchantSlot : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

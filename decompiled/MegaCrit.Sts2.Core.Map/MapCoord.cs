@@ -4,6 +4,9 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Map;
 
+/// <summary>
+/// A simple struct representing the row and column that a given map point is on in the map.
+/// </summary>
 [Serializable]
 public struct MapCoord : IEquatable<MapCoord>, IComparable<MapCoord>, IPacketSerializable
 {

@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -66,7 +67,7 @@ public sealed class LouseProgenitor : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<CurlUpPower>(base.Creature, CurlBlock, base.Creature, null);
+		await PowerCmd.Apply<CurlUpPower>(new ThrowingPlayerChoiceContext(), base.Creature, CurlBlock, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -95,7 +96,7 @@ public sealed class LouseProgenitor : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/giant_louse/giant_louse_attack_web")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<FrailPower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	private async Task CurlAndGrowMove(IReadOnlyList<Creature> targets)
@@ -103,7 +104,7 @@ public sealed class LouseProgenitor : MonsterModel
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/giant_louse/giant_louse_curl");
 		await CreatureCmd.TriggerAnim(base.Creature, "Curl", 0.25f);
 		await CreatureCmd.GainBlock(base.Creature, CurlBlock, ValueProp.Move, null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 5m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 5m, base.Creature, null);
 		Curled = true;
 	}
 

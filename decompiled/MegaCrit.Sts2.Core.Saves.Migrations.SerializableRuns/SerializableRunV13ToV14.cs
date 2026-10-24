@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.Saves.Migrations.SerializableRuns;
 
+/// <summary>
+/// SerializableReward.CardPoolId (singular) changed to CardPoolIds (plural).
+/// </summary>
 [Migration(typeof(SerializableRun), 13, 14)]
 public class SerializableRunV13ToV14 : MigrationBase<SerializableRun>
 {

@@ -13,7 +13,7 @@ public sealed class RefineBlade : CardModel
 {
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new ForgeVar(6),
+		new ForgeVar(9),
 		new EnergyVar(1)
 	});
 
@@ -28,7 +28,7 @@ public sealed class RefineBlade : CardModel
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		await ForgeCmd.Forge(base.DynamicVars.Forge.IntValue, base.Owner, this);
-		await PowerCmd.Apply<EnergyNextTurnPower>(base.Owner.Creature, base.DynamicVars.Energy.BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<EnergyNextTurnPower>(choiceContext, base.Owner.Creature, base.DynamicVars.Energy.BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

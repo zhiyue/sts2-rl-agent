@@ -15,6 +15,12 @@ public class MapPointHistoryEntry : IPacketSerializable
 	[JsonPropertyName("map_point_type")]
 	public MapPointType MapPointType { get; set; }
 
+	/// <summary>
+	/// All the rooms entered in this map point. Usually contains just 1, but can contain more when one type of
+	/// room transitions into another (like when the Dense Vegetation event transitions into the Wrigglers combat).
+	/// Accessing index 0 will usually give you what you want, but keep an eye out for cases where you may care
+	/// about other rooms entered in the same map point.
+	/// </summary>
 	[JsonPropertyName("rooms")]
 	[JsonSerializeCondition(SerializationCondition.SaveIfNotCollectionEmptyOrNull)]
 	public List<MapPointRoomHistoryEntry> Rooms { get; set; } = new List<MapPointRoomHistoryEntry>();

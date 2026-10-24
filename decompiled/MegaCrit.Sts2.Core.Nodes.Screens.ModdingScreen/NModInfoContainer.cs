@@ -14,20 +14,41 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.ModdingScreen;
 [ScriptPath("res://src/Core/Nodes/Screens/ModdingScreen/NModInfoContainer.cs")]
 public class NModInfoContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_title' field.
+		/// </summary>
 		public static readonly StringName _title = "_title";
 
+		/// <summary>
+		/// Cached name for the '_image' field.
+		/// </summary>
 		public static readonly StringName _image = "_image";
 
+		/// <summary>
+		/// Cached name for the '_description' field.
+		/// </summary>
 		public static readonly StringName _description = "_description";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -50,39 +71,58 @@ public class NModInfoContainer : Control
 
 	public void Fill(Mod mod)
 	{
-		if (mod.wasLoaded)
+		_title.Text = mod.manifest?.name ?? "<No Name>";
+		string path = "res://" + mod.manifest?.id + "/mod_image.png";
+		if (ResourceLoader.Exists(path))
 		{
-			_title.Text = mod.manifest.name;
-			_image.Texture = PreloadManager.Cache.GetAsset<Texture2D>("res://" + mod.pckName + "/mod_image.png");
-			StringBuilder stringBuilder = new StringBuilder();
-			StringBuilder stringBuilder2 = stringBuilder;
-			StringBuilder stringBuilder3 = stringBuilder2;
-			StringBuilder.AppendInterpolatedStringHandler handler = new StringBuilder.AppendInterpolatedStringHandler(21, 1, stringBuilder2);
-			handler.AppendLiteral("[gold]Author[/gold]: ");
-			handler.AppendFormatted(mod.manifest.author ?? "unknown");
-			stringBuilder3.AppendLine(ref handler);
-			stringBuilder2 = stringBuilder;
-			StringBuilder stringBuilder4 = stringBuilder2;
-			handler = new StringBuilder.AppendInterpolatedStringHandler(22, 1, stringBuilder2);
-			handler.AppendLiteral("[gold]Version[/gold]: ");
-			handler.AppendFormatted(mod.manifest.version ?? "unknown");
-			stringBuilder4.AppendLine(ref handler);
-			stringBuilder.AppendLine();
-			stringBuilder2 = stringBuilder;
-			StringBuilder stringBuilder5 = stringBuilder2;
-			handler = new StringBuilder.AppendInterpolatedStringHandler(0, 1, stringBuilder2);
-			handler.AppendFormatted(mod.manifest.description ?? "No description");
-			stringBuilder5.AppendLine(ref handler);
-			_description.Text = stringBuilder.ToString();
+			_image.Texture = PreloadManager.Cache.GetAsset<Texture2D>(path);
 		}
 		else
 		{
-			_title.Text = mod.pckName;
-			_image.Texture = NModMenuRow.GetPlatformIcon(mod.modSource);
-			_description.Text = new LocString("settings_ui", "MODDING_SCREEN.MOD_UNLOADED_DESCRIPTION").GetFormattedText();
+			_image.Texture = null;
 		}
+		StringBuilder stringBuilder = new StringBuilder();
+		StringBuilder stringBuilder2 = stringBuilder;
+		StringBuilder stringBuilder3 = stringBuilder2;
+		StringBuilder.AppendInterpolatedStringHandler handler = new StringBuilder.AppendInterpolatedStringHandler(21, 1, stringBuilder2);
+		handler.AppendLiteral("[gold]Author[/gold]: ");
+		handler.AppendFormatted(mod.manifest?.author ?? "unknown");
+		stringBuilder3.AppendLine(ref handler);
+		stringBuilder2 = stringBuilder;
+		StringBuilder stringBuilder4 = stringBuilder2;
+		handler = new StringBuilder.AppendInterpolatedStringHandler(22, 1, stringBuilder2);
+		handler.AppendLiteral("[gold]Version[/gold]: ");
+		handler.AppendFormatted(mod.manifest?.version ?? "unknown");
+		stringBuilder4.AppendLine(ref handler);
+		stringBuilder.AppendLine();
+		stringBuilder2 = stringBuilder;
+		StringBuilder stringBuilder5 = stringBuilder2;
+		handler = new StringBuilder.AppendInterpolatedStringHandler(0, 1, stringBuilder2);
+		handler.AppendFormatted(mod.manifest?.description ?? "No description");
+		stringBuilder5.AppendLine(ref handler);
+		List<LocString>? errors = mod.errors;
+		if (errors != null && errors.Count > 0)
+		{
+			stringBuilder.AppendLine();
+			foreach (LocString error in mod.errors)
+			{
+				stringBuilder2 = stringBuilder;
+				StringBuilder stringBuilder6 = stringBuilder2;
+				handler = new StringBuilder.AppendInterpolatedStringHandler(11, 1, stringBuilder2);
+				handler.AppendLiteral("[red]");
+				handler.AppendFormatted(error.GetFormattedText());
+				handler.AppendLiteral("[/red]");
+				stringBuilder6.AppendLine(ref handler);
+			}
+		}
+		_description.Text = stringBuilder.ToString();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -91,6 +131,7 @@ public class NModInfoContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -103,6 +144,7 @@ public class NModInfoContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -113,6 +155,7 @@ public class NModInfoContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -134,6 +177,7 @@ public class NModInfoContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -155,6 +199,11 @@ public class NModInfoContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -165,6 +214,7 @@ public class NModInfoContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -174,6 +224,7 @@ public class NModInfoContainer : Control
 		info.AddProperty(PropertyName._description, Variant.From(in _description));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

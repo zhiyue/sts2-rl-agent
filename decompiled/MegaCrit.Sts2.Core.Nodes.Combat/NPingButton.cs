@@ -21,6 +21,9 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Combat;
 
+/// <summary>
+/// Ping button. Flies in from off-screen after a short delay when the local player is ready but remote players are not.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Combat/NPingButton.cs")]
 public class NPingButton : NButton
 {
@@ -31,64 +34,151 @@ public class NPingButton : NButton
 		Hidden
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnEnable' method.
+		/// </summary>
 		public new static readonly StringName OnEnable = "OnEnable";
 
+		/// <summary>
+		/// Cached name for the 'OnDisable' method.
+		/// </summary>
 		public new static readonly StringName OnDisable = "OnDisable";
 
+		/// <summary>
+		/// Cached name for the 'AnimOut' method.
+		/// </summary>
 		public static readonly StringName AnimOut = "AnimOut";
 
+		/// <summary>
+		/// Cached name for the 'AnimIn' method.
+		/// </summary>
 		public static readonly StringName AnimIn = "AnimIn";
 
+		/// <summary>
+		/// Cached name for the 'OnCombatEnded' method.
+		/// </summary>
 		public static readonly StringName OnCombatEnded = "OnCombatEnded";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderV' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderV = "UpdateShaderV";
 
+		/// <summary>
+		/// Cached name for the 'SetState' method.
+		/// </summary>
 		public static readonly StringName SetState = "SetState";
 
+		/// <summary>
+		/// Cached name for the 'RefreshEnabled' method.
+		/// </summary>
 		public static readonly StringName RefreshEnabled = "RefreshEnabled";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ShowPos' property.
+		/// </summary>
 		public static readonly StringName ShowPos = "ShowPos";
 
+		/// <summary>
+		/// Cached name for the 'HidePos' property.
+		/// </summary>
 		public static readonly StringName HidePos = "HidePos";
 
+		/// <summary>
+		/// Cached name for the 'Hotkeys' property.
+		/// </summary>
 		public new static readonly StringName Hotkeys = "Hotkeys";
 
+		/// <summary>
+		/// Cached name for the '_state' field.
+		/// </summary>
 		public static readonly StringName _state = "_state";
 
+		/// <summary>
+		/// Cached name for the '_visuals' field.
+		/// </summary>
 		public static readonly StringName _visuals = "_visuals";
 
+		/// <summary>
+		/// Cached name for the '_image' field.
+		/// </summary>
 		public static readonly StringName _image = "_image";
 
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_viewport' field.
+		/// </summary>
 		public static readonly StringName _viewport = "_viewport";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_positionTween' field.
+		/// </summary>
 		public static readonly StringName _positionTween = "_positionTween";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -150,6 +240,8 @@ public class NPingButton : NButton
 	public override void _ExitTree()
 	{
 		base._ExitTree();
+		_showCancelTokenSource?.Cancel();
+		_showCancelTokenSource = null;
 		CombatManager.Instance.AboutToSwitchToEnemyTurn -= OnAboutToSwitchToEnemyTurn;
 		CombatManager.Instance.PlayerEndedTurn -= AfterPlayerEndedTurn;
 		CombatManager.Instance.PlayerUnendedTurn -= AfterPlayerUnendedTurn;
@@ -210,6 +302,9 @@ public class NPingButton : NButton
 		_label.Modulate = StsColors.cream;
 	}
 
+	/// <summary>
+	/// Called when the player presses End Turn or combat ends.
+	/// </summary>
 	protected override void OnDisable()
 	{
 		NHoverTipSet.Remove(this);
@@ -217,6 +312,9 @@ public class NPingButton : NButton
 		_label.Modulate = StsColors.gray;
 	}
 
+	/// <summary>
+	/// Animates the button out off the screen and disables the button if it is currently enabled.
+	/// </summary>
 	private void AnimOut()
 	{
 		_showCancelTokenSource?.Cancel();
@@ -226,6 +324,9 @@ public class NPingButton : NButton
 		_positionTween.TweenProperty(this, "position", HidePos, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 	}
 
+	/// <summary>
+	/// Animates the button in from off the screen.
+	/// </summary>
 	private void AnimIn()
 	{
 		_positionTween?.Kill();
@@ -270,6 +371,11 @@ public class NPingButton : NButton
 		_hsv.SetShaderParameter(_v, value);
 	}
 
+	/// <summary>
+	/// Set the state of the button.
+	/// Use this instead of calling Enable or Disable directly, as the enabled/disabled state of the button can also be
+	/// controlled by the state of the UI above the button (see RefreshEnabled).
+	/// </summary>
 	private void SetState(State newState)
 	{
 		if (_state != newState)
@@ -287,6 +393,11 @@ public class NPingButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// Refreshes whether the button is enabled or not. Should be called when a screen appears/disappears.
+	/// Use this instead of calling Enable or Disable directly! The enabled/disabled state of the button should be
+	/// controlled by the button itself.
+	/// </summary>
 	public void RefreshEnabled()
 	{
 		bool flag = NCombatRoom.Instance == null || NCombatRoom.Instance.Mode != CombatRoomMode.ActiveCombat || !ActiveScreenContext.Instance.IsCurrent(NCombatRoom.Instance) || NCombatRoom.Instance.Ui.Hand.IsInCardSelection;
@@ -300,6 +411,11 @@ public class NPingButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -328,6 +444,7 @@ public class NPingButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -424,6 +541,7 @@ public class NPingButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -490,6 +608,7 @@ public class NPingButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -536,6 +655,7 @@ public class NPingButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -600,6 +720,11 @@ public class NPingButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -618,6 +743,7 @@ public class NPingButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -632,6 +758,7 @@ public class NPingButton : NButton
 		info.AddProperty(PropertyName._hoverTween, Variant.From(in _hoverTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

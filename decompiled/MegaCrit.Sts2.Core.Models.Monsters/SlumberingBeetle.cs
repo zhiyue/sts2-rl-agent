@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -72,10 +73,10 @@ public sealed class SlumberingBeetle : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<PlatingPower>(base.Creature, PlatingAmount, base.Creature, null);
-		await PowerCmd.Apply<SlumberPower>(base.Creature, 3m, base.Creature, null);
-		SfxCmd.PlayLoop("event:/sfx/enemy/enemy_attacks/slumbering_beetle/slumbering_beetle_sleep_loop");
-		Marker2D marker2D = NCombatRoom.Instance.GetCreatureNode(base.Creature)?.GetSpecialNode<Marker2D>("%SleepVfxPos");
+		await PowerCmd.Apply<PlatingPower>(new ThrowingPlayerChoiceContext(), base.Creature, PlatingAmount, base.Creature, null);
+		await PowerCmd.Apply<SlumberPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
+		SfxCmd.PlayLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/slumbering_beetle/slumbering_beetle_sleep_loop");
+		Marker2D marker2D = base.Creature.GetCreatureNode()?.GetSpecialNode<Marker2D>("%SleepVfxPos");
 		if (marker2D != null)
 		{
 			SleepingVfx = NSleepingVfx.Create(marker2D.GlobalPosition);
@@ -94,7 +95,7 @@ public sealed class SlumberingBeetle : MonsterModel
 
 	public async Task WakeUpMove(IReadOnlyList<Creature> _)
 	{
-		SfxCmd.StopLoop("event:/sfx/enemy/enemy_attacks/slumbering_beetle/slumbering_beetle_sleep_loop");
+		SfxCmd.StopLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/slumbering_beetle/slumbering_beetle_sleep_loop");
 		SleepingVfx?.Stop();
 		SleepingVfx = null;
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/slumbering_beetle/slumbering_beetle_wake_up");
@@ -131,18 +132,18 @@ public sealed class SlumberingBeetle : MonsterModel
 		NCreature nCreature = NCombatRoom.Instance?.GetCreatureNode(base.Creature);
 		if (nCreature != null)
 		{
-			NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(LocalContext.GetMe(base.CombatState).Creature);
+			NCreature nCreature2 = LocalContext.GetMe(base.CombatState)?.Creature.GetCreatureNode();
 			Node2D specialNode = nCreature.GetSpecialNode<Node2D>("Visuals/SpineBoneNode");
-			if (specialNode != null)
+			if (specialNode != null && nCreature2 != null)
 			{
-				specialNode.Position = Vector2.Left * (nCreature.GlobalPosition.X - creatureNode.GlobalPosition.X);
+				specialNode.Position = Vector2.Left * (nCreature.GlobalPosition.X - nCreature2.GlobalPosition.X);
 			}
 		}
 		await DamageCmd.Attack(RolloutDamage).FromMonster(this).WithAttackerAnim("Rollout", 0.5f)
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/slumbering_beetle/slumbering_beetle_roll")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

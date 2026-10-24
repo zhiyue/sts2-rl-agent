@@ -12,48 +12,100 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
+/// <summary>
+/// Thought bubble vfx used when creatures think during combat. Generally, this is the player character breaking the 4th wall.
+/// Out of energy! No more cards in the draw pile. Etc
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Vfx/NThoughtBubbleVfx.cs")]
 public class NThoughtBubbleVfx : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'SetTexture' method.
+		/// </summary>
 		public static readonly StringName SetTexture = "SetTexture";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_container' field.
+		/// </summary>
 		public static readonly StringName _container = "_container";
 
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_textureRect' field.
+		/// </summary>
 		public static readonly StringName _textureRect = "_textureRect";
 
+		/// <summary>
+		/// Cached name for the '_contents' field.
+		/// </summary>
 		public static readonly StringName _contents = "_contents";
 
+		/// <summary>
+		/// Cached name for the '_tail' field.
+		/// </summary>
 		public static readonly StringName _tail = "_tail";
 
+		/// <summary>
+		/// Cached name for the '_style' field.
+		/// </summary>
 		public static readonly StringName _style = "_style";
 
+		/// <summary>
+		/// Cached name for the '_side' field.
+		/// </summary>
 		public static readonly StringName _side = "_side";
 
+		/// <summary>
+		/// Cached name for the '_text' field.
+		/// </summary>
 		public static readonly StringName _text = "_text";
 
+		/// <summary>
+		/// Cached name for the '_texture' field.
+		/// </summary>
 		public static readonly StringName _texture = "_texture";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -92,6 +144,9 @@ public class NThoughtBubbleVfx : Control
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>("res://scenes/vfx/vfx_thought_bubble.tscn");
 
+	/// <summary>
+	/// Creates a thought bubble given a creature. Use this when you want creatures to think out loud during combat!
+	/// </summary>
 	public static NThoughtBubbleVfx? Create(string text, Creature speaker, double? secondsToDisplay)
 	{
 		if (TestMode.IsOn)
@@ -108,6 +163,9 @@ public class NThoughtBubbleVfx : Control
 		return nThoughtBubbleVfx;
 	}
 
+	/// <summary>
+	/// When we want to specify the absolute position of the thought bubble vfx.
+	/// </summary>
 	public static NThoughtBubbleVfx? Create(string text, DialogueSide side, double? secondsToDisplay)
 	{
 		if (TestMode.IsOn)
@@ -117,6 +175,9 @@ public class NThoughtBubbleVfx : Control
 		return CreateInternal(text, null, side, secondsToDisplay);
 	}
 
+	/// <summary>
+	/// When we want to specify the absolute position of the thought bubble vfx with an image.
+	/// </summary>
 	public static NThoughtBubbleVfx? Create(Texture2D texture, DialogueSide side, double? secondsToDisplay)
 	{
 		if (TestMode.IsOn)
@@ -178,7 +239,6 @@ public class NThoughtBubbleVfx : Control
 	{
 		_tween?.Kill();
 		_cts?.Cancel();
-		_cts?.Dispose();
 	}
 
 	public async Task GoAway()
@@ -188,7 +248,7 @@ public class NThoughtBubbleVfx : Control
 			_tween?.Kill();
 			_tween = CreateTween();
 			_tween.TweenProperty(this, "modulate:a", 0f, 0.4).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
-			await ToSignal(_tween, Tween.SignalName.Finished);
+			await _tween.AwaitFinished(this);
 			this.QueueFreeSafely();
 		}
 	}
@@ -203,9 +263,19 @@ public class NThoughtBubbleVfx : Control
 		return nThoughtBubbleVfx;
 	}
 
+	/// <summary>
+	/// Given a creature, dynamically calculates and returns the position of where the "mouth" should be.
+	/// Used during combat, where we don't know which side a creature could be on.
+	/// </summary>
+	/// <param name="speaker"></param>
+	/// <returns></returns>
 	public static Vector2 GetCreatureSpeechPosition(Creature speaker)
 	{
-		NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(speaker);
+		NCreature creatureNode = speaker.GetCreatureNode();
+		if (creatureNode == null)
+		{
+			return Vector2.Zero;
+		}
 		if (creatureNode.Visuals.TalkPosition != null)
 		{
 			return creatureNode.Visuals.TalkPosition.GlobalPosition;
@@ -232,6 +302,11 @@ public class NThoughtBubbleVfx : Control
 		_textureRect.Texture = texture;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -245,6 +320,7 @@ public class NThoughtBubbleVfx : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -269,6 +345,7 @@ public class NThoughtBubbleVfx : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -287,6 +364,7 @@ public class NThoughtBubbleVfx : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -343,6 +421,7 @@ public class NThoughtBubbleVfx : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -399,6 +478,11 @@ public class NThoughtBubbleVfx : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -416,6 +500,7 @@ public class NThoughtBubbleVfx : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -432,6 +517,7 @@ public class NThoughtBubbleVfx : Control
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

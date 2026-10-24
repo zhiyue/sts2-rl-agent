@@ -13,6 +13,11 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 
+/// <summary>
+/// Node class that manages the current capstone screen.
+/// If a new Capstone screen is opened, any previously open capstone screens are destroyed.
+/// If a new Capstone screen is opened, any previously open overlay screens are hidden until there are no more capstone screens.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Capstones/NCapstoneContainer.cs")]
 public class NCapstoneContainer : Control
 {
@@ -22,40 +27,91 @@ public class NCapstoneContainer : Control
 	[Signal]
 	public delegate void CapstoneClosedEventHandler();
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'Close' method.
+		/// </summary>
 		public static readonly StringName Close = "Close";
 
+		/// <summary>
+		/// Cached name for the 'CloseInternal' method.
+		/// </summary>
 		public static readonly StringName CloseInternal = "CloseInternal";
 
+		/// <summary>
+		/// Cached name for the 'DisableBackstopInstantly' method.
+		/// </summary>
 		public static readonly StringName DisableBackstopInstantly = "DisableBackstopInstantly";
 
+		/// <summary>
+		/// Cached name for the 'EnableBackstopInstantly' method.
+		/// </summary>
 		public static readonly StringName EnableBackstopInstantly = "EnableBackstopInstantly";
 
+		/// <summary>
+		/// Cached name for the 'CleanUp' method.
+		/// </summary>
 		public static readonly StringName CleanUp = "CleanUp";
 
+		/// <summary>
+		/// Cached name for the 'OnActiveScreenChanged' method.
+		/// </summary>
 		public static readonly StringName OnActiveScreenChanged = "OnActiveScreenChanged";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InUse' property.
+		/// </summary>
 		public static readonly StringName InUse = "InUse";
 
+		/// <summary>
+		/// Cached name for the '_backstop' field.
+		/// </summary>
 		public static readonly StringName _backstop = "_backstop";
 
+		/// <summary>
+		/// Cached name for the '_backstopFade' field.
+		/// </summary>
 		public static readonly StringName _backstopFade = "_backstopFade";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Changed' signal.
+		/// </summary>
 		public static readonly StringName Changed = "Changed";
 
+		/// <summary>
+		/// Cached name for the 'CapstoneClosed' signal.
+		/// </summary>
 		public static readonly StringName CapstoneClosed = "CapstoneClosed";
 	}
 
@@ -73,6 +129,7 @@ public class NCapstoneContainer : Control
 
 	public static NCapstoneContainer? Instance => NRun.Instance?.GlobalUi.CapstoneContainer;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.Capstones.NCapstoneContainer.ChangedEventHandler" />
 	public event ChangedEventHandler Changed
 	{
 		add
@@ -85,6 +142,7 @@ public class NCapstoneContainer : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.Capstones.NCapstoneContainer.CapstoneClosedEventHandler" />
 	public event CapstoneClosedEventHandler CapstoneClosed
 	{
 		add
@@ -143,7 +201,7 @@ public class NCapstoneContainer : Control
 		}
 		((Node)screen).ProcessMode = ProcessModeEnum.Inherit;
 		screen.AfterCapstoneOpened();
-		if (RunManager.Instance.IsSinglePlayerOrFakeMultiplayer)
+		if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
 		{
 			CombatManager.Instance.Pause();
 		}
@@ -164,7 +222,7 @@ public class NCapstoneContainer : Control
 
 	private void CloseInternal()
 	{
-		if (RunManager.Instance.IsSinglePlayerOrFakeMultiplayer)
+		if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
 		{
 			CombatManager.Instance.Unpause();
 		}
@@ -201,9 +259,12 @@ public class NCapstoneContainer : Control
 		_backstop.Modulate = Colors.White;
 	}
 
+	/// <summary>
+	/// Called just before the run is disposed.
+	/// </summary>
 	public void CleanUp()
 	{
-		if (RunManager.Instance.IsSinglePlayerOrFakeMultiplayer)
+		if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer)
 		{
 			CombatManager.Instance.Unpause();
 		}
@@ -224,6 +285,11 @@ public class NCapstoneContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -240,6 +306,7 @@ public class NCapstoneContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -300,6 +367,7 @@ public class NCapstoneContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -342,6 +410,7 @@ public class NCapstoneContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -358,6 +427,7 @@ public class NCapstoneContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -379,6 +449,11 @@ public class NCapstoneContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -389,6 +464,7 @@ public class NCapstoneContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -399,6 +475,7 @@ public class NCapstoneContainer : Control
 		info.AddSignalEventDelegate(SignalName.CapstoneClosed, backing_CapstoneClosed);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -421,6 +498,11 @@ public class NCapstoneContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -440,6 +522,7 @@ public class NCapstoneContainer : Control
 		EmitSignal(SignalName.CapstoneClosed);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -457,6 +540,7 @@ public class NCapstoneContainer : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

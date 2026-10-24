@@ -27,7 +27,7 @@ public sealed class CosmicConcoction : PotionModel
 		foreach (CardModel item in distinctForCombat)
 		{
 			CardCmd.Upgrade(item);
-			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, base.Owner);
 		}
 	}
 }

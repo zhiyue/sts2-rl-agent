@@ -10,7 +10,6 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
@@ -31,19 +30,21 @@ public sealed class BowlbugEgg : MonsterModel
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Insect;
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
 		skeleton.SetSkin(skeleton.GetData().FindSkin("cocoon"));
 		skeleton.SetSlotsToSetupPose();
-		Node node = visuals.GetNode("Visuals/CocoonSlotNode/Cocoon");
+		Node node = (spine.BoundObject as Node)?.GetNodeOrNull("CocoonSlotNode/Cocoon");
 		if (node != null)
 		{
 			MegaSprite megaSprite = new MegaSprite(node);
 			MegaSkeleton skeleton2 = megaSprite.GetSkeleton();
-			skeleton2.SetSkin(skeleton2.GetData().FindSkin("egg1"));
-			megaSprite.GetAnimationState().SetAnimation("egg_idle_loop");
-			skeleton2.SetSlotsToSetupPose();
+			if (skeleton2 != null)
+			{
+				skeleton2.SetSkin(skeleton2.GetData().FindSkin("egg1"));
+				megaSprite.GetAnimationState().SetAnimation("egg_idle_loop");
+				skeleton2.SetSlotsToSetupPose();
+			}
 		}
 	}
 

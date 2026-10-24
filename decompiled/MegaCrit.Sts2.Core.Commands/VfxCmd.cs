@@ -8,7 +8,9 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.Screens.Bestiary;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
+using MegaCrit.Sts2.Core.Nodes.Vfx.Cards;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Ui;
 using MegaCrit.Sts2.Core.TestSupport;
 
@@ -79,49 +81,61 @@ public static class VfxCmd
 		"vfx/vfx_slime_impact", "vfx/vfx_thrash", "vfx/vfx_cross_heal", "vfx/vfx_heavy_blunt", "vfx/vfx_starry_impact", "vfx/vfx_scream", "vfx/vfx_spooky_scream"
 	}.Select(SceneHelper.GetScenePath).Concat(new global::_003C_003Ez__ReadOnlyArray<string>(new string[25]
 	{
-		NItemThrowVfx.scenePath,
-		NSplashVfx.scenePath,
-		NLiquidOverlayVfx.scenePath,
-		NLargeMagicMissileVfx.scenePath,
-		NBigSlashVfx.scenePath,
 		NBigSlashImpactVfx.scenePath,
-		NSmallMagicMissileVfx.scenePath,
-		NGaseousImpactVfx.scenePath,
+		NBigSlashVfx.scenePath,
+		NCardTransformShineVfx.scenePath,
 		NDaggerSprayFlurryVfx.scenePath,
 		NDaggerSprayImpactVfx.scenePath,
-		NFireBurstVfx.scenePath,
 		NFireBurningVfx.scenePath,
+		NFireBurstVfx.scenePath,
+		NGaseousImpactVfx.scenePath,
+		NGoopyImpactVfx.scenePath,
+		NHyperbeamImpactVfx.scenePath,
+		NHyperbeamVfx.scenePath,
+		NItemThrowVfx.scenePath,
+		NLargeMagicMissileVfx.scenePath,
+		NLiquidOverlayVfx.scenePath,
+		NLowHpBorderVfx.scenePath,
+		NMinionDiveBombVfx.scenePath,
 		NPoisonImpactVfx.scenePath,
 		NScratchVfx.scenePath,
-		NSporeImpactVfx.scenePath,
 		NShivThrowVfx.scenePath,
-		NHyperbeamVfx.scenePath,
-		NHyperbeamImpactVfx.scenePath,
-		NMinionDiveBombVfx.scenePath,
+		NSmallMagicMissileVfx.scenePath,
+		NSplashVfx.scenePath,
+		NSporeImpactVfx.scenePath,
 		NSweepingBeamImpactVfx.scenePath,
 		NSweepingBeamVfx.scenePath,
-		NGoopyImpactVfx.scenePath,
-		NGaseousImpactVfx.scenePath,
-		NWormyImpactVfx.scenePath,
-		NLowHpBorderVfx.scenePath
+		NWormyImpactVfx.scenePath
 	})).Concat(NHealNumVfx.AssetPaths);
 
-	public static void PlayFullScreenInCombat(string path)
+	public static void PlayFullScreenInCombat(string path, Creature? spawner)
 	{
-		if (!TestMode.IsOn && NCombatRoom.Instance != null)
+		if (!TestMode.IsOn)
 		{
-			string scenePath = SceneHelper.GetScenePath(path);
-			Node2D node2D = PreloadManager.Cache.GetScene(scenePath).Instantiate<Node2D>(PackedScene.GenEditState.Disabled);
-			NCombatRoom.Instance.CombatVfxContainer.AddChildSafely(node2D);
-			node2D.GlobalPosition = NGame.Instance.GetViewportRect().Size * 0.5f;
+			Control control = spawner?.GetVfxContainer();
+			if (control != null)
+			{
+				string scenePath = SceneHelper.GetScenePath(path);
+				Node2D node2D = PreloadManager.Cache.GetScene(scenePath).Instantiate<Node2D>(PackedScene.GenEditState.Disabled);
+				control.AddChildSafely(node2D);
+				node2D.GlobalPosition = NGame.Instance.GetViewportRect().Size * 0.5f;
+			}
 		}
 	}
 
-	public static Vector2? GetSideCenter(CombatSide side, CombatState combatState)
+	public static Vector2? GetSideCenter(CombatSide side, ICombatState combatState)
 	{
-		if (NCombatRoom.Instance == null)
+		if (TestMode.IsOn)
 		{
 			return null;
+		}
+		if (!combatState.IsLiveCombat())
+		{
+			if (side == CombatSide.Enemy && NBestiary.Instance != null)
+			{
+				return NBestiary.Instance.GetSideCenter();
+			}
+			return Vector2.Zero;
 		}
 		Vector2 zero = Vector2.Zero;
 		IReadOnlyList<Creature> readOnlyList = (from c in combatState.GetCreaturesOnSide(side)
@@ -129,7 +143,7 @@ public static class VfxCmd
 			select c).ToList();
 		foreach (Creature item in readOnlyList)
 		{
-			NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(item);
+			NCreature creatureNode = item.GetCreatureNode();
 			if (creatureNode != null)
 			{
 				zero += creatureNode.VfxSpawnPosition;
@@ -138,11 +152,19 @@ public static class VfxCmd
 		return zero / readOnlyList.Count;
 	}
 
-	public static Vector2? GetSideCenterFloor(CombatSide side, CombatState combatState)
+	public static Vector2? GetSideCenterFloor(CombatSide side, ICombatState combatState)
 	{
-		if (NCombatRoom.Instance == null)
+		if (TestMode.IsOn)
 		{
 			return null;
+		}
+		if (!combatState.IsLiveCombat())
+		{
+			if (side == CombatSide.Enemy && NBestiary.Instance != null)
+			{
+				return NBestiary.Instance.GetSideFloor();
+			}
+			return Vector2.Zero;
 		}
 		Vector2 zero = Vector2.Zero;
 		IReadOnlyList<Creature> readOnlyList = (from c in combatState.GetCreaturesOnSide(side)
@@ -150,7 +172,7 @@ public static class VfxCmd
 			select c).ToList();
 		foreach (Creature item in readOnlyList)
 		{
-			NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(item);
+			NCreature creatureNode = item.GetCreatureNode();
 			if (creatureNode != null)
 			{
 				if (creatureNode.GetBottomOfHitbox().Y > zero.Y)
@@ -164,14 +186,14 @@ public static class VfxCmd
 		return zero;
 	}
 
-	public static void PlayOnSide(CombatSide side, string path, CombatState combatState)
+	public static void PlayOnSide(CombatSide side, string path, ICombatState combatState)
 	{
-		if (!TestMode.IsOn)
+		if (!TestMode.IsOn && (combatState.IsLiveCombat() || side == CombatSide.Enemy))
 		{
 			Vector2? sideCenter = GetSideCenter(side, combatState);
 			if (sideCenter.HasValue)
 			{
-				PlayVfx(sideCenter.Value, path);
+				PlayVfx(vfxContainer: (!combatState.IsLiveCombat()) ? NBestiary.Instance?.VfxContainer : NCombatRoom.Instance?.CombatVfxContainer, position: sideCenter.Value, path: path);
 			}
 		}
 	}
@@ -188,10 +210,10 @@ public static class VfxCmd
 	{
 		if (!TestMode.IsOn && !target.IsDead)
 		{
-			NCreature nCreature = NCombatRoom.Instance?.GetCreatureNode(target);
-			if (nCreature != null)
+			NCreature creatureNode = target.GetCreatureNode();
+			if (creatureNode != null)
 			{
-				PlayVfx(nCreature.VfxSpawnPosition, path);
+				PlayVfx(creatureNode.VfxSpawnPosition, path, target.GetVfxContainer());
 			}
 		}
 	}
@@ -206,23 +228,23 @@ public static class VfxCmd
 
 	public static void PlayOnCreature(Creature target, string path)
 	{
-		if (!TestMode.IsOn && NCombatRoom.Instance != null && !target.IsDead)
+		if (!TestMode.IsOn && !target.IsDead)
 		{
-			NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(target);
+			NCreature creatureNode = target.GetCreatureNode();
 			if (creatureNode != null)
 			{
-				PlayVfx(creatureNode.GlobalPosition, path);
+				PlayVfx(creatureNode.GlobalPosition, path, target.GetVfxContainer());
 			}
 		}
 	}
 
-	public static void PlayVfx(Vector2 position, string path)
+	public static void PlayVfx(Vector2 position, string path, Control? vfxContainer)
 	{
-		if (!TestMode.IsOn && NCombatRoom.Instance != null)
+		if (!TestMode.IsOn)
 		{
 			string scenePath = SceneHelper.GetScenePath(path);
 			Node2D node2D = PreloadManager.Cache.GetScene(scenePath).Instantiate<Node2D>(PackedScene.GenEditState.Disabled);
-			NCombatRoom.Instance.CombatVfxContainer.AddChildSafely(node2D);
+			vfxContainer?.AddChildSafely(node2D);
 			node2D.GlobalPosition = position;
 		}
 	}

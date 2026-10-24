@@ -1,19 +1,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Ancients;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Extensions;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Models.Relics;
+using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Models.Events;
 
 public class Vakuu : AncientEventModel
 {
+	private const string _visitsKey = "Visits";
+
 	public override Color ButtonColor => new Color(0.05f, 0.06f, 0.12f, 0.8f);
 
 	public override Color DialogueColor => new Color("3C1931");
+
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DynamicVar("Visits", 0m));
 
 	public override IEnumerable<EventOption> AllPossibleOptions => Pool1.Concat(Pool2).Concat(Pool3);
 
@@ -28,7 +35,7 @@ public class Vakuu : AncientEventModel
 	{
 		RelicOption<PreservedFog>(),
 		RelicOption<SereTalon>(),
-		RelicOption<DistinguishedCape>().ThatDoesDamage(9m)
+		RelicOption<DistinguishedCape>().ThatDecreasesMaxHp(9m)
 	});
 
 	private IEnumerable<EventOption> Pool3 => new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[4]
@@ -38,6 +45,16 @@ public class Vakuu : AncientEventModel
 		RelicOption<LordsParasol>(),
 		RelicOption<JeweledMask>()
 	});
+
+	public override void CalculateVars()
+	{
+		base.CalculateVars();
+		if (LocalContext.IsMe(base.Owner))
+		{
+			int num = SaveManager.Instance.Progress.AncientStats.GetValueOrDefault(base.Id)?.GetVisitsAs(base.Owner.Character.Id) ?? 0;
+			base.DynamicVars["Visits"].BaseValue = num + 1;
+		}
+	}
 
 	protected override AncientDialogueSet DefineDialogues()
 	{

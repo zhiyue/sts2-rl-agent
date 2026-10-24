@@ -1,24 +1,32 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Audio;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
+using MegaCrit.Sts2.Core.Nodes.Audio;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class SoulFysh : MonsterModel
 {
+	private const string _soulFyshCustomTrackName = "soulfysh_progress";
+
+	private const string _beckonCustomTrackName = "beckon";
+
 	private const string _intangibleSfx = "event:/sfx/enemy/enemy_attacks/soul_fysh/soul_fysh_intangible";
 
 	private const string _beckonSfx = "event:/sfx/enemy/enemy_attacks/soul_fysh/soul_fysh_beckon";
@@ -33,6 +41,8 @@ public sealed class SoulFysh : MonsterModel
 
 	private const string _attackDebuffTrigger = "AttackDebuffTrigger";
 
+	private const string _beckonTrigger = "Beckon";
+
 	private bool _isInvisible;
 
 	public override string HurtSfx => "event:/sfx/enemy/enemy_attacks/soul_fysh/soul_fysh_hurt";
@@ -43,7 +53,7 @@ public sealed class SoulFysh : MonsterModel
 
 	private int DeGasDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 17, 16);
 
-	private int ScreamDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 12, 11);
+	private int ScreamDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 15, 13);
 
 	private int GazeDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 8, 7);
 
@@ -66,6 +76,35 @@ public sealed class SoulFysh : MonsterModel
 			AssertMutable();
 			_isInvisible = value;
 		}
+	}
+
+	public override Task AfterDeath(PlayerChoiceContext choiceContext, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
+	{
+		if (creature != base.Creature)
+		{
+			return Task.CompletedTask;
+		}
+		NRunMusicController.Instance?.UpdateMusicParameter("soulfysh_progress", 5f);
+		return Task.CompletedTask;
+	}
+
+	public override Task AfterCardChangedPilesLate(CardModel card, PileType oldPileType, AbstractModel? clonedBy)
+	{
+		if (LocalContext.GetMe(base.Creature.CombatState) != card.Owner)
+		{
+			return Task.CompletedTask;
+		}
+		if (!(card is Beckon))
+		{
+			return Task.CompletedTask;
+		}
+		if (CombatManager.Instance.IsOverOrEnding)
+		{
+			return Task.CompletedTask;
+		}
+		bool flag = card.Owner.PlayerCombatState.Hand.Cards.Any((CardModel c) => c is Beckon);
+		NRunMusicController.Instance?.UpdateMusicParameter("beckon", flag ? 1 : 0);
+		return Task.CompletedTask;
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -92,7 +131,7 @@ public sealed class SoulFysh : MonsterModel
 	private async Task BeckonMove(IReadOnlyList<Creature> targets)
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/soul_fysh/soul_fysh_beckon");
-		await CreatureCmd.TriggerAnim(base.Creature, "AttackBeckon", 0f);
+		await CreatureCmd.TriggerAnim(base.Creature, "Beckon", 0f);
 		await Cmd.Wait(0.3f);
 		VfxCmd.PlayOnCreatureCenter(base.Creature, "vfx/vfx_spooky_scream");
 		await Cmd.CustomScaledWait(0f, 0.3f);
@@ -102,10 +141,10 @@ public sealed class SoulFysh : MonsterModel
 			CardPileAddResult[] statusCards = new CardPileAddResult[BeckonMoveAmount];
 			CardModel card = base.CombatState.CreateCard<Beckon>(player);
 			CardPileAddResult[] array = statusCards;
-			array[0] = await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Draw, addedByPlayer: false, CardPilePosition.Random);
+			array[0] = await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Draw, null, CardPilePosition.Random);
 			CardModel card2 = base.CombatState.CreateCard<Beckon>(player);
 			array = statusCards;
-			array[1] = await CardPileCmd.AddGeneratedCardToCombat(card2, PileType.Discard, addedByPlayer: false);
+			array[1] = await CardPileCmd.AddGeneratedCardToCombat(card2, PileType.Discard, null);
 			if (LocalContext.IsMe(player))
 			{
 				CardCmd.PreviewCardPileAdd(statusCards);
@@ -126,7 +165,7 @@ public sealed class SoulFysh : MonsterModel
 			CardPileAddResult[] statusCards = new CardPileAddResult[1];
 			CardModel card = base.CombatState.CreateCard<Beckon>(player);
 			CardPileAddResult[] array = statusCards;
-			array[0] = await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, addedByPlayer: false);
+			array[0] = await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, null);
 			if (LocalContext.IsMe(player))
 			{
 				CardCmd.PreviewCardPileAdd(statusCards);
@@ -146,20 +185,22 @@ public sealed class SoulFysh : MonsterModel
 	private async Task ScreamMove(IReadOnlyList<Creature> targets)
 	{
 		IsInvisible = false;
+		NRunMusicController.Instance?.UpdateMusicParameter("soulfysh_progress", 2f);
 		await DamageCmd.Attack(ScreamDamage).FromMonster(this).WithAttackerAnim("AttackDebuffTrigger", 0.65f)
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/soul_fysh/soul_fysh_wave")
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
-		await PowerCmd.Apply<VulnerablePower>(targets, ScreamMoveAmount, base.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(new ThrowingPlayerChoiceContext(), targets, ScreamMoveAmount, base.Creature, null);
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/soul_fysh/soul_fysh_reappear");
 	}
 
 	private async Task FadeMove(IReadOnlyList<Creature> targets)
 	{
 		IsInvisible = true;
+		NRunMusicController.Instance?.UpdateMusicParameter("soulfysh_progress", 1f);
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/soul_fysh/soul_fysh_intangible");
 		await CreatureCmd.TriggerAnim(base.Creature, "IntangibleStart", 0.8f);
-		await PowerCmd.Apply<IntangiblePower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<IntangiblePower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
@@ -170,30 +211,33 @@ public sealed class SoulFysh : MonsterModel
 		AnimState animState4 = new AnimState("attack_beckon");
 		AnimState animState5 = new AnimState("hurt");
 		AnimState state = new AnimState("die");
+		AnimState animState6 = new AnimState("beckon");
 		AnimState nextState = new AnimState("intangible_loop", isLooping: true);
-		AnimState animState6 = new AnimState("intangible_start");
-		AnimState animState7 = new AnimState("intangible_end");
-		AnimState animState8 = new AnimState("hurt_intangible");
+		AnimState animState7 = new AnimState("intangible_start");
+		AnimState animState8 = new AnimState("intangible_end");
+		AnimState animState9 = new AnimState("hurt_intangible");
 		AnimState state2 = new AnimState("die_intangible");
-		AnimState animState9 = new AnimState("attack_debuff");
+		AnimState animState10 = new AnimState("attack_debuff");
 		animState2.NextState = animState;
 		animState3.NextState = animState;
 		animState4.NextState = animState;
 		animState5.NextState = animState;
-		animState6.NextState = nextState;
-		animState8.NextState = nextState;
-		animState9.NextState = animState7;
-		animState7.NextState = animState;
+		animState6.NextState = animState;
+		animState7.NextState = nextState;
+		animState9.NextState = nextState;
+		animState10.NextState = animState8;
+		animState8.NextState = animState;
 		CreatureAnimator creatureAnimator = new CreatureAnimator(animState, controller);
 		creatureAnimator.AddAnyState("Cast", animState2);
 		creatureAnimator.AddAnyState("Attack", animState3);
 		creatureAnimator.AddAnyState("AttackBeckon", animState4);
-		creatureAnimator.AddAnyState("IntangibleStart", animState6);
-		creatureAnimator.AddAnyState("AttackDebuffTrigger", animState9);
+		creatureAnimator.AddAnyState("Beckon", animState6);
+		creatureAnimator.AddAnyState("IntangibleStart", animState7);
+		creatureAnimator.AddAnyState("AttackDebuffTrigger", animState10);
 		creatureAnimator.AddAnyState("Dead", state, () => !IsInvisible);
 		creatureAnimator.AddAnyState("Hit", animState5, () => !IsInvisible);
 		creatureAnimator.AddAnyState("Dead", state2, () => IsInvisible);
-		creatureAnimator.AddAnyState("Hit", animState8, () => IsInvisible);
+		creatureAnimator.AddAnyState("Hit", animState9, () => IsInvisible);
 		return creatureAnimator;
 	}
 }

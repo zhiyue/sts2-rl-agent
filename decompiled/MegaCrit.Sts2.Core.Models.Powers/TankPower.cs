@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Models.Powers;
@@ -18,7 +19,7 @@ public sealed class TankPower : PowerModel
 		{
 			if (item.IsAlive && item.IsPlayer && item != base.Owner)
 			{
-				await PowerCmd.Apply<GuardedPower>(item, base.Amount, base.Owner, null);
+				await PowerCmd.Apply<GuardedPower>(new ThrowingPlayerChoiceContext(), item, base.Amount, base.Owner, null);
 			}
 		}
 	}

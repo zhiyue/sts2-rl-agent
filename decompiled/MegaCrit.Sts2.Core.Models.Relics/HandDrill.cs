@@ -21,10 +21,10 @@ public sealed class HandDrill : RelicModel
 
 	public override async Task AfterDamageGiven(PlayerChoiceContext choiceContext, Creature? dealer, DamageResult result, ValueProp props, Creature target, CardModel? cardSource)
 	{
-		if ((dealer == base.Owner.Creature || dealer?.PetOwner == base.Owner) && result.WasBlockBroken)
+		if ((dealer == base.Owner.Creature || dealer?.PetOwner == base.Owner) && !target.IsPlayer && result.WasBlockBroken)
 		{
 			Flash();
-			await PowerCmd.Apply<VulnerablePower>(target, base.DynamicVars.Vulnerable.BaseValue, base.Owner.Creature, null);
+			await PowerCmd.Apply<VulnerablePower>(choiceContext, target, base.DynamicVars.Vulnerable.BaseValue, base.Owner.Creature, null);
 		}
 	}
 }

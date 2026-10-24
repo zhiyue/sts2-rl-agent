@@ -18,11 +18,13 @@ namespace MegaCrit.Sts2.Core.Rooms;
 
 public class MerchantRoom : AbstractRoom
 {
+	private IRunState? _runState;
+
 	private static MerchantDialogueSet? _dialogue;
 
 	public override RoomType RoomType => RoomType.Shop;
 
-	public MerchantInventory Inventory { get; private set; }
+	public List<MerchantInventory> Inventories { get; private set; } = new List<MerchantInventory>();
 
 	public override ModelId? ModelId => null;
 
@@ -41,13 +43,24 @@ public class MerchantRoom : AbstractRoom
 		}
 	}
 
-	public override async Task Enter(IRunState? runState, bool isRestoringRoomStackBase)
+	public MerchantInventory GetLocalInventory()
+	{
+		int playerSlotIndex = _runState.GetPlayerSlotIndex(LocalContext.GetMe(_runState));
+		return Inventories[playerSlotIndex];
+	}
+
+	public override async Task EnterInternal(IRunState? runState, bool isRestoringRoomStackBase)
 	{
 		if (isRestoringRoomStackBase)
 		{
 			throw new InvalidOperationException("MerchantRoom does not support room stack reconstruction.");
 		}
-		Inventory = MerchantInventory.CreateForNormalMerchant(LocalContext.GetMe(runState));
+		_runState = runState;
+		foreach (Player item2 in runState?.Players ?? Array.Empty<Player>())
+		{
+			MerchantInventory item = MerchantInventory.CreateForNormalMerchant(item2);
+			Inventories.Add(item);
+		}
 		await PreloadManager.LoadRoomMerchantAssets();
 		NRun.Instance?.SetCurrentRoom(NMerchantRoom.Create(this, runState?.Players ?? Array.Empty<Player>()));
 		if (runState != null)
@@ -62,37 +75,42 @@ public class MerchantRoom : AbstractRoom
 		{
 			return Task.CompletedTask;
 		}
-		PlayerMapPointHistoryEntry playerMapPointHistoryEntry = runState?.CurrentMapPointHistoryEntry?.GetEntry(LocalContext.NetId.Value);
-		if (playerMapPointHistoryEntry == null)
+		for (int i = 0; i < Inventories.Count; i++)
 		{
-			return Task.CompletedTask;
-		}
-		foreach (MerchantCardEntry characterCardEntry in Inventory.CharacterCardEntries)
-		{
-			if (characterCardEntry.IsStocked)
+			MerchantInventory merchantInventory = Inventories[i];
+			Player player = _runState.Players[i];
+			PlayerMapPointHistoryEntry playerMapPointHistoryEntry = runState?.CurrentMapPointHistoryEntry?.GetEntry(player.NetId);
+			if (playerMapPointHistoryEntry == null)
 			{
-				playerMapPointHistoryEntry.CardChoices.Add(new CardChoiceHistoryEntry(characterCardEntry.CreationResult.Card, wasPicked: false));
+				continue;
 			}
-		}
-		foreach (MerchantCardEntry colorlessCardEntry in Inventory.ColorlessCardEntries)
-		{
-			if (colorlessCardEntry.IsStocked)
+			foreach (MerchantCardEntry characterCardEntry in merchantInventory.CharacterCardEntries)
 			{
-				playerMapPointHistoryEntry.CardChoices.Add(new CardChoiceHistoryEntry(colorlessCardEntry.CreationResult.Card, wasPicked: false));
+				if (characterCardEntry.IsStocked)
+				{
+					playerMapPointHistoryEntry.CardChoices.Add(new CardChoiceHistoryEntry(characterCardEntry.CreationResult.Card, wasPicked: false));
+				}
 			}
-		}
-		foreach (MerchantRelicEntry relicEntry in Inventory.RelicEntries)
-		{
-			if (relicEntry.IsStocked)
+			foreach (MerchantCardEntry colorlessCardEntry in merchantInventory.ColorlessCardEntries)
 			{
-				playerMapPointHistoryEntry.RelicChoices.Add(new ModelChoiceHistoryEntry(relicEntry.Model.Id, wasPicked: false));
+				if (colorlessCardEntry.IsStocked)
+				{
+					playerMapPointHistoryEntry.CardChoices.Add(new CardChoiceHistoryEntry(colorlessCardEntry.CreationResult.Card, wasPicked: false));
+				}
 			}
-		}
-		foreach (MerchantPotionEntry potionEntry in Inventory.PotionEntries)
-		{
-			if (potionEntry.IsStocked)
+			foreach (MerchantRelicEntry relicEntry in merchantInventory.RelicEntries)
 			{
-				playerMapPointHistoryEntry.PotionChoices.Add(new ModelChoiceHistoryEntry(potionEntry.Model.Id, wasPicked: false));
+				if (relicEntry.IsStocked)
+				{
+					playerMapPointHistoryEntry.RelicChoices.Add(new ModelChoiceHistoryEntry(relicEntry.Model.Id, wasPicked: false));
+				}
+			}
+			foreach (MerchantPotionEntry potionEntry in merchantInventory.PotionEntries)
+			{
+				if (potionEntry.IsStocked)
+				{
+					playerMapPointHistoryEntry.PotionChoices.Add(new ModelChoiceHistoryEntry(potionEntry.Model.Id, wasPicked: false));
+				}
 			}
 		}
 		return Task.CompletedTask;

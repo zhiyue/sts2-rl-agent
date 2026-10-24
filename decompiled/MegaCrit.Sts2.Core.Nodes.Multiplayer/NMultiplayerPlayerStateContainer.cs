@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Relics;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
@@ -17,47 +18,107 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 
+/// <summary>
+/// Displays a list of all the players in the session.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NMultiplayerPlayerStateContainer.cs")]
 public class NMultiplayerPlayerStateContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
-		public new static readonly StringName _Ready = "_Ready";
-
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'UpdateNavigation' method.
+		/// </summary>
 		public static readonly StringName UpdateNavigation = "UpdateNavigation";
 
+		/// <summary>
+		/// Cached name for the 'LockNavigation' method.
+		/// </summary>
 		public static readonly StringName LockNavigation = "LockNavigation";
 
+		/// <summary>
+		/// Cached name for the 'UnlockNavigation' method.
+		/// </summary>
 		public static readonly StringName UnlockNavigation = "UnlockNavigation";
 
+		/// <summary>
+		/// Cached name for the 'UpdatePositionAfterOneFrame' method.
+		/// </summary>
 		public static readonly StringName UpdatePositionAfterOneFrame = "UpdatePositionAfterOneFrame";
 
+		/// <summary>
+		/// Cached name for the 'UpdatePosition' method.
+		/// </summary>
 		public static readonly StringName UpdatePosition = "UpdatePosition";
 
+		/// <summary>
+		/// Cached name for the 'GetTargetPosition' method.
+		/// </summary>
+		public static readonly StringName GetTargetPosition = "GetTargetPosition";
+
+		/// <summary>
+		/// Cached name for the 'AnimHide' method.
+		/// </summary>
 		public static readonly StringName AnimHide = "AnimHide";
 
+		/// <summary>
+		/// Cached name for the 'AnimShow' method.
+		/// </summary>
 		public static readonly StringName AnimShow = "AnimShow";
 
+		/// <summary>
+		/// Cached name for the 'ShowImmediately' method.
+		/// </summary>
 		public static readonly StringName ShowImmediately = "ShowImmediately";
 
+		/// <summary>
+		/// Cached name for the 'HideImmediately' method.
+		/// </summary>
 		public static readonly StringName HideImmediately = "HideImmediately";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'FirstPlayerState' property.
+		/// </summary>
 		public static readonly StringName FirstPlayerState = "FirstPlayerState";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
-		public static readonly StringName _originalPosition = "_originalPosition";
+		/// <summary>
+		/// Cached name for the '_hidden' field.
+		/// </summary>
+		public static readonly StringName _hidden = "_hidden";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -68,14 +129,9 @@ public class NMultiplayerPlayerStateContainer : Control
 
 	private Tween? _tween;
 
-	private Vector2 _originalPosition;
+	private bool _hidden;
 
 	public NMultiplayerPlayerState? FirstPlayerState => GetChild<NMultiplayerPlayerState>(0);
-
-	public override void _Ready()
-	{
-		_originalPosition = base.Position;
-	}
 
 	public override void _EnterTree()
 	{
@@ -127,14 +183,20 @@ public class NMultiplayerPlayerStateContainer : Control
 
 	private void UpdateNavigation()
 	{
+		Control activeScreenProxy = NRun.Instance.GlobalUi.TopBar.ActiveScreenProxy;
+		NodePath nodePath = (activeScreenProxy.IsValid() ? activeScreenProxy.GetPath() : null);
 		for (int i = 0; i < GetChildCount(); i++)
 		{
 			Control hitbox = GetChild<NMultiplayerPlayerState>(i).Hitbox;
 			hitbox.FocusNeighborTop = ((i > 0) ? GetChild<NMultiplayerPlayerState>(i - 1).Hitbox.GetPath() : null);
-			hitbox.FocusNeighborBottom = ((i < GetChildCount() - 1) ? GetChild<NMultiplayerPlayerState>(i + 1).Hitbox.GetPath() : ActiveScreenContext.Instance.GetCurrentScreen()?.FocusedControlFromTopBar?.GetPath());
+			hitbox.FocusNeighborBottom = ((i < GetChildCount() - 1) ? GetChild<NMultiplayerPlayerState>(i + 1).Hitbox.GetPath() : nodePath);
 		}
 	}
 
+	/// <summary>
+	/// Lock navigation so you cannot navigate away from the player states
+	/// Important for controller navigation while potion targeting an ally
+	/// </summary>
 	public void LockNavigation()
 	{
 		for (int i = 0; i < GetChildCount(); i++)
@@ -159,22 +221,35 @@ public class NMultiplayerPlayerStateContainer : Control
 
 	private async Task UpdatePositionAfterOneFrameAsync()
 	{
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame();
 		UpdatePosition();
 	}
 
 	private void UpdatePosition()
 	{
+		base.Position = GetTargetPosition();
+	}
+
+	private Vector2 GetTargetPosition()
+	{
 		NRelicInventory relicInventory = NRun.Instance.GlobalUi.RelicInventory;
 		int lineCount = relicInventory.GetLineCount();
+		Vector2 result;
 		if (lineCount == 0 || relicInventory.GetChildCount() == 0)
 		{
-			base.Position = relicInventory.Position;
-			return;
+			result = relicInventory.GetDefaultPosition();
 		}
-		float y = relicInventory.GetChild<Control>(0).Size.Y;
-		float num = relicInventory.GetThemeConstant(ThemeConstants.FlowContainer.vSeparation, "FlowContainer");
-		base.Position = relicInventory.Position + (float)lineCount * (y + num) * Vector2.Down;
+		else
+		{
+			float y = relicInventory.GetChild<Control>(0).Size.Y;
+			float num = relicInventory.GetThemeConstant(ThemeConstants.FlowContainer.VSeparation, "FlowContainer");
+			result = relicInventory.GetDefaultPosition() + (float)lineCount * (y + num) * Vector2.Down;
+		}
+		if (_hidden)
+		{
+			result.X = 0f - base.Size.X;
+		}
+		return result;
 	}
 
 	public void HighlightPlayer(Player player)
@@ -194,26 +269,27 @@ public class NMultiplayerPlayerStateContainer : Control
 
 	public void AnimHide()
 	{
+		_hidden = true;
 		_tween?.Kill();
 		_tween = CreateTween();
-		_tween.TweenProperty(this, "position:x", 0f - base.Size.X, 0.20000000298023224).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.InOut);
+		_tween.TweenProperty(this, "position", GetTargetPosition(), 0.20000000298023224).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.InOut);
 		_tween.TweenProperty(this, "modulate:a", 0f, 0.20000000298023224).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.InOut);
 	}
 
 	public void AnimShow()
 	{
+		_hidden = false;
 		_tween?.Kill();
 		_tween = CreateTween();
-		_tween.TweenProperty(this, "position:x", _originalPosition.X, 0.25).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+		_tween.TweenProperty(this, "position", GetTargetPosition(), 0.25).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
 		_tween.TweenProperty(this, "modulate:a", 1f, 0.15000000596046448).SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
 	}
 
 	public void ShowImmediately()
 	{
 		_tween?.Kill();
-		Vector2 position = base.Position;
-		position.X = _originalPosition.X;
-		base.Position = position;
+		_hidden = false;
+		base.Position = GetTargetPosition();
 		Color modulate = base.Modulate;
 		modulate.A = 1f;
 		base.Modulate = modulate;
@@ -222,19 +298,22 @@ public class NMultiplayerPlayerStateContainer : Control
 	public void HideImmediately()
 	{
 		_tween?.Kill();
-		Vector2 position = base.Position;
-		position.X = 0f - base.Size.X;
-		base.Position = position;
+		_hidden = true;
+		base.Position = GetTargetPosition();
 		Color modulate = base.Modulate;
 		modulate.A = 0f;
 		base.Modulate = modulate;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
 		List<MethodInfo> list = new List<MethodInfo>(13);
-		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Input, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
@@ -246,6 +325,7 @@ public class NMultiplayerPlayerStateContainer : Control
 		list.Add(new MethodInfo(MethodName.UnlockNavigation, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.UpdatePositionAfterOneFrame, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.UpdatePosition, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.GetTargetPosition, new PropertyInfo(Variant.Type.Vector2, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.AnimHide, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.AnimShow, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.ShowImmediately, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -253,15 +333,10 @@ public class NMultiplayerPlayerStateContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
-		if (method == MethodName._Ready && args.Count == 0)
-		{
-			_Ready();
-			ret = default(godot_variant);
-			return true;
-		}
 		if (method == MethodName._EnterTree && args.Count == 0)
 		{
 			_EnterTree();
@@ -310,6 +385,11 @@ public class NMultiplayerPlayerStateContainer : Control
 			ret = default(godot_variant);
 			return true;
 		}
+		if (method == MethodName.GetTargetPosition && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<Vector2>(GetTargetPosition());
+			return true;
+		}
 		if (method == MethodName.AnimHide && args.Count == 0)
 		{
 			AnimHide();
@@ -337,13 +417,10 @@ public class NMultiplayerPlayerStateContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
-		if (method == MethodName._Ready)
-		{
-			return true;
-		}
 		if (method == MethodName._EnterTree)
 		{
 			return true;
@@ -376,6 +453,10 @@ public class NMultiplayerPlayerStateContainer : Control
 		{
 			return true;
 		}
+		if (method == MethodName.GetTargetPosition)
+		{
+			return true;
+		}
 		if (method == MethodName.AnimHide)
 		{
 			return true;
@@ -395,6 +476,7 @@ public class NMultiplayerPlayerStateContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -403,14 +485,15 @@ public class NMultiplayerPlayerStateContainer : Control
 			_tween = VariantUtils.ConvertTo<Tween>(in value);
 			return true;
 		}
-		if (name == PropertyName._originalPosition)
+		if (name == PropertyName._hidden)
 		{
-			_originalPosition = VariantUtils.ConvertTo<Vector2>(in value);
+			_hidden = VariantUtils.ConvertTo<bool>(in value);
 			return true;
 		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -424,32 +507,39 @@ public class NMultiplayerPlayerStateContainer : Control
 			value = VariantUtils.CreateFrom(in _tween);
 			return true;
 		}
-		if (name == PropertyName._originalPosition)
+		if (name == PropertyName._hidden)
 		{
-			value = VariantUtils.CreateFrom(in _originalPosition);
+			value = VariantUtils.CreateFrom(in _hidden);
 			return true;
 		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.FirstPlayerState, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._tween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._originalPosition, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._hidden, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
-		info.AddProperty(PropertyName._originalPosition, Variant.From(in _originalPosition));
+		info.AddProperty(PropertyName._hidden, Variant.From(in _hidden));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -458,9 +548,9 @@ public class NMultiplayerPlayerStateContainer : Control
 		{
 			_tween = value.As<Tween>();
 		}
-		if (info.TryGetProperty(PropertyName._originalPosition, out var value2))
+		if (info.TryGetProperty(PropertyName._hidden, out var value2))
 		{
-			_originalPosition = value2.As<Vector2>();
+			_hidden = value2.As<bool>();
 		}
 	}
 }

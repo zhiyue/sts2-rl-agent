@@ -22,63 +22,150 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens;
 
+/// <summary>
+/// Shows a very large version of a single card so players can view the portrait and its upgrade.
+/// Accessed from various card pile screens, shop, run history screen, and card library.
+/// We have to do this, rather than making it its own Overlay Screen, because we end up using
+/// it both for other overlay screens and capstone screens (deck view screen).
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/NInspectCardScreen.cs")]
 public class NInspectCardScreen : Control, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Close' method.
+		/// </summary>
 		public static readonly StringName Close = "Close";
 
+		/// <summary>
+		/// Cached name for the 'OnRightButtonReleased' method.
+		/// </summary>
 		public static readonly StringName OnRightButtonReleased = "OnRightButtonReleased";
 
+		/// <summary>
+		/// Cached name for the 'OnLeftButtonReleased' method.
+		/// </summary>
 		public static readonly StringName OnLeftButtonReleased = "OnLeftButtonReleased";
 
+		/// <summary>
+		/// Cached name for the 'ToggleShowUpgrade' method.
+		/// </summary>
 		public static readonly StringName ToggleShowUpgrade = "ToggleShowUpgrade";
 
+		/// <summary>
+		/// Cached name for the 'UpdateCardDisplay' method.
+		/// </summary>
 		public static readonly StringName UpdateCardDisplay = "UpdateCardDisplay";
 
+		/// <summary>
+		/// Cached name for the 'SetCard' method.
+		/// </summary>
 		public static readonly StringName SetCard = "SetCard";
 
+		/// <summary>
+		/// Cached name for the 'OnBackstopPressed' method.
+		/// </summary>
 		public static readonly StringName OnBackstopPressed = "OnBackstopPressed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsShowingUpgradedCard' property.
+		/// </summary>
 		public static readonly StringName IsShowingUpgradedCard = "IsShowingUpgradedCard";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_card' field.
+		/// </summary>
 		public static readonly StringName _card = "_card";
 
+		/// <summary>
+		/// Cached name for the '_backstop' field.
+		/// </summary>
 		public static readonly StringName _backstop = "_backstop";
 
+		/// <summary>
+		/// Cached name for the '_upgradeTickbox' field.
+		/// </summary>
 		public static readonly StringName _upgradeTickbox = "_upgradeTickbox";
 
+		/// <summary>
+		/// Cached name for the '_leftButton' field.
+		/// </summary>
 		public static readonly StringName _leftButton = "_leftButton";
 
+		/// <summary>
+		/// Cached name for the '_rightButton' field.
+		/// </summary>
 		public static readonly StringName _rightButton = "_rightButton";
 
+		/// <summary>
+		/// Cached name for the '_hoverTipRect' field.
+		/// </summary>
 		public static readonly StringName _hoverTipRect = "_hoverTipRect";
 
+		/// <summary>
+		/// Cached name for the '_index' field.
+		/// </summary>
 		public static readonly StringName _index = "_index";
 
+		/// <summary>
+		/// Cached name for the '_openTween' field.
+		/// </summary>
 		public static readonly StringName _openTween = "_openTween";
 
+		/// <summary>
+		/// Cached name for the '_cardTween' field.
+		/// </summary>
 		public static readonly StringName _cardTween = "_cardTween";
 
+		/// <summary>
+		/// Cached name for the '_cardPosition' field.
+		/// </summary>
 		public static readonly StringName _cardPosition = "_cardPosition";
 
+		/// <summary>
+		/// Cached name for the '_leftButtonX' field.
+		/// </summary>
 		public static readonly StringName _leftButtonX = "_leftButtonX";
 
+		/// <summary>
+		/// Cached name for the '_rightButtonX' field.
+		/// </summary>
 		public static readonly StringName _rightButtonX = "_rightButtonX";
 
+		/// <summary>
+		/// Cached name for the '_viewAllUpgraded' field.
+		/// </summary>
 		public static readonly StringName _viewAllUpgraded = "_viewAllUpgraded";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -170,8 +257,6 @@ public class NInspectCardScreen : Control, IScreenContext
 		_card.Modulate = StsColors.transparentBlack;
 		_leftButton.Modulate = StsColors.transparentBlack;
 		_rightButton.Modulate = StsColors.transparentBlack;
-		_rightButton.Enable();
-		_leftButton.Enable();
 		_openTween?.Kill();
 		_openTween = CreateTween().SetParallel();
 		_openTween.TweenProperty(_backstop, "modulate:a", 0.9f, 0.25);
@@ -190,9 +275,11 @@ public class NInspectCardScreen : Control, IScreenContext
 		_cardTween.TweenProperty(_card, "modulate", Colors.White, 0.25);
 		_cardTween.TweenProperty(_card, "scale", Vector2.One * 2f, 0.15).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Spring)
 			.SetDelay(0.1);
-		_upgradeTickbox.Enable();
 		ActiveScreenContext.Instance.Update();
 		NHotkeyManager.Instance.AddBlockingScreen(this);
+		_rightButton.Enable();
+		_leftButton.Enable();
+		_upgradeTickbox.Enable();
 		NHotkeyManager.Instance.PushHotkeyPressedBinding(MegaInput.cancel, Close);
 		NHotkeyManager.Instance.PushHotkeyPressedBinding(MegaInput.pauseAndBack, Close);
 		NHotkeyManager.Instance.PushHotkeyPressedBinding(MegaInput.left, OnLeftButtonReleased);
@@ -286,8 +373,7 @@ public class NInspectCardScreen : Control, IScreenContext
 			_card.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
 		}
 		NHoverTipSet.Clear();
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, cardModel2.HoverTips);
-		nHoverTipSet.SetAlignment(_hoverTipRect, HoverTip.GetHoverTipAlignment(this));
+		NHoverTipSet.CreateAndShow(this, cardModel2.HoverTips)?.SetAlignment(_hoverTipRect, HoverTip.GetHoverTipAlignment(this));
 	}
 
 	private void SetCard(int index)
@@ -315,6 +401,11 @@ public class NInspectCardScreen : Control, IScreenContext
 		Close();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -340,6 +431,7 @@ public class NInspectCardScreen : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -411,6 +503,7 @@ public class NInspectCardScreen : Control, IScreenContext
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -453,6 +546,7 @@ public class NInspectCardScreen : Control, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -524,6 +618,7 @@ public class NInspectCardScreen : Control, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -605,6 +700,11 @@ public class NInspectCardScreen : Control, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -627,6 +727,7 @@ public class NInspectCardScreen : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -646,6 +747,7 @@ public class NInspectCardScreen : Control, IScreenContext
 		info.AddProperty(PropertyName._viewAllUpgraded, Variant.From(in _viewAllUpgraded));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

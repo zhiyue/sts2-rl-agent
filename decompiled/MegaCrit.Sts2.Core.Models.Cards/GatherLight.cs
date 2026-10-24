@@ -14,7 +14,7 @@ public sealed class GatherLight : CardModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new BlockVar(7m, ValueProp.Move),
+		new BlockVar(8m, ValueProp.Move),
 		new StarsVar(1)
 	});
 

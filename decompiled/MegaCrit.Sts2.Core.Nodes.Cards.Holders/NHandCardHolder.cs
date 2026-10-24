@@ -10,10 +10,12 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Extensions;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.addons.mega_text;
 
@@ -31,86 +33,206 @@ public class NHandCardHolder : NCardHolder
 	[Signal]
 	public delegate void HolderMouseClickedEventHandler(NCardHolder cardHolder);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NCardHolder.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'Clear' method.
+		/// </summary>
 		public new static readonly StringName Clear = "Clear";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnMousePressed' method.
+		/// </summary>
 		public new static readonly StringName OnMousePressed = "OnMousePressed";
 
+		/// <summary>
+		/// Cached name for the 'OnMouseReleased' method.
+		/// </summary>
 		public new static readonly StringName OnMouseReleased = "OnMouseReleased";
 
+		/// <summary>
+		/// Cached name for the 'DoCardHoverEffects' method.
+		/// </summary>
 		public new static readonly StringName DoCardHoverEffects = "DoCardHoverEffects";
 
+		/// <summary>
+		/// Cached name for the 'SetIndexLabel' method.
+		/// </summary>
 		public static readonly StringName SetIndexLabel = "SetIndexLabel";
 
+		/// <summary>
+		/// Cached name for the 'SetTargetAngle' method.
+		/// </summary>
 		public static readonly StringName SetTargetAngle = "SetTargetAngle";
 
+		/// <summary>
+		/// Cached name for the 'SetTargetPosition' method.
+		/// </summary>
 		public static readonly StringName SetTargetPosition = "SetTargetPosition";
 
+		/// <summary>
+		/// Cached name for the 'SetTargetScale' method.
+		/// </summary>
 		public static readonly StringName SetTargetScale = "SetTargetScale";
 
+		/// <summary>
+		/// Cached name for the 'SetAngleInstantly' method.
+		/// </summary>
 		public static readonly StringName SetAngleInstantly = "SetAngleInstantly";
 
+		/// <summary>
+		/// Cached name for the 'SetScaleInstantly' method.
+		/// </summary>
 		public static readonly StringName SetScaleInstantly = "SetScaleInstantly";
 
+		/// <summary>
+		/// Cached name for the 'StopAnimations' method.
+		/// </summary>
 		public static readonly StringName StopAnimations = "StopAnimations";
 
+		/// <summary>
+		/// Cached name for the 'SetCard' method.
+		/// </summary>
 		public new static readonly StringName SetCard = "SetCard";
 
+		/// <summary>
+		/// Cached name for the 'UpdateCard' method.
+		/// </summary>
 		public static readonly StringName UpdateCard = "UpdateCard";
 
+		/// <summary>
+		/// Cached name for the 'BeginDrag' method.
+		/// </summary>
 		public static readonly StringName BeginDrag = "BeginDrag";
 
+		/// <summary>
+		/// Cached name for the 'CancelDrag' method.
+		/// </summary>
 		public static readonly StringName CancelDrag = "CancelDrag";
 
+		/// <summary>
+		/// Cached name for the 'SetDefaultTargets' method.
+		/// </summary>
 		public static readonly StringName SetDefaultTargets = "SetDefaultTargets";
 
+		/// <summary>
+		/// Cached name for the 'Flash' method.
+		/// </summary>
 		public static readonly StringName Flash = "Flash";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NCardHolder.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InSelectMode' property.
+		/// </summary>
 		public static readonly StringName InSelectMode = "InSelectMode";
 
+		/// <summary>
+		/// Cached name for the 'TargetPosition' property.
+		/// </summary>
 		public static readonly StringName TargetPosition = "TargetPosition";
 
+		/// <summary>
+		/// Cached name for the 'TargetAngle' property.
+		/// </summary>
 		public static readonly StringName TargetAngle = "TargetAngle";
 
+		/// <summary>
+		/// Cached name for the 'ShouldGlowGold' property.
+		/// </summary>
 		public static readonly StringName ShouldGlowGold = "ShouldGlowGold";
 
+		/// <summary>
+		/// Cached name for the 'ShouldGlowRed' property.
+		/// </summary>
 		public static readonly StringName ShouldGlowRed = "ShouldGlowRed";
 
+		/// <summary>
+		/// Cached name for the '_flash' field.
+		/// </summary>
 		public static readonly StringName _flash = "_flash";
 
+		/// <summary>
+		/// Cached name for the '_flashTween' field.
+		/// </summary>
 		public static readonly StringName _flashTween = "_flashTween";
 
+		/// <summary>
+		/// Cached name for the '_handIndexLabel' field.
+		/// </summary>
 		public static readonly StringName _handIndexLabel = "_handIndexLabel";
 
+		/// <summary>
+		/// Cached name for the '_targetPosition' field.
+		/// </summary>
 		public static readonly StringName _targetPosition = "_targetPosition";
 
+		/// <summary>
+		/// Cached name for the '_targetAngle' field.
+		/// </summary>
 		public static readonly StringName _targetAngle = "_targetAngle";
 
+		/// <summary>
+		/// Cached name for the '_targetScale' field.
+		/// </summary>
 		public static readonly StringName _targetScale = "_targetScale";
 
+		/// <summary>
+		/// Cached name for the '_hand' field.
+		/// </summary>
 		public static readonly StringName _hand = "_hand";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NCardHolder.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'HolderFocused' signal.
+		/// </summary>
 		public static readonly StringName HolderFocused = "HolderFocused";
 
+		/// <summary>
+		/// Cached name for the 'HolderUnfocused' signal.
+		/// </summary>
 		public static readonly StringName HolderUnfocused = "HolderUnfocused";
 
+		/// <summary>
+		/// Cached name for the 'HolderMouseClicked' signal.
+		/// </summary>
 		public static readonly StringName HolderMouseClicked = "HolderMouseClicked";
 	}
 
@@ -177,9 +299,21 @@ public class NHandCardHolder : NCardHolder
 			{
 				return _hand.SelectModeGoldGlowOverride(cardModel);
 			}
-			if (CombatManager.Instance.IsPlayPhase && cardModel.CanPlay())
+			if (cardModel.CanPlay())
 			{
-				return cardModel.ShouldGlowGold;
+				if (cardModel != null && cardModel.ShouldGlowGold)
+				{
+					Player owner = cardModel.Owner;
+					if (owner != null)
+					{
+						PlayerCombatState playerCombatState = owner.PlayerCombatState;
+						if (playerCombatState != null)
+						{
+							return playerCombatState.Phase == PlayerTurnPhase.Play;
+						}
+					}
+				}
+				return false;
 			}
 			return false;
 		}
@@ -190,18 +324,23 @@ public class NHandCardHolder : NCardHolder
 		get
 		{
 			CardModel cardModel = base.CardNode?.Model;
-			if (cardModel == null)
+			if (cardModel != null && cardModel.ShouldGlowRed)
 			{
-				return false;
-			}
-			if (CombatManager.Instance.IsPlayPhase)
-			{
-				return cardModel.ShouldGlowRed;
+				Player owner = cardModel.Owner;
+				if (owner != null)
+				{
+					PlayerCombatState playerCombatState = owner.PlayerCombatState;
+					if (playerCombatState != null)
+					{
+						return playerCombatState.Phase == PlayerTurnPhase.Play;
+					}
+				}
 			}
 			return false;
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Cards.Holders.NHandCardHolder.HolderFocusedEventHandler" />
 	public event HolderFocusedEventHandler HolderFocused
 	{
 		add
@@ -214,6 +353,7 @@ public class NHandCardHolder : NCardHolder
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Cards.Holders.NHandCardHolder.HolderUnfocusedEventHandler" />
 	public event HolderUnfocusedEventHandler HolderUnfocused
 	{
 		add
@@ -226,6 +366,7 @@ public class NHandCardHolder : NCardHolder
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Cards.Holders.NHandCardHolder.HolderMouseClickedEventHandler" />
 	public event HolderMouseClickedEventHandler HolderMouseClicked
 	{
 		add
@@ -315,6 +456,11 @@ public class NHandCardHolder : NCardHolder
 		_handIndexLabel.Visible = i > 0 && SaveManager.Instance.PrefsSave.ShowCardIndices;
 	}
 
+	/// <summary>
+	/// Sets the angle we want this card to be (in degrees).
+	/// Used when fanning out cards in the hand. Lacks features that normal tweens have.
+	/// </summary>
+	/// <param name="angle"></param>
 	public void SetTargetAngle(float angle)
 	{
 		_targetAngle = angle;
@@ -323,6 +469,10 @@ public class NHandCardHolder : NCardHolder
 		TaskHelper.RunSafely(AnimAngle(_angleCancelToken));
 	}
 
+	/// <summary>
+	/// Sets the target global position we want this card to be at.
+	/// Used when we want this card to navigate from one position to another without a fixed time frame (non-tween).
+	/// </summary>
 	public void SetTargetPosition(Vector2 position)
 	{
 		_targetPosition = position;
@@ -331,6 +481,11 @@ public class NHandCardHolder : NCardHolder
 		TaskHelper.RunSafely(AnimPosition(_positionCancelToken));
 	}
 
+	/// <summary>
+	/// Sets the target scale we want this card to be at, it will smoothly get there.
+	/// Used when we want to lerp this card scale in various screens but lacks features that normal tweens have.
+	/// </summary>
+	/// <param name="scale"></param>
 	public void SetTargetScale(Vector2 scale)
 	{
 		_targetScale = scale;
@@ -339,18 +494,29 @@ public class NHandCardHolder : NCardHolder
 		TaskHelper.RunSafely(AnimScale(_scaleCancelToken));
 	}
 
+	/// <summary>
+	/// Cancels tweens and sets the Rotation of this CardHolder
+	/// </summary>
+	/// <param name="setAngle"></param>
 	public void SetAngleInstantly(float setAngle)
 	{
 		_angleCancelToken?.Cancel();
 		base.RotationDegrees = setAngle;
 	}
 
+	/// <summary>
+	/// Cancels tweens and sets the Scale of this CardHolder
+	/// </summary>
+	/// <param name="setScale"></param>
 	public void SetScaleInstantly(Vector2 setScale)
 	{
 		_scaleCancelToken?.Cancel();
 		base.Scale = setScale;
 	}
 
+	/// <summary>
+	/// Call if we want to stop animating this CardHolder for any reason (like using separate animators/tweens)
+	/// </summary>
 	private void StopAnimations()
 	{
 		_angleCancelToken?.Cancel();
@@ -358,6 +524,11 @@ public class NHandCardHolder : NCardHolder
 		_scaleCancelToken?.Cancel();
 	}
 
+	/// <summary>
+	/// Animates our card to rotate to targetAngle.
+	/// NOTE: This is NOT a timer-based tween.
+	/// </summary>
+	/// <param name="cancelToken"></param>
 	private async Task AnimAngle(CancellationTokenSource cancelToken)
 	{
 		while (!cancelToken.IsCancellationRequested)
@@ -368,10 +539,15 @@ public class NHandCardHolder : NCardHolder
 				base.RotationDegrees = _targetAngle;
 				break;
 			}
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrameNonThrowing(cancelToken);
 		}
 	}
 
+	/// <summary>
+	/// Animates our card to scale to targetSize.
+	/// NOTE: This is NOT a timer-based tween.
+	/// </summary>
+	/// <param name="cancelToken"></param>
 	private async Task AnimScale(CancellationTokenSource cancelToken)
 	{
 		while (!cancelToken.IsCancellationRequested)
@@ -382,10 +558,15 @@ public class NHandCardHolder : NCardHolder
 				base.Scale = _targetScale;
 				break;
 			}
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrameNonThrowing(cancelToken);
 		}
 	}
 
+	/// <summary>
+	/// Animates our card to move to a specified position.
+	/// NOTE: This is NOT a timer-based tween.
+	/// </summary>
+	/// <param name="cancelToken"></param>
 	private async Task AnimPosition(CancellationTokenSource cancelToken)
 	{
 		while (!cancelToken.IsCancellationRequested)
@@ -401,9 +582,9 @@ public class NHandCardHolder : NCardHolder
 				base.Position = _targetPosition;
 				return;
 			}
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrameNonThrowing(cancelToken);
 		}
-		if (!base.Hitbox.IsEnabled && base.Position.DistanceSquaredTo(_targetPosition) < 200f)
+		if (this.IsValid() && !base.Hitbox.IsEnabled && base.Position.DistanceSquaredTo(_targetPosition) < 200f)
 		{
 			base.Hitbox.SetEnabled(enabled: true);
 		}
@@ -539,6 +720,11 @@ public class NHandCardHolder : NCardHolder
 		SubscribeToEvents(base.CardNode?.Model);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -602,6 +788,7 @@ public class NHandCardHolder : NCardHolder
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -751,6 +938,7 @@ public class NHandCardHolder : NCardHolder
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -845,6 +1033,7 @@ public class NHandCardHolder : NCardHolder
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -891,6 +1080,7 @@ public class NHandCardHolder : NCardHolder
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -961,6 +1151,11 @@ public class NHandCardHolder : NCardHolder
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -980,6 +1175,7 @@ public class NHandCardHolder : NCardHolder
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -997,6 +1193,7 @@ public class NHandCardHolder : NCardHolder
 		info.AddSignalEventDelegate(SignalName.HolderMouseClicked, backing_HolderMouseClicked);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1047,6 +1244,11 @@ public class NHandCardHolder : NCardHolder
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotSignalList()
 	{
@@ -1081,6 +1283,7 @@ public class NHandCardHolder : NCardHolder
 		EmitSignal(SignalName.HolderMouseClicked, cardHolder);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -1102,6 +1305,7 @@ public class NHandCardHolder : NCardHolder
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

@@ -6,9 +6,13 @@ using Steamworks;
 
 namespace MegaCrit.Sts2.Core.Platform.Steam;
 
+/// <summary>
+/// Manages Steam user stats and global stat aggregates.
+/// Used to track per-user architect damage and fetch the global aggregate across all players.
+/// </summary>
 public static class SteamStatsManager
 {
-	private const string ArchitectDamageStat = "architect_damage";
+	private const string _architectDamageStat = "architect_damage";
 
 	private static Callback<UserStatsReceived_t>? _userStatsReceivedCallback;
 
@@ -40,7 +44,7 @@ public static class SteamStatsManager
 			return;
 		}
 		SteamAPICall_t call = SteamUserStats.RequestGlobalStats(0);
-		using SteamCallResult<GlobalStatsReceived_t> callResult = new SteamCallResult<GlobalStatsReceived_t>(call);
+		using SteamCallResult<GlobalStatsReceived_t> callResult = new SteamCallResult<GlobalStatsReceived_t>(call, SteamInitializer.DisconnectToken);
 		try
 		{
 			OnGlobalStatsReceived(await callResult.Task);

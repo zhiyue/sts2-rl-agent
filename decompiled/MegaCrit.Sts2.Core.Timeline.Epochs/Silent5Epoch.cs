@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Poisoner
+/// </summary>
 public class Silent5Epoch : EpochModel
 {
 	public override string Id => "SILENT5_EPOCH";

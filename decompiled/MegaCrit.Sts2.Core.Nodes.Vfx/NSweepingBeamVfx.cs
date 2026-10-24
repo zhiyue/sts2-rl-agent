@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -12,6 +13,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.TestSupport;
@@ -21,30 +23,71 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NSweepingBeamVfx.cs")]
 public class NSweepingBeamVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_emittingParticles' field.
+		/// </summary>
 		public static readonly StringName _emittingParticles = "_emittingParticles";
 
+		/// <summary>
+		/// Cached name for the '_startParticles' field.
+		/// </summary>
 		public static readonly StringName _startParticles = "_startParticles";
 
+		/// <summary>
+		/// Cached name for the '_endParticles' field.
+		/// </summary>
 		public static readonly StringName _endParticles = "_endParticles";
 
+		/// <summary>
+		/// Cached name for the '_sweepingParticles' field.
+		/// </summary>
 		public static readonly StringName _sweepingParticles = "_sweepingParticles";
 
+		/// <summary>
+		/// Cached name for the '_sweepingIndexCurve' field.
+		/// </summary>
 		public static readonly StringName _sweepingIndexCurve = "_sweepingIndexCurve";
 
+		/// <summary>
+		/// Cached name for the '_sweepDuration' field.
+		/// </summary>
 		public static readonly StringName _sweepDuration = "_sweepDuration";
 
+		/// <summary>
+		/// Cached name for the '_targetCenterPositions' field.
+		/// </summary>
 		public static readonly StringName _targetCenterPositions = "_targetCenterPositions";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -71,6 +114,13 @@ public class NSweepingBeamVfx : Node2D
 
 	private Array<Vector2> _targetCenterPositions = new Array<Vector2>();
 
+	private CancellationTokenSource? _cts;
+
+	public override void _ExitTree()
+	{
+		_cts?.Cancel();
+	}
+
 	public static NSweepingBeamVfx? Create(Creature owner, List<Creature> targets)
 	{
 		if (TestMode.IsOn)
@@ -82,9 +132,9 @@ public class NSweepingBeamVfx : Node2D
 		{
 			Vector2 vfxSpawnPosition = nCreature.VfxSpawnPosition;
 			Player player = owner.Player;
-			if (player != null && player.Character is Defect defect)
+			if (player != null && player.Character is Defect)
 			{
-				vfxSpawnPosition += defect.EyelineOffset;
+				vfxSpawnPosition += Defect.EyelineOffset;
 			}
 			Array<Vector2> array = new Array<Vector2>();
 			foreach (Creature target in targets)
@@ -123,6 +173,7 @@ public class NSweepingBeamVfx : Node2D
 
 	private async Task PlaySequence()
 	{
+		_cts = new CancellationTokenSource();
 		double timer = 0.0;
 		bool playedImpactParticles = false;
 		for (int i = 0; i < _startParticles.Count; i++)
@@ -156,7 +207,7 @@ public class NSweepingBeamVfx : Node2D
 				}
 			}
 			timer += processDeltaTime;
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await this.AwaitProcessFrame();
 		}
 		for (int l = 0; l < _endParticles.Count; l++)
 		{
@@ -166,14 +217,20 @@ public class NSweepingBeamVfx : Node2D
 		{
 			_emittingParticles[m].Emitting = false;
 		}
-		await Cmd.Wait(2f);
+		await Cmd.Wait(2f, _cts.Token);
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(2);
+		List<MethodInfo> list = new List<MethodInfo>(3);
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Node2D"), exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Vector2, "defectEyeCenter", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
@@ -183,9 +240,16 @@ public class NSweepingBeamVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName.Create && args.Count == 2)
 		{
 			ret = VariantUtils.CreateFrom<NSweepingBeamVfx>(Create(VariantUtils.ConvertTo<Vector2>(in args[0]), VariantUtils.ConvertToArray<Vector2>(in args[1])));
@@ -212,9 +276,14 @@ public class NSweepingBeamVfx : Node2D
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
+		if (method == MethodName._ExitTree)
+		{
+			return true;
+		}
 		if (method == MethodName.Create)
 		{
 			return true;
@@ -226,6 +295,7 @@ public class NSweepingBeamVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -267,6 +337,7 @@ public class NSweepingBeamVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -308,6 +379,11 @@ public class NSweepingBeamVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -322,6 +398,7 @@ public class NSweepingBeamVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -335,6 +412,7 @@ public class NSweepingBeamVfx : Node2D
 		info.AddProperty(PropertyName._targetCenterPositions, Variant.CreateFrom(_targetCenterPositions));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

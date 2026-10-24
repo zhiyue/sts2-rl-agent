@@ -48,7 +48,7 @@ public sealed class GoForTheEyes : CardModel
 			.Execute(choiceContext);
 		if (cardPlay.Target.Monster.IntendsToAttack)
 		{
-			await PowerCmd.Apply<WeakPower>(cardPlay.Target, base.DynamicVars.Weak.BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<WeakPower>(choiceContext, cardPlay.Target, base.DynamicVars.Weak.BaseValue, base.Owner.Creature, this);
 		}
 	}
 

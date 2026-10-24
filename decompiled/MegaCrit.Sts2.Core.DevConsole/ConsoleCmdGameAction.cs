@@ -11,16 +11,29 @@ public class ConsoleCmdGameAction : GameAction
 {
 	public override ulong OwnerId => Player.NetId;
 
-	public override GameActionType ActionType => GameActionType.NonCombat;
+	public override GameActionType ActionType
+	{
+		get
+		{
+			if (!InCombat)
+			{
+				return GameActionType.Any;
+			}
+			return GameActionType.CombatPlayPhaseOnly;
+		}
+	}
 
-	public Player Player { get; private set; }
+	public Player Player { get; }
 
-	public string Cmd { get; private set; }
+	public string Cmd { get; }
 
-	public ConsoleCmdGameAction(Player player, string cmd)
+	public bool InCombat { get; }
+
+	public ConsoleCmdGameAction(Player player, string cmd, bool inCombat)
 	{
 		Player = player;
 		Cmd = cmd;
+		InCombat = inCombat;
 	}
 
 	protected override async Task ExecuteAction()
@@ -32,7 +45,13 @@ public class ConsoleCmdGameAction : GameAction
 	{
 		return new NetConsoleCmdGameAction
 		{
-			cmd = Cmd
+			cmd = Cmd,
+			inCombat = InCombat
 		};
+	}
+
+	public override string ToString()
+	{
+		return $"{"ConsoleCmdGameAction"} player {Player.NetId} cmd {Cmd} InCombat {InCombat}";
 	}
 }

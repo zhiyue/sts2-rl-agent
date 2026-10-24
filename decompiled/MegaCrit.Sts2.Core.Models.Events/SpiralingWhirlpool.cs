@@ -24,7 +24,7 @@ public sealed class SpiralingWhirlpool : EventModel
 		base.DynamicVars.Heal.BaseValue = ((base.Owner != null) ? ((decimal)base.Owner.Creature.MaxHp * 0.33m) : 0m);
 	}
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		return runState.Players.All((Player p) => p.Deck.Cards.Any(ModelDb.Enchantment<Spiral>().CanEnchant));
 	}

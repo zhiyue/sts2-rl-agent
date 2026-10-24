@@ -27,7 +27,7 @@ public sealed class PaleBlueDotPower : PowerModel
 		{
 			return count;
 		}
-		int num = CombatManager.Instance.History.CardPlaysFinished.Count((CardPlayFinishedEntry c) => c.RoundNumber == base.CombatState.RoundNumber - 1 && c.CardPlay.Card.Owner == base.Owner.Player);
+		int num = CombatManager.Instance.History.CardPlaysFinished.Count((CardPlayFinishedEntry c) => c.HappenedLastPlayerTurn(player) && c.CardPlay.Card.Owner == base.Owner.Player);
 		if (num < base.DynamicVars["CardPlay"].IntValue)
 		{
 			return count;

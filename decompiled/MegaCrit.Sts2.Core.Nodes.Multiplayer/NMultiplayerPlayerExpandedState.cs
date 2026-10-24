@@ -26,6 +26,10 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 
+/// <summary>
+/// Displays the player's relics and deck.
+/// Shown when a player clicks a remote player.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NMultiplayerPlayerExpandedState.cs")]
 public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreenContext
 {
@@ -62,50 +66,116 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		}
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'AfterCapstoneOpened' method.
+		/// </summary>
 		public static readonly StringName AfterCapstoneOpened = "AfterCapstoneOpened";
 
+		/// <summary>
+		/// Cached name for the 'AfterCapstoneClosed' method.
+		/// </summary>
 		public static readonly StringName AfterCapstoneClosed = "AfterCapstoneClosed";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'ShowEntry' method.
+		/// </summary>
 		public static readonly StringName ShowEntry = "ShowEntry";
 
+		/// <summary>
+		/// Cached name for the 'BackButtonPressed' method.
+		/// </summary>
 		public static readonly StringName BackButtonPressed = "BackButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnRelicClicked' method.
+		/// </summary>
 		public static readonly StringName OnRelicClicked = "OnRelicClicked";
 
+		/// <summary>
+		/// Cached name for the 'UpdateNavigation' method.
+		/// </summary>
 		public static readonly StringName UpdateNavigation = "UpdateNavigation";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the 'ScreenType' property.
+		/// </summary>
 		public static readonly StringName ScreenType = "ScreenType";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_playerNameLabel' field.
+		/// </summary>
 		public static readonly StringName _playerNameLabel = "_playerNameLabel";
 
+		/// <summary>
+		/// Cached name for the '_cardsHeader' field.
+		/// </summary>
 		public static readonly StringName _cardsHeader = "_cardsHeader";
 
+		/// <summary>
+		/// Cached name for the '_cardContainer' field.
+		/// </summary>
 		public static readonly StringName _cardContainer = "_cardContainer";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_potionsHeader' field.
+		/// </summary>
 		public static readonly StringName _potionsHeader = "_potionsHeader";
 
+		/// <summary>
+		/// Cached name for the '_potionContainer' field.
+		/// </summary>
 		public static readonly StringName _potionContainer = "_potionContainer";
 
+		/// <summary>
+		/// Cached name for the '_relicsHeader' field.
+		/// </summary>
 		public static readonly StringName _relicsHeader = "_relicsHeader";
 
+		/// <summary>
+		/// Cached name for the '_relicContainer' field.
+		/// </summary>
 		public static readonly StringName _relicContainer = "_relicContainer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -152,9 +222,9 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		globalUi.TopBar.AnimHide();
 		globalUi.RelicInventory.AnimHide();
 		globalUi.MultiplayerPlayerContainer.AnimHide();
-		globalUi.MoveChild(globalUi.AboveTopBarVfxContainer, globalUi.CapstoneContainer.GetIndex());
-		globalUi.MoveChild(globalUi.CardPreviewContainer, globalUi.CapstoneContainer.GetIndex());
-		globalUi.MoveChild(globalUi.MessyCardPreviewContainer, globalUi.CapstoneContainer.GetIndex());
+		globalUi.MoveChildSafely(globalUi.AboveTopBarVfxContainer, globalUi.CapstoneContainer.GetIndex());
+		globalUi.MoveChildSafely(globalUi.CardPreviewContainer, globalUi.CapstoneContainer.GetIndex());
+		globalUi.MoveChildSafely(globalUi.MessyCardPreviewContainer, globalUi.CapstoneContainer.GetIndex());
 	}
 
 	public void AfterCapstoneClosed()
@@ -163,9 +233,9 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		globalUi.TopBar.AnimShow();
 		globalUi.RelicInventory.AnimShow();
 		globalUi.MultiplayerPlayerContainer.AnimShow();
-		globalUi.MoveChild(globalUi.AboveTopBarVfxContainer, globalUi.TopBar.GetIndex() + 1);
-		globalUi.MoveChild(globalUi.CardPreviewContainer, globalUi.TopBar.GetIndex() + 1);
-		globalUi.MoveChild(globalUi.MessyCardPreviewContainer, globalUi.TopBar.GetIndex() + 1);
+		globalUi.MoveChildSafely(globalUi.AboveTopBarVfxContainer, globalUi.TopBar.GetIndex() + 1);
+		globalUi.MoveChildSafely(globalUi.CardPreviewContainer, globalUi.TopBar.GetIndex() + 1);
+		globalUi.MoveChildSafely(globalUi.MessyCardPreviewContainer, globalUi.TopBar.GetIndex() + 1);
 		this.QueueFreeSafely();
 		_backButton.Disable();
 	}
@@ -250,6 +320,10 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		NCapstoneContainer.Instance.Close();
 	}
 
+	/// <summary>
+	/// Opens the Inspect Relic screen and allows the player to paginate through the rest of the top bar relics.
+	/// </summary>
+	/// <param name="node"></param>
 	private void OnRelicClicked(NRelic node)
 	{
 		List<RelicModel> list = new List<RelicModel>();
@@ -324,6 +398,11 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -351,6 +430,7 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -405,6 +485,7 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -443,6 +524,7 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -489,6 +571,7 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -550,6 +633,11 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -568,6 +656,7 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -582,6 +671,7 @@ public class NMultiplayerPlayerExpandedState : Control, ICapstoneScreen, IScreen
 		info.AddProperty(PropertyName._relicContainer, Variant.From(in _relicContainer));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -15,34 +15,86 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 [ScriptPath("res://src/Core/Nodes/Screens/Shops/NMerchantHand.cs")]
 public class NMerchantHand : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'PointAtTarget' method.
+		/// </summary>
 		public static readonly StringName PointAtTarget = "PointAtTarget";
 
+		/// <summary>
+		/// Cached name for the 'StopPointing' method.
+		/// </summary>
 		public static readonly StringName StopPointing = "StopPointing";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_startPos' field.
+		/// </summary>
 		public static readonly StringName _startPos = "_startPos";
 
+		/// <summary>
+		/// Cached name for the '_targetPos' field.
+		/// </summary>
 		public static readonly StringName _targetPos = "_targetPos";
 
+		/// <summary>
+		/// Cached name for the '_targetNode' field.
+		/// </summary>
+		public static readonly StringName _targetNode = "_targetNode";
+
+		/// <summary>
+		/// Cached name for the '_targetOffset' field.
+		/// </summary>
+		public static readonly StringName _targetOffset = "_targetOffset";
+
+		/// <summary>
+		/// Cached name for the '_noise' field.
+		/// </summary>
 		public static readonly StringName _noise = "_noise";
 
+		/// <summary>
+		/// Cached name for the '_time' field.
+		/// </summary>
 		public static readonly StringName _time = "_time";
 
+		/// <summary>
+		/// Cached name for the '_rug' field.
+		/// </summary>
 		public static readonly StringName _rug = "_rug";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -51,7 +103,11 @@ public class NMerchantHand : Node
 
 	private Vector2 _targetPos;
 
-	private MegaBone _bone;
+	private Control? _targetNode;
+
+	private Vector2 _targetOffset;
+
+	private MegaBone? _bone;
 
 	private FastNoiseLite _noise;
 
@@ -75,8 +131,11 @@ public class NMerchantHand : Node
 		_noise = new FastNoiseLite();
 		_noise.NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin;
 		_noise.Frequency = 1f;
-		_bone = _animController.GetSkeleton().FindBone("rotate_me");
-		_animController.GetAnimationState().SetAnimation("default");
+		this.RunWhenSpineReady(_animController, delegate(MegaAnimationState animState)
+		{
+			_bone = _animController.GetSkeleton()?.FindBone("rotate_me");
+			animState.SetAnimation("default");
+		});
 	}
 
 	public override void _ExitTree()
@@ -87,21 +146,27 @@ public class NMerchantHand : Node
 
 	public override void _Process(double delta)
 	{
+		if (_targetNode != null && GodotObject.IsInstanceValid(_targetNode))
+		{
+			_targetPos = _targetNode.GlobalPosition + _targetOffset;
+		}
 		_time += (float)delta;
 		float x = _noise.GetNoise1D(_time * 0.1f) + 0.4f;
 		float y = _noise.GetNoise1D((_time + 0.25f) * 0.1f) - 0.5f;
 		_parent.GlobalPosition = _parent.GlobalPosition.Lerp(_targetPos + new Vector2(x, y) * 100f, (float)delta * 4f);
-		_bone.SetRotation(Mathf.Lerp(-10f, 10f, (_parent.Position.X - _rug.Size.X * 0.5f - 50f) * 0.01f));
+		_bone?.SetRotation(Mathf.Lerp(-10f, 10f, (_parent.Position.X - _rug.Size.X * 0.5f - 50f) * 0.01f));
 	}
 
-	public void PointAtTarget(Vector2 pos)
+	public void PointAtTarget(Control target, Vector2 offset)
 	{
 		_stopPointingToken?.Cancel();
-		_targetPos = pos - Vector2.One * 50f;
+		_targetNode = target;
+		_targetOffset = offset;
 	}
 
 	public void StopPointing(float lingerTime)
 	{
+		_targetNode = null;
 		_stopPointingToken?.Cancel();
 		_stopPointingToken = new CancellationTokenSource();
 		TaskHelper.RunSafely(WaitAndReturn(_stopPointingToken, lingerTime));
@@ -109,17 +174,24 @@ public class NMerchantHand : Node
 
 	private async Task WaitAndReturn(CancellationTokenSource cancelToken, float lingerTime)
 	{
-		for (float timer = 0f; timer < lingerTime; timer += (float)GetProcessDeltaTime())
+		float num = 0f;
+		while (num < lingerTime)
 		{
 			if (cancelToken.IsCancellationRequested || !this.IsValid() || !IsInsideTree())
 			{
 				return;
 			}
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			float num2 = num;
+			num = num2 + await this.AwaitProcessFrame();
 		}
 		_targetPos = _startPos;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -132,7 +204,8 @@ public class NMerchantHand : Node
 		}, null));
 		list.Add(new MethodInfo(MethodName.PointAtTarget, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
-			new PropertyInfo(Variant.Type.Vector2, "pos", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			new PropertyInfo(Variant.Type.Object, "target", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false),
+			new PropertyInfo(Variant.Type.Vector2, "offset", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.StopPointing, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -141,6 +214,7 @@ public class NMerchantHand : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -162,9 +236,9 @@ public class NMerchantHand : Node
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.PointAtTarget && args.Count == 1)
+		if (method == MethodName.PointAtTarget && args.Count == 2)
 		{
-			PointAtTarget(VariantUtils.ConvertTo<Vector2>(in args[0]));
+			PointAtTarget(VariantUtils.ConvertTo<Control>(in args[0]), VariantUtils.ConvertTo<Vector2>(in args[1]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -177,6 +251,7 @@ public class NMerchantHand : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -203,6 +278,7 @@ public class NMerchantHand : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -214,6 +290,16 @@ public class NMerchantHand : Node
 		if (name == PropertyName._targetPos)
 		{
 			_targetPos = VariantUtils.ConvertTo<Vector2>(in value);
+			return true;
+		}
+		if (name == PropertyName._targetNode)
+		{
+			_targetNode = VariantUtils.ConvertTo<Control>(in value);
+			return true;
+		}
+		if (name == PropertyName._targetOffset)
+		{
+			_targetOffset = VariantUtils.ConvertTo<Vector2>(in value);
 			return true;
 		}
 		if (name == PropertyName._noise)
@@ -239,6 +325,7 @@ public class NMerchantHand : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -250,6 +337,16 @@ public class NMerchantHand : Node
 		if (name == PropertyName._targetPos)
 		{
 			value = VariantUtils.CreateFrom(in _targetPos);
+			return true;
+		}
+		if (name == PropertyName._targetNode)
+		{
+			value = VariantUtils.CreateFrom(in _targetNode);
+			return true;
+		}
+		if (name == PropertyName._targetOffset)
+		{
+			value = VariantUtils.CreateFrom(in _targetOffset);
 			return true;
 		}
 		if (name == PropertyName._noise)
@@ -275,12 +372,19 @@ public class NMerchantHand : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
 		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._startPos, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._targetPos, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._targetNode, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._targetOffset, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._noise, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName._time, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._rug, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -288,18 +392,22 @@ public class NMerchantHand : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 		info.AddProperty(PropertyName._startPos, Variant.From(in _startPos));
 		info.AddProperty(PropertyName._targetPos, Variant.From(in _targetPos));
+		info.AddProperty(PropertyName._targetNode, Variant.From(in _targetNode));
+		info.AddProperty(PropertyName._targetOffset, Variant.From(in _targetOffset));
 		info.AddProperty(PropertyName._noise, Variant.From(in _noise));
 		info.AddProperty(PropertyName._time, Variant.From(in _time));
 		info.AddProperty(PropertyName._rug, Variant.From(in _rug));
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -312,21 +420,29 @@ public class NMerchantHand : Node
 		{
 			_targetPos = value2.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName._noise, out var value3))
+		if (info.TryGetProperty(PropertyName._targetNode, out var value3))
 		{
-			_noise = value3.As<FastNoiseLite>();
+			_targetNode = value3.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._time, out var value4))
+		if (info.TryGetProperty(PropertyName._targetOffset, out var value4))
 		{
-			_time = value4.As<float>();
+			_targetOffset = value4.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName._rug, out var value5))
+		if (info.TryGetProperty(PropertyName._noise, out var value5))
 		{
-			_rug = value5.As<Control>();
+			_noise = value5.As<FastNoiseLite>();
 		}
-		if (info.TryGetProperty(PropertyName._parent, out var value6))
+		if (info.TryGetProperty(PropertyName._time, out var value6))
 		{
-			_parent = value6.As<Node2D>();
+			_time = value6.As<float>();
+		}
+		if (info.TryGetProperty(PropertyName._rug, out var value7))
+		{
+			_rug = value7.As<Control>();
+		}
+		if (info.TryGetProperty(PropertyName._parent, out var value8))
+		{
+			_parent = value8.As<Node2D>();
 		}
 	}
 }

@@ -8,20 +8,16 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Factories;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Entities.Merchant;
 
+/// <summary>
+/// Manages a purchasable relic in the merchant shop
+/// </summary>
 public sealed class MerchantRelicEntry : MerchantEntry
 {
-	private static readonly HashSet<RelicModel> _baseBlacklist = new HashSet<RelicModel>
-	{
-		ModelDb.Relic<TheCourier>(),
-		ModelDb.Relic<OldCoin>()
-	};
-
 	public RelicModel? Model { get; private set; }
 
 	public override bool IsStocked => Model != null;
@@ -40,11 +36,7 @@ public sealed class MerchantRelicEntry : MerchantEntry
 
 	private void FillSlot(RelicRarity rarity, IEnumerable<RelicModel>? blacklist = null)
 	{
-		if (blacklist == null)
-		{
-			blacklist = Array.Empty<RelicModel>();
-		}
-		SetModel(RelicFactory.PullNextRelicFromBack(_player, rarity, blacklist.Concat(_baseBlacklist)).ToMutable());
+		SetModel(RelicFactory.PullNextRelicFromBack(_player, rarity, (RelicModel r) => (blacklist == null || !blacklist.Contains(r)) && r.IsAllowedInShops).ToMutable());
 	}
 
 	public override void CalcCost()

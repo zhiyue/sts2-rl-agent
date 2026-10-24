@@ -30,8 +30,14 @@ public class AnimState
 
 	public string Id { get; }
 
+	/// <summary>
+	/// Is this a looping animation?
+	/// </summary>
 	public bool IsLooping { get; }
 
+	/// <summary>
+	/// If this is a looping animation, has it already looped at least once?
+	/// </summary>
 	public bool HasLooped { get; private set; }
 
 	public AnimState? NextState { get; set; }
@@ -81,6 +87,9 @@ public class AnimState
 		return _branchedStates.ContainsKey(trigger);
 	}
 
+	/// <summary>
+	/// Mark that this animation has looped at least once.
+	/// </summary>
 	public void MarkHasLooped()
 	{
 		HasLooped = true;

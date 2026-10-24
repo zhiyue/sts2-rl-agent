@@ -1,10 +1,15 @@
+using System.Collections.Generic;
 using System.Text;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 
 namespace MegaCrit.Sts2.Core.Combat.History.Entries;
 
 public class CardPlayStartedEntry : CombatHistoryEntry
 {
+	/// <summary>
+	/// The instance of the card play that started.
+	/// </summary>
 	public CardPlay CardPlay { get; }
 
 	public override string Description
@@ -24,8 +29,8 @@ public class CardPlayStartedEntry : CombatHistoryEntry
 		}
 	}
 
-	public CardPlayStartedEntry(CardPlay cardPlay, int roundNumber, CombatSide currentSide, CombatHistory history)
-		: base(cardPlay.Card.Owner.Creature, roundNumber, currentSide, history)
+	public CardPlayStartedEntry(CardPlay cardPlay, int roundNumber, CombatSide currentSide, CombatHistory history, IEnumerable<Player> players)
+		: base(cardPlay.Card.Owner.Creature, roundNumber, currentSide, history, players)
 	{
 		CardPlay = cardPlay;
 	}

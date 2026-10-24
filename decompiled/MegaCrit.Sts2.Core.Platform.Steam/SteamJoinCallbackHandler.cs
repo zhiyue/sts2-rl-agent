@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Logging;
@@ -14,6 +13,9 @@ using Steamworks;
 
 namespace MegaCrit.Sts2.Core.Platform.Steam;
 
+/// <summary>
+/// Responsible for handling Steam-related requests to join multiplayer sessions coming from outside the game.
+/// </summary>
 public class SteamJoinCallbackHandler : IDisposable
 {
 	private readonly Callback<GameLobbyJoinRequested_t> _steamJoinCallback;
@@ -23,13 +25,18 @@ public class SteamJoinCallbackHandler : IDisposable
 		_steamJoinCallback = new Callback<GameLobbyJoinRequested_t>(OnSteamLobbyJoinRequested);
 	}
 
+	/// <summary>
+	/// If the game is not yet launched and the player accepts an invite, Steam launches the game with a specific command
+	/// line argument. This method handles joining the multiplayer session. It should be called relatively early after
+	/// the game is launched.
+	/// </summary>
 	public void CheckForCommandLineJoin()
 	{
-		Log.Info("Command line: " + string.Join(" ", OS.GetCmdlineArgs()));
 		if (CommandLineHelper.TryGetValue("+connect_lobby", out string value))
 		{
-			ulong lobbyId = ulong.Parse(value);
-			TaskHelper.RunSafely(JoinToHost(lobbyId, null));
+			ulong num = ulong.Parse(value);
+			Log.Info($"Joining to host via Steam invite that caused the game to launch. Lobby id: {num}");
+			TaskHelper.RunSafely(JoinToHost(num, null));
 		}
 	}
 
@@ -40,15 +47,19 @@ public class SteamJoinCallbackHandler : IDisposable
 
 	private void OnSteamLobbyJoinRequested(GameLobbyJoinRequested_t lobbyJoinRequest)
 	{
+		Log.Info($"Joining to host via Steam invite. Lobby: {lobbyJoinRequest.m_steamIDLobby.m_SteamID} player: {lobbyJoinRequest.m_steamIDFriend.m_SteamID}");
 		TaskHelper.RunSafely(JoinToHost(lobbyJoinRequest.m_steamIDLobby.m_SteamID, lobbyJoinRequest.m_steamIDFriend.m_SteamID));
 	}
 
-	private async Task JoinToHost(ulong lobbyId, ulong? playerId)
+	private static async Task JoinToHost(ulong lobbyId, ulong? playerId, IClientConnectionInitializer? connInitializer = null)
 	{
 		if (NGame.Instance.RootSceneContainer.CurrentScene is NMultiplayerTest nMultiplayerTest)
 		{
-			SteamClientConnectionInitializer initializer = SteamClientConnectionInitializer.FromLobby(lobbyId);
-			await nMultiplayerTest.JoinToHost(initializer);
+			if (connInitializer == null)
+			{
+				connInitializer = SteamClientConnectionInitializer.FromLobby(lobbyId);
+			}
+			await nMultiplayerTest.JoinToHost(connInitializer);
 			return;
 		}
 		if (RunManager.Instance.IsInProgress)
@@ -76,6 +87,10 @@ public class SteamJoinCallbackHandler : IDisposable
 		{
 			NGame.Instance.MainMenu?.SubmenuStack.Pop();
 		}
-		await NGame.Instance.MainMenu.JoinGame(SteamClientConnectionInitializer.FromLobby(lobbyId));
+		if (connInitializer == null)
+		{
+			connInitializer = SteamClientConnectionInitializer.FromLobby(lobbyId);
+		}
+		await NGame.Instance.MainMenu.JoinGame(connInitializer);
 	}
 }

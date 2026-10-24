@@ -16,7 +16,7 @@ public sealed class CeremonialBeastBoss : EncounterModel
 
 	public override IEnumerable<MonsterModel> AllPossibleMonsters => new global::_003C_003Ez__ReadOnlySingleElementList<MonsterModel>(ModelDb.Monster<CeremonialBeast>());
 
-	public override IEnumerable<string>? ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Ringing>().OverlayPath);
+	public override IEnumerable<string> ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Ringing>().OverlayPath);
 
 	public override float GetCameraScaling()
 	{

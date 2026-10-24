@@ -13,6 +13,8 @@ public sealed class Deprived : CharacterModel
 {
 	private MockCardPool? _mockCardPool;
 
+	public override bool IsPlayable => false;
+
 	public override Color NameColor => StsColors.gold;
 
 	public override CharacterGender Gender => CharacterGender.Neutral;

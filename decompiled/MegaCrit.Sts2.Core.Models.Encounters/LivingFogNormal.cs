@@ -23,7 +23,7 @@ public sealed class LivingFogNormal : EncounterModel
 		ModelDb.Monster<GasBomb>()
 	});
 
-	public override IEnumerable<string>? ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Smog>().OverlayPath);
+	public override IEnumerable<string> ExtraAssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ModelDb.Affliction<Smog>().OverlayPath);
 
 	public override float GetCameraScaling()
 	{

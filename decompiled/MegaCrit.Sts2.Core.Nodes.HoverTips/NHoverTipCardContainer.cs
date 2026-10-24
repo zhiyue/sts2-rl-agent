@@ -15,15 +15,27 @@ namespace MegaCrit.Sts2.Core.Nodes.HoverTips;
 [ScriptPath("res://src/Core/Nodes/HoverTips/NHoverTipCardContainer.cs")]
 public class NHoverTipCardContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'LayoutResizeAndReposition' method.
+		/// </summary>
 		public static readonly StringName LayoutResizeAndReposition = "LayoutResizeAndReposition";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -43,6 +55,13 @@ public class NHoverTipCardContainer : Control
 		node.UpdateVisuals(PileType.Deck, CardPreviewMode.Normal);
 	}
 
+	/// <summary>
+	/// Lays out cards vertically, then horizontally, then sets the position and the size of the container according
+	/// to the passed global start position and alignment.
+	/// </summary>
+	/// <param name="globalStartLocation">Where to start positioning nodes.</param>
+	/// <param name="alignment">Which side of the global start location the cards should be placed on.</param>
+	/// <returns></returns>
 	public void LayoutResizeAndReposition(Vector2 globalStartLocation, HoverTipAlignment alignment)
 	{
 		Vector2 size = NGame.Instance.GetViewportRect().Size;
@@ -68,6 +87,11 @@ public class NHoverTipCardContainer : Control
 		base.Size = size2;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -80,6 +104,7 @@ public class NHoverTipCardContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -92,6 +117,7 @@ public class NHoverTipCardContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -102,12 +128,14 @@ public class NHoverTipCardContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

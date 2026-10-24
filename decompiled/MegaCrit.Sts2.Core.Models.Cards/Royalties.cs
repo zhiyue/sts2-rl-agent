@@ -21,12 +21,12 @@ public sealed class Royalties : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<RoyaltiesPower>(base.Owner.Creature, base.DynamicVars.Gold.BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<RoyaltiesPower>(choiceContext, base.Owner.Creature, base.DynamicVars.Gold.BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars.Gold.UpgradeValueBy(5m);
+		base.DynamicVars.Gold.UpgradeValueBy(10m);
 	}
 }

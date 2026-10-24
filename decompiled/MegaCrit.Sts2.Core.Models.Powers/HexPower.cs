@@ -18,6 +18,24 @@ public sealed class HexPower : PowerModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => HoverTipFactory.FromAffliction<Hexed>(base.Amount);
 
+	/// <summary>
+	/// Ethereal is granted globally for as long as this power exists, gated on the card being afflicted with
+	/// <see cref="T:MegaCrit.Sts2.Core.Models.Afflictions.Hexed" />. When this power is removed, it stops contributing here automatically, so any Ethereal from
+	/// another source (e.g. <see cref="T:MegaCrit.Sts2.Core.Models.Relics.MusicBox" />) is left untouched.
+	/// </summary>
+	public override bool TryModifyKeywordsInCombat(CardModel card, ISet<CardKeyword> keywords)
+	{
+		if (card.Owner != base.Owner.Player)
+		{
+			return false;
+		}
+		if (!(card.Affliction is Hexed))
+		{
+			return false;
+		}
+		return keywords.Add(CardKeyword.Ethereal);
+	}
+
 	public override async Task AfterApplied(Creature? applier, CardModel? cardSource)
 	{
 		foreach (CardModel allCard in base.Owner.Player.PlayerCombatState.AllCards)
@@ -46,12 +64,8 @@ public sealed class HexPower : PowerModel
 	{
 		foreach (CardModel allCard in base.Owner.Player.PlayerCombatState.AllCards)
 		{
-			if (allCard.Affliction is Hexed hexed)
+			if (allCard.Affliction is Hexed)
 			{
-				if (hexed.AppliedEthereal)
-				{
-					CardCmd.RemoveKeyword(allCard, CardKeyword.Ethereal);
-				}
 				CardCmd.ClearAffliction(allCard);
 			}
 		}
@@ -62,12 +76,7 @@ public sealed class HexPower : PowerModel
 	{
 		if (card.Affliction == null)
 		{
-			Hexed hexed = await CardCmd.Afflict<Hexed>(card, base.Amount);
-			if (hexed != null && !card.Keywords.Contains(CardKeyword.Ethereal))
-			{
-				CardCmd.ApplyKeyword(card, CardKeyword.Ethereal);
-				hexed.AppliedEthereal = true;
-			}
+			await CardCmd.Afflict<Hexed>(card, base.Amount);
 		}
 	}
 }

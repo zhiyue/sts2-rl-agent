@@ -28,65 +28,156 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 
+/// <summary>
+/// Selection screen for choosing a card from in-combat generators like Attack Potion.
+/// NOTE: The card reward selection screen is only set up to look good with exactly 3 cards right now. Any more or less
+/// than that and things may start to look wonky. We'll need do some UI work to make it look nicer if that's required.
+/// </summary>
+/// TODO: this is very similar to NCardRewardScreen... if we have a 3rd screen set up like this, might be
+/// worth having them inherit from a common class.
 [ScriptPath("res://src/Core/Nodes/Screens/CardSelection/NChooseACardSelectionScreen.cs")]
 public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenContext, ICardSelector
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'SelectHolder' method.
+		/// </summary>
 		public static readonly StringName SelectHolder = "SelectHolder";
 
+		/// <summary>
+		/// Cached name for the 'OpenPreviewScreen' method.
+		/// </summary>
 		public static readonly StringName OpenPreviewScreen = "OpenPreviewScreen";
 
+		/// <summary>
+		/// Cached name for the 'OnSkipButtonReleased' method.
+		/// </summary>
 		public static readonly StringName OnSkipButtonReleased = "OnSkipButtonReleased";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayOpened' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayOpened = "AfterOverlayOpened";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayClosed' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayClosed = "AfterOverlayClosed";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayShown' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayShown = "AfterOverlayShown";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayHidden' method.
+		/// </summary>
 		public static readonly StringName AfterOverlayHidden = "AfterOverlayHidden";
 
+		/// <summary>
+		/// Cached name for the 'UpdateControllerIcons' method.
+		/// </summary>
 		public static readonly StringName UpdateControllerIcons = "UpdateControllerIcons";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ScreenType' property.
+		/// </summary>
 		public static readonly StringName ScreenType = "ScreenType";
 
+		/// <summary>
+		/// Cached name for the 'UseSharedBackstop' property.
+		/// </summary>
 		public static readonly StringName UseSharedBackstop = "UseSharedBackstop";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_banner' field.
+		/// </summary>
 		public static readonly StringName _banner = "_banner";
 
+		/// <summary>
+		/// Cached name for the '_cardRow' field.
+		/// </summary>
 		public static readonly StringName _cardRow = "_cardRow";
 
+		/// <summary>
+		/// Cached name for the '_skipButton' field.
+		/// </summary>
 		public static readonly StringName _skipButton = "_skipButton";
 
+		/// <summary>
+		/// Cached name for the '_combatPiles' field.
+		/// </summary>
 		public static readonly StringName _combatPiles = "_combatPiles";
 
+		/// <summary>
+		/// Cached name for the '_inspectPrompt' field.
+		/// </summary>
 		public static readonly StringName _inspectPrompt = "_inspectPrompt";
 
+		/// <summary>
+		/// Cached name for the '_peekButton' field.
+		/// </summary>
 		public static readonly StringName _peekButton = "_peekButton";
 
+		/// <summary>
+		/// Cached name for the '_openedTicks' field.
+		/// </summary>
 		public static readonly StringName _openedTicks = "_openedTicks";
 
+		/// <summary>
+		/// Cached name for the '_screenComplete' field.
+		/// </summary>
 		public static readonly StringName _screenComplete = "_screenComplete";
 
+		/// <summary>
+		/// Cached name for the '_cardSelected' field.
+		/// </summary>
 		public static readonly StringName _cardSelected = "_cardSelected";
 
+		/// <summary>
+		/// Cached name for the '_canSkip' field.
+		/// </summary>
 		public static readonly StringName _canSkip = "_canSkip";
 
+		/// <summary>
+		/// Cached name for the '_cardTween' field.
+		/// </summary>
 		public static readonly StringName _cardTween = "_cardTween";
 
+		/// <summary>
+		/// Cached name for the '_fadeTween' field.
+		/// </summary>
 		public static readonly StringName _fadeTween = "_fadeTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -135,7 +226,7 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 	{
 		get
 		{
-			if (_peekButton.IsPeeking)
+			if (_peekButton.IsPeeking && NCombatRoom.Instance != null)
 			{
 				return NCombatRoom.Instance.DefaultFocusedControl;
 			}
@@ -216,7 +307,6 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 				base.MouseFilter = MouseFilterEnum.Stop;
 				_combatPiles.Visible = false;
 				_combatPiles.Disable();
-				ActiveScreenContext.Instance.Update();
 				if (_canSkip)
 				{
 					_skipButton.Enable();
@@ -308,7 +398,10 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 	public void AfterOverlayShown()
 	{
 		base.Visible = true;
-		_peekButton.Enable();
+		if (CombatManager.Instance.IsInProgress)
+		{
+			_peekButton.Enable();
+		}
 		if (_canSkip && !_peekButton.IsPeeking)
 		{
 			_skipButton.Enable();
@@ -329,6 +422,11 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 		_inspectPrompt.GetNode<MegaLabel>("Label").SetTextAutoSize(new LocString("gameplay_ui", "TO_INSPECT_PROMPT").GetFormattedText());
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -355,6 +453,7 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -421,6 +520,7 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -467,6 +567,7 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -533,6 +634,7 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -614,6 +716,11 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -636,6 +743,7 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -654,6 +762,7 @@ public class NChooseACardSelectionScreen : Control, IOverlayScreen, IScreenConte
 		info.AddProperty(PropertyName._fadeTween, Variant.From(in _fadeTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

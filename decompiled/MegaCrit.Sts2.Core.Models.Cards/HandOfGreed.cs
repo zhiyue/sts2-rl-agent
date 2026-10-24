@@ -55,11 +55,11 @@ public sealed class HandOfGreed : CardModel
 		AttackCommand attackCommand = await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
 			.WithHitFx("vfx/vfx_attack_blunt", null, "blunt_attack.mp3")
 			.Execute(choiceContext);
-		if (shouldTriggerFatal && attackCommand.Results.Any((DamageResult r) => r.WasTargetKilled))
+		if (shouldTriggerFatal && attackCommand.Results.SelectMany((List<DamageResult> r) => r).Any((DamageResult r) => r.WasTargetKilled))
 		{
 			if (monsterPos.HasValue)
 			{
-				VfxCmd.PlayVfx(monsterPos.Value, "vfx/vfx_coin_explosion_regular");
+				VfxCmd.PlayVfx(monsterPos.Value, "vfx/vfx_coin_explosion_regular", NCombatRoom.Instance?.CombatVfxContainer);
 			}
 			await PlayerCmd.GainGold(base.DynamicVars["Gold"].IntValue, base.Owner);
 		}

@@ -17,7 +17,7 @@ public sealed class BagOfPreparation : RelicModel
 		{
 			return count;
 		}
-		if (player.Creature.CombatState.RoundNumber > 1)
+		if (base.Owner.PlayerCombatState.TurnNumber > 1)
 		{
 			return count;
 		}

@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -63,7 +64,7 @@ public sealed class VineShambler : MonsterModel
 			.SpawningHitVfxOnEachCreature()
 			.WithHitVfxSpawnedAtBase()
 			.Execute(null);
-		await PowerCmd.Apply<TangledPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<TangledPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
 	}
 
 	private async Task SwipeMove(IReadOnlyList<Creature> targets)

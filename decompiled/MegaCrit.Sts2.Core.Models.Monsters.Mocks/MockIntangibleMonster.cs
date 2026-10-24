@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -33,7 +34,7 @@ public sealed class MockIntangibleMonster : MonsterModel
 
 	private async Task IntangibleMove(IReadOnlyList<Creature> targets)
 	{
-		await PowerCmd.Apply<IntangiblePower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<IntangiblePower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	private Task NothingMove(IReadOnlyList<Creature> targets)

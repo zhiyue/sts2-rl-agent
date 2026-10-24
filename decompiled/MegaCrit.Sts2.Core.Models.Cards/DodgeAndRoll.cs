@@ -23,7 +23,7 @@ public sealed class DodgeAndRoll : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		decimal amount = await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<BlockNextTurnPower>(base.Owner.Creature, amount, base.Owner.Creature, this);
+		await PowerCmd.Apply<BlockNextTurnPower>(choiceContext, base.Owner.Creature, amount, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

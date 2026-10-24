@@ -85,12 +85,12 @@ public class SerializablePlayer : IPacketSerializable
 	{
 		writer.WriteULong(NetId);
 		writer.WriteModelEntry(CharacterId);
-		writer.WriteInt(CurrentHp, 16);
-		writer.WriteInt(MaxHp, 16);
-		writer.WriteInt(MaxEnergy, 8);
-		writer.WriteInt(MaxPotionSlotCount, 3);
-		writer.WriteInt(Gold, 16);
-		writer.WriteInt(BaseOrbSlotCount, 8);
+		writer.WriteInt(CurrentHp);
+		writer.WriteInt(MaxHp);
+		writer.WriteInt(MaxEnergy, 16);
+		writer.WriteInt(MaxPotionSlotCount, 8);
+		writer.WriteInt(Gold);
+		writer.WriteInt(BaseOrbSlotCount, 16);
 		writer.WriteList(Deck);
 		writer.WriteList(Relics);
 		writer.WriteList(Potions);
@@ -114,12 +114,12 @@ public class SerializablePlayer : IPacketSerializable
 	{
 		NetId = reader.ReadULong();
 		CharacterId = reader.ReadModelIdAssumingType<CharacterModel>();
-		CurrentHp = reader.ReadInt(16);
-		MaxHp = reader.ReadInt(16);
-		MaxEnergy = reader.ReadInt(8);
-		MaxPotionSlotCount = reader.ReadInt(3);
-		Gold = reader.ReadInt(16);
-		BaseOrbSlotCount = reader.ReadInt(8);
+		CurrentHp = reader.ReadInt();
+		MaxHp = reader.ReadInt();
+		MaxEnergy = reader.ReadInt(16);
+		MaxPotionSlotCount = reader.ReadInt(8);
+		Gold = reader.ReadInt();
+		BaseOrbSlotCount = reader.ReadInt(16);
 		Deck = reader.ReadList<SerializableCard>();
 		Relics = reader.ReadList<SerializableRelic>();
 		Potions = reader.ReadList<SerializablePotion>();

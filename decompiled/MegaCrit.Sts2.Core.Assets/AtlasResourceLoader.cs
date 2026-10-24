@@ -9,48 +9,109 @@ using MegaCrit.Sts2.Core.Logging;
 
 namespace MegaCrit.Sts2.Core.Assets;
 
+/// <summary>
+/// ResourceFormatLoader that intercepts .sprites/ paths and returns AtlasTextures from AtlasManager.
+/// Handles paths like: res://images/atlases/relic_atlas.sprites/anchor.tres
+/// </summary>
 [ScriptPath("res://src/Core/Assets/AtlasResourceLoader.cs")]
 public class AtlasResourceLoader : ResourceFormatLoader
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : ResourceFormatLoader.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_GetRecognizedExtensions' method.
+		/// </summary>
 		public new static readonly StringName _GetRecognizedExtensions = "_GetRecognizedExtensions";
 
+		/// <summary>
+		/// Cached name for the '_HandlesType' method.
+		/// </summary>
 		public new static readonly StringName _HandlesType = "_HandlesType";
 
+		/// <summary>
+		/// Cached name for the '_GetResourceType' method.
+		/// </summary>
 		public new static readonly StringName _GetResourceType = "_GetResourceType";
 
+		/// <summary>
+		/// Cached name for the '_RecognizePath' method.
+		/// </summary>
 		public new static readonly StringName _RecognizePath = "_RecognizePath";
 
+		/// <summary>
+		/// Cached name for the '_Exists' method.
+		/// </summary>
 		public new static readonly StringName _Exists = "_Exists";
 
+		/// <summary>
+		/// Cached name for the '_Load' method.
+		/// </summary>
 		public new static readonly StringName _Load = "_Load";
 
+		/// <summary>
+		/// Cached name for the '_GetDependencies' method.
+		/// </summary>
 		public new static readonly StringName _GetDependencies = "_GetDependencies";
 
+		/// <summary>
+		/// Cached name for the 'IsSpritePath' method.
+		/// </summary>
 		public static readonly StringName IsSpritePath = "IsSpritePath";
 
+		/// <summary>
+		/// Cached name for the 'HasFallback' method.
+		/// </summary>
 		public static readonly StringName HasFallback = "HasFallback";
 
+		/// <summary>
+		/// Cached name for the 'LoadFallback' method.
+		/// </summary>
 		public static readonly StringName LoadFallback = "LoadFallback";
 
+		/// <summary>
+		/// Cached name for the 'GetFallbackPath' method.
+		/// </summary>
 		public static readonly StringName GetFallbackPath = "GetFallbackPath";
 
+		/// <summary>
+		/// Cached name for the 'GetRelicFallbackPath' method.
+		/// </summary>
 		public static readonly StringName GetRelicFallbackPath = "GetRelicFallbackPath";
 
+		/// <summary>
+		/// Cached name for the 'GetPowerFallbackPath' method.
+		/// </summary>
 		public static readonly StringName GetPowerFallbackPath = "GetPowerFallbackPath";
 
+		/// <summary>
+		/// Cached name for the 'GetCardFallbackPath' method.
+		/// </summary>
 		public static readonly StringName GetCardFallbackPath = "GetCardFallbackPath";
 
+		/// <summary>
+		/// Cached name for the 'GetPotionFallbackPath' method.
+		/// </summary>
 		public static readonly StringName GetPotionFallbackPath = "GetPotionFallbackPath";
 
+		/// <summary>
+		/// Cached name for the 'GetMissingTexture' method.
+		/// </summary>
 		public static readonly StringName GetMissingTexture = "GetMissingTexture";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : ResourceFormatLoader.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : ResourceFormatLoader.SignalName
 	{
 	}
@@ -164,6 +225,11 @@ public class AtlasResourceLoader : ResourceFormatLoader
 		return false;
 	}
 
+	/// <summary>
+	/// Parses a sprite path to extract atlas and sprite names.
+	/// Example: res://images/atlases/relic_atlas.sprites/anchor.tres
+	/// Returns: ("relic_atlas", "anchor")
+	/// </summary>
 	public static (string? AtlasName, string? SpriteName) ParsePath(string path)
 	{
 		Match match = _pathPattern.Match(path);
@@ -199,6 +265,10 @@ public class AtlasResourceLoader : ResourceFormatLoader
 		return ResourceLoader.Load<Texture2D>(fallbackPath, null, ResourceLoader.CacheMode.Reuse);
 	}
 
+	/// <summary>
+	/// Returns the fallback path for a sprite not found in the atlas.
+	/// Different atlases have different fallback conventions.
+	/// </summary>
 	private static string? GetFallbackPath(string atlasName, string spriteName)
 	{
 		switch (atlasName)
@@ -295,6 +365,11 @@ public class AtlasResourceLoader : ResourceFormatLoader
 		return 7L;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -371,6 +446,7 @@ public class AtlasResourceLoader : ResourceFormatLoader
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -509,6 +585,7 @@ public class AtlasResourceLoader : ResourceFormatLoader
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -579,12 +656,14 @@ public class AtlasResourceLoader : ResourceFormatLoader
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

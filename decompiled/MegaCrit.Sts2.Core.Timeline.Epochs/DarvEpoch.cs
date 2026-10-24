@@ -3,6 +3,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Darv
+/// </summary>
 public class DarvEpoch : EpochModel
 {
 	public override string Id => "DARV_EPOCH";

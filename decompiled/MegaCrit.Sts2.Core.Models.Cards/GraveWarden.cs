@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -20,7 +19,7 @@ public sealed class GraveWarden : CardModel
 		new CardsVar(1)
 	});
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Soul>(base.IsUpgraded));
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Soul>());
 
 	public GraveWarden()
 		: base(1, CardType.Skill, CardRarity.Common, TargetType.Self)
@@ -31,19 +30,11 @@ public sealed class GraveWarden : CardModel
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		List<Soul> list = Soul.Create(base.Owner, base.DynamicVars.Cards.IntValue, base.CombatState).ToList();
-		if (base.IsUpgraded)
-		{
-			foreach (Soul item in list)
-			{
-				CardCmd.Upgrade(item);
-			}
-		}
-		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Draw, addedByPlayer: true, CardPilePosition.Random));
+		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardsToCombat(Soul.Create(base.Owner, base.DynamicVars.Cards.IntValue, base.CombatState), PileType.Draw, base.Owner, CardPilePosition.Random));
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars.Block.UpgradeValueBy(2m);
+		base.DynamicVars.Block.UpgradeValueBy(3m);
 	}
 }

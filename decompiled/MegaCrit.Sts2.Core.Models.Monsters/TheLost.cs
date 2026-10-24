@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -23,11 +24,13 @@ public sealed class TheLost : MonsterModel
 
 	private int EyeLasersDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 5, 4);
 
+	private int DebilitatingSmogStrengthStealAmount => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 2, 2);
+
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Stone;
 
 	public override async Task AfterAddedToRoom()
 	{
-		await PowerCmd.Apply<PossessStrengthPower>(base.Creature, 1m, null, null);
+		await PowerCmd.Apply<PossessStrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, null, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -45,8 +48,8 @@ public sealed class TheLost : MonsterModel
 	{
 		SfxCmd.Play(CastSfx);
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.5f);
-		await PowerCmd.Apply<StrengthPower>(targets, -2m, base.Creature, null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), targets, -DebilitatingSmogStrengthStealAmount, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, DebilitatingSmogStrengthStealAmount, base.Creature, null);
 	}
 
 	private async Task EyeLasersMove(IReadOnlyList<Creature> targets)

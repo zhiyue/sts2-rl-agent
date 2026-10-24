@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Audio;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -13,6 +14,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class TrackerRubyRaider : MonsterModel
 {
+	private const string _trackMove = "TRACK_MOVE";
+
 	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 22, 21);
 
 	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 26, 25);
@@ -38,7 +41,7 @@ public sealed class TrackerRubyRaider : MonsterModel
 	{
 		await CreatureCmd.TriggerAnim(base.Creature, "Attack", 0.8f);
 		VfxCmd.PlayOnCreatureCenters(targets, "vfx/vfx_attack_slash");
-		await PowerCmd.Apply<FrailPower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	private async Task HoundsMove(IReadOnlyList<Creature> targets)
@@ -49,5 +52,10 @@ public sealed class TrackerRubyRaider : MonsterModel
 			.WithAttackerFx(null, AttackSfx)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "TRACK_MOVE";
 	}
 }

@@ -13,6 +13,9 @@ using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer;
 
+/// <summary>
+/// Responsible for synchronizing all players' combat states before combat begins.
+/// </summary>
 public class CombatStateSynchronizer : IDisposable
 {
 	private readonly INetGameService _netService;
@@ -56,6 +59,10 @@ public class CombatStateSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Handles a combat synchronization message from another peer.
+	/// Remember that this can be called even before StartSync and must queue the data for the next time we sync.
+	/// </summary>
 	private void OnSyncPlayerMessageReceived(SyncPlayerDataMessage syncMessage, ulong senderId)
 	{
 		_logger.Debug($"Received sync player message from {senderId}");
@@ -70,6 +77,10 @@ public class CombatStateSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Handles a RNG synchronization message from the host.
+	/// Remember that this can be called even before StartSync and must queue the data for the next time we sync.
+	/// </summary>
 	private void OnSyncRngMessageReceived(SyncRngMessage syncMessage, ulong senderId)
 	{
 		_logger.Debug($"Received sync RNG message from {senderId}");
@@ -85,6 +96,10 @@ public class CombatStateSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Called when a peer disconnects from the lobby.
+	/// Used to check if we should complete the sync now that they've been disconnected.
+	/// </summary>
 	private void OnPeerDisconnected(ulong peerId)
 	{
 		TaskCompletionSource? syncCompletionSource = _syncCompletionSource;
@@ -95,6 +110,12 @@ public class CombatStateSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Sends a message syncing our combat state to all other players.
+	/// This should be called early before beginning animations for entering a combat room. Then, WaitForSync should be
+	/// called just before entering the combat room.
+	/// Between this and WaitForSync, no player or RNG state should be modified.
+	/// </summary>
 	public void StartSync()
 	{
 		_logger.Debug("Broadcasting combat sync message to all peers");
@@ -125,6 +146,9 @@ public class CombatStateSynchronizer : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Waits for all other players' combat data to be received. StartSync must be called exactly once before this is called.
+	/// </summary>
 	public async Task WaitForSync()
 	{
 		_logger.Debug("Waiting to receive all sync messages from all clients");
@@ -175,6 +199,10 @@ public class CombatStateSynchronizer : IDisposable
 		_syncCompletionSource = null;
 	}
 
+	/// <summary>
+	/// Checks if synchronization is complete and sets the result on the sync completion source if we are all done.
+	/// This should be called every time we receive some sync data from a peer.
+	/// </summary>
 	private void CheckSyncCompleted()
 	{
 		if (_syncCompletionSource == null)

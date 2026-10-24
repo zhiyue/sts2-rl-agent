@@ -31,7 +31,7 @@ public sealed class ByrdonisNest : EventModel
 		});
 	}
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		return runState.Players.All((Player p) => !p.HasEventPet());
 	}

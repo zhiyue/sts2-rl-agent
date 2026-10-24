@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Entities.Multiplayer;
 
+/// <summary>
+/// Serializable version of PlayerChoiceResult, representing the result of a choice the player made mid-combat.
+/// </summary>
 public struct NetPlayerChoiceResult : IPacketSerializable
 {
 	public PlayerChoiceType type;

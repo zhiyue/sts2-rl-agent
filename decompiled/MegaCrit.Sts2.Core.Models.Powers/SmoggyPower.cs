@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Combat.History.Entries;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models.Afflictions;
@@ -18,7 +19,7 @@ public sealed class SmoggyPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Single;
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner.Creature != base.Owner || cardPlay.Card.Type != CardType.Skill)
 		{
@@ -43,9 +44,9 @@ public sealed class SmoggyPower : PowerModel
 		}
 	}
 
-	public override Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side != base.Owner.Side)
+		if (!participants.Contains(base.Owner))
 		{
 			return Task.CompletedTask;
 		}

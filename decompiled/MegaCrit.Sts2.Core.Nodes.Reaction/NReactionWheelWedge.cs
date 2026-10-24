@@ -9,28 +9,61 @@ namespace MegaCrit.Sts2.Core.Nodes.Reaction;
 [ScriptPath("res://src/Core/Nodes/Reaction/NReactionWheelWedge.cs")]
 public class NReactionWheelWedge : TextureRect
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : TextureRect.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnSelected' method.
+		/// </summary>
 		public static readonly StringName OnSelected = "OnSelected";
 
+		/// <summary>
+		/// Cached name for the 'OnDeselected' method.
+		/// </summary>
 		public static readonly StringName OnDeselected = "OnDeselected";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : TextureRect.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Reaction' property.
+		/// </summary>
 		public static readonly StringName Reaction = "Reaction";
 
+		/// <summary>
+		/// Cached name for the '_textureRect' field.
+		/// </summary>
 		public static readonly StringName _textureRect = "_textureRect";
 
+		/// <summary>
+		/// Cached name for the '_normal' field.
+		/// </summary>
 		public static readonly StringName _normal = "_normal";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_defaultPosition' field.
+		/// </summary>
 		public static readonly StringName _defaultPosition = "_defaultPosition";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : TextureRect.SignalName
 	{
 	}
@@ -74,6 +107,11 @@ public class NReactionWheelWedge : TextureRect
 		_tween.TweenProperty(this, "self_modulate", _defaultColor, 0.2).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -84,6 +122,7 @@ public class NReactionWheelWedge : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -108,6 +147,7 @@ public class NReactionWheelWedge : TextureRect
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -126,6 +166,7 @@ public class NReactionWheelWedge : TextureRect
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -152,6 +193,7 @@ public class NReactionWheelWedge : TextureRect
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -183,6 +225,11 @@ public class NReactionWheelWedge : TextureRect
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -195,6 +242,7 @@ public class NReactionWheelWedge : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -205,6 +253,7 @@ public class NReactionWheelWedge : TextureRect
 		info.AddProperty(PropertyName._defaultPosition, Variant.From(in _defaultPosition));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

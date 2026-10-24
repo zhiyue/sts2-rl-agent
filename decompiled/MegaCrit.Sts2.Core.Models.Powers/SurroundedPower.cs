@@ -3,10 +3,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Nodes.Audio;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.ValueProps;
 
@@ -19,6 +21,8 @@ public sealed class SurroundedPower : PowerModel
 		Right,
 		Left
 	}
+
+	private const string _kaiserCrabDirectionCustomTrackName = "kaiser_crab_direction";
 
 	private Direction _facing;
 
@@ -133,6 +137,10 @@ public sealed class SurroundedPower : PowerModel
 		foreach (Node2D item2 in enumerable)
 		{
 			await FlipScale(item2);
+		}
+		if (LocalContext.GetMe(base.Owner.CombatState) == base.Owner.Player)
+		{
+			NRunMusicController.Instance?.UpdateMusicParameter("kaiser_crab_direction", (Facing == Direction.Left) ? 1 : 2);
 		}
 	}
 

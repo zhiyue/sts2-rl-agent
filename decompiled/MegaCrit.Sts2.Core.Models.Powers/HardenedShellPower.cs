@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -57,19 +58,21 @@ public sealed class HardenedShellPower : PowerModel
 		{
 			return Task.CompletedTask;
 		}
-		GetInternalData<Data>().damageReceivedThisTurn += (decimal)result.UnblockedDamage;
+		Data internalData = GetInternalData<Data>();
+		internalData.damageReceivedThisTurn += (decimal)result.UnblockedDamage;
 		InvokeDisplayAmountChanged();
+		if (internalData.damageReceivedThisTurn >= (decimal)base.Amount)
+		{
+			base.Owner.HpDisplay = HpDisplay.InfiniteWithNumbers;
+		}
 		return Task.CompletedTask;
 	}
 
-	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, CombatState combatState)
+	public override Task BeforeSideTurnStart(PlayerChoiceContext choiceContext, CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side != CombatSide.Player)
-		{
-			return Task.CompletedTask;
-		}
 		GetInternalData<Data>().damageReceivedThisTurn = default(decimal);
 		InvokeDisplayAmountChanged();
+		base.Owner.HpDisplay = HpDisplay.Normal;
 		return Task.CompletedTask;
 	}
 }

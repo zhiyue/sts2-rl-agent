@@ -14,13 +14,16 @@ public class RunHistoryPlayer
 	public ModelId Character { get; init; } = ModelId.none;
 
 	[JsonPropertyName("deck")]
-	public IEnumerable<SerializableCard> Deck { get; init; } = new List<SerializableCard>();
+	public IEnumerable<SerializableCard> Deck { get; set; } = new List<SerializableCard>();
 
 	[JsonPropertyName("relics")]
-	public IEnumerable<SerializableRelic> Relics { get; init; } = new List<SerializableRelic>();
+	public IEnumerable<SerializableRelic> Relics { get; set; } = new List<SerializableRelic>();
 
 	[JsonPropertyName("potions")]
-	public IEnumerable<SerializablePotion> Potions { get; init; } = new List<SerializablePotion>();
+	public IEnumerable<SerializablePotion> Potions { get; set; } = new List<SerializablePotion>();
+
+	[JsonPropertyName("badges")]
+	public IEnumerable<SerializableBadge> Badges { get; set; } = new List<SerializableBadge>();
 
 	[JsonPropertyName("max_potion_slot_count")]
 	public int MaxPotionSlotCount { get; set; } = 3;

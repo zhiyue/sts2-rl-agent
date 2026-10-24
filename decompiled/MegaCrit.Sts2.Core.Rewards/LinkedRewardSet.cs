@@ -37,11 +37,11 @@ public class LinkedRewardSet : Reward
 		}
 	}
 
-	public override async Task Populate()
+	public override void Populate()
 	{
 		foreach (Reward reward in _rewards)
 		{
-			await reward.Populate();
+			reward.Populate();
 		}
 	}
 

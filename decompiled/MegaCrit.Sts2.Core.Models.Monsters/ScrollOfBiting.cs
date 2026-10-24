@@ -6,12 +6,12 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
@@ -34,9 +34,9 @@ public sealed class ScrollOfBiting : MonsterModel
 
 	public const string buffSfx = "event:/sfx/enemy/enemy_attacks/scroll_of_biting/scroll_of_biting_buff";
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 32, 31);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 33, 30);
 
-	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 39, 38);
+	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 39, 37);
 
 	private int ChompDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 16, 14);
 
@@ -61,10 +61,9 @@ public sealed class ScrollOfBiting : MonsterModel
 		}
 	}
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
-		MegaSkin megaSkin = visuals.SpineBody.NewSkin("custom-skin");
+		MegaSkin megaSkin = spine.NewSkin("custom-skin");
 		MegaSkeletonDataResource data = skeleton.GetData();
 		megaSkin.AddSkin(data.FindSkin(MegaCrit.Sts2.Core.Random.Rng.Chaotic.NextItem(_skinOptions)));
 		skeleton.SetSkin(megaSkin);
@@ -74,7 +73,7 @@ public sealed class ScrollOfBiting : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<PaperCutsPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<PaperCutsPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -123,7 +122,7 @@ public sealed class ScrollOfBiting : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/scroll_of_biting/scroll_of_biting_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.8f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

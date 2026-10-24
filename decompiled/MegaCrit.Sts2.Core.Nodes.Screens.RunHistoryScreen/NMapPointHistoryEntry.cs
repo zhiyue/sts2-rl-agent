@@ -30,46 +30,106 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen;
 [ScriptPath("res://src/Core/Nodes/Screens/RunHistoryScreen/NMapPointHistoryEntry.cs")]
 public class NMapPointHistoryEntry : NClickableControl
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NClickableControl.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'Highlight' method.
+		/// </summary>
 		public static readonly StringName Highlight = "Highlight";
 
+		/// <summary>
+		/// Cached name for the 'Unhighlight' method.
+		/// </summary>
 		public static readonly StringName Unhighlight = "Unhighlight";
 
+		/// <summary>
+		/// Cached name for the 'GetSfxVolume' method.
+		/// </summary>
 		public static readonly StringName GetSfxVolume = "GetSfxVolume";
 
+		/// <summary>
+		/// Cached name for the 'HurryUp' method.
+		/// </summary>
 		public static readonly StringName HurryUp = "HurryUp";
 
+		/// <summary>
+		/// Cached name for the 'SetupForAnimation' method.
+		/// </summary>
 		public static readonly StringName SetupForAnimation = "SetupForAnimation";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NClickableControl.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'FloorNum' property.
+		/// </summary>
 		public static readonly StringName FloorNum = "FloorNum";
 
+		/// <summary>
+		/// Cached name for the '_baseScale' field.
+		/// </summary>
 		public static readonly StringName _baseScale = "_baseScale";
 
+		/// <summary>
+		/// Cached name for the '_texture' field.
+		/// </summary>
 		public static readonly StringName _texture = "_texture";
 
+		/// <summary>
+		/// Cached name for the '_outline' field.
+		/// </summary>
 		public static readonly StringName _outline = "_outline";
 
+		/// <summary>
+		/// Cached name for the '_questIcon' field.
+		/// </summary>
 		public static readonly StringName _questIcon = "_questIcon";
 
+		/// <summary>
+		/// Cached name for the '_animateInTween' field.
+		/// </summary>
 		public static readonly StringName _animateInTween = "_animateInTween";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_baseAngle' field.
+		/// </summary>
 		public static readonly StringName _baseAngle = "_baseAngle";
 
+		/// <summary>
+		/// Cached name for the '_hurryUp' field.
+		/// </summary>
 		public static readonly StringName _hurryUp = "_hurryUp";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NClickableControl.SignalName
 	{
 	}
@@ -353,21 +413,21 @@ public class NMapPointHistoryEntry : NClickableControl
 
 	private async Task DoCombatAnimateInEffects(RoomType roomType)
 	{
-		CharacterModel byId = ModelDb.GetById<CharacterModel>(_player.Character);
+		CharacterModel character = SaveUtil.CharacterOrDeprecated(_player.Character);
 		ShakeStrength? shakeStrength = null;
 		switch (roomType)
 		{
 		case RoomType.Monster:
 			shakeStrength = ShakeStrength.Weak;
-			await PlaySfx(GetSmallHitSfx(byId));
+			await PlaySfx(GetSmallHitSfx(character));
 			break;
 		case RoomType.Elite:
 			shakeStrength = ShakeStrength.Medium;
-			await PlaySfx(GetBigHitSfx(byId));
+			await PlaySfx(GetBigHitSfx(character));
 			break;
 		case RoomType.Boss:
 			shakeStrength = ShakeStrength.Strong;
-			await PlaySfx(GetBigHitSfx(byId));
+			await PlaySfx(GetBigHitSfx(character));
 			break;
 		}
 		if (shakeStrength.HasValue)
@@ -377,10 +437,10 @@ public class NMapPointHistoryEntry : NClickableControl
 		await Cmd.Wait(0.25f);
 		foreach (ModelId monsterId in _entry.Rooms.Last().MonsterIds)
 		{
-			MonsterModel byId2 = ModelDb.GetById<MonsterModel>(monsterId);
-			if (byId2.HasDeathSfx)
+			MonsterModel monsterModel = SaveUtil.MonsterOrDeprecated(monsterId);
+			if (monsterModel.HasDeathSfx)
 			{
-				SfxCmd.Play(byId2.DeathSfx);
+				SfxCmd.Play(monsterModel.DeathSfx);
 				await Cmd.Wait(0.25f);
 			}
 		}
@@ -544,6 +604,11 @@ public class NMapPointHistoryEntry : NClickableControl
 		base.Modulate = StsColors.transparentBlack;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -559,6 +624,7 @@ public class NMapPointHistoryEntry : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -612,6 +678,7 @@ public class NMapPointHistoryEntry : NClickableControl
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -650,6 +717,7 @@ public class NMapPointHistoryEntry : NClickableControl
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -701,6 +769,7 @@ public class NMapPointHistoryEntry : NClickableControl
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -752,6 +821,11 @@ public class NMapPointHistoryEntry : NClickableControl
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -768,6 +842,7 @@ public class NMapPointHistoryEntry : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -783,6 +858,7 @@ public class NMapPointHistoryEntry : NClickableControl
 		info.AddProperty(PropertyName._hurryUp, Variant.From(in _hurryUp));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

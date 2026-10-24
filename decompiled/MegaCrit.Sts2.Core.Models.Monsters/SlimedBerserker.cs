@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -17,6 +18,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class SlimedBerserker : MonsterModel
 {
+	private const string _smotherMove = "SMOTHER_MOVE";
+
 	private const int _pummelingRepeat = 4;
 
 	private const int _leechingDrain = 3;
@@ -27,7 +30,7 @@ public sealed class SlimedBerserker : MonsterModel
 
 	private const string _vomitTrigger = "Vomit";
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 276, 266);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 281, 261);
 
 	public override int MaxInitialHp => MinInitialHp;
 
@@ -64,15 +67,15 @@ public sealed class SlimedBerserker : MonsterModel
 	{
 		SfxCmd.Play(SlimeSfx);
 		await CreatureCmd.TriggerAnim(base.Creature, "Vomit", 0.7f);
-		await CardPileCmd.AddToCombatAndPreview<Slimed>(targets, PileType.Discard, 10, addedByPlayer: false);
+		await CardPileCmd.AddToCombatAndPreview<Slimed>(targets, PileType.Discard, 10, null);
 	}
 
 	private async Task LeechingHugMove(IReadOnlyList<Creature> targets)
 	{
 		SfxCmd.Play(CastSfx);
 		await CreatureCmd.TriggerAnim(base.Creature, "Hug", 0.65f);
-		await PowerCmd.Apply<WeakPower>(targets, 3m, null, null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 3m, null, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 	}
 
 	private async Task FuriousPummelingMove(IReadOnlyList<Creature> targets)
@@ -110,5 +113,10 @@ public sealed class SlimedBerserker : MonsterModel
 		creatureAnimator.AddAnyState("Dead", state);
 		creatureAnimator.AddAnyState("Hit", animState5);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "SMOTHER_MOVE";
 	}
 }

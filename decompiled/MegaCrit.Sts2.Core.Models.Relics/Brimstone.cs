@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -27,16 +28,16 @@ public sealed class Brimstone : RelicModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromPower<StrengthPower>());
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Creature.Side)
+		if (participants.Contains(base.Owner.Creature))
 		{
 			Flash();
-			await PowerCmd.Apply<StrengthPower>(base.Owner.Creature, base.DynamicVars["SelfStrength"].BaseValue, base.Owner.Creature, null);
+			await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Owner.Creature, base.DynamicVars["SelfStrength"].BaseValue, base.Owner.Creature, null);
 			IEnumerable<Creature> targets = from c in combatState.GetOpponentsOf(base.Owner.Creature)
 				where c.IsAlive
 				select c;
-			await PowerCmd.Apply<StrengthPower>(targets, base.DynamicVars["EnemyStrength"].BaseValue, null, null);
+			await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), targets, base.DynamicVars["EnemyStrength"].BaseValue, null, null);
 		}
 	}
 }

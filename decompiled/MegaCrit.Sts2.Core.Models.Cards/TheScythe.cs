@@ -54,7 +54,7 @@ public sealed class TheScythe : CardModel
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
 		new DamageVar(CurrentDamage, ValueProp.Move),
-		new IntVar("Increase", 3m)
+		new IntVar("Increase", 4m)
 	});
 
 	public TheScythe()

@@ -23,6 +23,28 @@ public class BackgroundAssets
 		where !string.IsNullOrWhiteSpace(s)
 		select s;
 
+	/// Creates the combat background for a particular encounter. If this encounter doesn't have a unique background,
+	/// automatically pull the one for the act. Otherwise scrub through the the corresponding filepath and set up the
+	/// background dynamically.
+	/// file structure:
+	/// -&gt;scenes/backgrounds/{title}
+	/// --&gt; layers
+	/// ---&gt; {title}_bg_00_a.tscn
+	/// ---&gt; {title}_bg_01_a.tscn
+	/// ---&gt; {title}_bg_01_b.tscn
+	/// ---&gt; {title}_bg_02_a.tscn
+	/// ---&gt; {title}_bg_02_b.tscn
+	/// ---&gt; {title}_fg_a.tscn
+	/// --&gt; {title}_background.tscn
+	///
+	/// notes:
+	/// - the {title}_background.tscn file helps visually define how the layers are set up
+	/// - the layer scenes (in the layer folder) are an asset optimization.
+	/// - {title} must be exactly the same as the class name
+	/// - layer files that share the same prefix (_bg_##, _fg_) are grouped together, and will be randomly chosen for the combat's background
+	/// - you can have as many _bg_ layers as you want.
+	/// - _bg_ layers are stacked from least to most
+	/// - there is only 1 fg layer currently
 	public BackgroundAssets(string title, Rng rng)
 	{
 		string text = "res://scenes/backgrounds/" + title + "/layers";

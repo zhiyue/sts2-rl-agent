@@ -7,12 +7,13 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
@@ -53,10 +54,9 @@ public sealed class DampCultist : MonsterModel
 
 	protected override string AttackSfx => "event:/sfx/enemy/enemy_attacks/cultists/cultists_attack";
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
-		MegaSkin megaSkin = visuals.SpineBody.NewSkin("custom-skin");
+		MegaSkin megaSkin = spine.NewSkin("custom-skin");
 		MegaSkeletonDataResource data = skeleton.GetData();
 		megaSkin.AddSkin(data.FindSkin("slug"));
 		skeleton.SetSkin(megaSkin);
@@ -77,9 +77,10 @@ public sealed class DampCultist : MonsterModel
 	private async Task IncantationMove(IReadOnlyList<Creature> targets)
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/cultists/cultists_buff_damp");
-		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.6f);
-		TalkCmd.Play(_cawCawDialogue, base.Creature);
-		await PowerCmd.Apply<RitualPower>(base.Creature, IncantationAmount, base.Creature, null);
+		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.45f);
+		TalkCmd.Play(_cawCawDialogue, base.Creature, VfxColor.Swamp, VfxDuration.Standard);
+		await Cmd.CustomScaledWait(0.25f, 0.5f);
+		await PowerCmd.Apply<RitualPower>(new ThrowingPlayerChoiceContext(), base.Creature, IncantationAmount, base.Creature, null);
 	}
 
 	private async Task DarkStrikeMove(IReadOnlyList<Creature> targets)

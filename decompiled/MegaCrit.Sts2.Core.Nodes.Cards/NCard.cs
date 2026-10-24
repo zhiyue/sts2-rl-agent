@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -34,191 +35,458 @@ namespace MegaCrit.Sts2.Core.Nodes.Cards;
 [ScriptPath("res://src/Core/Nodes/Cards/NCard.cs")]
 public class NCard : Control, IPoolable
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'OnInstantiated' method.
+		/// </summary>
 		public static readonly StringName OnInstantiated = "OnInstantiated";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'InitPool' method.
+		/// </summary>
 		public static readonly StringName InitPool = "InitPool";
 
+		/// <summary>
+		/// Cached name for the 'GetCurrentSize' method.
+		/// </summary>
 		public static readonly StringName GetCurrentSize = "GetCurrentSize";
 
+		/// <summary>
+		/// Cached name for the 'UpdateVisuals' method.
+		/// </summary>
 		public static readonly StringName UpdateVisuals = "UpdateVisuals";
 
+		/// <summary>
+		/// Cached name for the 'ShowUpgradePreview' method.
+		/// </summary>
 		public static readonly StringName ShowUpgradePreview = "ShowUpgradePreview";
 
+		/// <summary>
+		/// Cached name for the 'UpdateEnchantmentVisuals' method.
+		/// </summary>
 		public static readonly StringName UpdateEnchantmentVisuals = "UpdateEnchantmentVisuals";
 
+		/// <summary>
+		/// Cached name for the 'OnEnchantmentStatusChanged' method.
+		/// </summary>
 		public static readonly StringName OnEnchantmentStatusChanged = "OnEnchantmentStatusChanged";
 
+		/// <summary>
+		/// Cached name for the 'SetEnchantmentStatus' method.
+		/// </summary>
 		public static readonly StringName SetEnchantmentStatus = "SetEnchantmentStatus";
 
+		/// <summary>
+		/// Cached name for the 'UpdateEnergyCostVisuals' method.
+		/// </summary>
 		public static readonly StringName UpdateEnergyCostVisuals = "UpdateEnergyCostVisuals";
 
+		/// <summary>
+		/// Cached name for the 'SetPretendCardCanBePlayed' method.
+		/// </summary>
 		public static readonly StringName SetPretendCardCanBePlayed = "SetPretendCardCanBePlayed";
 
+		/// <summary>
+		/// Cached name for the 'SetForceUnpoweredPreview' method.
+		/// </summary>
 		public static readonly StringName SetForceUnpoweredPreview = "SetForceUnpoweredPreview";
 
+		/// <summary>
+		/// Cached name for the 'UpdateEnergyCostColor' method.
+		/// </summary>
 		public static readonly StringName UpdateEnergyCostColor = "UpdateEnergyCostColor";
 
+		/// <summary>
+		/// Cached name for the 'UpdateStarCostVisuals' method.
+		/// </summary>
 		public static readonly StringName UpdateStarCostVisuals = "UpdateStarCostVisuals";
 
+		/// <summary>
+		/// Cached name for the 'UpdateStarCostText' method.
+		/// </summary>
 		public static readonly StringName UpdateStarCostText = "UpdateStarCostText";
 
+		/// <summary>
+		/// Cached name for the 'UpdateStarCostColor' method.
+		/// </summary>
 		public static readonly StringName UpdateStarCostColor = "UpdateStarCostColor";
 
+		/// <summary>
+		/// Cached name for the 'GetCostTextColorInHand' method.
+		/// </summary>
 		public static readonly StringName GetCostTextColorInHand = "GetCostTextColorInHand";
 
+		/// <summary>
+		/// Cached name for the 'GetCostOutlineColorInHand' method.
+		/// </summary>
 		public static readonly StringName GetCostOutlineColorInHand = "GetCostOutlineColorInHand";
 
+		/// <summary>
+		/// Cached name for the 'PlayRandomizeCostAnim' method.
+		/// </summary>
 		public static readonly StringName PlayRandomizeCostAnim = "PlayRandomizeCostAnim";
 
+		/// <summary>
+		/// Cached name for the 'Reload' method.
+		/// </summary>
 		public static readonly StringName Reload = "Reload";
 
+		/// <summary>
+		/// Cached name for the 'UpdateTypePlaque' method.
+		/// </summary>
 		public static readonly StringName UpdateTypePlaque = "UpdateTypePlaque";
 
+		/// <summary>
+		/// Cached name for the 'UpdateTypePlaqueSizeAndPosition' method.
+		/// </summary>
 		public static readonly StringName UpdateTypePlaqueSizeAndPosition = "UpdateTypePlaqueSizeAndPosition";
 
+		/// <summary>
+		/// Cached name for the 'UpdateTitleLabel' method.
+		/// </summary>
 		public static readonly StringName UpdateTitleLabel = "UpdateTitleLabel";
 
+		/// <summary>
+		/// Cached name for the 'GetTitleLabelOutlineColor' method.
+		/// </summary>
 		public static readonly StringName GetTitleLabelOutlineColor = "GetTitleLabelOutlineColor";
 
+		/// <summary>
+		/// Cached name for the 'ReloadOverlay' method.
+		/// </summary>
 		public static readonly StringName ReloadOverlay = "ReloadOverlay";
 
+		/// <summary>
+		/// Cached name for the 'OnAfflictionChanged' method.
+		/// </summary>
 		public static readonly StringName OnAfflictionChanged = "OnAfflictionChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnEnchantmentChanged' method.
+		/// </summary>
 		public static readonly StringName OnEnchantmentChanged = "OnEnchantmentChanged";
 
+		/// <summary>
+		/// Cached name for the 'GetTitleText' method.
+		/// </summary>
 		public static readonly StringName GetTitleText = "GetTitleText";
 
+		/// <summary>
+		/// Cached name for the 'ActivateRewardScreenGlow' method.
+		/// </summary>
 		public static readonly StringName ActivateRewardScreenGlow = "ActivateRewardScreenGlow";
 
+		/// <summary>
+		/// Cached name for the 'KillRarityGlow' method.
+		/// </summary>
 		public static readonly StringName KillRarityGlow = "KillRarityGlow";
 
+		/// <summary>
+		/// Cached name for the 'AnimCardToPlayPile' method.
+		/// </summary>
 		public static readonly StringName AnimCardToPlayPile = "AnimCardToPlayPile";
 
+		/// <summary>
+		/// Cached name for the 'OnReturnedFromPool' method.
+		/// </summary>
 		public static readonly StringName OnReturnedFromPool = "OnReturnedFromPool";
 
+		/// <summary>
+		/// Cached name for the 'OnFreedToPool' method.
+		/// </summary>
 		public static readonly StringName OnFreedToPool = "OnFreedToPool";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'CardHighlight' property.
+		/// </summary>
 		public static readonly StringName CardHighlight = "CardHighlight";
 
+		/// <summary>
+		/// Cached name for the 'Body' property.
+		/// </summary>
 		public static readonly StringName Body = "Body";
 
+		/// <summary>
+		/// Cached name for the 'Visibility' property.
+		/// </summary>
 		public static readonly StringName Visibility = "Visibility";
 
+		/// <summary>
+		/// Cached name for the 'PlayPileTween' property.
+		/// </summary>
 		public static readonly StringName PlayPileTween = "PlayPileTween";
 
+		/// <summary>
+		/// Cached name for the 'RandomizeCostTween' property.
+		/// </summary>
 		public static readonly StringName RandomizeCostTween = "RandomizeCostTween";
 
+		/// <summary>
+		/// Cached name for the 'DisplayingPile' property.
+		/// </summary>
 		public static readonly StringName DisplayingPile = "DisplayingPile";
 
+		/// <summary>
+		/// Cached name for the 'EnchantmentTab' property.
+		/// </summary>
 		public static readonly StringName EnchantmentTab = "EnchantmentTab";
 
+		/// <summary>
+		/// Cached name for the 'EnchantmentVfxOverride' property.
+		/// </summary>
 		public static readonly StringName EnchantmentVfxOverride = "EnchantmentVfxOverride";
 
+		/// <summary>
+		/// Cached name for the 'OverlayContainer' property.
+		/// </summary>
+		public static readonly StringName OverlayContainer = "OverlayContainer";
+
+		/// <summary>
+		/// Cached name for the 'CardVfxContainer' property.
+		/// </summary>
+		public static readonly StringName CardVfxContainer = "CardVfxContainer";
+
+		/// <summary>
+		/// Cached name for the '_titleLabel' field.
+		/// </summary>
 		public static readonly StringName _titleLabel = "_titleLabel";
 
+		/// <summary>
+		/// Cached name for the '_descriptionLabel' field.
+		/// </summary>
 		public static readonly StringName _descriptionLabel = "_descriptionLabel";
 
+		/// <summary>
+		/// Cached name for the '_ancientPortrait' field.
+		/// </summary>
 		public static readonly StringName _ancientPortrait = "_ancientPortrait";
 
+		/// <summary>
+		/// Cached name for the '_portrait' field.
+		/// </summary>
 		public static readonly StringName _portrait = "_portrait";
 
+		/// <summary>
+		/// Cached name for the '_frame' field.
+		/// </summary>
 		public static readonly StringName _frame = "_frame";
 
+		/// <summary>
+		/// Cached name for the '_ancientBorderGlassOverlay' field.
+		/// </summary>
+		public static readonly StringName _ancientBorderGlassOverlay = "_ancientBorderGlassOverlay";
+
+		/// <summary>
+		/// Cached name for the '_ancientBorder' field.
+		/// </summary>
 		public static readonly StringName _ancientBorder = "_ancientBorder";
 
+		/// <summary>
+		/// Cached name for the '_ancientBanner' field.
+		/// </summary>
 		public static readonly StringName _ancientBanner = "_ancientBanner";
 
+		/// <summary>
+		/// Cached name for the '_ancientTextBg' field.
+		/// </summary>
 		public static readonly StringName _ancientTextBg = "_ancientTextBg";
 
-		public static readonly StringName _ancientHighlight = "_ancientHighlight";
-
+		/// <summary>
+		/// Cached name for the '_portraitBorder' field.
+		/// </summary>
 		public static readonly StringName _portraitBorder = "_portraitBorder";
 
+		/// <summary>
+		/// Cached name for the '_banner' field.
+		/// </summary>
 		public static readonly StringName _banner = "_banner";
 
+		/// <summary>
+		/// Cached name for the '_lock' field.
+		/// </summary>
 		public static readonly StringName _lock = "_lock";
 
+		/// <summary>
+		/// Cached name for the '_typePlaque' field.
+		/// </summary>
 		public static readonly StringName _typePlaque = "_typePlaque";
 
+		/// <summary>
+		/// Cached name for the '_typeLabel' field.
+		/// </summary>
 		public static readonly StringName _typeLabel = "_typeLabel";
 
+		/// <summary>
+		/// Cached name for the '_portraitCanvasGroup' field.
+		/// </summary>
 		public static readonly StringName _portraitCanvasGroup = "_portraitCanvasGroup";
 
+		/// <summary>
+		/// Cached name for the '_rareGlow' field.
+		/// </summary>
 		public static readonly StringName _rareGlow = "_rareGlow";
 
+		/// <summary>
+		/// Cached name for the '_uncommonGlow' field.
+		/// </summary>
 		public static readonly StringName _uncommonGlow = "_uncommonGlow";
 
+		/// <summary>
+		/// Cached name for the '_sparkles' field.
+		/// </summary>
 		public static readonly StringName _sparkles = "_sparkles";
 
+		/// <summary>
+		/// Cached name for the '_energyIcon' field.
+		/// </summary>
 		public static readonly StringName _energyIcon = "_energyIcon";
 
+		/// <summary>
+		/// Cached name for the '_energyLabel' field.
+		/// </summary>
 		public static readonly StringName _energyLabel = "_energyLabel";
 
+		/// <summary>
+		/// Cached name for the '_unplayableEnergyIcon' field.
+		/// </summary>
 		public static readonly StringName _unplayableEnergyIcon = "_unplayableEnergyIcon";
 
+		/// <summary>
+		/// Cached name for the '_starIcon' field.
+		/// </summary>
 		public static readonly StringName _starIcon = "_starIcon";
 
+		/// <summary>
+		/// Cached name for the '_starLabel' field.
+		/// </summary>
 		public static readonly StringName _starLabel = "_starLabel";
 
+		/// <summary>
+		/// Cached name for the '_unplayableStarIcon' field.
+		/// </summary>
 		public static readonly StringName _unplayableStarIcon = "_unplayableStarIcon";
 
+		/// <summary>
+		/// Cached name for the '_overlayContainer' field.
+		/// </summary>
 		public static readonly StringName _overlayContainer = "_overlayContainer";
 
+		/// <summary>
+		/// Cached name for the '_cardOverlay' field.
+		/// </summary>
 		public static readonly StringName _cardOverlay = "_cardOverlay";
 
+		/// <summary>
+		/// Cached name for the '_cardVfxContainer' field.
+		/// </summary>
+		public static readonly StringName _cardVfxContainer = "_cardVfxContainer";
+
+		/// <summary>
+		/// Cached name for the '_enchantmentTab' field.
+		/// </summary>
 		public static readonly StringName _enchantmentTab = "_enchantmentTab";
 
+		/// <summary>
+		/// Cached name for the '_enchantmentVfxOverride' field.
+		/// </summary>
 		public static readonly StringName _enchantmentVfxOverride = "_enchantmentVfxOverride";
 
+		/// <summary>
+		/// Cached name for the '_enchantmentIcon' field.
+		/// </summary>
 		public static readonly StringName _enchantmentIcon = "_enchantmentIcon";
 
+		/// <summary>
+		/// Cached name for the '_enchantmentLabel' field.
+		/// </summary>
 		public static readonly StringName _enchantmentLabel = "_enchantmentLabel";
 
+		/// <summary>
+		/// Cached name for the '_defaultEnchantmentPosition' field.
+		/// </summary>
 		public static readonly StringName _defaultEnchantmentPosition = "_defaultEnchantmentPosition";
 
+		/// <summary>
+		/// Cached name for the '_pretendCardCanBePlayed' field.
+		/// </summary>
 		public static readonly StringName _pretendCardCanBePlayed = "_pretendCardCanBePlayed";
 
+		/// <summary>
+		/// Cached name for the '_forceUnpoweredPreview' field.
+		/// </summary>
 		public static readonly StringName _forceUnpoweredPreview = "_forceUnpoweredPreview";
 
+		/// <summary>
+		/// Cached name for the '_portraitBlurMaterial' field.
+		/// </summary>
 		public static readonly StringName _portraitBlurMaterial = "_portraitBlurMaterial";
 
+		/// <summary>
+		/// Cached name for the '_canvasGroupMaskBlurMaterial' field.
+		/// </summary>
 		public static readonly StringName _canvasGroupMaskBlurMaterial = "_canvasGroupMaskBlurMaterial";
 
+		/// <summary>
+		/// Cached name for the '_canvasGroupBlurMaterial' field.
+		/// </summary>
 		public static readonly StringName _canvasGroupBlurMaterial = "_canvasGroupBlurMaterial";
 
+		/// <summary>
+		/// Cached name for the '_canvasGroupMaskMaterial' field.
+		/// </summary>
 		public static readonly StringName _canvasGroupMaskMaterial = "_canvasGroupMaskMaterial";
 
+		/// <summary>
+		/// Cached name for the '_visibility' field.
+		/// </summary>
 		public static readonly StringName _visibility = "_visibility";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
 
 	private const string _scenePath = "res://scenes/cards/card.tscn";
 
-	private static readonly string _portraitBlurMaterialPath = "res://scenes/cards/card_portrait_blur_material.tres";
+	private const string _portraitBlurMaterialPath = "res://scenes/cards/card_portrait_blur_material.tres";
 
-	private static readonly string _canvasGroupMaskMaterialPath = "res://scenes/cards/card_canvas_group_mask_material.tres";
+	private const string _canvasGroupMaskMaterialPath = "res://scenes/cards/card_canvas_group_mask_material.tres";
 
-	private static readonly string _canvasGroupBlurMaterialPath = "res://scenes/cards/card_canvas_group_blur_material.tres";
+	private const string _canvasGroupBlurMaterialPath = "res://scenes/cards/card_canvas_group_blur_material.tres";
 
-	private static readonly string _canvasGroupMaskBlurMaterialPath = "res://scenes/cards/card_canvas_group_mask_blur_material.tres";
+	private const string _canvasGroupMaskBlurMaterialPath = "res://scenes/cards/card_canvas_group_mask_blur_material.tres";
 
-	private static readonly float _typePlaqueXMargin = 17f;
+	private const float _typePlaqueXMargin = 17f;
 
-	private static readonly float _typePlaqueMinXSize = 61f;
+	private const float _typePlaqueMinXSize = 61f;
 
 	private static readonly StringName _v = new StringName("v");
 
@@ -227,6 +495,8 @@ public class NCard : Control, IPoolable
 	private static readonly StringName _h = new StringName("h");
 
 	public static readonly Vector2 defaultSize = new Vector2(300f, 422f);
+
+	private CancellationTokenSource _cts = new CancellationTokenSource();
 
 	private CardModel? _model;
 
@@ -240,13 +510,13 @@ public class NCard : Control, IPoolable
 
 	private TextureRect _frame;
 
+	private TextureRect _ancientBorderGlassOverlay;
+
 	private TextureRect _ancientBorder;
 
 	private Control _ancientBanner;
 
 	private TextureRect _ancientTextBg;
-
-	private TextureRect _ancientHighlight;
 
 	private TextureRect _portraitBorder;
 
@@ -284,6 +554,8 @@ public class NCard : Control, IPoolable
 
 	private Control? _cardOverlay;
 
+	private Node _cardVfxContainer;
+
 	private Creature? _previewTarget;
 
 	private Control _enchantmentTab;
@@ -312,6 +584,12 @@ public class NCard : Control, IPoolable
 
 	private Material? _canvasGroupMaskMaterial;
 
+	/// <summary>
+	/// The visibility of the model.
+	/// In all cases during a run, this should be ModelVisibility.Visible. When we are showing the card as part of the
+	/// compendium or other places, the card might show up as unknown (if the player has not seen it) or locked (if the
+	/// card is locked in the timeline.
+	/// </summary>
 	private ModelVisibility _visibility = ModelVisibility.Visible;
 
 	private readonly LocString _unknownDescription = new LocString("card_library", "UNKNOWN.description");
@@ -352,6 +630,10 @@ public class NCard : Control, IPoolable
 
 	public TextureRect EnchantmentVfxOverride => _enchantmentVfxOverride;
 
+	public Node OverlayContainer => _overlayContainer;
+
+	public Node CardVfxContainer => _cardVfxContainer;
+
 	public CardModel? Model
 	{
 		get
@@ -376,7 +658,7 @@ public class NCard : Control, IPoolable
 		}
 	}
 
-	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlyArray<string>(new string[5] { "res://scenes/cards/card.tscn", _portraitBlurMaterialPath, _canvasGroupBlurMaterialPath, _canvasGroupMaskBlurMaterialPath, _canvasGroupMaskMaterialPath });
+	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlyArray<string>(new string[5] { "res://scenes/cards/card.tscn", "res://scenes/cards/card_portrait_blur_material.tres", "res://scenes/cards/card_canvas_group_blur_material.tres", "res://scenes/cards/card_canvas_group_mask_blur_material.tres", "res://scenes/cards/card_canvas_group_mask_material.tres" });
 
 	public event Action<CardModel?>? ModelChanged;
 
@@ -389,10 +671,10 @@ public class NCard : Control, IPoolable
 		_titleLabel = GetNode<MegaLabel>("%TitleLabel");
 		_descriptionLabel = GetNode<MegaRichTextLabel>("%DescriptionLabel");
 		_frame = GetNode<TextureRect>("%Frame");
+		_ancientBorderGlassOverlay = GetNode<TextureRect>("%AncientBorderGlassOverlay");
 		_ancientBorder = GetNode<TextureRect>("%AncientBorder");
 		_ancientTextBg = GetNode<TextureRect>("%AncientTextBg");
 		_ancientBanner = GetNode<Control>("%AncientBanner");
-		_ancientHighlight = GetNode<TextureRect>("%AncientHighlight");
 		_portrait = GetNode<TextureRect>("%Portrait");
 		_ancientPortrait = GetNode<TextureRect>("%AncientPortrait");
 		_typeLabel = GetNode<MegaLabel>("%TypeLabel");
@@ -416,17 +698,22 @@ public class NCard : Control, IPoolable
 		CardHighlight = GetNode<NCardHighlight>("%Highlight");
 		Body = GetNode<Control>("%CardContainer");
 		_overlayContainer = GetNode("%OverlayContainer");
+		_cardVfxContainer = GetNode("%CardVfxContainer");
 		_defaultEnchantmentPosition = _enchantmentTab.Position;
 		Reload();
 	}
 
 	public override void _EnterTree()
 	{
+		_cts = new CancellationTokenSource();
 		SubscribeToModel(Model);
 	}
 
 	public override void _ExitTree()
 	{
+		_cts.Cancel();
+		RandomizeCostTween?.Kill();
+		RandomizeCostTween = null;
 		UnsubscribeFromModel(Model);
 	}
 
@@ -489,6 +776,15 @@ public class NCard : Control, IPoolable
 		return nCard;
 	}
 
+	/// <summary>
+	/// Try to find a card's node if it is in the Play or Hand pile.
+	/// The "Table" here refers to the Play or Hand Pile, where there would be
+	/// card nodes.
+	/// </summary>
+	/// <param name="card">The card to find.</param>
+	/// <param name="overridePile">The pile to try to find the card in. If null, the card's pile will be used.</param>
+	/// <returns></returns>
+	/// <exception cref="T:System.ArgumentOutOfRangeException"></exception>
 	public static NCard? FindOnTable(CardModel card, PileType? overridePile = null)
 	{
 		if (TestMode.IsOn)
@@ -519,11 +815,24 @@ public class NCard : Control, IPoolable
 		};
 	}
 
+	/// <summary>
+	/// WARNING: You usually want to use the Size property on <see cref="T:MegaCrit.Sts2.Core.Nodes.Cards.Holders.NCardHolder" />.
+	/// This is just for if you need the size of an NCard that's not in a holder.
+	///
+	/// Get the current size of this card. Takes scale into account.
+	/// </summary>
 	public Vector2 GetCurrentSize()
 	{
 		return defaultSize * base.Scale;
 	}
 
+	/// <summary>
+	/// Sets the creature that the card is targeting.
+	/// Necessary to do things like update damage amounts when the target has Vulnerable.
+	/// </summary>
+	/// <param name="creature">
+	/// Creature being targeted by the card.
+	/// </param>
 	public void SetPreviewTarget(Creature? creature)
 	{
 		if (_previewTarget != creature)
@@ -533,6 +842,18 @@ public class NCard : Control, IPoolable
 		}
 	}
 
+	/// <summary>
+	/// Refreshes this card to show the correct text given the context.
+	/// </summary>
+	/// <param name="pileType">
+	/// The pile that the card is being viewed in.
+	/// We can't just use Model.Pile here, because the visual context might not match up.
+	/// Examples: When a card is being played, it might transition from the play pile to the discard pile while being
+	/// displayed. If the text to changed in response to this, it would be visually jarring.
+	/// </param>
+	/// <param name="previewMode">
+	/// The type of preview to show in the card's visuals. See <see cref="T:MegaCrit.Sts2.Core.Entities.Cards.CardPreviewMode" /> for details.
+	/// </param>
 	public void UpdateVisuals(PileType pileType, CardPreviewMode previewMode)
 	{
 		if (!IsNodeReady())
@@ -615,6 +936,10 @@ public class NCard : Control, IPoolable
 		SetEnchantmentStatus(Model?.Enchantment?.Status ?? EnchantmentStatus.Disabled);
 	}
 
+	/// <summary>
+	/// Used when an Enchantment is temporarily disabled on a card. This change is purely visual.
+	/// For instance, an Enchantment which only triggers once per turn or requires a condition to activate.
+	/// </summary>
 	private void SetEnchantmentStatus(EnchantmentStatus status)
 	{
 		if (status == EnchantmentStatus.Disabled)
@@ -645,8 +970,8 @@ public class NCard : Control, IPoolable
 		{
 			_energyLabel.SetTextAutoSize("?");
 			_energyIcon.Visible = true;
-			_energyLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, StsColors.cream);
-			_energyLabel.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, Model.Pool.EnergyOutlineColor);
+			_energyLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, StsColors.cream);
+			_energyLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, Model.Pool.EnergyOutlineColor);
 			return;
 		}
 		if (Model.EnergyCost.CostsX)
@@ -683,6 +1008,14 @@ public class NCard : Control, IPoolable
 		_forceUnpoweredPreview = forceUnpoweredPreview;
 	}
 
+	/// <summary>
+	/// Update the color of the card's energy cost.
+	/// See <see cref="M:MegaCrit.Sts2.Core.Helpers.Models.CardCostHelper.GetEnergyCostColor(MegaCrit.Sts2.Core.Models.CardModel,MegaCrit.Sts2.Core.Combat.ICombatState)" /> for details on the rules when the card is in the player's
+	/// hand.
+	/// WARNING: If you make a change to this method, you should probably make a similar change to
+	/// <see cref="M:MegaCrit.Sts2.Core.Nodes.Cards.NCard.UpdateStarCostColor(MegaCrit.Sts2.Core.Entities.Cards.PileType)" />, or write a comment explaining why the two methods are different.
+	/// </summary>
+	/// <param name="pileType">The pile that the card is being viewed in. See UpdateText() for why we need this.</param>
 	private void UpdateEnergyCostColor(PileType pileType)
 	{
 		Color color = StsColors.cream;
@@ -699,8 +1032,8 @@ public class NCard : Control, IPoolable
 			color = GetCostTextColorInHand(energyCostColor, _pretendCardCanBePlayed, color);
 			color2 = GetCostOutlineColorInHand(energyCostColor, _pretendCardCanBePlayed, color2);
 		}
-		_energyLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, color);
-		_energyLabel.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, color2);
+		_energyLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, color);
+		_energyLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, color2);
 	}
 
 	private void UpdateStarCostVisuals(PileType pileType)
@@ -709,8 +1042,8 @@ public class NCard : Control, IPoolable
 		{
 			_starLabel.SetTextAutoSize(string.Empty);
 			_starIcon.Visible = false;
-			_starLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, StsColors.cream);
-			_starLabel.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, Model.Pool.EnergyOutlineColor);
+			_starLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, StsColors.cream);
+			_starLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, Model.Pool.EnergyOutlineColor);
 			return;
 		}
 		if (Model.HasStarCostX)
@@ -752,6 +1085,14 @@ public class NCard : Control, IPoolable
 		}
 	}
 
+	/// <summary>
+	/// Update the color of the card's star cost.
+	/// See <see cref="M:MegaCrit.Sts2.Core.Helpers.Models.CardCostHelper.GetStarCostColor(MegaCrit.Sts2.Core.Models.CardModel,MegaCrit.Sts2.Core.Combat.ICombatState)" /> for details on the rules when the card is in the player's
+	/// hand.
+	/// WARNING: If you make a change to this method, you should probably make a similar change to
+	/// <see cref="M:MegaCrit.Sts2.Core.Nodes.Cards.NCard.UpdateStarCostColor(MegaCrit.Sts2.Core.Entities.Cards.PileType)" />, or write a comment explaining why the two methods are different.
+	/// </summary>
+	/// <param name="pileType">The pile that the card is being viewed in. See UpdateText() for why we need this.</param>
 	private void UpdateStarCostColor(PileType pileType)
 	{
 		Color color = StsColors.cream;
@@ -767,8 +1108,8 @@ public class NCard : Control, IPoolable
 			color = GetCostTextColorInHand(starCostColor, _pretendCardCanBePlayed, color);
 			color2 = GetCostOutlineColorInHand(starCostColor, _pretendCardCanBePlayed, color2);
 		}
-		_starLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, color);
-		_starLabel.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, color2);
+		_starLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, color);
+		_starLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, color2);
 	}
 
 	private static Color GetCostTextColorInHand(CardCostColor costColor, bool pretendCardCanBePlayed, Color defaultColor)
@@ -795,6 +1136,10 @@ public class NCard : Control, IPoolable
 		};
 	}
 
+	/// <summary>
+	/// Animates the card cost texts between random costs until settling on the real cost.
+	/// Used for content that randomizes card costs (ie snecko eye)
+	/// </summary>
 	public void PlayRandomizeCostAnim()
 	{
 		RandomizeCostTween?.Kill();
@@ -814,7 +1159,10 @@ public class NCard : Control, IPoolable
 		}), 0, 50, Rng.Chaotic.NextFloat(0.4f, 0.6f)).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
 		RandomizeCostTween.Connect(Tween.SignalName.Finished, Callable.From(delegate
 		{
-			UpdateEnergyCostVisuals(Model.Pile.Type);
+			if (Model != null)
+			{
+				UpdateEnergyCostVisuals(DisplayingPile);
+			}
 		}), 4u);
 	}
 
@@ -835,6 +1183,7 @@ public class NCard : Control, IPoolable
 		_portrait.Visible = !flag;
 		_frame.Visible = !flag;
 		_ancientPortrait.Visible = flag;
+		_ancientBorderGlassOverlay.Visible = flag;
 		_ancientBorder.Visible = flag;
 		_ancientTextBg.Visible = flag;
 		_ancientBanner.Visible = flag;
@@ -845,13 +1194,13 @@ public class NCard : Control, IPoolable
 		{
 			if (_portraitBlurMaterial == null)
 			{
-				_portraitBlurMaterial = PreloadManager.Cache.GetMaterial(_portraitBlurMaterialPath);
+				_portraitBlurMaterial = PreloadManager.Cache.GetMaterial("res://scenes/cards/card_portrait_blur_material.tres");
 			}
 			if (flag)
 			{
 				if (_canvasGroupMaskBlurMaterial == null)
 				{
-					_canvasGroupMaskBlurMaterial = PreloadManager.Cache.GetMaterial(_canvasGroupMaskBlurMaterialPath);
+					_canvasGroupMaskBlurMaterial = PreloadManager.Cache.GetMaterial("res://scenes/cards/card_canvas_group_mask_blur_material.tres");
 				}
 				_portraitCanvasGroup.Material = _canvasGroupMaskBlurMaterial;
 			}
@@ -859,7 +1208,7 @@ public class NCard : Control, IPoolable
 			{
 				if (_canvasGroupBlurMaterial == null)
 				{
-					_canvasGroupBlurMaterial = PreloadManager.Cache.GetMaterial(_canvasGroupBlurMaterialPath);
+					_canvasGroupBlurMaterial = PreloadManager.Cache.GetMaterial("res://scenes/cards/card_canvas_group_blur_material.tres");
 				}
 				_portraitCanvasGroup.Material = _canvasGroupBlurMaterial;
 			}
@@ -872,7 +1221,7 @@ public class NCard : Control, IPoolable
 			{
 				if (_canvasGroupMaskMaterial == null)
 				{
-					_canvasGroupMaskMaterial = PreloadManager.Cache.GetMaterial(_canvasGroupMaskMaterialPath);
+					_canvasGroupMaskMaterial = PreloadManager.Cache.GetMaterial("res://scenes/cards/card_canvas_group_mask_material.tres");
 				}
 				_portraitCanvasGroup.Material = _canvasGroupMaskMaterial;
 			}
@@ -894,6 +1243,7 @@ public class NCard : Control, IPoolable
 		}
 		else
 		{
+			_ancientBorder.Texture = Model.AncientBorder;
 			_ancientTextBg.Texture = Model.AncientTextBg;
 			_ancientPortrait.Texture = portrait;
 			_banner.Material = null;
@@ -918,7 +1268,7 @@ public class NCard : Control, IPoolable
 		float num = _typePlaque.Position.X + _typePlaque.Size.X * 0.5f;
 		NinePatchRect typePlaque = _typePlaque;
 		Vector2 size = _typePlaque.Size;
-		size.X = Mathf.Max(_typeLabel.Size.X + _typePlaqueXMargin, _typePlaqueMinXSize);
+		size.X = Mathf.Max(_typeLabel.Size.X + 17f, 61f);
 		typePlaque.Size = size;
 		NinePatchRect typePlaque2 = _typePlaque;
 		size = _typePlaque.Position;
@@ -956,8 +1306,8 @@ public class NCard : Control, IPoolable
 			color2 = StsColors.cardTitleOutlineSpecial;
 		}
 		_titleLabel.SetTextAutoSize(textAutoSize);
-		_titleLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, color);
-		_titleLabel.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, color2);
+		_titleLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, color);
+		_titleLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, color2);
 	}
 
 	private Color GetTitleLabelOutlineColor()
@@ -992,7 +1342,7 @@ public class NCard : Control, IPoolable
 	{
 		if (_cardOverlay != null)
 		{
-			_overlayContainer.RemoveChildSafely(_cardOverlay);
+			OverlayContainer.RemoveChildSafely(_cardOverlay);
 			_cardOverlay.QueueFreeSafely();
 			_cardOverlay = null;
 		}
@@ -1002,7 +1352,6 @@ public class NCard : Control, IPoolable
 			{
 				_frame.Visible = false;
 				_ancientBorder.Visible = true;
-				_ancientHighlight.Visible = true;
 			}
 			AfflictionModel affliction = Model.Affliction;
 			if (affliction != null && affliction.HasOverlay)
@@ -1015,7 +1364,7 @@ public class NCard : Control, IPoolable
 			}
 			if (_cardOverlay != null)
 			{
-				_overlayContainer.AddChildSafely(_cardOverlay);
+				OverlayContainer.AddChildSafely(_cardOverlay);
 			}
 		}
 	}
@@ -1046,7 +1395,7 @@ public class NCard : Control, IPoolable
 			if (_rareGlow != null)
 			{
 				Body.AddChildSafely(_rareGlow);
-				Body.MoveChild(_rareGlow, 1);
+				Body.MoveChildSafely(_rareGlow, 1);
 			}
 			CardHighlight.Modulate = NCardHighlight.gold;
 		}
@@ -1056,7 +1405,7 @@ public class NCard : Control, IPoolable
 			if (_uncommonGlow != null)
 			{
 				Body.AddChildSafely(_uncommonGlow);
-				Body.MoveChild(_uncommonGlow, 1);
+				Body.MoveChildSafely(_uncommonGlow, 1);
 			}
 			CardHighlight.Modulate = NCardHighlight.playableColor;
 		}
@@ -1088,13 +1437,17 @@ public class NCard : Control, IPoolable
 			PlayPileTween.TweenProperty(this, "modulate", StsColors.transparentBlack, 0.2);
 			PlayPileTween.Chain();
 			PlayPileTween.TweenInterval((SaveManager.Instance.PrefsSave.FastMode == FastModeType.Fast) ? 0.1 : 0.2);
+			PlayPileTween.TweenCallback(Callable.From(delegate
+			{
+				UpdateVisuals(PileType.Play, CardPreviewMode.Normal);
+			}));
 			PlayPileTween.Chain();
 			PlayPileTween.TweenProperty(this, "modulate", Colors.White, 0.2).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 			PlayPileTween.TweenProperty(this, "scale", scale, 0.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic)
 				.From(scale * 0.5f);
 			PlayPileTween.TweenProperty(this, "position:y", y, 0.25).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back)
 				.From(y + 250f);
-			await Cmd.CustomScaledWait(0.4f, 0.5f);
+			await Cmd.CustomScaledWait(0.4f, 0.5f, ignoreCombatEnd: false, _cts.Token);
 		}
 	}
 
@@ -1161,6 +1514,11 @@ public class NCard : Control, IPoolable
 		RandomizeCostTween = null;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -1241,6 +1599,7 @@ public class NCard : Control, IPoolable
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -1475,6 +1834,7 @@ public class NCard : Control, IPoolable
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -1621,6 +1981,7 @@ public class NCard : Control, IPoolable
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1679,6 +2040,11 @@ public class NCard : Control, IPoolable
 			_frame = VariantUtils.ConvertTo<TextureRect>(in value);
 			return true;
 		}
+		if (name == PropertyName._ancientBorderGlassOverlay)
+		{
+			_ancientBorderGlassOverlay = VariantUtils.ConvertTo<TextureRect>(in value);
+			return true;
+		}
 		if (name == PropertyName._ancientBorder)
 		{
 			_ancientBorder = VariantUtils.ConvertTo<TextureRect>(in value);
@@ -1692,11 +2058,6 @@ public class NCard : Control, IPoolable
 		if (name == PropertyName._ancientTextBg)
 		{
 			_ancientTextBg = VariantUtils.ConvertTo<TextureRect>(in value);
-			return true;
-		}
-		if (name == PropertyName._ancientHighlight)
-		{
-			_ancientHighlight = VariantUtils.ConvertTo<TextureRect>(in value);
 			return true;
 		}
 		if (name == PropertyName._portraitBorder)
@@ -1784,6 +2145,11 @@ public class NCard : Control, IPoolable
 			_cardOverlay = VariantUtils.ConvertTo<Control>(in value);
 			return true;
 		}
+		if (name == PropertyName._cardVfxContainer)
+		{
+			_cardVfxContainer = VariantUtils.ConvertTo<Node>(in value);
+			return true;
+		}
 		if (name == PropertyName._enchantmentTab)
 		{
 			_enchantmentTab = VariantUtils.ConvertTo<Control>(in value);
@@ -1847,6 +2213,7 @@ public class NCard : Control, IPoolable
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1896,6 +2263,19 @@ public class NCard : Control, IPoolable
 			value = VariantUtils.CreateFrom<TextureRect>(EnchantmentVfxOverride);
 			return true;
 		}
+		Node from3;
+		if (name == PropertyName.OverlayContainer)
+		{
+			from3 = OverlayContainer;
+			value = VariantUtils.CreateFrom(in from3);
+			return true;
+		}
+		if (name == PropertyName.CardVfxContainer)
+		{
+			from3 = CardVfxContainer;
+			value = VariantUtils.CreateFrom(in from3);
+			return true;
+		}
 		if (name == PropertyName._titleLabel)
 		{
 			value = VariantUtils.CreateFrom(in _titleLabel);
@@ -1921,6 +2301,11 @@ public class NCard : Control, IPoolable
 			value = VariantUtils.CreateFrom(in _frame);
 			return true;
 		}
+		if (name == PropertyName._ancientBorderGlassOverlay)
+		{
+			value = VariantUtils.CreateFrom(in _ancientBorderGlassOverlay);
+			return true;
+		}
 		if (name == PropertyName._ancientBorder)
 		{
 			value = VariantUtils.CreateFrom(in _ancientBorder);
@@ -1934,11 +2319,6 @@ public class NCard : Control, IPoolable
 		if (name == PropertyName._ancientTextBg)
 		{
 			value = VariantUtils.CreateFrom(in _ancientTextBg);
-			return true;
-		}
-		if (name == PropertyName._ancientHighlight)
-		{
-			value = VariantUtils.CreateFrom(in _ancientHighlight);
 			return true;
 		}
 		if (name == PropertyName._portraitBorder)
@@ -2026,6 +2406,11 @@ public class NCard : Control, IPoolable
 			value = VariantUtils.CreateFrom(in _cardOverlay);
 			return true;
 		}
+		if (name == PropertyName._cardVfxContainer)
+		{
+			value = VariantUtils.CreateFrom(in _cardVfxContainer);
+			return true;
+		}
 		if (name == PropertyName._enchantmentTab)
 		{
 			value = VariantUtils.CreateFrom(in _enchantmentTab);
@@ -2089,6 +2474,11 @@ public class NCard : Control, IPoolable
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -2098,10 +2488,10 @@ public class NCard : Control, IPoolable
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ancientPortrait, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._portrait, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._frame, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ancientBorderGlassOverlay, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ancientBorder, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ancientBanner, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ancientTextBg, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._ancientHighlight, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._portraitBorder, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._banner, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._lock, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -2119,6 +2509,7 @@ public class NCard : Control, IPoolable
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._unplayableStarIcon, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._overlayContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._cardOverlay, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._cardVfxContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._enchantmentTab, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._enchantmentVfxOverride, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._enchantmentIcon, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -2139,9 +2530,12 @@ public class NCard : Control, IPoolable
 		list.Add(new PropertyInfo(Variant.Type.Int, PropertyName.DisplayingPile, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.EnchantmentTab, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.EnchantmentVfxOverride, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.OverlayContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.CardVfxContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -2157,10 +2551,10 @@ public class NCard : Control, IPoolable
 		info.AddProperty(PropertyName._ancientPortrait, Variant.From(in _ancientPortrait));
 		info.AddProperty(PropertyName._portrait, Variant.From(in _portrait));
 		info.AddProperty(PropertyName._frame, Variant.From(in _frame));
+		info.AddProperty(PropertyName._ancientBorderGlassOverlay, Variant.From(in _ancientBorderGlassOverlay));
 		info.AddProperty(PropertyName._ancientBorder, Variant.From(in _ancientBorder));
 		info.AddProperty(PropertyName._ancientBanner, Variant.From(in _ancientBanner));
 		info.AddProperty(PropertyName._ancientTextBg, Variant.From(in _ancientTextBg));
-		info.AddProperty(PropertyName._ancientHighlight, Variant.From(in _ancientHighlight));
 		info.AddProperty(PropertyName._portraitBorder, Variant.From(in _portraitBorder));
 		info.AddProperty(PropertyName._banner, Variant.From(in _banner));
 		info.AddProperty(PropertyName._lock, Variant.From(in _lock));
@@ -2178,6 +2572,7 @@ public class NCard : Control, IPoolable
 		info.AddProperty(PropertyName._unplayableStarIcon, Variant.From(in _unplayableStarIcon));
 		info.AddProperty(PropertyName._overlayContainer, Variant.From(in _overlayContainer));
 		info.AddProperty(PropertyName._cardOverlay, Variant.From(in _cardOverlay));
+		info.AddProperty(PropertyName._cardVfxContainer, Variant.From(in _cardVfxContainer));
 		info.AddProperty(PropertyName._enchantmentTab, Variant.From(in _enchantmentTab));
 		info.AddProperty(PropertyName._enchantmentVfxOverride, Variant.From(in _enchantmentVfxOverride));
 		info.AddProperty(PropertyName._enchantmentIcon, Variant.From(in _enchantmentIcon));
@@ -2192,6 +2587,7 @@ public class NCard : Control, IPoolable
 		info.AddProperty(PropertyName._visibility, Variant.From(in _visibility));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -2240,21 +2636,21 @@ public class NCard : Control, IPoolable
 		{
 			_frame = value11.As<TextureRect>();
 		}
-		if (info.TryGetProperty(PropertyName._ancientBorder, out var value12))
+		if (info.TryGetProperty(PropertyName._ancientBorderGlassOverlay, out var value12))
 		{
-			_ancientBorder = value12.As<TextureRect>();
+			_ancientBorderGlassOverlay = value12.As<TextureRect>();
 		}
-		if (info.TryGetProperty(PropertyName._ancientBanner, out var value13))
+		if (info.TryGetProperty(PropertyName._ancientBorder, out var value13))
 		{
-			_ancientBanner = value13.As<Control>();
+			_ancientBorder = value13.As<TextureRect>();
 		}
-		if (info.TryGetProperty(PropertyName._ancientTextBg, out var value14))
+		if (info.TryGetProperty(PropertyName._ancientBanner, out var value14))
 		{
-			_ancientTextBg = value14.As<TextureRect>();
+			_ancientBanner = value14.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._ancientHighlight, out var value15))
+		if (info.TryGetProperty(PropertyName._ancientTextBg, out var value15))
 		{
-			_ancientHighlight = value15.As<TextureRect>();
+			_ancientTextBg = value15.As<TextureRect>();
 		}
 		if (info.TryGetProperty(PropertyName._portraitBorder, out var value16))
 		{
@@ -2324,53 +2720,57 @@ public class NCard : Control, IPoolable
 		{
 			_cardOverlay = value32.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._enchantmentTab, out var value33))
+		if (info.TryGetProperty(PropertyName._cardVfxContainer, out var value33))
 		{
-			_enchantmentTab = value33.As<Control>();
+			_cardVfxContainer = value33.As<Node>();
 		}
-		if (info.TryGetProperty(PropertyName._enchantmentVfxOverride, out var value34))
+		if (info.TryGetProperty(PropertyName._enchantmentTab, out var value34))
 		{
-			_enchantmentVfxOverride = value34.As<TextureRect>();
+			_enchantmentTab = value34.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName._enchantmentIcon, out var value35))
+		if (info.TryGetProperty(PropertyName._enchantmentVfxOverride, out var value35))
 		{
-			_enchantmentIcon = value35.As<TextureRect>();
+			_enchantmentVfxOverride = value35.As<TextureRect>();
 		}
-		if (info.TryGetProperty(PropertyName._enchantmentLabel, out var value36))
+		if (info.TryGetProperty(PropertyName._enchantmentIcon, out var value36))
 		{
-			_enchantmentLabel = value36.As<MegaLabel>();
+			_enchantmentIcon = value36.As<TextureRect>();
 		}
-		if (info.TryGetProperty(PropertyName._defaultEnchantmentPosition, out var value37))
+		if (info.TryGetProperty(PropertyName._enchantmentLabel, out var value37))
 		{
-			_defaultEnchantmentPosition = value37.As<Vector2>();
+			_enchantmentLabel = value37.As<MegaLabel>();
 		}
-		if (info.TryGetProperty(PropertyName._pretendCardCanBePlayed, out var value38))
+		if (info.TryGetProperty(PropertyName._defaultEnchantmentPosition, out var value38))
 		{
-			_pretendCardCanBePlayed = value38.As<bool>();
+			_defaultEnchantmentPosition = value38.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName._forceUnpoweredPreview, out var value39))
+		if (info.TryGetProperty(PropertyName._pretendCardCanBePlayed, out var value39))
 		{
-			_forceUnpoweredPreview = value39.As<bool>();
+			_pretendCardCanBePlayed = value39.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._portraitBlurMaterial, out var value40))
+		if (info.TryGetProperty(PropertyName._forceUnpoweredPreview, out var value40))
 		{
-			_portraitBlurMaterial = value40.As<Material>();
+			_forceUnpoweredPreview = value40.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._canvasGroupMaskBlurMaterial, out var value41))
+		if (info.TryGetProperty(PropertyName._portraitBlurMaterial, out var value41))
 		{
-			_canvasGroupMaskBlurMaterial = value41.As<Material>();
+			_portraitBlurMaterial = value41.As<Material>();
 		}
-		if (info.TryGetProperty(PropertyName._canvasGroupBlurMaterial, out var value42))
+		if (info.TryGetProperty(PropertyName._canvasGroupMaskBlurMaterial, out var value42))
 		{
-			_canvasGroupBlurMaterial = value42.As<Material>();
+			_canvasGroupMaskBlurMaterial = value42.As<Material>();
 		}
-		if (info.TryGetProperty(PropertyName._canvasGroupMaskMaterial, out var value43))
+		if (info.TryGetProperty(PropertyName._canvasGroupBlurMaterial, out var value43))
 		{
-			_canvasGroupMaskMaterial = value43.As<Material>();
+			_canvasGroupBlurMaterial = value43.As<Material>();
 		}
-		if (info.TryGetProperty(PropertyName._visibility, out var value44))
+		if (info.TryGetProperty(PropertyName._canvasGroupMaskMaterial, out var value44))
 		{
-			_visibility = value44.As<ModelVisibility>();
+			_canvasGroupMaskMaterial = value44.As<Material>();
+		}
+		if (info.TryGetProperty(PropertyName._visibility, out var value45))
+		{
+			_visibility = value45.As<ModelVisibility>();
 		}
 	}
 }

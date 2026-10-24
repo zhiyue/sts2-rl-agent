@@ -4,79 +4,183 @@ using Godot;
 using Godot.Bridge;
 using Godot.Collections;
 using Godot.NativeInterop;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
+/// <summary>
+/// Sub Vfx for doom that manage the front and back particle effects
+/// (the glow, the light spears, the ground)
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Vfx/NDoomSubEmitterVfx.cs")]
 public class NDoomSubEmitterVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'FireSpear' method.
+		/// </summary>
 		public static readonly StringName FireSpear = "FireSpear";
 
+		/// <summary>
+		/// Cached name for the 'FireAllSpears' method.
+		/// </summary>
 		public static readonly StringName FireAllSpears = "FireAllSpears";
 
+		/// <summary>
+		/// Cached name for the 'ShowOrHide' method.
+		/// </summary>
 		public static readonly StringName ShowOrHide = "ShowOrHide";
 
+		/// <summary>
+		/// Cached name for the 'UpdateWidth' method.
+		/// </summary>
 		public static readonly StringName UpdateWidth = "UpdateWidth";
 
+		/// <summary>
+		/// Cached name for the 'SetVisibility' method.
+		/// </summary>
 		public static readonly StringName SetVisibility = "SetVisibility";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'CurScaleX' property.
+		/// </summary>
 		public static readonly StringName CurScaleX = "CurScaleX";
 
+		/// <summary>
+		/// Cached name for the '_scalableLayers' field.
+		/// </summary>
 		public static readonly StringName _scalableLayers = "_scalableLayers";
 
+		/// <summary>
+		/// Cached name for the '_spears' field.
+		/// </summary>
 		public static readonly StringName _spears = "_spears";
 
+		/// <summary>
+		/// Cached name for the '_verticalShrinkingLayer' field.
+		/// </summary>
 		public static readonly StringName _verticalShrinkingLayer = "_verticalShrinkingLayer";
 
+		/// <summary>
+		/// Cached name for the '_particlesToKeepDense' field.
+		/// </summary>
 		public static readonly StringName _particlesToKeepDense = "_particlesToKeepDense";
 
+		/// <summary>
+		/// Cached name for the '_baseScales' field.
+		/// </summary>
 		public static readonly StringName _baseScales = "_baseScales";
 
+		/// <summary>
+		/// Cached name for the '_indeces' field.
+		/// </summary>
 		public static readonly StringName _indeces = "_indeces";
 
+		/// <summary>
+		/// Cached name for the '_baseSpearRegionWidth' field.
+		/// </summary>
 		public static readonly StringName _baseSpearRegionWidth = "_baseSpearRegionWidth";
 
+		/// <summary>
+		/// Cached name for the '_dumbHackBecauseOfHowTexturerectsWork' field.
+		/// </summary>
 		public static readonly StringName _dumbHackBecauseOfHowTexturerectsWork = "_dumbHackBecauseOfHowTexturerectsWork";
 
+		/// <summary>
+		/// Cached name for the '_rotationHackForSameDumbReason' field.
+		/// </summary>
 		public static readonly StringName _rotationHackForSameDumbReason = "_rotationHackForSameDumbReason";
 
+		/// <summary>
+		/// Cached name for the '_baseParticleDensity' field.
+		/// </summary>
 		public static readonly StringName _baseParticleDensity = "_baseParticleDensity";
 
+		/// <summary>
+		/// Cached name for the '_spearFixedHScale' field.
+		/// </summary>
 		public static readonly StringName _spearFixedHScale = "_spearFixedHScale";
 
+		/// <summary>
+		/// Cached name for the '_spearAngleIntensity' field.
+		/// </summary>
 		public static readonly StringName _spearAngleIntensity = "_spearAngleIntensity";
 
+		/// <summary>
+		/// Cached name for the '_minSpearSize' field.
+		/// </summary>
 		public static readonly StringName _minSpearSize = "_minSpearSize";
 
+		/// <summary>
+		/// Cached name for the '_maxSpearSize' field.
+		/// </summary>
 		public static readonly StringName _maxSpearSize = "_maxSpearSize";
 
+		/// <summary>
+		/// Cached name for the '_minSpearTime' field.
+		/// </summary>
 		public static readonly StringName _minSpearTime = "_minSpearTime";
 
+		/// <summary>
+		/// Cached name for the '_maxSpearTime' field.
+		/// </summary>
 		public static readonly StringName _maxSpearTime = "_maxSpearTime";
 
+		/// <summary>
+		/// Cached name for the '_outerMargin' field.
+		/// </summary>
 		public static readonly StringName _outerMargin = "_outerMargin";
 
+		/// <summary>
+		/// Cached name for the '_innerMargin' field.
+		/// </summary>
 		public static readonly StringName _innerMargin = "_innerMargin";
 
+		/// <summary>
+		/// Cached name for the '_time' field.
+		/// </summary>
 		public static readonly StringName _time = "_time";
 
+		/// <summary>
+		/// Cached name for the '_isOn' field.
+		/// </summary>
 		public static readonly StringName _isOn = "_isOn";
 
+		/// <summary>
+		/// Cached name for the '_curScaleX' field.
+		/// </summary>
 		public static readonly StringName _curScaleX = "_curScaleX";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -253,7 +357,7 @@ public class NDoomSubEmitterVfx : Node2D
 			}
 			else if (isOn)
 			{
-				MoveChild(scalableLayer, _indeces[num]);
+				this.MoveChildSafely(scalableLayer, _indeces[num]);
 			}
 			num++;
 		}
@@ -268,6 +372,11 @@ public class NDoomSubEmitterVfx : Node2D
 		_tween?.Kill();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -295,6 +404,7 @@ public class NDoomSubEmitterVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -343,6 +453,7 @@ public class NDoomSubEmitterVfx : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -377,6 +488,7 @@ public class NDoomSubEmitterVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -498,6 +610,7 @@ public class NDoomSubEmitterVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -619,6 +732,11 @@ public class NDoomSubEmitterVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -649,6 +767,7 @@ public class NDoomSubEmitterVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -678,6 +797,7 @@ public class NDoomSubEmitterVfx : Node2D
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

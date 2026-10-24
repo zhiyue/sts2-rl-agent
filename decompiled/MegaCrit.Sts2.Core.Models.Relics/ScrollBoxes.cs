@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Models.Relics;
 
@@ -19,9 +20,17 @@ public sealed class ScrollBoxes : RelicModel
 
 	public override RelicRarity Rarity => RelicRarity.Ancient;
 
+	public override bool IsAllowedAtNeow(Player player)
+	{
+		if (CanGenerateBundles(player))
+		{
+			return base.IsAllowedAtNeow(player);
+		}
+		return false;
+	}
+
 	public override async Task AfterObtained()
 	{
-		await PlayerCmd.LoseGold(base.Owner.Gold, base.Owner);
 		List<IReadOnlyList<CardModel>> list = GenerateRandomBundles(base.Owner);
 		List<IReadOnlyList<CardModel>> list2 = new List<IReadOnlyList<CardModel>>();
 		foreach (IReadOnlyList<CardModel> item in list)
@@ -34,9 +43,13 @@ public sealed class ScrollBoxes : RelicModel
 		}
 	}
 
+	/// <summary>
+	/// Checks if random bundles can be generated for the given player.
+	/// Requires at least 4 unlocked commons and 2 unlocked uncommons.
+	/// </summary>
 	public static bool CanGenerateBundles(Player player)
 	{
-		IEnumerable<CardModel> unlockedCards = player.Character.CardPool.GetUnlockedCards(player.UnlockState, player.RunState.CardMultiplayerConstraint);
+		IEnumerable<CardModel> unlockedCards = GetCardPool(player.Character).GetUnlockedCards(player.UnlockState, player.RunState.CardMultiplayerConstraint);
 		int num = unlockedCards.Count((CardModel c) => c.Rarity == CardRarity.Common);
 		int num2 = unlockedCards.Count((CardModel c) => c.Rarity == CardRarity.Uncommon);
 		if (num >= 4)
@@ -46,13 +59,19 @@ public sealed class ScrollBoxes : RelicModel
 		return false;
 	}
 
+	/// <summary>
+	/// Generates 2 random bundles for the player. Each bundle contains 2 commons and 1 uncommon.
+	/// All 6 cards across both bundles are unique.
+	/// For Defect, each bundle has a 1% chance to be 3x Claw instead.
+	/// </summary>
 	public static List<IReadOnlyList<CardModel>> GenerateRandomBundles(Player player)
 	{
 		Rng rewards = player.PlayerRng.Rewards;
 		bool flag = player.Character is Defect;
-		CardCreationOptions options = CardCreationOptions.ForNonCombatWithUniformOdds(new global::_003C_003Ez__ReadOnlySingleElementList<CardPoolModel>(player.Character.CardPool), (CardModel c) => c.Rarity == CardRarity.Common).WithFlags(CardCreationFlags.NoRarityModification);
+		CardPoolModel cardPool = GetCardPool(player.Character);
+		CardCreationOptions options = CardCreationOptions.ForNonCombatWithUniformOdds(new global::_003C_003Ez__ReadOnlySingleElementList<CardPoolModel>(cardPool), (CardModel c) => c.Rarity == CardRarity.Common).WithFlags(CardCreationFlags.NoRarityModification);
 		options = Hook.ModifyCardRewardCreationOptions(player.RunState, player, options);
-		CardCreationOptions options2 = CardCreationOptions.ForNonCombatWithUniformOdds(new global::_003C_003Ez__ReadOnlySingleElementList<CardPoolModel>(player.Character.CardPool), (CardModel c) => c.Rarity == CardRarity.Uncommon).WithFlags(CardCreationFlags.NoRarityModification);
+		CardCreationOptions options2 = CardCreationOptions.ForNonCombatWithUniformOdds(new global::_003C_003Ez__ReadOnlySingleElementList<CardPoolModel>(cardPool), (CardModel c) => c.Rarity == CardRarity.Uncommon).WithFlags(CardCreationFlags.NoRarityModification);
 		options2 = Hook.ModifyCardRewardCreationOptions(player.RunState, player, options2);
 		List<CardModel> source = options.GetPossibleCards(player).ToList();
 		List<CardModel> source2 = options2.GetPossibleCards(player).ToList();
@@ -82,5 +101,14 @@ public sealed class ScrollBoxes : RelicModel
 			list.Add(list2);
 		}
 		return list;
+	}
+
+	private static CardPoolModel GetCardPool(CharacterModel character)
+	{
+		if (TestMode.IsOn && character is Deprived)
+		{
+			return ModelDb.Character<Ironclad>().CardPool;
+		}
+		return character.CardPool;
 	}
 }

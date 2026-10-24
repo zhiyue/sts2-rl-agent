@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Entities.RestSite;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Rooms;
@@ -51,7 +52,7 @@ public sealed class Girya : RelicModel
 		if (TimesLifted > 0 && room is CombatRoom)
 		{
 			Flash();
-			await PowerCmd.Apply<StrengthPower>(base.Owner.Creature, TimesLifted, base.Owner.Creature, null);
+			await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Owner.Creature, TimesLifted, base.Owner.Creature, null);
 		}
 	}
 

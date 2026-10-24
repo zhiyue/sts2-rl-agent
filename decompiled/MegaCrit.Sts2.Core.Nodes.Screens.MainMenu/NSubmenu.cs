@@ -14,40 +14,91 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NSubmenu.cs")]
 public abstract class NSubmenu : Control, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'HideBackButtonImmediately' method.
+		/// </summary>
 		public static readonly StringName HideBackButtonImmediately = "HideBackButtonImmediately";
 
+		/// <summary>
+		/// Cached name for the 'SetStack' method.
+		/// </summary>
 		public static readonly StringName SetStack = "SetStack";
 
+		/// <summary>
+		/// Cached name for the 'OnScreenVisibilityChange' method.
+		/// </summary>
 		public static readonly StringName OnScreenVisibilityChange = "OnScreenVisibilityChange";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuShown' method.
+		/// </summary>
 		public static readonly StringName OnSubmenuShown = "OnSubmenuShown";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuHidden' method.
+		/// </summary>
 		public static readonly StringName OnSubmenuHidden = "OnSubmenuHidden";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuClosed' method.
+		/// </summary>
 		public static readonly StringName OnSubmenuClosed = "OnSubmenuClosed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_stack' field.
+		/// </summary>
 		public static readonly StringName _stack = "_stack";
 
+		/// <summary>
+		/// Cached name for the '_lastFocusedControl' field.
+		/// </summary>
 		public static readonly StringName _lastFocusedControl = "_lastFocusedControl";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -56,10 +107,16 @@ public abstract class NSubmenu : Control, IScreenContext
 
 	protected NSubmenuStack _stack;
 
+	/// <summary>
+	/// The last control node we were focusing on when this submenu was hidden (usually when another submenu is opened above it)
+	/// </summary>
 	protected Control? _lastFocusedControl;
 
 	public Control? DefaultFocusedControl => _lastFocusedControl ?? InitialFocusedControl;
 
+	/// <summary>
+	/// The initial control the submenu is focused on when it is first opened
+	/// </summary>
 	protected abstract Control? InitialFocusedControl { get; }
 
 	public override void _Ready()
@@ -83,6 +140,9 @@ public abstract class NSubmenu : Control, IScreenContext
 		Connect(CanvasItem.SignalName.VisibilityChanged, Callable.From(OnScreenVisibilityChange));
 	}
 
+	/// <summary>
+	/// Used to override submenu back button behaviors (see: Timeline)
+	/// </summary>
 	public void HideBackButtonImmediately()
 	{
 		_backButton.Disable();
@@ -110,23 +170,42 @@ public abstract class NSubmenu : Control, IScreenContext
 		}
 	}
 
+	/// <summary>
+	/// Called when this submenu is newly pushed onto the stack OR when it is re-shown because the submenu above it has
+	/// been popped from the stack.
+	/// </summary>
 	protected virtual void OnSubmenuShown()
 	{
 	}
 
+	/// <summary>
+	/// Called when this submenu has just been popped from the stack OR when it is hidden because a new submenu has just
+	/// been pushed onto the stack.
+	/// </summary>
 	protected virtual void OnSubmenuHidden()
 	{
 	}
 
+	/// <summary>
+	/// Called only when this submenu is newly pushed on to a stack.
+	/// </summary>
 	public virtual void OnSubmenuOpened()
 	{
 	}
 
+	/// <summary>
+	/// Called only when this submenu is popped from the stack it was on.
+	/// </summary>
 	public virtual void OnSubmenuClosed()
 	{
 		_lastFocusedControl = null;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -146,6 +225,7 @@ public abstract class NSubmenu : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -206,6 +286,7 @@ public abstract class NSubmenu : Control, IScreenContext
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -248,6 +329,7 @@ public abstract class NSubmenu : Control, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -269,6 +351,7 @@ public abstract class NSubmenu : Control, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -303,6 +386,11 @@ public abstract class NSubmenu : Control, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -315,6 +403,7 @@ public abstract class NSubmenu : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -324,6 +413,7 @@ public abstract class NSubmenu : Control, IScreenContext
 		info.AddProperty(PropertyName._lastFocusedControl, Variant.From(in _lastFocusedControl));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

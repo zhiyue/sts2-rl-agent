@@ -7,12 +7,12 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
@@ -83,6 +83,9 @@ public sealed class TwoTailedRat : MonsterModel
 		}
 	}
 
+	/// <summary>
+	/// Track how many times call for backup has happened this combat. This is so we can limit it to 3.
+	/// </summary>
 	public int CallForBackupCount
 	{
 		get
@@ -96,10 +99,9 @@ public sealed class TwoTailedRat : MonsterModel
 		}
 	}
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
-		MegaSkin megaSkin = visuals.SpineBody.NewSkin("custom-skin");
+		MegaSkin megaSkin = spine.NewSkin("custom-skin");
 		MegaSkeletonDataResource data = skeleton.GetData();
 		megaSkin.AddSkin(data.FindSkin(MegaCrit.Sts2.Core.Random.Rng.Chaotic.NextItem(_barnacleOptions)));
 		megaSkin.AddSkin(data.FindSkin(MegaCrit.Sts2.Core.Random.Rng.Chaotic.NextItem(_headOptions)));
@@ -153,8 +155,8 @@ public sealed class TwoTailedRat : MonsterModel
 	private async Task DiseaseBiteMove(IReadOnlyList<Creature> targets)
 	{
 		TurnsUntilSummonable--;
-		await DamageCmd.Attack(DiseaseBiteDamage).FromMonster(this).WithAttackerAnim("Cast", 0.25f)
-			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/two_tail_rats/two_tail_rats_attack_bite")
+		await DamageCmd.Attack(DiseaseBiteDamage).FromMonster(this).WithAttackerAnim("Attack", 0.25f)
+			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/two_tail_rats/two_tail_rats_attack_hands")
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
 	}
@@ -164,13 +166,17 @@ public sealed class TwoTailedRat : MonsterModel
 		TurnsUntilSummonable--;
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/two_tail_rats/two_tail_rats_attack_bite");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.3f);
-		await PowerCmd.Apply<FrailPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
 	}
 
 	private async Task CallForBackup(IReadOnlyList<Creature> targets)
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/two_tail_rats/two_tail_rats_summon");
 		await CreatureCmd.TriggerAnim(base.Creature, "Summon", 0.3f);
+		if (!base.CombatState.IsLiveCombat())
+		{
+			return;
+		}
 		string nextSlot = base.CombatState.Encounter.Slots.LastOrDefault((string s) => base.CombatState.Enemies.All((Creature c) => c.SlotName != s), string.Empty);
 		if (!string.IsNullOrEmpty(nextSlot))
 		{

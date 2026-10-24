@@ -24,7 +24,7 @@ public sealed class CrabRagePower : PowerModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new PowerVar<StrengthPower>(5m),
+		new PowerVar<StrengthPower>(6m),
 		new BlockVar(99m, ValueProp.Unpowered)
 	});
 
@@ -33,7 +33,7 @@ public sealed class CrabRagePower : PowerModel
 		if (creature != base.Owner && creature.Side == base.Owner.Side)
 		{
 			Flash();
-			await PowerCmd.Apply<StrengthPower>(base.Owner, base.DynamicVars.Strength.IntValue, base.Owner, null);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner, base.DynamicVars.Strength.IntValue, base.Owner, null);
 			await CreatureCmd.GainBlock(base.Owner, base.DynamicVars.Block, null);
 			await PowerCmd.Remove(this);
 		}

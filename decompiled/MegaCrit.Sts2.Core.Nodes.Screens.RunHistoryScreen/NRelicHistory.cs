@@ -29,24 +29,51 @@ public class NRelicHistory : VBoxContainer
 	[Signal]
 	public delegate void UnhoveredEventHandler(NRelicBasicHolder relic);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : VBoxContainer.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnRelicClicked' method.
+		/// </summary>
 		public static readonly StringName OnRelicClicked = "OnRelicClicked";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : VBoxContainer.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_headerLabel' field.
+		/// </summary>
 		public static readonly StringName _headerLabel = "_headerLabel";
 
+		/// <summary>
+		/// Cached name for the '_relicsContainer' field.
+		/// </summary>
 		public static readonly StringName _relicsContainer = "_relicsContainer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : VBoxContainer.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Hovered' signal.
+		/// </summary>
 		public static readonly StringName Hovered = "Hovered";
 
+		/// <summary>
+		/// Cached name for the 'Unhovered' signal.
+		/// </summary>
 		public static readonly StringName Unhovered = "Unhovered";
 	}
 
@@ -62,6 +89,7 @@ public class NRelicHistory : VBoxContainer
 
 	private UnhoveredEventHandler backing_Unhovered;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen.NRelicHistory.HoveredEventHandler" />
 	public event HoveredEventHandler Hovered
 	{
 		add
@@ -74,6 +102,7 @@ public class NRelicHistory : VBoxContainer
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen.NRelicHistory.UnhoveredEventHandler" />
 	public event UnhoveredEventHandler Unhovered
 	{
 		add
@@ -158,6 +187,10 @@ public class NRelicHistory : VBoxContainer
 		_headerLabel.Text = stringBuilder.ToString();
 	}
 
+	/// <summary>
+	/// Opens the Inspect Relic screen and allows the player to paginate through the rest of the top bar relics.
+	/// </summary>
+	/// <param name="node"></param>
 	private void OnRelicClicked(NRelic node)
 	{
 		List<RelicModel> list = new List<RelicModel>();
@@ -168,6 +201,11 @@ public class NRelicHistory : VBoxContainer
 		NGame.Instance.GetInspectRelicScreen().Open(list, node.Model);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -180,6 +218,7 @@ public class NRelicHistory : VBoxContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -198,6 +237,7 @@ public class NRelicHistory : VBoxContainer
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -212,6 +252,7 @@ public class NRelicHistory : VBoxContainer
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -228,6 +269,7 @@ public class NRelicHistory : VBoxContainer
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -244,6 +286,11 @@ public class NRelicHistory : VBoxContainer
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -253,6 +300,7 @@ public class NRelicHistory : VBoxContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -263,6 +311,7 @@ public class NRelicHistory : VBoxContainer
 		info.AddSignalEventDelegate(SignalName.Unhovered, backing_Unhovered);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -285,6 +334,11 @@ public class NRelicHistory : VBoxContainer
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -310,6 +364,7 @@ public class NRelicHistory : VBoxContainer
 		EmitSignal(SignalName.Unhovered, relic);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -327,6 +382,7 @@ public class NRelicHistory : VBoxContainer
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

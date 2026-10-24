@@ -17,6 +17,9 @@ public abstract class RelicPoolModel : AbstractModel, IPoolModel
 
 	public virtual Color LabOutlineColor => StsColors.halfTransparentBlack;
 
+	/// <summary>
+	/// Get every relic in this pool (ignores Unlocks/Epoch state).
+	/// </summary>
 	public IEnumerable<RelicModel> AllRelics
 	{
 		get
@@ -30,12 +33,24 @@ public abstract class RelicPoolModel : AbstractModel, IPoolModel
 		}
 	}
 
+	/// <summary>
+	/// Get the ID of every relic in this pool (ignores Unlocks/Epoch state).
+	/// </summary>
 	public HashSet<ModelId> AllRelicIds => _allRelicIds ?? (_allRelicIds = AllRelics.Select((RelicModel c) => c.Id).ToHashSet());
 
 	public override bool ShouldReceiveCombatHooks => false;
 
+	/// <summary>
+	/// Generates every relic in this pool (ignores Unlocks/Epoch state).
+	/// Overridden in subclasses, but should only be called once by <see cref="P:MegaCrit.Sts2.Core.Models.RelicPoolModel.AllRelics" /> so it can be cached.
+	/// </summary>
 	protected abstract IEnumerable<RelicModel> GenerateAllRelics();
 
+	/// <summary>
+	/// Returns every relic in this pool that the player has unlocked.
+	/// By default, this is just AllRelics, but can be overriden in subclasses to remove relics that should be locked
+	/// under certain conditions.
+	/// </summary>
 	public virtual IEnumerable<RelicModel> GetUnlockedRelics(UnlockState unlockState)
 	{
 		return AllRelics;

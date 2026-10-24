@@ -28,13 +28,14 @@ public sealed class GlimpseBeyond : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		IEnumerable<Creature> enumerable = from c in base.CombatState.GetTeammatesOf(base.Owner.Creature)
 			where c != null && c.IsAlive && c.IsPlayer
 			select c;
 		foreach (Creature creature in enumerable)
 		{
 			List<Soul> cards = Soul.Create(creature.Player, base.DynamicVars.Cards.IntValue, base.CombatState).ToList();
-			IReadOnlyList<CardPileAddResult> results = await CardPileCmd.AddGeneratedCardsToCombat(cards, PileType.Draw, addedByPlayer: true, CardPilePosition.Random);
+			IReadOnlyList<CardPileAddResult> results = await CardPileCmd.AddGeneratedCardsToCombat(cards, PileType.Draw, base.Owner, CardPilePosition.Random);
 			if (LocalContext.IsMe(creature))
 			{
 				CardCmd.PreviewCardPileAdd(results);

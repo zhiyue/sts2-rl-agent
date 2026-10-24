@@ -16,12 +16,12 @@ public sealed class LostWisp : RelicModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new DamageVar(8m, ValueProp.Unpowered));
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner && CombatManager.Instance.IsInProgress && cardPlay.Card.Type == CardType.Power)
 		{
 			Flash();
-			await CreatureCmd.Damage(context, base.Owner.Creature.CombatState.HittableEnemies, base.DynamicVars.Damage.BaseValue, base.DynamicVars.Damage.Props, base.Owner.Creature, null);
+			await CreatureCmd.Damage(choiceContext, base.Owner.Creature.CombatState.HittableEnemies, base.DynamicVars.Damage.BaseValue, base.DynamicVars.Damage.Props, base.Owner.Creature, null);
 		}
 	}
 }

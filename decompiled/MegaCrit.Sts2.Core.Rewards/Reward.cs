@@ -18,17 +18,37 @@ namespace MegaCrit.Sts2.Core.Rewards;
 
 public abstract class Reward
 {
+	/// <summary>
+	/// If this is set, uses this rng rather than the default one used by the particular reward (Typically a player RNG)
+	/// Used in the Crystal Sphere Items so that we can pass the event rng to be used and not hit state divergences in multiplayer
+	/// since we don't sync the player rng sets in that case
+	/// </summary>
 	protected Rng? _rngOverride;
 
+	/// <summary>
+	/// The player that this reward is for.
+	/// </summary>
 	public Player Player { get; }
 
 	protected abstract RewardType RewardType { get; }
 
+	/// <summary>
+	/// The index to use for this reward when ordering the rewards displayed in a <see cref="T:MegaCrit.Sts2.Core.Rewards.RewardsSet" />.
+	/// Lower indexes are displayed first.
+	/// </summary>
 	public abstract int RewardsSetIndex { get; }
 
 	public abstract LocString Description { get; }
 
+	/// <summary>
+	/// Whether this reward has been populated.
+	/// </summary>
 	public abstract bool IsPopulated { get; }
+
+	/// <summary>
+	/// Whether the reward has successfully been taken.
+	/// </summary>
+	public bool SuccessfullySelected { get; private set; }
 
 	protected virtual string? IconPath => null;
 
@@ -56,10 +76,25 @@ public abstract class Reward
 		Player = player;
 	}
 
-	public abstract Task Populate();
+	/// <summary>
+	/// Logic to run to populate this reward with options.
+	/// For example, calling this on a CardReward would generate 3 cards for the player to choose from.
+	/// </summary>
+	public abstract void Populate();
 
+	/// <summary>
+	/// Logic to run when this reward is selected.
+	/// </summary>
+	/// <returns>
+	/// Whether the reward was received. Usually true, but false in certain cases (like if the player tries to
+	/// take a potion when they have no more room for potions).
+	/// </returns>
 	protected abstract Task<bool> OnSelect();
 
+	/// <summary>
+	/// Create an icon node representing this reward.
+	/// Null if we're in test mode.
+	/// </summary>
 	public virtual Control? CreateIcon()
 	{
 		if (TestMode.IsOn)
@@ -77,12 +112,18 @@ public abstract class Reward
 	{
 	}
 
-	public async Task<bool> OnSelectWrapper()
+	/// <summary>
+	/// YOU SHOULD MOST LIKELY NOT BE CALLING THIS!
+	/// See <see cref="M:MegaCrit.Sts2.Core.Multiplayer.Game.RewardsSetSynchronizer.SelectLocalReward(MegaCrit.Sts2.Core.Rewards.Reward)" />.
+	/// This only selects the reward on the local machine.
+	/// </summary>
+	public async Task<bool> SelectUnsynchronized()
 	{
 		bool success = await OnSelect();
 		if (success)
 		{
 			await Hook.AfterRewardTaken(Player.RunState, Player, this);
+			SuccessfullySelected = true;
 		}
 		if (ParentRewardSet != null)
 		{
@@ -130,6 +171,10 @@ public abstract class Reward
 		case RewardType.Potion:
 			return new PotionReward(player);
 		case RewardType.Relic:
+			if (save.PredeterminedModelId != ModelId.none)
+			{
+				return new RelicReward(ModelDb.GetById<RelicModel>(save.PredeterminedModelId).ToMutable(), player);
+			}
 			return new RelicReward(player);
 		case RewardType.Card:
 		{

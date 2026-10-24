@@ -5,6 +5,10 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Saves.Runs;
 
+/// <summary>
+/// Serializable representation of an act map for save files.
+/// Captures the full map topology so it can be restored without regeneration.
+/// </summary>
 public class SerializableActMap : IPacketSerializable
 {
 	[JsonPropertyName("points")]

@@ -21,6 +21,9 @@ public sealed class Rampage : CardModel
 		new DynamicVar("Increase", 5m)
 	});
 
+	/// <summary>
+	/// Required so we can restore the extra damage amount after a downgrade (ie Magiknight)
+	/// </summary>
 	private decimal ExtraDamageFromPlays
 	{
 		get

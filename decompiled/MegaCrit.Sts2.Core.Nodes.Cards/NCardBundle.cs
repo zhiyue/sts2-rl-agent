@@ -19,38 +19,86 @@ public class NCardBundle : Control
 	[Signal]
 	public delegate void ClickedEventHandler(NCardBundle cardHolder);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ReAddCardNodes' method.
+		/// </summary>
 		public static readonly StringName ReAddCardNodes = "ReAddCardNodes";
 
+		/// <summary>
+		/// Cached name for the 'OnClicked' method.
+		/// </summary>
 		public static readonly StringName OnClicked = "OnClicked";
 
+		/// <summary>
+		/// Cached name for the 'OnFocused' method.
+		/// </summary>
 		public static readonly StringName OnFocused = "OnFocused";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocused' method.
+		/// </summary>
 		public static readonly StringName OnUnfocused = "OnUnfocused";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Hitbox' property.
+		/// </summary>
 		public static readonly StringName Hitbox = "Hitbox";
 
+		/// <summary>
+		/// Cached name for the '_hoverScale' field.
+		/// </summary>
 		public static readonly StringName _hoverScale = "_hoverScale";
 
+		/// <summary>
+		/// Cached name for the 'smallScale' field.
+		/// </summary>
 		public static readonly StringName smallScale = "smallScale";
 
+		/// <summary>
+		/// Cached name for the '_cardHolder' field.
+		/// </summary>
 		public static readonly StringName _cardHolder = "_cardHolder";
 
+		/// <summary>
+		/// Cached name for the '_hoverTween' field.
+		/// </summary>
 		public static readonly StringName _hoverTween = "_hoverTween";
 
+		/// <summary>
+		/// Cached name for the '_cardTween' field.
+		/// </summary>
 		public static readonly StringName _cardTween = "_cardTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Clicked' signal.
+		/// </summary>
 		public static readonly StringName Clicked = "Clicked";
 	}
 
@@ -80,6 +128,7 @@ public class NCardBundle : Control
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ScenePath);
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Cards.NCardBundle.ClickedEventHandler" />
 	public event ClickedEventHandler Clicked
 	{
 		add
@@ -184,6 +233,11 @@ public class NCardBundle : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -206,6 +260,7 @@ public class NCardBundle : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -248,6 +303,7 @@ public class NCardBundle : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -278,6 +334,7 @@ public class NCardBundle : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -304,6 +361,7 @@ public class NCardBundle : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -340,6 +398,11 @@ public class NCardBundle : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -353,6 +416,7 @@ public class NCardBundle : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -364,6 +428,7 @@ public class NCardBundle : Control
 		info.AddSignalEventDelegate(SignalName.Clicked, backing_Clicked);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -390,6 +455,11 @@ public class NCardBundle : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -406,6 +476,7 @@ public class NCardBundle : Control
 		EmitSignal(SignalName.Clicked, cardHolder);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -419,6 +490,7 @@ public class NCardBundle : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

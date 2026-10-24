@@ -13,6 +13,10 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles simple card selection screens.
+/// Some screens require multiple card selections and/or manual confirmation.
+/// </summary>
 public class SimpleCardSelectScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NSimpleCardSelectScreen);

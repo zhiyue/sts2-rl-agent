@@ -21,7 +21,7 @@ public sealed class Panache : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<PanachePower>(base.Owner.Creature, base.DynamicVars["PanacheDamage"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<PanachePower>(choiceContext, base.Owner.Creature, base.DynamicVars["PanacheDamage"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

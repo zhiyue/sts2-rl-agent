@@ -6,6 +6,9 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Factories;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
+using MegaCrit.Sts2.Core.Models.Cards;
+using MegaCrit.Sts2.Core.Models.Characters;
+using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Models.Relics;
 
@@ -34,11 +37,19 @@ public sealed class LargeCapsule : RelicModel
 
 	private static CardModel GetStrikeForCharacter(CharacterModel character)
 	{
+		if (TestMode.IsOn && character is Deprived)
+		{
+			return ModelDb.Card<StrikeIronclad>();
+		}
 		return character.CardPool.AllCards.First((CardModel c) => c.Rarity == CardRarity.Basic && c.Tags.Contains(CardTag.Strike));
 	}
 
 	private static CardModel GetDefendForCharacter(CharacterModel character)
 	{
+		if (TestMode.IsOn && character is Deprived)
+		{
+			return ModelDb.Card<DefendIronclad>();
+		}
 		return character.CardPool.AllCards.First((CardModel c) => c.Rarity == CardRarity.Basic && c.Tags.Contains(CardTag.Defend));
 	}
 }

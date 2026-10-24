@@ -11,6 +11,9 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles the deck upgrade selection screen.
+/// </summary>
 public class DeckUpgradeScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NDeckUpgradeSelectScreen);

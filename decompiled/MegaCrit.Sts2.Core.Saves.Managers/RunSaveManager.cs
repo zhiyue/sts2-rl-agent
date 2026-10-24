@@ -29,9 +29,29 @@ public class RunSaveManager
 
 	private string CurrentMultiplayerRunSavePath => GetRunSavePath(_profileIdProvider.CurrentProfileId, "current_run_mp.save");
 
-	public bool HasRunSave => _saveStore.FileExists(CurrentRunSavePath);
+	public bool HasRunSave
+	{
+		get
+		{
+			if (!_saveStore.FileExists(CurrentRunSavePath))
+			{
+				return _saveStore.FileExists(CurrentRunSavePath + ".backup");
+			}
+			return true;
+		}
+	}
 
-	public bool HasMultiplayerRunSave => _saveStore.FileExists(CurrentMultiplayerRunSavePath);
+	public bool HasMultiplayerRunSave
+	{
+		get
+		{
+			if (!_saveStore.FileExists(CurrentMultiplayerRunSavePath))
+			{
+				return _saveStore.FileExists(CurrentMultiplayerRunSavePath + ".backup");
+			}
+			return true;
+		}
+	}
 
 	public int SchemaVersion => _migrationManager.GetLatestVersion<SerializableRun>();
 
@@ -50,24 +70,39 @@ public class RunSaveManager
 		_profileIdProvider = profileIdProvider;
 	}
 
+	/// <summary>
+	/// Save a run while one is currently in progress.
+	/// </summary>
+	/// <param name="preFinishedRoom"></param>
 	public async Task SaveRun(AbstractRoom? preFinishedRoom)
 	{
-		if (!RunManager.Instance.ShouldSave || (RunManager.Instance.NetService.Type != NetGameType.Singleplayer && RunManager.Instance.NetService.Type != NetGameType.Host))
+		if (RunManager.Instance.ShouldSave && (RunManager.Instance.NetService.Type == NetGameType.Singleplayer || RunManager.Instance.NetService.Type == NetGameType.Host))
 		{
-			return;
+			SerializableRun save = RunManager.Instance.ToSave(preFinishedRoom);
+			await SaveRun(save, RunManager.Instance.NetService.Type == NetGameType.Host);
 		}
-		SerializableRun value = RunManager.Instance.ToSave(preFinishedRoom);
-		string savePath = (RunManager.Instance.NetService.Type.IsMultiplayer() ? CurrentMultiplayerRunSavePath : CurrentRunSavePath);
+	}
+
+	/// <summary>
+	/// Save a run when you just have a SerializableRun field, independent of whether run manager has been set up yet.
+	/// WARNING: Only use this if you know what you are doing
+	/// This exists so we can resave a serializable run without already having a run in progress
+	/// Important for resaving SerializableRun.NumReloads right after we've started a run.
+	/// in most cases you should call the other SaveRun overload.
+	/// </summary>
+	public async Task SaveRun(SerializableRun save, bool isMultiplayer)
+	{
+		string savePath = (isMultiplayer ? CurrentMultiplayerRunSavePath : CurrentRunSavePath);
 		using MemoryStream stream = new MemoryStream();
 		if (!_forceSynchronous)
 		{
-			await JsonSerializer.SerializeAsync((Stream)stream, value, JsonSerializationUtility.GetTypeInfo<SerializableRun>(), default(CancellationToken));
+			await JsonSerializer.SerializeAsync((Stream)stream, save, JsonSerializationUtility.GetTypeInfo<SerializableRun>(), default(CancellationToken));
 			stream.Seek(0L, SeekOrigin.Begin);
 			await _saveStore.WriteFileAsync(savePath, stream.ToArray());
 		}
 		else
 		{
-			JsonSerializer.Serialize(stream, value, JsonSerializationUtility.GetTypeInfo<SerializableRun>());
+			JsonSerializer.Serialize(stream, save, JsonSerializationUtility.GetTypeInfo<SerializableRun>());
 			stream.Seek(0L, SeekOrigin.Begin);
 			_saveStore.WriteFile(savePath, stream.ToArray());
 		}
@@ -118,6 +153,12 @@ public class RunSaveManager
 		return readSaveResult;
 	}
 
+	/// <summary>
+	/// Loads the multiplayer run and canonicalizes it.
+	/// In this case, "canonicalize" means that we load the save, detect any deprecated content, and replace it with
+	/// the deprecated version of that model (e.g. <see cref="T:MegaCrit.Sts2.Core.Models.Events.DeprecatedEvent" />.)
+	/// </summary>
+	/// <param name="localPlayerId">The local player ID who is loading the save.</param>
 	public ReadSaveResult<SerializableRun> LoadAndCanonicalizeMultiplayerRunSave(ulong localPlayerId)
 	{
 		ReadSaveResult<SerializableRun> readSaveResult = LoadMultiplayerRunSave();
@@ -141,11 +182,13 @@ public class RunSaveManager
 	public void DeleteCurrentRun()
 	{
 		_saveStore.DeleteFile(CurrentRunSavePath);
+		_saveStore.DeleteFile(CurrentRunSavePath + ".backup");
 	}
 
 	public void DeleteCurrentMultiplayerRun()
 	{
 		_saveStore.DeleteFile(CurrentMultiplayerRunSavePath);
+		_saveStore.DeleteFile(CurrentMultiplayerRunSavePath + ".backup");
 	}
 
 	public void RenameBrokenMultiplayerRunSave(ReadSaveStatus status)
@@ -154,9 +197,19 @@ public class RunSaveManager
 		{
 			if (HasMultiplayerRunSave)
 			{
-				string text = CorruptFileHandler.GenerateCorruptFilePath(CurrentMultiplayerRunSavePath, status);
-				_saveStore.RenameFile(CurrentMultiplayerRunSavePath, text);
-				Log.Error($"Corrupt multiplayer run save detected: Renamed '{CurrentMultiplayerRunSavePath}' to '{text}'");
+				if (_saveStore.FileExists(CurrentMultiplayerRunSavePath))
+				{
+					string text = CorruptFileHandler.GenerateCorruptFilePath(CurrentMultiplayerRunSavePath, status);
+					_saveStore.RenameFile(CurrentMultiplayerRunSavePath, text);
+					Log.Error($"Corrupt multiplayer run save detected: Renamed '{CurrentMultiplayerRunSavePath}' to '{text}'");
+				}
+				string text2 = CurrentMultiplayerRunSavePath + ".backup";
+				if (_saveStore.FileExists(text2))
+				{
+					string text3 = CorruptFileHandler.GenerateCorruptFilePath(text2, status);
+					_saveStore.RenameFile(text2, text3);
+					Log.Error($"Corrupt multiplayer run backup detected: Renamed '{text2}' to '{text3}'");
+				}
 			}
 		}
 		catch (Exception ex)

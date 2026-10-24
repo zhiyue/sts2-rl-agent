@@ -7,9 +7,9 @@ namespace MegaCrit.Sts2.Core.GameActions.Multiplayer;
 
 public static class ActionTypes
 {
-	private static readonly NetTypeCache<INetAction> _cache;
+	private static NetTypeCache<INetAction>? _cache;
 
-	static ActionTypes()
+	public static void Initialize()
 	{
 		List<Type> list = new List<Type>();
 		list.AddRange(INetActionSubtypes.All);
@@ -19,21 +19,21 @@ public static class ActionTypes
 
 	public static int TypeToId<T>() where T : INetAction
 	{
-		return _cache.TypeToId<T>();
+		return (_cache ?? throw new InvalidOperationException()).TypeToId<T>();
 	}
 
 	private static int TypeToId(Type type)
 	{
-		return _cache.TypeToId(type);
+		return (_cache ?? throw new InvalidOperationException()).TypeToId(type);
 	}
 
 	public static int ToId(this INetAction message)
 	{
-		return _cache.TypeToId(message.GetType());
+		return (_cache ?? throw new InvalidOperationException()).TypeToId(message.GetType());
 	}
 
 	public static bool TryGetActionType(int id, out Type? type)
 	{
-		return _cache.TryGetTypeFromId(id, out type);
+		return (_cache ?? throw new InvalidOperationException()).TryGetTypeFromId(id, out type);
 	}
 }

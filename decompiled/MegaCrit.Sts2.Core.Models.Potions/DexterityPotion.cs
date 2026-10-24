@@ -26,6 +26,6 @@ public sealed class DexterityPotion : PotionModel
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
-		await PowerCmd.Apply<DexterityPower>(target, base.DynamicVars.Dexterity.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<DexterityPower>(choiceContext, target, base.DynamicVars.Dexterity.BaseValue, base.Owner.Creature, null);
 	}
 }

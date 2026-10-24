@@ -12,7 +12,7 @@ public sealed class JewelryBox : RelicModel
 {
 	public override RelicRarity Rarity => RelicRarity.Ancient;
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Apotheosis>());
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => HoverTipFactory.FromCardWithCardHoverTips<Apotheosis>();
 
 	public override bool HasUponPickupEffect => true;
 

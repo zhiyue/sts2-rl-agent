@@ -30,6 +30,8 @@ public sealed class SlipperyBridge : EventModel
 
 	private CardModel? _randomCardToLose;
 
+	private HashSet<CardModel>? _skippedRemovals;
+
 	private int NumberOfHoldOns
 	{
 		get
@@ -56,6 +58,19 @@ public sealed class SlipperyBridge : EventModel
 		}
 	}
 
+	private HashSet<CardModel>? SkippedRemovals
+	{
+		get
+		{
+			return _skippedRemovals;
+		}
+		set
+		{
+			AssertMutable();
+			_skippedRemovals = value;
+		}
+	}
+
 	private int CurrentHpLoss => 3 + NumberOfHoldOns;
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
@@ -64,7 +79,7 @@ public sealed class SlipperyBridge : EventModel
 		new DynamicVar("HpLoss", CurrentHpLoss)
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		if (runState.TotalFloor > 6)
 		{
@@ -90,8 +105,21 @@ public sealed class SlipperyBridge : EventModel
 
 	private void GetNewRandomCard()
 	{
-		List<CardModel> list = ((RandomCardToLose != null) ? base.Owner.Deck.Cards.Where((CardModel c) => c.GetType() != RandomCardToLose.GetType()).ToList() : base.Owner.Deck.Cards.Where((CardModel c) => c.Rarity != CardRarity.Basic).ToList());
-		list.RemoveAll((CardModel c) => !c.IsRemovable);
+		List<CardModel> list;
+		if (RandomCardToLose == null)
+		{
+			list = base.Owner.Deck.Cards.Where((CardModel c) => c.Rarity != CardRarity.Basic).ToList();
+		}
+		else
+		{
+			if (SkippedRemovals == null)
+			{
+				HashSet<CardModel> hashSet = (SkippedRemovals = new HashSet<CardModel>());
+			}
+			SkippedRemovals.Add(RandomCardToLose);
+			list = base.Owner.Deck.Cards.Where((CardModel c) => c.GetType() != RandomCardToLose.GetType()).ToList();
+		}
+		list.RemoveAll((CardModel c) => !c.IsRemovable || (SkippedRemovals?.Contains(c) ?? false));
 		if (list.Count == 0)
 		{
 			list = base.Owner.Deck.Cards.Where((CardModel c) => c.IsRemovable).ToList();

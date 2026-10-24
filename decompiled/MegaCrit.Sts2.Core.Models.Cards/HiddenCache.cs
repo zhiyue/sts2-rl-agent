@@ -25,7 +25,7 @@ public sealed class HiddenCache : CardModel
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		await PlayerCmd.GainStars(base.DynamicVars.Stars.BaseValue, base.Owner);
-		await PowerCmd.Apply<StarNextTurnPower>(base.Owner.Creature, base.DynamicVars["StarNextTurnPower"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<StarNextTurnPower>(choiceContext, base.Owner.Creature, base.DynamicVars["StarNextTurnPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

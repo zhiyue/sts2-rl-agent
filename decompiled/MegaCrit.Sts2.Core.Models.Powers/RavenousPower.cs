@@ -30,7 +30,7 @@ public sealed class RavenousPower : PowerModel
 			await CreatureCmd.TriggerAnim(base.Owner, "DevourStartTrigger", 0.5f);
 			((CorpseSlug)base.Owner.Monster).IsRavenous = true;
 			await CreatureCmd.Stun(base.Owner, StunnedMove);
-			await PowerCmd.Apply<StrengthPower>(base.Owner, base.Amount, base.Owner, null);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner, base.Amount, base.Owner, null);
 		}
 	}
 

@@ -46,6 +46,10 @@ public class SettingsSaveManager
 		return readSaveResult;
 	}
 
+	/// <summary>
+	/// Applies platform-specific default settings when a settings file is recreated.
+	/// </summary>
+	/// <param name="settings">The settings object to apply defaults to</param>
 	private void ApplyPlatformDefaults(SettingsSave settings)
 	{
 		if (SteamInitializer.Initialized && SteamUtils.IsSteamRunningOnSteamDeck())

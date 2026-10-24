@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
+using Godot.Collections;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Helpers;
@@ -14,50 +15,126 @@ namespace MegaCrit.Sts2.Core.Debug;
 [ScriptPath("res://src/Core/Debug/NCombatVfxSpawner.cs")]
 public class NCombatVfxSpawner : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'GetRandomColor' method.
+		/// </summary>
 		public static readonly StringName GetRandomColor = "GetRandomColor";
 
+		/// <summary>
+		/// Cached name for the 'TestFunctionA' method.
+		/// </summary>
 		public static readonly StringName TestFunctionA = "TestFunctionA";
 
+		/// <summary>
+		/// Cached name for the 'TestFunctionB' method.
+		/// </summary>
 		public static readonly StringName TestFunctionB = "TestFunctionB";
 
+		/// <summary>
+		/// Cached name for the 'TestFunctionC' method.
+		/// </summary>
 		public static readonly StringName TestFunctionC = "TestFunctionC";
 
+		/// <summary>
+		/// Cached name for the 'SpawnVfx' method.
+		/// </summary>
 		public static readonly StringName SpawnVfx = "SpawnVfx";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_backCombatVfxContainer' field.
+		/// </summary>
 		public static readonly StringName _backCombatVfxContainer = "_backCombatVfxContainer";
 
+		/// <summary>
+		/// Cached name for the '_combatVfxContainer' field.
+		/// </summary>
 		public static readonly StringName _combatVfxContainer = "_combatVfxContainer";
 
+		/// <summary>
+		/// Cached name for the '_env' field.
+		/// </summary>
 		public static readonly StringName _env = "_env";
 
+		/// <summary>
+		/// Cached name for the '_playerTopPosition' field.
+		/// </summary>
+		public static readonly StringName _playerTopPosition = "_playerTopPosition";
+
+		/// <summary>
+		/// Cached name for the '_playerPosition' field.
+		/// </summary>
 		public static readonly StringName _playerPosition = "_playerPosition";
 
+		/// <summary>
+		/// Cached name for the '_playerGroundPosition' field.
+		/// </summary>
 		public static readonly StringName _playerGroundPosition = "_playerGroundPosition";
 
+		/// <summary>
+		/// Cached name for the '_enemyTopPosition' field.
+		/// </summary>
+		public static readonly StringName _enemyTopPosition = "_enemyTopPosition";
+
+		/// <summary>
+		/// Cached name for the '_enemyPosition' field.
+		/// </summary>
 		public static readonly StringName _enemyPosition = "_enemyPosition";
 
+		/// <summary>
+		/// Cached name for the '_enemyGroundPosition' field.
+		/// </summary>
 		public static readonly StringName _enemyGroundPosition = "_enemyGroundPosition";
 
+		/// <summary>
+		/// Cached name for the '_defectEyePosition' field.
+		/// </summary>
 		public static readonly StringName _defectEyePosition = "_defectEyePosition";
 
+		/// <summary>
+		/// Cached name for the '_lowHpBorderVfx' field.
+		/// </summary>
 		public static readonly StringName _lowHpBorderVfx = "_lowHpBorderVfx";
 
+		/// <summary>
+		/// Cached name for the '_gaseousScreenVfx' field.
+		/// </summary>
 		public static readonly StringName _gaseousScreenVfx = "_gaseousScreenVfx";
 
+		/// <summary>
+		/// Cached name for the '_shiftPressed' field.
+		/// </summary>
 		public static readonly StringName _shiftPressed = "_shiftPressed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -71,10 +148,16 @@ public class NCombatVfxSpawner : Control
 	private WorldEnvironment _env;
 
 	[Export(PropertyHint.None, "")]
+	private Node2D _playerTopPosition;
+
+	[Export(PropertyHint.None, "")]
 	private Node2D _playerPosition;
 
 	[Export(PropertyHint.None, "")]
 	private Node2D _playerGroundPosition;
+
+	[Export(PropertyHint.None, "")]
+	private Node2D _enemyTopPosition;
 
 	[Export(PropertyHint.None, "")]
 	private Node2D _enemyPosition;
@@ -128,12 +211,13 @@ public class NCombatVfxSpawner : Control
 
 	private void TestFunctionA(bool shiftPressed)
 	{
-		_lowHpBorderVfx.Play();
+		NSweepingBeamVfx child = NSweepingBeamVfx.Create(_defectEyePosition.GlobalPosition, new Array<Vector2> { _enemyPosition.GlobalPosition });
+		_combatVfxContainer.AddChildSafely(child);
 	}
 
 	private void TestFunctionB(bool shiftPressed)
 	{
-		_gaseousScreenVfx.Play();
+		TaskHelper.RunSafely(PlayingGrandFinale());
 	}
 
 	private void TestFunctionC(bool shiftPressed)
@@ -166,6 +250,20 @@ public class NCombatVfxSpawner : Control
 		_combatVfxContainer.AddChildSafely(child2);
 	}
 
+	private async Task PlayingGrandFinale()
+	{
+		NGrandFinaleVfx child = NGrandFinaleVfx.Create(_playerPosition.GlobalPosition);
+		_combatVfxContainer.AddChildSafely(child);
+		await Cmd.Wait(NGrandFinaleVfx.totalAnticipationDuration);
+		NGrandFinaleImpactVfx child2 = NGrandFinaleImpactVfx.Create(_enemyPosition.GlobalPosition, _enemyGroundPosition.GlobalPosition);
+		_combatVfxContainer.AddChildSafely(child2);
+	}
+
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -196,6 +294,7 @@ public class NCombatVfxSpawner : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -261,6 +360,7 @@ public class NCombatVfxSpawner : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -299,6 +399,7 @@ public class NCombatVfxSpawner : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -317,6 +418,11 @@ public class NCombatVfxSpawner : Control
 			_env = VariantUtils.ConvertTo<WorldEnvironment>(in value);
 			return true;
 		}
+		if (name == PropertyName._playerTopPosition)
+		{
+			_playerTopPosition = VariantUtils.ConvertTo<Node2D>(in value);
+			return true;
+		}
 		if (name == PropertyName._playerPosition)
 		{
 			_playerPosition = VariantUtils.ConvertTo<Node2D>(in value);
@@ -325,6 +431,11 @@ public class NCombatVfxSpawner : Control
 		if (name == PropertyName._playerGroundPosition)
 		{
 			_playerGroundPosition = VariantUtils.ConvertTo<Node2D>(in value);
+			return true;
+		}
+		if (name == PropertyName._enemyTopPosition)
+		{
+			_enemyTopPosition = VariantUtils.ConvertTo<Node2D>(in value);
 			return true;
 		}
 		if (name == PropertyName._enemyPosition)
@@ -360,6 +471,7 @@ public class NCombatVfxSpawner : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -378,6 +490,11 @@ public class NCombatVfxSpawner : Control
 			value = VariantUtils.CreateFrom(in _env);
 			return true;
 		}
+		if (name == PropertyName._playerTopPosition)
+		{
+			value = VariantUtils.CreateFrom(in _playerTopPosition);
+			return true;
+		}
 		if (name == PropertyName._playerPosition)
 		{
 			value = VariantUtils.CreateFrom(in _playerPosition);
@@ -386,6 +503,11 @@ public class NCombatVfxSpawner : Control
 		if (name == PropertyName._playerGroundPosition)
 		{
 			value = VariantUtils.CreateFrom(in _playerGroundPosition);
+			return true;
+		}
+		if (name == PropertyName._enemyTopPosition)
+		{
+			value = VariantUtils.CreateFrom(in _enemyTopPosition);
 			return true;
 		}
 		if (name == PropertyName._enemyPosition)
@@ -421,6 +543,11 @@ public class NCombatVfxSpawner : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -428,8 +555,10 @@ public class NCombatVfxSpawner : Control
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._backCombatVfxContainer, PropertyHint.NodeType, "Node2D", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._combatVfxContainer, PropertyHint.NodeType, "Control", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._env, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._playerTopPosition, PropertyHint.NodeType, "Node2D", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._playerPosition, PropertyHint.NodeType, "Node2D", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._playerGroundPosition, PropertyHint.NodeType, "Node2D", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._enemyTopPosition, PropertyHint.NodeType, "Node2D", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._enemyPosition, PropertyHint.NodeType, "Node2D", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._enemyGroundPosition, PropertyHint.NodeType, "Node2D", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._defectEyePosition, PropertyHint.NodeType, "Node2D", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
@@ -439,6 +568,7 @@ public class NCombatVfxSpawner : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -446,8 +576,10 @@ public class NCombatVfxSpawner : Control
 		info.AddProperty(PropertyName._backCombatVfxContainer, Variant.From(in _backCombatVfxContainer));
 		info.AddProperty(PropertyName._combatVfxContainer, Variant.From(in _combatVfxContainer));
 		info.AddProperty(PropertyName._env, Variant.From(in _env));
+		info.AddProperty(PropertyName._playerTopPosition, Variant.From(in _playerTopPosition));
 		info.AddProperty(PropertyName._playerPosition, Variant.From(in _playerPosition));
 		info.AddProperty(PropertyName._playerGroundPosition, Variant.From(in _playerGroundPosition));
+		info.AddProperty(PropertyName._enemyTopPosition, Variant.From(in _enemyTopPosition));
 		info.AddProperty(PropertyName._enemyPosition, Variant.From(in _enemyPosition));
 		info.AddProperty(PropertyName._enemyGroundPosition, Variant.From(in _enemyGroundPosition));
 		info.AddProperty(PropertyName._defectEyePosition, Variant.From(in _defectEyePosition));
@@ -456,6 +588,7 @@ public class NCombatVfxSpawner : Control
 		info.AddProperty(PropertyName._shiftPressed, Variant.From(in _shiftPressed));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -472,37 +605,45 @@ public class NCombatVfxSpawner : Control
 		{
 			_env = value3.As<WorldEnvironment>();
 		}
-		if (info.TryGetProperty(PropertyName._playerPosition, out var value4))
+		if (info.TryGetProperty(PropertyName._playerTopPosition, out var value4))
 		{
-			_playerPosition = value4.As<Node2D>();
+			_playerTopPosition = value4.As<Node2D>();
 		}
-		if (info.TryGetProperty(PropertyName._playerGroundPosition, out var value5))
+		if (info.TryGetProperty(PropertyName._playerPosition, out var value5))
 		{
-			_playerGroundPosition = value5.As<Node2D>();
+			_playerPosition = value5.As<Node2D>();
 		}
-		if (info.TryGetProperty(PropertyName._enemyPosition, out var value6))
+		if (info.TryGetProperty(PropertyName._playerGroundPosition, out var value6))
 		{
-			_enemyPosition = value6.As<Node2D>();
+			_playerGroundPosition = value6.As<Node2D>();
 		}
-		if (info.TryGetProperty(PropertyName._enemyGroundPosition, out var value7))
+		if (info.TryGetProperty(PropertyName._enemyTopPosition, out var value7))
 		{
-			_enemyGroundPosition = value7.As<Node2D>();
+			_enemyTopPosition = value7.As<Node2D>();
 		}
-		if (info.TryGetProperty(PropertyName._defectEyePosition, out var value8))
+		if (info.TryGetProperty(PropertyName._enemyPosition, out var value8))
 		{
-			_defectEyePosition = value8.As<Node2D>();
+			_enemyPosition = value8.As<Node2D>();
 		}
-		if (info.TryGetProperty(PropertyName._lowHpBorderVfx, out var value9))
+		if (info.TryGetProperty(PropertyName._enemyGroundPosition, out var value9))
 		{
-			_lowHpBorderVfx = value9.As<NLowHpBorderVfx>();
+			_enemyGroundPosition = value9.As<Node2D>();
 		}
-		if (info.TryGetProperty(PropertyName._gaseousScreenVfx, out var value10))
+		if (info.TryGetProperty(PropertyName._defectEyePosition, out var value10))
 		{
-			_gaseousScreenVfx = value10.As<NGaseousScreenVfx>();
+			_defectEyePosition = value10.As<Node2D>();
 		}
-		if (info.TryGetProperty(PropertyName._shiftPressed, out var value11))
+		if (info.TryGetProperty(PropertyName._lowHpBorderVfx, out var value11))
 		{
-			_shiftPressed = value11.As<bool>();
+			_lowHpBorderVfx = value11.As<NLowHpBorderVfx>();
+		}
+		if (info.TryGetProperty(PropertyName._gaseousScreenVfx, out var value12))
+		{
+			_gaseousScreenVfx = value12.As<NGaseousScreenVfx>();
+		}
+		if (info.TryGetProperty(PropertyName._shiftPressed, out var value13))
+		{
+			_shiftPressed = value13.As<bool>();
 		}
 	}
 }

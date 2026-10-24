@@ -99,42 +99,99 @@ internal class GameInfoUploaderSerializerContext : JsonSerializerContext, IJsonT
 
 	private static readonly JsonEncodedText PropName_options = JsonEncodedText.Encode("options");
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<bool> Boolean => _Boolean ?? (_Boolean = (JsonTypeInfo<bool>)base.Options.GetTypeInfo(typeof(bool)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<ModelId> ModelId => _ModelId ?? (_ModelId = (JsonTypeInfo<ModelId>)base.Options.GetTypeInfo(typeof(ModelId)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<AncientChoiceInfo> AncientChoiceInfo => _AncientChoiceInfo ?? (_AncientChoiceInfo = (JsonTypeInfo<AncientChoiceInfo>)base.Options.GetTypeInfo(typeof(AncientChoiceInfo)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<CardInfo> CardInfo => _CardInfo ?? (_CardInfo = (JsonTypeInfo<CardInfo>)base.Options.GetTypeInfo(typeof(CardInfo)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<DailyMods> DailyMods => _DailyMods ?? (_DailyMods = (JsonTypeInfo<DailyMods>)base.Options.GetTypeInfo(typeof(DailyMods)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<EnchantmentInfo> EnchantmentInfo => _EnchantmentInfo ?? (_EnchantmentInfo = (JsonTypeInfo<EnchantmentInfo>)base.Options.GetTypeInfo(typeof(EnchantmentInfo)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<EncounterInfo> EncounterInfo => _EncounterInfo ?? (_EncounterInfo = (JsonTypeInfo<EncounterInfo>)base.Options.GetTypeInfo(typeof(EncounterInfo)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<MegaCrit.Sts2.GameInfo.Objects.EventInfo> EventInfo => _EventInfo ?? (_EventInfo = (JsonTypeInfo<MegaCrit.Sts2.GameInfo.Objects.EventInfo>)base.Options.GetTypeInfo(typeof(MegaCrit.Sts2.GameInfo.Objects.EventInfo)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<IGameInfo> IGameInfo => _IGameInfo ?? (_IGameInfo = (JsonTypeInfo<IGameInfo>)base.Options.GetTypeInfo(typeof(IGameInfo)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<Keywords> Keywords => _Keywords ?? (_Keywords = (JsonTypeInfo<Keywords>)base.Options.GetTypeInfo(typeof(Keywords)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<NeowBonusInfo> NeowBonusInfo => _NeowBonusInfo ?? (_NeowBonusInfo = (JsonTypeInfo<NeowBonusInfo>)base.Options.GetTypeInfo(typeof(NeowBonusInfo)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<PotionInfo> PotionInfo => _PotionInfo ?? (_PotionInfo = (JsonTypeInfo<PotionInfo>)base.Options.GetTypeInfo(typeof(PotionInfo)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<RelicInfo> RelicInfo => _RelicInfo ?? (_RelicInfo = (JsonTypeInfo<RelicInfo>)base.Options.GetTypeInfo(typeof(RelicInfo)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<List<IGameInfo>> ListIGameInfo => _ListIGameInfo ?? (_ListIGameInfo = (JsonTypeInfo<List<IGameInfo>>)base.Options.GetTypeInfo(typeof(List<IGameInfo>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<List<string>> ListString => _ListString ?? (_ListString = (JsonTypeInfo<List<string>>)base.Options.GetTypeInfo(typeof(List<string>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<int> Int32 => _Int32 ?? (_Int32 = (JsonTypeInfo<int>)base.Options.GetTypeInfo(typeof(int)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<string> String => _String ?? (_String = (JsonTypeInfo<string>)base.Options.GetTypeInfo(typeof(string)));
 
+	/// <summary>
+	/// The default <see cref="T:System.Text.Json.Serialization.JsonSerializerContext" /> associated with a default <see cref="T:System.Text.Json.JsonSerializerOptions" /> instance.
+	/// </summary>
 	public static GameInfoUploaderSerializerContext Default { get; } = new GameInfoUploaderSerializerContext(new JsonSerializerOptions(s_defaultOptions));
 
+	/// <summary>
+	/// The source-generated options associated with this context.
+	/// </summary>
 	protected override JsonSerializerOptions? GeneratedSerializerOptions { get; } = s_defaultOptions;
 
 	private JsonTypeInfo<bool> Create_Boolean(JsonSerializerOptions options)
@@ -2936,11 +2993,13 @@ internal class GameInfoUploaderSerializerContext : JsonSerializerContext, IJsonT
 		return jsonTypeInfo;
 	}
 
+	/// <inheritdoc />
 	public GameInfoUploaderSerializerContext()
 		: base(null)
 	{
 	}
 
+	/// <inheritdoc />
 	public GameInfoUploaderSerializerContext(JsonSerializerOptions options)
 		: base(options)
 	{
@@ -2988,6 +3047,7 @@ internal class GameInfoUploaderSerializerContext : JsonSerializerContext, IJsonT
 		return converter;
 	}
 
+	/// <inheritdoc />
 	public override JsonTypeInfo? GetTypeInfo(Type type)
 	{
 		base.Options.TryGetTypeInfo(type, out JsonTypeInfo typeInfo);

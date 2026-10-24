@@ -98,6 +98,11 @@ public sealed class HealRestSiteOption : RestSiteOption
 		NDebugAudioManager.Instance?.Play("SOTE_SFX_SleepBlanket_v1.mp3", 1f, PitchVariance.Small);
 	}
 
+	/// <summary>
+	/// Heals the player's creature and offers rewards if applicable.
+	/// This is public because <see cref="M:MegaCrit.Sts2.Core.Commands.PlayerCmd.MimicRestSiteHeal(MegaCrit.Sts2.Core.Entities.Players.Player,System.Boolean)" /> calls it for mimicking rest site heals
+	/// (for example, for <see cref="T:MegaCrit.Sts2.Core.Models.Events.DenseVegetation" />'s Rest option).
+	/// </summary>
 	public static async Task ExecuteRestSiteHeal(Player player, bool isMimicked)
 	{
 		await CreatureCmd.Heal(player.Creature, GetHealAmount(player));

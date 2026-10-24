@@ -7,18 +7,20 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Audio;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class WaterfallGiant : MonsterModel
 {
+	private const string _siphonMove = "SIPHON_MOVE";
+
 	private const string _waterfallGiantTrackName = "waterfall_giant_progress";
 
 	private const int _endCombatBgmFlag = 5;
@@ -63,9 +65,11 @@ public sealed class WaterfallGiant : MonsterModel
 
 	private const string _ambientSfx = "event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient";
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 260, 250);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 250, 240);
 
 	public override int MaxInitialHp => MinInitialHp;
+
+	public int SiphonHeal => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 15, 10);
 
 	private int PressurizeAmount => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 20, 15);
 
@@ -80,8 +84,6 @@ public sealed class WaterfallGiant : MonsterModel
 	public override bool ShouldDisappearFromDoom => !base.Creature.HasPower<SteamEruptionPower>();
 
 	private int PressureGunIncrease => 5;
-
-	private int SiphonHeal => 15;
 
 	private int CurrentPressureGunDamage
 	{
@@ -158,17 +160,22 @@ public sealed class WaterfallGiant : MonsterModel
 	{
 		await base.AfterAddedToRoom();
 		CurrentPressureGunDamage = BasePressureGunDamage;
-		SfxCmd.PlayLoop("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient", usesLoopParam: false);
-		base.Creature.Died += AfterDeath;
+		SfxCmd.PlayLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient", "waterfall_giant_sfx", 2f);
 	}
 
-	private void AfterDeath(Creature _)
+	public override Task AfterDeath(PlayerChoiceContext choiceContext, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
 	{
-		if (!base.Creature.HasPower<SteamEruptionPower>())
+		if (creature != base.Creature)
 		{
-			base.Creature.Died -= AfterDeath;
-			NRunMusicController.Instance?.UpdateMusicParameter("waterfall_giant_progress", 5f);
+			return Task.CompletedTask;
 		}
+		if (base.Creature.HasPower<SteamEruptionPower>())
+		{
+			return Task.CompletedTask;
+		}
+		NRunMusicController.Instance?.UpdateMusicParameter("waterfall_giant_progress", 5f);
+		StopAmbientSfx();
+		return Task.CompletedTask;
 	}
 
 	public override void BeforeRemovedFromRoom()
@@ -178,8 +185,7 @@ public sealed class WaterfallGiant : MonsterModel
 
 	private void StopAmbientSfx()
 	{
-		SfxCmd.SetParam("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient", "waterfall_giant_sfx", 2f);
-		SfxCmd.StopLoop("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient");
+		SfxCmd.StopLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient");
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -219,7 +225,7 @@ public sealed class WaterfallGiant : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_eruption");
 		await CreatureCmd.TriggerAnim(base.Creature, "Heal", 0.8f);
-		await PowerCmd.Apply<SteamEruptionPower>(base.Creature, PressurizeAmount, base.Creature, null);
+		await PowerCmd.Apply<SteamEruptionPower>(new ThrowingPlayerChoiceContext(), base.Creature, PressurizeAmount, base.Creature, null);
 		IncrementBuildUpAnimationTrack();
 	}
 
@@ -229,7 +235,7 @@ public sealed class WaterfallGiant : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_attack_stomp")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<SteamEruptionPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<SteamEruptionPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 		IncrementBuildUpAnimationTrack();
 	}
 
@@ -239,8 +245,8 @@ public sealed class WaterfallGiant : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_attack_stomp")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<WeakPower>(targets, 1m, base.Creature, null);
-		await PowerCmd.Apply<SteamEruptionPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<SteamEruptionPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 		IncrementBuildUpAnimationTrack();
 	}
 
@@ -250,7 +256,7 @@ public sealed class WaterfallGiant : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_attack_kick")
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<SteamEruptionPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<SteamEruptionPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 		IncrementBuildUpAnimationTrack();
 	}
 
@@ -259,7 +265,7 @@ public sealed class WaterfallGiant : MonsterModel
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_eruption");
 		await CreatureCmd.TriggerAnim(base.Creature, "Heal", 0.8f);
 		await CreatureCmd.Heal(base.Creature, SiphonHeal * base.Creature.CombatState.Players.Count);
-		await PowerCmd.Apply<SteamEruptionPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<SteamEruptionPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 		IncrementBuildUpAnimationTrack();
 	}
 
@@ -270,7 +276,7 @@ public sealed class WaterfallGiant : MonsterModel
 			.WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
 		CurrentPressureGunDamage += PressureGunIncrease;
-		await PowerCmd.Apply<SteamEruptionPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<SteamEruptionPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 		IncrementBuildUpAnimationTrack();
 	}
 
@@ -296,23 +302,29 @@ public sealed class WaterfallGiant : MonsterModel
 	{
 		IsAboutToBlow = true;
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_knockout");
-		NRunMusicController.Instance?.UpdateMusicParameter("waterfall_giant_progress", 2f);
 		await CreatureCmd.SetMaxAndCurrentHp(base.Creature, 999999999m);
-		base.Creature.ShowsInfiniteHp = true;
+		base.Creature.HpDisplay = HpDisplay.InfiniteWithoutNumbers;
 		SetMoveImmediate(AboutToBlowState, forceTransition: true);
-		SfxCmd.SetParam("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient", "waterfall_giant_sfx", 3f);
+		if (base.CombatState.IsLiveCombat())
+		{
+			NRunMusicController.Instance?.UpdateMusicParameter("waterfall_giant_progress", 2f);
+			SfxCmd.SetParam("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient", "waterfall_giant_sfx", 3f);
+		}
 	}
 
 	private void IncrementBuildUpAnimationTrack()
 	{
 		if (TestMode.IsOff)
 		{
-			NRunMusicController.Instance?.UpdateMusicParameter("waterfall_giant_progress", 1f);
-			SfxCmd.SetParam("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient", "waterfall_giant_sfx", 1f);
+			if (base.CombatState.IsLiveCombat())
+			{
+				NRunMusicController.Instance?.UpdateMusicParameter("waterfall_giant_progress", 1f);
+				SfxCmd.SetParam("event:/sfx/enemy/enemy_attacks/waterfall_giant/waterfall_giant_ambient", "waterfall_giant_sfx", 1f);
+			}
 			PressureBuildupIdx++;
 			int value = Mathf.FloorToInt((float)PressureBuildupIdx * 0.5f);
 			value = Mathf.Clamp(value, 1, 3);
-			NCombatRoom.Instance.GetCreatureNode(base.Creature)?.SpineController.GetAnimationState().SetAnimation($"_tracks/buildup{value}", loop: true, 1);
+			base.Creature.GetCreatureNode()?.SpineAnimation.SetAnimation($"_tracks/buildup{value}", loop: true, 1);
 		}
 	}
 
@@ -345,5 +357,10 @@ public sealed class WaterfallGiant : MonsterModel
 		creatureAnimator.AddAnyState("Heal", animState6);
 		creatureAnimator.AddAnyState("Erupt", state);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "SIPHON_MOVE";
 	}
 }

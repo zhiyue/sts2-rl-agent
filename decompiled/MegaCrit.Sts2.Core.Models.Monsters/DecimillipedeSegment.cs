@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -18,7 +19,7 @@ using MegaCrit.Sts2.Core.MonsterMoves;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
@@ -31,6 +32,8 @@ public abstract class DecimillipedeSegment : MonsterModel
 
 	private MoveState _deadState;
 
+	public static readonly string rocksVfxPath = SceneHelper.GetScenePath("vfx/vfx_decimillipede_rocks");
+
 	private const string _healSfx = "event:/sfx/enemy/enemy_attacks/decimillipede/decimillipede_heal";
 
 	private const string _attackTriple = "event:/sfx/enemy/enemy_attacks/decimillipede/decimillipede_attack_triple";
@@ -38,6 +41,10 @@ public abstract class DecimillipedeSegment : MonsterModel
 	private const string _attackBuff = "event:/sfx/enemy/enemy_attacks/decimillipede/decimillipede_attack_buff";
 
 	private const string _attackWeaken = "event:/sfx/enemy/enemy_attacks/decimillipede/decimillipede_attack_weaken";
+
+	private string PhobiaModeAliveTexture => ImageHelper.GetImagePath("monsters/phobia_mode/" + base.Id.Entry.ToLowerInvariant() + "_phobia.png");
+
+	private string PhobiaModeDeadTexture => ImageHelper.GetImagePath("monsters/phobia_mode/" + base.Id.Entry.ToLowerInvariant() + "_shriveled_phobia.png");
 
 	public override LocString Title => MonsterModel.L10NMonsterLookup("DECIMILLIPEDE_SEGMENT.name");
 
@@ -54,9 +61,9 @@ public abstract class DecimillipedeSegment : MonsterModel
 		}
 	}
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 48, 42);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 46, 40);
 
-	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 56, 48);
+	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 52, 46);
 
 	private int WritheDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 6, 5);
 
@@ -85,9 +92,9 @@ public abstract class DecimillipedeSegment : MonsterModel
 
 	public override bool ShouldDisappearFromDoom => false;
 
-	public override bool CanChangeScale => false;
+	public override bool ShouldShowInCompendium => false;
 
-	private static string RocksVfxPath => SceneHelper.GetScenePath("vfx/vfx_decimillipede_rocks");
+	public override bool CanChangeScale => false;
 
 	public override string DeathSfx => "event:/sfx/enemy/enemy_attacks/decimillipede/decimillipede_die";
 
@@ -95,12 +102,16 @@ public abstract class DecimillipedeSegment : MonsterModel
 	{
 		get
 		{
-			int num = 1;
+			int num = 3;
 			List<string> list = new List<string>(num);
 			CollectionsMarshal.SetCount(list, num);
 			Span<string> span = CollectionsMarshal.AsSpan(list);
-			int index = 0;
-			span[index] = RocksVfxPath;
+			int num2 = 0;
+			span[num2] = rocksVfxPath;
+			num2++;
+			span[num2] = PhobiaModeAliveTexture;
+			num2++;
+			span[num2] = PhobiaModeDeadTexture;
 			List<string> first = list;
 			return first.Concat(base.AssetPaths);
 		}
@@ -129,7 +140,7 @@ public abstract class DecimillipedeSegment : MonsterModel
 			}
 		}
 		await CreatureCmd.SetMaxAndCurrentHp(base.Creature, maxHp);
-		await PowerCmd.Apply<ReattachPower>(base.Creature, 25m, base.Creature, null);
+		await PowerCmd.Apply<ReattachPower>(new ThrowingPlayerChoiceContext(), base.Creature, 25m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -181,7 +192,7 @@ public abstract class DecimillipedeSegment : MonsterModel
 		await AnimSegmentsAttack();
 		await DamageCmd.Attack(BulkDamage).FromMonster(this).WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, BulkStrength, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, BulkStrength, base.Creature, null);
 	}
 
 	private async Task ConstrictMove(IReadOnlyList<Creature> targets)
@@ -190,7 +201,7 @@ public abstract class DecimillipedeSegment : MonsterModel
 		await AnimSegmentsAttack();
 		await DamageCmd.Attack(ConstrictDamage).FromMonster(this).WithHitFx("vfx/vfx_attack_blunt")
 			.Execute(null);
-		await PowerCmd.Apply<WeakPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
 	}
 
 	private Task DeadMove(IReadOnlyList<Creature> targets)
@@ -201,7 +212,11 @@ public abstract class DecimillipedeSegment : MonsterModel
 	private async Task ReattachMove(IReadOnlyList<Creature> targets)
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/decimillipede/decimillipede_heal");
-		await base.Creature.GetPower<ReattachPower>().DoReattach();
+		if (base.CombatState.IsLiveCombat())
+		{
+			await base.Creature.GetPower<ReattachPower>().DoReattach();
+		}
+		ChangePhobiaModeTexture(ResourceLoader.Load<Texture2D>(PhobiaModeAliveTexture, null, ResourceLoader.CacheMode.Reuse));
 	}
 
 	private async Task AnimSegmentsAttack()
@@ -217,10 +232,33 @@ public abstract class DecimillipedeSegment : MonsterModel
 		{
 			((DecimillipedeSegment)item.Monster).SegmentAttack();
 		}
-		Node2D node2D = PreloadManager.Cache.GetScene(RocksVfxPath).Instantiate<Node2D>(PackedScene.GenEditState.Disabled);
-		NCombatRoom.Instance.CombatVfxContainer.AddChildSafely(node2D);
-		node2D.GlobalPosition = NGame.Instance.GetViewportRect().Size / 2f;
+		Node2D node2D = PreloadManager.Cache.GetScene(rocksVfxPath).Instantiate<Node2D>(PackedScene.GenEditState.Disabled);
+		base.Creature.GetVfxContainer()?.AddChildSafely(node2D);
+		node2D.GlobalPosition = NGame.Instance.GetViewportRect().Size * 0.5f;
 		await Cmd.Wait(0.5f);
+	}
+
+	public override Task AfterDeath(PlayerChoiceContext choiceContext, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
+	{
+		if (creature != base.Creature)
+		{
+			return Task.CompletedTask;
+		}
+		if (TestMode.IsOn)
+		{
+			return Task.CompletedTask;
+		}
+		ChangePhobiaModeTexture(ResourceLoader.Load<Texture2D>(PhobiaModeDeadTexture, null, ResourceLoader.CacheMode.Reuse));
+		return Task.CompletedTask;
+	}
+
+	private void ChangePhobiaModeTexture(Texture2D tex)
+	{
+		NCreature creatureNode = base.Creature.GetCreatureNode();
+		if (creatureNode != null && creatureNode.Visuals.IsUsingPhobiaModeBody)
+		{
+			((Sprite2D)creatureNode.Body).Texture = tex;
+		}
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
@@ -240,5 +278,5 @@ public abstract class DecimillipedeSegment : MonsterModel
 		return creatureAnimator;
 	}
 
-	protected abstract void SegmentAttack();
+	public abstract void SegmentAttack();
 }

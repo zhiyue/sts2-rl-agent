@@ -13,6 +13,9 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Audio.Debug;
 
+/// <summary>
+/// Audio manager for use with temporary sound effects (hopefully they make it into FMOD someday).
+/// </summary>
 [ScriptPath("res://src/Core/Audio/Debug/NDebugAudioManager.cs")]
 public class NDebugAudioManager : Node
 {
@@ -25,32 +28,76 @@ public class NDebugAudioManager : Node
 		public Callable callable;
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Play' method.
+		/// </summary>
 		public static readonly StringName Play = "Play";
 
+		/// <summary>
+		/// Cached name for the 'StopAll' method.
+		/// </summary>
+		public static readonly StringName StopAll = "StopAll";
+
+		/// <summary>
+		/// Cached name for the 'Stop' method.
+		/// </summary>
 		public static readonly StringName Stop = "Stop";
 
+		/// <summary>
+		/// Cached name for the 'StopInternalById' method.
+		/// </summary>
 		public static readonly StringName StopInternalById = "StopInternalById";
 
+		/// <summary>
+		/// Cached name for the 'StopInternal' method.
+		/// </summary>
 		public static readonly StringName StopInternal = "StopInternal";
 
+		/// <summary>
+		/// Cached name for the 'SetMasterAudioVolume' method.
+		/// </summary>
 		public static readonly StringName SetMasterAudioVolume = "SetMasterAudioVolume";
 
+		/// <summary>
+		/// Cached name for the 'SetSfxAudioVolume' method.
+		/// </summary>
 		public static readonly StringName SetSfxAudioVolume = "SetSfxAudioVolume";
 
+		/// <summary>
+		/// Cached name for the 'PlayerFinished' method.
+		/// </summary>
 		public static readonly StringName PlayerFinished = "PlayerFinished";
 
+		/// <summary>
+		/// Cached name for the 'GetRandomPitchScale' method.
+		/// </summary>
 		public static readonly StringName GetRandomPitchScale = "GetRandomPitchScale";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_nextId' field.
+		/// </summary>
 		public static readonly StringName _nextId = "_nextId";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -72,6 +119,14 @@ public class NDebugAudioManager : Node
 		_freeAudioPlayers.AddRange(GetChildren().OfType<AudioStreamPlayer>());
 	}
 
+	/// <summary>
+	/// Play a sound.
+	/// </summary>
+	/// <param name="streamName">The name of the audio sample file in res://debug_audio to play. Include the file extension.</param>
+	/// <param name="volume">The volume to play the sound at. 0 is muted, 2 is 2x the volume.</param>
+	/// <param name="variance">The randomized pitch variance with which to play the sound.</param>
+	/// <returns>An integer ID. If this is a one-shot sound, then the value can be ignored. If the sound is looping, or
+	///          you wish to stop the sound early, pass this value to Stop to stop the sound from playing.</returns>
 	public int Play(string streamName, float volume = 1f, PitchVariance variance = PitchVariance.None)
 	{
 		AudioStreamPlayer streamPlayer;
@@ -109,10 +164,26 @@ public class NDebugAudioManager : Node
 		return item.id;
 	}
 
+	/// <summary>
+	/// Stops all currently playing sounds
+	/// </summary>
+	public void StopAll()
+	{
+		List<PlayingSound> list = _playingSounds.ToList();
+		foreach (PlayingSound item in list)
+		{
+			Stop(item.id, 0f);
+		}
+	}
+
+	/// <summary>
+	/// Stops a sound.
+	/// </summary>
+	/// <param name="id">The ID returned from the Play call of the sound you wish to stop.</param>
+	/// <param name="fadeTime">Amount of time that the sound will fade to zero before stopping.</param>
 	public void Stop(int id, float fadeTime = 0.5f)
 	{
-		int i;
-		for (i = 0; i < _playingSounds.Count; i++)
+		for (int i = 0; i < _playingSounds.Count; i++)
 		{
 			PlayingSound playingSound = _playingSounds[i];
 			if (playingSound.id != id)
@@ -125,7 +196,7 @@ public class NDebugAudioManager : Node
 				tween.TweenProperty(playingSound.player, "volume_linear", 0f, fadeTime);
 				tween.TweenCallback(Callable.From(delegate
 				{
-					StopInternalById(i);
+					StopInternalById(id);
 				}));
 			}
 			else
@@ -161,11 +232,19 @@ public class NDebugAudioManager : Node
 		_freeAudioPlayers.Add(playingSound.player);
 	}
 
+	/// <summary>
+	/// Sets the volume of the master bus.
+	/// </summary>
+	/// <param name="linearVolume">Volume from 0-1.</param>
 	public void SetMasterAudioVolume(float linearVolume)
 	{
 		AudioServer.Singleton.SetBusVolumeDb(AudioServer.Singleton.GetBusIndex(_master), Mathf.LinearToDb(Mathf.Pow(linearVolume, 2f)));
 	}
 
+	/// <summary>
+	/// Sets the volume of the SFX bus.
+	/// </summary>
+	/// <param name="linearVolume">Volume from 0-1.</param>
 	public void SetSfxAudioVolume(float linearVolume)
 	{
 		AudioServer.Singleton.SetBusVolumeDb(AudioServer.Singleton.GetBusIndex(_sfx), Mathf.LinearToDb(Mathf.Pow(linearVolume, 2f)));
@@ -201,10 +280,15 @@ public class NDebugAudioManager : Node
 		return 1f + Rng.Chaotic.NextFloat(0f - num, num);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(9);
+		List<MethodInfo> list = new List<MethodInfo>(10);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.Play, new PropertyInfo(Variant.Type.Int, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -212,6 +296,7 @@ public class NDebugAudioManager : Node
 			new PropertyInfo(Variant.Type.Float, "volume", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
 			new PropertyInfo(Variant.Type.Int, "variance", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.StopAll, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.Stop, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Int, "id", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
@@ -244,6 +329,7 @@ public class NDebugAudioManager : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -256,6 +342,12 @@ public class NDebugAudioManager : Node
 		if (method == MethodName.Play && args.Count == 3)
 		{
 			ret = VariantUtils.CreateFrom<int>(Play(VariantUtils.ConvertTo<string>(in args[0]), VariantUtils.ConvertTo<float>(in args[1]), VariantUtils.ConvertTo<PitchVariance>(in args[2])));
+			return true;
+		}
+		if (method == MethodName.StopAll && args.Count == 0)
+		{
+			StopAll();
+			ret = default(godot_variant);
 			return true;
 		}
 		if (method == MethodName.Stop && args.Count == 2)
@@ -302,6 +394,7 @@ public class NDebugAudioManager : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -310,6 +403,10 @@ public class NDebugAudioManager : Node
 			return true;
 		}
 		if (method == MethodName.Play)
+		{
+			return true;
+		}
+		if (method == MethodName.StopAll)
 		{
 			return true;
 		}
@@ -344,6 +441,7 @@ public class NDebugAudioManager : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -355,6 +453,7 @@ public class NDebugAudioManager : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -366,6 +465,11 @@ public class NDebugAudioManager : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -374,6 +478,7 @@ public class NDebugAudioManager : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -381,6 +486,7 @@ public class NDebugAudioManager : Node
 		info.AddProperty(PropertyName._nextId, Variant.From(in _nextId));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

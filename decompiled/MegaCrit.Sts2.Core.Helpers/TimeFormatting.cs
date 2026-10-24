@@ -1,26 +1,26 @@
-using System.Text;
-using Godot;
+using System;
+using MegaCrit.Sts2.Core.Localization;
 
 namespace MegaCrit.Sts2.Core.Helpers;
 
 public static class TimeFormatting
 {
-	private static readonly StringBuilder _timeStringBuilder = new StringBuilder();
-
 	public static string Format(float time)
 	{
-		_timeStringBuilder.Clear();
-		int num = Mathf.FloorToInt(time / 3600f);
+		TimeSpan timeSpan = TimeSpan.FromSeconds(time);
+		int num = (int)timeSpan.TotalHours;
+		LocString locString;
 		if (num > 0)
 		{
-			_timeStringBuilder.Append(num);
-			_timeStringBuilder.Append(':');
+			locString = new LocString("main_menu_ui", "RUN_TIME_FORMAT_HOURS");
+			locString.Add("Hours", num.ToString());
 		}
-		string value = Mathf.Floor(time / 60f % 60f).ToString("00");
-		string value2 = Mathf.RoundToInt(time % 60f).ToString("00");
-		_timeStringBuilder.Append(value);
-		_timeStringBuilder.Append(':');
-		_timeStringBuilder.Append(value2);
-		return _timeStringBuilder.ToString();
+		else
+		{
+			locString = new LocString("main_menu_ui", "RUN_TIME_FORMAT");
+		}
+		locString.Add("Seconds", timeSpan.Seconds.ToString("00"));
+		locString.Add("Minutes", timeSpan.Minutes.ToString("00"));
+		return locString.GetFormattedText();
 	}
 }

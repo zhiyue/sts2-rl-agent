@@ -31,7 +31,7 @@ public sealed class TeaOfDiscourtesy : RelicModel
 		new DynamicVar("DazedCount", 2m)
 	});
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Dazed>());
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => HoverTipFactory.FromCardWithCardHoverTips<Dazed>();
 
 	[SavedProperty]
 	private int CombatsLeft
@@ -57,7 +57,7 @@ public sealed class TeaOfDiscourtesy : RelicModel
 	{
 		if (CombatsLeft > 0)
 		{
-			await CardPileCmd.AddToCombatAndPreview<Dazed>(base.Owner.Creature, PileType.Draw, base.DynamicVars["DazedCount"].IntValue, addedByPlayer: true, CardPilePosition.Random);
+			await CardPileCmd.AddToCombatAndPreview<Dazed>(base.Owner.Creature, PileType.Draw, base.DynamicVars["DazedCount"].IntValue, base.Owner, CardPilePosition.Random);
 			CombatsLeft--;
 			Flash();
 		}

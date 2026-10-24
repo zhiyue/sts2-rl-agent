@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.Combat.History.Entries;
@@ -23,8 +25,8 @@ public class PowerReceivedEntry : CombatHistoryEntry
 		}
 	}
 
-	public PowerReceivedEntry(PowerModel power, decimal amount, Creature? applier, int roundNumber, CombatSide currentSide, CombatHistory history)
-		: base(power.Owner, roundNumber, currentSide, history)
+	public PowerReceivedEntry(PowerModel power, decimal amount, Creature? applier, int roundNumber, CombatSide currentSide, CombatHistory history, IEnumerable<Player> players)
+		: base(power.Owner, roundNumber, currentSide, history, players)
 	{
 		Power = power;
 		Amount = amount;

@@ -17,9 +17,25 @@ public class SteamPlatformUtilStrategy : IPlatformUtilStrategy
 
 	private const string _richPresenceGroupSizeKey = "steam_player_group_size";
 
-	private readonly Lazy<string?> _steamBranch = new Lazy<string>(() => (!SteamApps.GetCurrentBetaName(out var pchName, 128)) ? "public" : pchName);
+	private PlatformBranch? _branch;
+
+	private bool _isPlatformOverlayOpen;
+
+	private Callback<GameOverlayActivated_t>? _steamOverlayCallback;
 
 	public bool SupportsInviteDialog => SteamUtils.IsOverlayEnabled();
+
+	public bool IsPlatformOverlayOpen => _isPlatformOverlayOpen;
+
+	public SteamPlatformUtilStrategy()
+	{
+		_steamOverlayCallback = Callback<GameOverlayActivated_t>.Create(OnSteamOverlayToggled);
+	}
+
+	~SteamPlatformUtilStrategy()
+	{
+		_steamOverlayCallback?.Dispose();
+	}
 
 	public string GetPlayerName(ulong playerId)
 	{
@@ -156,9 +172,30 @@ public class SteamPlatformUtilStrategy : IPlatformUtilStrategy
 		};
 	}
 
-	public string? GetPlatformBranch()
+	public PlatformBranch GetPlatformBranch()
 	{
-		return _steamBranch.Value;
+		if (_branch.HasValue)
+		{
+			return _branch.Value;
+		}
+		if (!SteamApps.GetCurrentBetaName(out var pchName, 128))
+		{
+			_branch = PlatformBranch.Production;
+		}
+		else
+		{
+			PlatformBranch? branch = PlatformBranchExtensions.FromName(pchName);
+			if (branch.HasValue)
+			{
+				_branch = branch;
+			}
+			else
+			{
+				Log.Error($"User is on Steam beta branch {pchName} which could not be mapped to any {"PlatformBranch"}! Defaulting to None");
+				_branch = PlatformBranch.None;
+			}
+		}
+		return _branch.Value;
 	}
 
 	public string GetRawLanguage()
@@ -173,5 +210,10 @@ public class SteamPlatformUtilStrategy : IPlatformUtilStrategy
 			return SupportedWindowMode.FullscreenOnlyDisplayToggle;
 		}
 		return SupportedWindowMode.Any;
+	}
+
+	private void OnSteamOverlayToggled(GameOverlayActivated_t callback)
+	{
+		_isPlatformOverlayOpen = callback.m_bActive == 1;
 	}
 }

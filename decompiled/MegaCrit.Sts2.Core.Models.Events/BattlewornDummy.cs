@@ -94,7 +94,7 @@ public sealed class BattlewornDummy : EventModel
 		}
 		case BattlewornDummyEventEncounter.DummySetting.Setting2:
 		{
-			IEnumerable<CardModel> enumerable = PileType.Deck.GetPile(base.Owner).Cards.Where((CardModel c) => c?.IsUpgradable ?? false).ToList().StableShuffle(base.Owner.RunState.Rng.Niche)
+			IEnumerable<CardModel> enumerable = PileType.Deck.GetPile(base.Owner).Cards.Where((CardModel c) => c?.IsUpgradable ?? false).ToList().StableShuffle(base.Rng)
 				.Take(2);
 			{
 				foreach (CardModel item in enumerable)

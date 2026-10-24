@@ -9,12 +9,15 @@ using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Audio;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
@@ -50,6 +53,8 @@ public sealed class TheInsatiable : MonsterModel
 
 	public static string TheInsatiableTrackName => "insatiable_progress";
 
+	public static string EatPlayerAnim => "eat_player";
+
 	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 341, 321);
 
 	public override int MaxInitialHp => MinInitialHp;
@@ -75,23 +80,21 @@ public sealed class TheInsatiable : MonsterModel
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Insect;
 
-	public override async Task AfterAddedToRoom()
+	public override Task AfterDeath(PlayerChoiceContext choiceContext, Creature creature, bool wasRemovalPrevented, float deathAnimLength)
 	{
-		await base.AfterAddedToRoom();
-		base.Creature.Died += AfterDeath;
-	}
-
-	private void AfterDeath(Creature _)
-	{
-		base.Creature.Died -= AfterDeath;
+		if (creature != base.Creature)
+		{
+			return Task.CompletedTask;
+		}
 		NRunMusicController.Instance?.UpdateMusicParameter(TheInsatiableTrackName, 10f);
+		return Task.CompletedTask;
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
 		MoveState moveState = new MoveState("LIQUIFY_GROUND_MOVE", LiquifyMove, new BuffIntent(), new StatusIntent(6));
-		MoveState moveState2 = new MoveState("THRASH_MOVE_1", ThrashMove, new MultiAttackIntent(ThrashDamage, 2));
+		MoveState moveState2 = new MoveState("THRASH_MOVE", ThrashMove, new MultiAttackIntent(ThrashDamage, 2));
 		MoveState moveState3 = new MoveState("THRASH_MOVE_2", ThrashMove, new MultiAttackIntent(ThrashDamage, 2));
 		MoveState moveState4 = new MoveState("LUNGING_BITE_MOVE", BiteMove, new SingleAttackIntent(BiteDamage));
 		MoveState moveState5 = new MoveState("SALIVATE_MOVE", SalivateMove, new BuffIntent());
@@ -119,7 +122,7 @@ public sealed class TheInsatiable : MonsterModel
 		{
 			SandpitPower sandpitPower = (SandpitPower)ModelDb.Power<SandpitPower>().ToMutable();
 			sandpitPower.Target = target;
-			await PowerCmd.Apply(sandpitPower, base.Creature, 4m, base.Creature, null);
+			await PowerCmd.Apply(new ThrowingPlayerChoiceContext(), sandpitPower, base.Creature, 4m, base.Creature, null);
 		}
 		foreach (Creature target2 in targets)
 		{
@@ -130,7 +133,7 @@ public sealed class TheInsatiable : MonsterModel
 				CardModel card = base.CombatState.CreateCard<FranticEscape>(player);
 				PileType newPileType = ((i < 3) ? PileType.Draw : PileType.Discard);
 				List<CardPileAddResult> list = statusCards;
-				list.Add(await CardPileCmd.AddGeneratedCardToCombat(card, newPileType, addedByPlayer: false, CardPilePosition.Random));
+				list.Add(await CardPileCmd.AddGeneratedCardToCombat(card, newPileType, null, CardPilePosition.Random));
 			}
 			if (LocalContext.IsMe(player))
 			{
@@ -164,7 +167,7 @@ public sealed class TheInsatiable : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/the_insatiable/the_insatiable_salivate");
 		await CreatureCmd.TriggerAnim(base.Creature, "Salivate", 0.5f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, SalivateStrength, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, SalivateStrength, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
@@ -175,7 +178,7 @@ public sealed class TheInsatiable : MonsterModel
 		AnimState animState3 = new AnimState("salivate");
 		AnimState animState4 = new AnimState("attack_thrash");
 		AnimState animState5 = new AnimState("attack_bite");
-		AnimState animState6 = new AnimState("eat_player");
+		AnimState animState6 = new AnimState(EatPlayerAnim);
 		AnimState animState7 = new AnimState("intro_hurt");
 		AnimState animState8 = new AnimState("hurt");
 		AnimState state = new AnimState("die");
@@ -198,5 +201,12 @@ public sealed class TheInsatiable : MonsterModel
 		creatureAnimator.AddAnyState("Hit", animState7, () => !HasLiquified);
 		creatureAnimator.AddAnyState("Hit", animState8, () => HasLiquified);
 		return creatureAnimator;
+	}
+
+	public override List<BestiaryMonsterMove> GenerateBestiaryMoveList(NCreatureVisuals? creatureVisuals)
+	{
+		List<BestiaryMonsterMove> list = base.GenerateBestiaryMoveList(creatureVisuals);
+		list.Insert(4, BestiaryMonsterMove.FromAnim(new LocString("monsters", "THE_INSATIABLE.moves.DEVOUR.title"), EatPlayerAnim, "event:/sfx/enemy/enemy_attacks/the_insatiable/the_insatiable_finisher"));
+		return list;
 	}
 }

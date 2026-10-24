@@ -18,6 +18,8 @@ public struct ClientRejoinResponseMessage : INetMessage, IPacketSerializable
 
 	public LogLevel LogLevel => LogLevel.Info;
 
+	public bool ShouldBuffer => true;
+
 	public void Serialize(PacketWriter writer)
 	{
 		writer.Write(serializableRun);

@@ -6,8 +6,23 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// The player's gameplay progress for Slay the Spire 2.
+/// This would be considered the most important save file and is synced across devices/platforms.
+/// There would be a progress.save in each respective profile's folder and contains data such as:
+/// - Total wins, losses, playtime, and progress per character
+/// - Which cards/relics/potions/etc have been seen or unlocked
+/// - Which enemies/elites/bosses have been encountered and defeated
+/// - Character data
+/// - Timeline and Unlock progress (meta progression)
+/// - Unlocked achievements
+/// - Which FTUEs this player has seen
+/// </summary>
 public class SerializableProgress : ISaveSchema
 {
+	/// <summary>
+	/// The schema version of this save.
+	/// </summary>
 	[JsonPropertyName("schema_version")]
 	public int SchemaVersion { get; set; }
 
@@ -20,12 +35,21 @@ public class SerializableProgress : ISaveSchema
 	[JsonPropertyName("card_stats")]
 	public List<CardStats> CardStats { get; set; } = new List<CardStats>();
 
+	/// <summary>
+	/// Tracks how often each character has encountered, won, and lost against each Encounter.
+	/// </summary>
 	[JsonPropertyName("encounter_stats")]
 	public List<EncounterStats> EncounterStats { get; set; } = new List<EncounterStats>();
 
+	/// <summary>
+	/// Tracks how often each character has encountered, won, and lost against each Enemy Creature.
+	/// </summary>
 	[JsonPropertyName("enemy_stats")]
 	public List<EnemyStats> EnemyStats { get; set; } = new List<EnemyStats>();
 
+	/// <summary>
+	/// Tracks how often each character has encountered, won, and lost after encountering each ancient.
+	/// </summary>
 	[JsonPropertyName("ancient_stats")]
 	public List<AncientStats> AncientStats { get; set; } = new List<AncientStats>();
 
@@ -59,9 +83,15 @@ public class SerializableProgress : ISaveSchema
 	[JsonPropertyName("total_playtime")]
 	public long TotalPlaytime { get; set; }
 
+	/// <summary>
+	/// The amount of agnostic unlocks via score system this player has unlocked.
+	/// </summary>
 	[JsonPropertyName("total_unlocks")]
 	public int TotalUnlocks { get; set; }
 
+	/// <summary>
+	/// How much score this player has (is not cumulative).
+	/// </summary>
 	[JsonPropertyName("current_score")]
 	public int CurrentScore { get; set; }
 
@@ -74,15 +104,25 @@ public class SerializableProgress : ISaveSchema
 	[JsonPropertyName("wongo_points")]
 	public int WongoPoints { get; set; }
 
+	/// <summary> Which multiplayer ascension we had selected the last time we started a multiplayer run. </summary>
 	[JsonPropertyName("preferred_multiplayer_ascension")]
 	public int PreferredMultiplayerAscension { get; set; }
 
+	/// <summary>
+	/// The maximum unlocked ascension in multiplayer.
+	/// In singleplayer runs, we use character stats. In multiplayer runs, all characters share an ascension.
+	/// </summary>
 	[JsonPropertyName("max_multiplayer_ascension")]
 	public int MaxMultiplayerAscension { get; set; }
 
 	[JsonPropertyName("test_subject_kills")]
 	public int TestSubjectKills { get; set; }
 
+	/// <summary>
+	/// Characters that have been unlocked between the last run and the next time the player opens the character
+	/// select screen.
+	/// Used to show an animation on the character select screen.
+	/// </summary>
 	[JsonPropertyName("pending_character_unlock")]
 	public ModelId PendingCharacterUnlock { get; set; } = ModelId.none;
 
@@ -131,11 +171,17 @@ public class SerializableProgress : ISaveSchema
 		}
 	}
 
+	/// <summary>
+	/// Get the stats for the specified character.
+	/// </summary>
 	public CharacterStats? GetStatsForCharacter(ModelId characterId)
 	{
 		return CharStats.FirstOrDefault((CharacterStats c) => c.Id == characterId);
 	}
 
+	/// <summary>
+	/// Get the stats for the specified ancient.
+	/// </summary>
 	public AncientStats? GetStatsForAncient(ModelId ancientId)
 	{
 		return AncientStats.FirstOrDefault((AncientStats a) => a.Id == ancientId);

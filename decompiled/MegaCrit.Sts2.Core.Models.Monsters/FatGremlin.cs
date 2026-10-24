@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
@@ -65,7 +66,8 @@ public sealed class FatGremlin : MonsterModel
 	private async Task FleeMove(IReadOnlyList<Creature> targets)
 	{
 		LocString line = MonsterModel.L10NMonsterLookup("FAT_GREMLIN.moves.FLEE.banter");
-		TalkCmd.Play(line, base.Creature, 1.25);
+		TalkCmd.Play(line, base.Creature, VfxColor.Swamp, VfxDuration.Standard);
+		await Cmd.CustomScaledWait(0.75f, 1.25f);
 		NCombatRoom.Instance?.GetCreatureNode(base.Creature)?.ToggleIsInteractable(on: false);
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/gremlin_merc/fat_gremlin_escape");
 		await CreatureCmd.TriggerAnim(base.Creature, "FleeTrigger", 0f);

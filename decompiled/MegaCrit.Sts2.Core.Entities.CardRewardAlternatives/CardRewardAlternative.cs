@@ -9,6 +9,10 @@ using MegaCrit.Sts2.Core.Rewards;
 
 namespace MegaCrit.Sts2.Core.Entities.CardRewardAlternatives;
 
+/// <summary>
+/// Manages the extra, non card, options in a card reward screen.
+/// i.e. Skip (default option), Sacrifice (for Pael  Wing), Heal +2 (for Dream Catcher)
+/// </summary>
 public class CardRewardAlternative
 {
 	public string OptionId { get; }
@@ -17,8 +21,14 @@ public class CardRewardAlternative
 
 	public string Hotkey { get; }
 
+	/// <summary>
+	/// Action to perform when the alternative option is selected.
+	/// </summary>
 	public Func<Task> OnSelect { get; private set; }
 
+	/// <summary>
+	/// The action to take after the alternate reward is selected. See the values for more information.
+	/// </summary>
 	public PostAlternateCardRewardAction AfterSelected { get; private set; }
 
 	public CardRewardAlternative(string optionId, PostAlternateCardRewardAction afterSelected)
@@ -31,19 +41,29 @@ public class CardRewardAlternative
 		OptionId = optionId;
 		OnSelect = onSelect;
 		AfterSelected = afterSelected;
-		Hotkey = ((afterSelected == PostAlternateCardRewardAction.DismissScreenAndKeepReward) ? MegaInput.cancel : MegaInput.viewExhaustPileAndTabRight);
+		Hotkey = ((afterSelected == PostAlternateCardRewardAction.EndSelectionAndDoNotCompleteReward) ? MegaInput.cancel : MegaInput.viewExhaustPileAndTabRight);
 	}
 
+	/// <summary>
+	/// Generates a list of extra options to use for the next card reward screen.
+	/// This list will include extra options added by models like the Pael Wing relic if the player has them.
+	/// </summary>
+	/// <param name="cardReward">The reward for which alternatives are being generated.</param>
+	/// <returns>List of rest extra options options.</returns>
 	public static IReadOnlyList<CardRewardAlternative> Generate(CardReward cardReward)
 	{
 		List<CardRewardAlternative> list = new List<CardRewardAlternative>();
 		if (cardReward.CanSkip)
 		{
-			list.Add(new CardRewardAlternative("Skip", PostAlternateCardRewardAction.DismissScreenAndKeepReward));
+			list.Add(new CardRewardAlternative("Skip", PostAlternateCardRewardAction.EndSelectionAndDoNotCompleteReward));
 		}
 		if (cardReward.CanReroll)
 		{
-			list.Add(new CardRewardAlternative("REROLL", cardReward.Reroll, PostAlternateCardRewardAction.DoNothing));
+			list.Add(new CardRewardAlternative("REROLL", delegate
+			{
+				cardReward.Reroll();
+				return Task.CompletedTask;
+			}, PostAlternateCardRewardAction.DoNothing));
 		}
 		Hook.ModifyCardRewardAlternatives(cardReward.Player.RunState, cardReward.Player, cardReward, list);
 		if (list.Count > 2)

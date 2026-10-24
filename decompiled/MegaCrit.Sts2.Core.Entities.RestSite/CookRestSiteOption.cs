@@ -22,7 +22,7 @@ public sealed class CookRestSiteOption : RestSiteOption
 	{
 		get
 		{
-			if (base.IsEnabled)
+			if (IsEnabled)
 			{
 				LocString locString = new LocString("rest_site_ui", "OPTION_" + OptionId + ".description");
 				locString.Add("Cards", 2m);
@@ -33,10 +33,11 @@ public sealed class CookRestSiteOption : RestSiteOption
 		}
 	}
 
+	public override bool IsEnabled => GetRemovableCardCount(base.Owner) >= 2;
+
 	public CookRestSiteOption(Player owner)
 		: base(owner)
 	{
-		base.IsEnabled = GetRemovableCardCount(owner) >= 2;
 	}
 
 	public override async Task<bool> OnSelect()

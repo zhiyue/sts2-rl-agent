@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -33,11 +35,35 @@ public static class SfxCmd
 		}
 	}
 
+	public static void PlayLoop(Creature creature, string sfx)
+	{
+		if (!NonInteractiveMode.IsActive)
+		{
+			creature.GetCreatureNode()?.StartSfxLoop(sfx);
+		}
+	}
+
+	public static void PlayLoop(Creature creature, string sfx, string loopParam, float loopStopValue)
+	{
+		if (!NonInteractiveMode.IsActive)
+		{
+			creature.GetCreatureNode()?.StartSfxLoop(sfx, loopParam, loopStopValue);
+		}
+	}
+
 	public static void StopLoop(string sfx)
 	{
 		if (!NonInteractiveMode.IsActive)
 		{
 			NAudioManager.Instance.StopLoop(sfx);
+		}
+	}
+
+	public static void StopLoop(Creature creature, string sfx)
+	{
+		if (!NonInteractiveMode.IsActive)
+		{
+			creature.GetCreatureNode()?.StopSfxLoop(sfx);
 		}
 	}
 
@@ -70,6 +96,32 @@ public static class SfxCmd
 		if (!NonInteractiveMode.IsActive)
 		{
 			NAudioManager.Instance.PlayOneShot(player.Character.DeathSfx);
+		}
+	}
+
+	/// <summary>
+	/// Plays the correct swoosh sfx depending on the pile the carf came from and is going to
+	/// </summary>
+	public static void PlayCardSwooshSfx(CardPile currentPile, CardPile? prevPile = null)
+	{
+		if (currentPile.Type == PileType.Draw)
+		{
+			Play("event:/sfx/ui/cards/card_movement_B_into_draw");
+		}
+		else if (currentPile.Type == PileType.Discard)
+		{
+			if (prevPile != null && prevPile.Type == PileType.Play)
+			{
+				Play("event:/sfx/ui/cards/card_movement_B_play_into_discard");
+			}
+			else
+			{
+				Play("event:/sfx/ui/cards/card_movement_B_into_discard");
+			}
+		}
+		else
+		{
+			Play("event:/sfx/ui/cards/card_movement_B_into_deck");
 		}
 	}
 }

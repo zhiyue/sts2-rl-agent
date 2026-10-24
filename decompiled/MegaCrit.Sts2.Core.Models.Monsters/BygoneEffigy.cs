@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -26,22 +27,22 @@ public sealed class BygoneEffigy : MonsterModel
 
 	public override int MaxInitialHp => MinInitialHp;
 
-	private int SlashDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 17, 15);
+	private int SlashDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 15, 13);
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Stone;
 
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<SlowPower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<SlowPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
-		MoveState moveState = new MoveState("INITIAL_SLEEP_MOVE", InitialSleepMove, new SleepIntent());
+		MoveState moveState = new MoveState("SLEEP_MOVE", InitialSleepMove, new SleepIntent());
 		MoveState moveState2 = new MoveState("WAKE_MOVE", WakeMove, new BuffIntent());
-		MoveState moveState3 = new MoveState("SLEEP_MOVE", SleepMove, new SleepIntent());
+		MoveState moveState3 = new MoveState("SLEEP_MOVE_2", SleepMove, new SleepIntent());
 		MoveState moveState4 = new MoveState("SLASHES_MOVE", SlashMove, new SingleAttackIntent(SlashDamage));
 		moveState.FollowUpState = moveState2;
 		moveState2.FollowUpState = moveState4;
@@ -70,11 +71,11 @@ public sealed class BygoneEffigy : MonsterModel
 	{
 		if (TestMode.IsOff)
 		{
-			NRunMusicController.Instance.TriggerEliteSecondPhase();
+			NRunMusicController.Instance?.TriggerEliteSecondPhase();
 		}
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 10m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 10m, base.Creature, null);
 		LocString line = MonsterModel.L10NMonsterLookup("BYGONE_EFFIGY.moves.SLEEP.speakLine2");
-		TalkCmd.Play(line, base.Creature);
+		TalkCmd.Play(line, base.Creature, VfxColor.DarkGray, VfxDuration.Long);
 		await Cmd.Wait(0.5f);
 	}
 
@@ -85,17 +86,17 @@ public sealed class BygoneEffigy : MonsterModel
 			Vector2? vector = null;
 			foreach (Creature target in targets)
 			{
-				NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(target);
-				if (!vector.HasValue || vector.Value.X > creatureNode.GlobalPosition.X)
+				NCreature creatureNode = target.GetCreatureNode();
+				if (creatureNode != null && (!vector.HasValue || vector.Value.X > creatureNode.GlobalPosition.X))
 				{
 					vector = creatureNode.GlobalPosition;
 				}
 			}
-			NCreature creatureNode2 = NCombatRoom.Instance.GetCreatureNode(base.Creature);
-			Node2D specialNode = creatureNode2.GetSpecialNode<Node2D>("Visuals/SpineBoneNode");
-			if (specialNode != null)
+			NCreature creatureNode2 = base.Creature.GetCreatureNode();
+			Node2D node2D = creatureNode2?.GetSpecialNode<Node2D>("Visuals/SpineBoneNode");
+			if (creatureNode2 != null && node2D != null && vector.HasValue)
 			{
-				specialNode.Position = Vector2.Left * (vector.Value.X - creatureNode2.GlobalPosition.X - 300f);
+				node2D.Position = Vector2.Left * (vector.Value.X - creatureNode2.GlobalPosition.X - 300f);
 			}
 		}
 		NCombatRoom.Instance?.RadialBlur(VfxPosition.Left);

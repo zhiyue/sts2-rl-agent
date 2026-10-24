@@ -95,7 +95,7 @@ public sealed class RelicTrader : EventModel
 		return list;
 	}
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		if (runState.CurrentActIndex == 0)
 		{

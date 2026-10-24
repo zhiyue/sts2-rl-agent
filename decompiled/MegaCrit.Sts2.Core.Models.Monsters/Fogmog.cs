@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -16,6 +17,10 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Fogmog : MonsterModel
 {
+	private const string _swipeRandomMove = "SWIPE_RANDOM_MOVE";
+
+	private const string _headbuttMove = "HEADBUTT_MOVE";
+
 	private const string _summonTrigger = "Summon";
 
 	private const string _sporesSfx = "event:/sfx/enemy/enemy_attacks/fogmog/fogmog_summon";
@@ -56,7 +61,10 @@ public sealed class Fogmog : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/fogmog/fogmog_summon");
 		await CreatureCmd.TriggerAnim(base.Creature, "Summon", 0.75f);
-		await CreatureCmd.Add<EyeWithTeeth>(base.CombatState, "illusion");
+		if (base.CombatState.IsLiveCombat())
+		{
+			await CreatureCmd.Add<EyeWithTeeth>(base.CombatState, "illusion");
+		}
 	}
 
 	private async Task SwipeMove(IReadOnlyList<Creature> targets)
@@ -65,7 +73,7 @@ public sealed class Fogmog : MonsterModel
 			.WithAttackerFx(null, AttackSfx)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
 	}
 
 	private async Task HeadbuttMove(IReadOnlyList<Creature> targets)
@@ -92,5 +100,14 @@ public sealed class Fogmog : MonsterModel
 		creatureAnimator.AddAnyState("Summon", animState2);
 		creatureAnimator.AddAnyState("Attack", animState3);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		if (moveStateId != "SWIPE_RANDOM_MOVE")
+		{
+			return moveStateId != "HEADBUTT_MOVE";
+		}
+		return false;
 	}
 }

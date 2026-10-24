@@ -40,16 +40,32 @@ public class CardRarityOdds : AbstractOdds
 
 	public static float ShopRareOdds => AscensionHelper.GetValueIfAscension(AscensionLevel.Scarcity, 0.045f, 0.09f);
 
+	/// <summary>
+	/// For creating at the start of a run.
+	/// </summary>
+	/// <param name="rng">RNG to use for rolls.</param>
 	public CardRarityOdds(Rng rng)
 		: base(-0.05f, rng)
 	{
 	}
 
+	/// <summary>
+	/// For restoring from save.
+	/// </summary>
+	/// <param name="initialValue">Restored value at the saved spot in the run.</param>
+	/// <param name="rng">RNG to use for rolls.</param>
 	public CardRarityOdds(float initialValue, Rng rng)
 		: base(initialValue, rng)
 	{
 	}
 
+	/// <summary>
+	/// Roll for what rarity of card should be generated.
+	/// Using this will NOT modify the odds of future generated card rarities.
+	/// Use for things like encounter rewards.
+	/// </summary>
+	/// <param name="type">Odds type to roll for.</param>
+	/// <returns>What rarity a generated card should be.</returns>
 	public CardRarity Roll(CardRarityOddsType type)
 	{
 		CardRarity cardRarity = RollWithoutChangingFutureOdds(type, (type == CardRarityOddsType.BossEncounter) ? 0f : base.CurrentValue);
@@ -69,6 +85,14 @@ public class CardRarityOdds : AbstractOdds
 		return RollWithoutChangingFutureOdds(oddsType, base.CurrentValue);
 	}
 
+	/// <summary>
+	/// Roll for what rarity of card should be generated.
+	/// Using this will NOT modify the odds of future generated card rarities.
+	/// Use for things like shops.
+	/// </summary>
+	/// <param name="type">Odds type to roll for.</param>
+	/// <param name="offset">offset for rare odds</param>
+	/// <returns>What rarity a generated card should be.</returns>
 	public CardRarity RollWithoutChangingFutureOdds(CardRarityOddsType type, float offset)
 	{
 		float num = _rng.NextFloat();
@@ -85,6 +109,13 @@ public class CardRarityOdds : AbstractOdds
 		return CardRarity.Common;
 	}
 
+	/// <summary>
+	/// Roll for what rarity of card should be generated.
+	/// Using this will use only the base odds for the given card source.
+	/// Used for some events.
+	/// </summary>
+	/// <param name="type">Odds type to roll for.</param>
+	/// <returns>What rarity a generated card should be.</returns>
 	public CardRarity RollWithBaseOdds(CardRarityOddsType type)
 	{
 		float num = _rng.NextFloat();

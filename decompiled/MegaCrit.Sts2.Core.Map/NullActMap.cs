@@ -1,5 +1,8 @@
 namespace MegaCrit.Sts2.Core.Map;
 
+/// <summary>
+/// An empty map used as a placeholder before a real map is generated.
+/// </summary>
 public class NullActMap : ActMap
 {
 	public static NullActMap Instance { get; } = new NullActMap();

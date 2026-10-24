@@ -38,7 +38,7 @@ public sealed class MoltenFist : CardModel
 		int num = (cardPlay.Target.IsAlive ? cardPlay.Target.GetPowerAmount<VulnerablePower>() : 0);
 		if (num > 0)
 		{
-			await PowerCmd.Apply<VulnerablePower>(cardPlay.Target, num, base.Owner.Creature, this);
+			await PowerCmd.Apply<VulnerablePower>(choiceContext, cardPlay.Target, num, base.Owner.Creature, this);
 		}
 	}
 

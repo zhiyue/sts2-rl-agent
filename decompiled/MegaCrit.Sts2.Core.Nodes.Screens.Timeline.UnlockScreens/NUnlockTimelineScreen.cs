@@ -11,22 +11,44 @@ using MegaCrit.Sts2.Core.Timeline;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline.UnlockScreens;
 
+/// <summary>
+/// Unlock screen which isn't really a screen but just an animation.
+/// Extends NUnlockScreen so it supports queueing it up like the other unlocks on the TimelineScreen.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/UnlockScreens/NUnlockTimelineScreen.cs")]
 public class NUnlockTimelineScreen : NUnlockScreen
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NUnlockScreen.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Open' method.
+		/// </summary>
 		public new static readonly StringName Open = "Open";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NUnlockScreen.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NUnlockScreen.SignalName
 	{
 	}
@@ -42,10 +64,18 @@ public class NUnlockTimelineScreen : NUnlockScreen
 		return PreloadManager.Cache.GetScene(_scenePath).Instantiate<NUnlockTimelineScreen>(PackedScene.GenEditState.Disabled);
 	}
 
+	/// <summary>
+	/// Empty _Ready() function so we don't initialize the Confirm button like other unlock screens.
+	/// Better ways to handle but w/e.
+	/// </summary>
 	public override void _Ready()
 	{
 	}
 
+	/// <summary>
+	/// Set which era slots are unlocked when this "screen" is triggered.
+	/// </summary>
+	/// <param name="eras"></param>
 	public void SetUnlocks(List<EpochSlotData> eras)
 	{
 		_erasToUnlock = eras.OrderBy((EpochSlotData a) => a.EraPosition).ToList();
@@ -67,6 +97,11 @@ public class NUnlockTimelineScreen : NUnlockScreen
 		NTimelineScreen.Instance.EnableInput();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -77,6 +112,7 @@ public class NUnlockTimelineScreen : NUnlockScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -112,6 +148,7 @@ public class NUnlockTimelineScreen : NUnlockScreen
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -130,12 +167,14 @@ public class NUnlockTimelineScreen : NUnlockScreen
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

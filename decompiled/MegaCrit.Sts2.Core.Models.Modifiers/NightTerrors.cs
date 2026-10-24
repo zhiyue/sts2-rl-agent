@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -21,7 +22,8 @@ public class NightTerrors : ModifierModel
 	{
 		if (!isMimicked)
 		{
-			await CreatureCmd.LoseMaxHp(new ThrowingPlayerChoiceContext(), player.Creature, 5m, isFromCard: false);
+			int num = Mathf.Min(5, player.Creature.MaxHp - 1);
+			await CreatureCmd.LoseMaxHp(new ThrowingPlayerChoiceContext(), player.Creature, num, isFromCard: false);
 		}
 	}
 

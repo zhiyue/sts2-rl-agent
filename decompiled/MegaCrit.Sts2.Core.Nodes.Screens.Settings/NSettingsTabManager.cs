@@ -20,44 +20,101 @@ public class NSettingsTabManager : Control
 	[Signal]
 	public delegate void TabChangedEventHandler();
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ResetTabs' method.
+		/// </summary>
 		public static readonly StringName ResetTabs = "ResetTabs";
 
+		/// <summary>
+		/// Cached name for the 'Enable' method.
+		/// </summary>
 		public static readonly StringName Enable = "Enable";
 
+		/// <summary>
+		/// Cached name for the 'Disable' method.
+		/// </summary>
 		public static readonly StringName Disable = "Disable";
 
+		/// <summary>
+		/// Cached name for the 'TabLeft' method.
+		/// </summary>
 		public static readonly StringName TabLeft = "TabLeft";
 
+		/// <summary>
+		/// Cached name for the 'TabRight' method.
+		/// </summary>
 		public static readonly StringName TabRight = "TabRight";
 
+		/// <summary>
+		/// Cached name for the 'SwitchTabTo' method.
+		/// </summary>
 		public static readonly StringName SwitchTabTo = "SwitchTabTo";
 
+		/// <summary>
+		/// Cached name for the 'UpdateControllerButton' method.
+		/// </summary>
 		public static readonly StringName UpdateControllerButton = "UpdateControllerButton";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'CurrentlyDisplayedPanel' property.
+		/// </summary>
 		public static readonly StringName CurrentlyDisplayedPanel = "CurrentlyDisplayedPanel";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_currentTab' field.
+		/// </summary>
 		public static readonly StringName _currentTab = "_currentTab";
 
+		/// <summary>
+		/// Cached name for the '_scrollContainer' field.
+		/// </summary>
 		public static readonly StringName _scrollContainer = "_scrollContainer";
 
+		/// <summary>
+		/// Cached name for the '_leftTriggerIcon' field.
+		/// </summary>
 		public static readonly StringName _leftTriggerIcon = "_leftTriggerIcon";
 
+		/// <summary>
+		/// Cached name for the '_rightTriggerIcon' field.
+		/// </summary>
 		public static readonly StringName _rightTriggerIcon = "_rightTriggerIcon";
 
+		/// <summary>
+		/// Cached name for the '_scrollbarTween' field.
+		/// </summary>
 		public static readonly StringName _scrollbarTween = "_scrollbarTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'TabChanged' signal.
+		/// </summary>
 		public static readonly StringName TabChanged = "TabChanged";
 	}
 
@@ -97,6 +154,7 @@ public class NSettingsTabManager : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.Settings.NSettingsTabManager.TabChangedEventHandler" />
 	public event TabChangedEventHandler TabChanged
 	{
 		add
@@ -109,6 +167,9 @@ public class NSettingsTabManager : Control
 		}
 	}
 
+	/// <summary>
+	/// Hooks up the Tab button callbacks.
+	/// </summary>
 	public override void _Ready()
 	{
 		_leftTriggerIcon = GetNode<TextureRect>("LeftTriggerIcon");
@@ -208,6 +269,11 @@ public class NSettingsTabManager : Control
 		_rightTriggerIcon.Texture = NInputManager.Instance.GetHotkeyIcon(MegaInput.viewExhaustPileAndTabRight);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -226,6 +292,7 @@ public class NSettingsTabManager : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -280,6 +347,7 @@ public class NSettingsTabManager : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -318,6 +386,7 @@ public class NSettingsTabManager : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -349,6 +418,7 @@ public class NSettingsTabManager : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -390,6 +460,11 @@ public class NSettingsTabManager : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -404,6 +479,7 @@ public class NSettingsTabManager : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -416,6 +492,7 @@ public class NSettingsTabManager : Control
 		info.AddSignalEventDelegate(SignalName.TabChanged, backing_TabChanged);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -446,6 +523,11 @@ public class NSettingsTabManager : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -459,6 +541,7 @@ public class NSettingsTabManager : Control
 		EmitSignal(SignalName.TabChanged);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -472,6 +555,7 @@ public class NSettingsTabManager : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

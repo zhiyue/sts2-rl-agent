@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Spireborn
+/// </summary>
 public class Necrobinder4Epoch : EpochModel
 {
 	public override string Id => "NECROBINDER4_EPOCH";

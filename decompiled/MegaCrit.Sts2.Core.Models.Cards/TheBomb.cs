@@ -27,7 +27,7 @@ public sealed class TheBomb : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		(await PowerCmd.Apply<TheBombPower>(base.Owner.Creature, base.DynamicVars["Turns"].BaseValue, base.Owner.Creature, this)).SetDamage(base.DynamicVars["BombDamage"].BaseValue);
+		(await PowerCmd.Apply<TheBombPower>(choiceContext, base.Owner.Creature, base.DynamicVars["Turns"].BaseValue, base.Owner.Creature, this)).SetDamage(base.DynamicVars["BombDamage"].BaseValue);
 	}
 
 	protected override void OnUpgrade()

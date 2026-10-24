@@ -13,56 +13,131 @@ namespace MegaCrit.Sts2.Core.Nodes.Reaction;
 [ScriptPath("res://src/Core/Nodes/Reaction/NReactionWheel.cs")]
 public class NReactionWheel : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the '_Notification' method.
+		/// </summary>
 		public new static readonly StringName _Notification = "_Notification";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'HideWheel' method.
+		/// </summary>
 		public static readonly StringName HideWheel = "HideWheel";
 
+		/// <summary>
+		/// Cached name for the 'WarpMouseBackToOriginalPosition' method.
+		/// </summary>
 		public static readonly StringName WarpMouseBackToOriginalPosition = "WarpMouseBackToOriginalPosition";
 
+		/// <summary>
+		/// Cached name for the 'React' method.
+		/// </summary>
 		public static readonly StringName React = "React";
 
+		/// <summary>
+		/// Cached name for the 'MoveMarker' method.
+		/// </summary>
 		public static readonly StringName MoveMarker = "MoveMarker";
 
+		/// <summary>
+		/// Cached name for the 'GetSelectedWedge' method.
+		/// </summary>
 		public static readonly StringName GetSelectedWedge = "GetSelectedWedge";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_rightWedge' field.
+		/// </summary>
 		public static readonly StringName _rightWedge = "_rightWedge";
 
+		/// <summary>
+		/// Cached name for the '_downRightWedge' field.
+		/// </summary>
 		public static readonly StringName _downRightWedge = "_downRightWedge";
 
+		/// <summary>
+		/// Cached name for the '_downWedge' field.
+		/// </summary>
 		public static readonly StringName _downWedge = "_downWedge";
 
+		/// <summary>
+		/// Cached name for the '_downLeftWedge' field.
+		/// </summary>
 		public static readonly StringName _downLeftWedge = "_downLeftWedge";
 
+		/// <summary>
+		/// Cached name for the '_leftWedge' field.
+		/// </summary>
 		public static readonly StringName _leftWedge = "_leftWedge";
 
+		/// <summary>
+		/// Cached name for the '_upLeftWedge' field.
+		/// </summary>
 		public static readonly StringName _upLeftWedge = "_upLeftWedge";
 
+		/// <summary>
+		/// Cached name for the '_upWedge' field.
+		/// </summary>
 		public static readonly StringName _upWedge = "_upWedge";
 
+		/// <summary>
+		/// Cached name for the '_upRightWedge' field.
+		/// </summary>
 		public static readonly StringName _upRightWedge = "_upRightWedge";
 
+		/// <summary>
+		/// Cached name for the '_marker' field.
+		/// </summary>
 		public static readonly StringName _marker = "_marker";
 
+		/// <summary>
+		/// Cached name for the '_ignoreNextMouseInput' field.
+		/// </summary>
 		public static readonly StringName _ignoreNextMouseInput = "_ignoreNextMouseInput";
 
+		/// <summary>
+		/// Cached name for the '_centerPosition' field.
+		/// </summary>
 		public static readonly StringName _centerPosition = "_centerPosition";
 
+		/// <summary>
+		/// Cached name for the '_selectedWedge' field.
+		/// </summary>
 		public static readonly StringName _selectedWedge = "_selectedWedge";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -234,6 +309,11 @@ public class NReactionWheel : Control
 		};
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -263,6 +343,7 @@ public class NReactionWheel : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -328,6 +409,7 @@ public class NReactionWheel : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -374,6 +456,7 @@ public class NReactionWheel : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -440,6 +523,7 @@ public class NReactionWheel : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -506,6 +590,11 @@ public class NReactionWheel : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -525,6 +614,7 @@ public class NReactionWheel : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -543,6 +633,7 @@ public class NReactionWheel : Control
 		info.AddProperty(PropertyName._selectedWedge, Variant.From(in _selectedWedge));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

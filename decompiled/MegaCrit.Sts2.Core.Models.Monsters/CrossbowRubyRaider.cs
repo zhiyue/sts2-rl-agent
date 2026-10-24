@@ -72,25 +72,25 @@ public sealed class CrossbowRubyRaider : MonsterModel
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)
 	{
-		AnimState animState = new AnimState("idle_loop", isLooping: true);
-		AnimState animState2 = new AnimState("hurt");
+		AnimState nextState = new AnimState("idle_loop", isLooping: true);
+		AnimState animState = new AnimState("hurt");
 		AnimState state = new AnimState("die");
-		AnimState animState3 = new AnimState("attack");
-		AnimState animState4 = new AnimState("hurt_empty");
-		AnimState animState5 = new AnimState("idle_loop_empty", isLooping: true);
-		AnimState animState6 = new AnimState("hurt_empty");
+		AnimState animState2 = new AnimState("attack");
+		AnimState animState3 = new AnimState("hurt_empty");
+		AnimState animState4 = new AnimState("idle_loop_empty", isLooping: true);
+		AnimState animState5 = new AnimState("hurt_empty");
 		AnimState state2 = new AnimState("die_empty");
-		AnimState animState7 = new AnimState("reload");
-		animState2.NextState = animState;
-		animState3.NextState = animState5;
-		animState4.NextState = animState5;
-		animState6.NextState = animState5;
-		animState7.NextState = animState;
-		CreatureAnimator creatureAnimator = new CreatureAnimator(animState, controller);
-		creatureAnimator.AddAnyState("Attack", animState5);
-		creatureAnimator.AddAnyState("Reload", animState7);
-		creatureAnimator.AddAnyState("Hit", animState6, () => !IsCrossbowReloaded);
-		creatureAnimator.AddAnyState("Hit", animState2, () => IsCrossbowReloaded);
+		AnimState animState6 = new AnimState("reload");
+		animState.NextState = nextState;
+		animState2.NextState = animState4;
+		animState3.NextState = animState4;
+		animState5.NextState = animState4;
+		animState6.NextState = nextState;
+		CreatureAnimator creatureAnimator = new CreatureAnimator(animState4, controller);
+		creatureAnimator.AddAnyState("Attack", animState2);
+		creatureAnimator.AddAnyState("Reload", animState6);
+		creatureAnimator.AddAnyState("Hit", animState5, () => !IsCrossbowReloaded);
+		creatureAnimator.AddAnyState("Hit", animState, () => IsCrossbowReloaded);
 		creatureAnimator.AddAnyState("Dead", state2, () => !IsCrossbowReloaded);
 		creatureAnimator.AddAnyState("Dead", state, () => IsCrossbowReloaded);
 		return creatureAnimator;

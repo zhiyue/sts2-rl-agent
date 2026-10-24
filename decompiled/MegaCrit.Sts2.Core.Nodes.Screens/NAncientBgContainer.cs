@@ -9,30 +9,66 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens;
 [ScriptPath("res://src/Core/Nodes/Screens/NAncientBgContainer.cs")]
 public class NAncientBgContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnWindowChange' method.
+		/// </summary>
 		public static readonly StringName OnWindowChange = "OnWindowChange";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_window' field.
+		/// </summary>
 		public static readonly StringName _window = "_window";
 
-		public static readonly StringName pos4_3 = "pos4_3";
+		/// <summary>
+		/// Cached name for the '_pos43' field.
+		/// </summary>
+		public static readonly StringName _pos43 = "_pos43";
 
-		public static readonly StringName scale4_3 = "scale4_3";
+		/// <summary>
+		/// Cached name for the '_scale43' field.
+		/// </summary>
+		public static readonly StringName _scale43 = "_scale43";
 
-		public static readonly StringName pos16_9 = "pos16_9";
+		/// <summary>
+		/// Cached name for the '_pos169' field.
+		/// </summary>
+		public static readonly StringName _pos169 = "_pos169";
 
-		public static readonly StringName scale16_9 = "scale16_9";
+		/// <summary>
+		/// Cached name for the '_scale169' field.
+		/// </summary>
+		public static readonly StringName _scale169 = "_scale169";
 
-		public static readonly StringName pos21_9 = "pos21_9";
+		/// <summary>
+		/// Cached name for the '_pos219' field.
+		/// </summary>
+		public static readonly StringName _pos219 = "_pos219";
 
-		public static readonly StringName scale21_9 = "scale21_9";
+		/// <summary>
+		/// Cached name for the '_scale219' field.
+		/// </summary>
+		public static readonly StringName _scale219 = "_scale219";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -45,17 +81,17 @@ public class NAncientBgContainer : Control
 
 	private const float _ratioMax = 2.3333f;
 
-	private Vector2 pos4_3 = new Vector2(-140f, 110f);
+	private Vector2 _pos43 = new Vector2(-140f, 110f);
 
-	private Vector2 scale4_3 = new Vector2(1f, 1f);
+	private Vector2 _scale43 = new Vector2(1f, 1f);
 
-	private Vector2 pos16_9 = new Vector2(0f, 40f);
+	private Vector2 _pos169 = new Vector2(0f, 40f);
 
-	private Vector2 scale16_9 = new Vector2(0.89f, 0.89f);
+	private Vector2 _scale169 = new Vector2(0.89f, 0.89f);
 
-	private Vector2 pos21_9 = new Vector2(330f, 40f);
+	private Vector2 _pos219 = new Vector2(330f, 40f);
 
-	private Vector2 scale21_9 = new Vector2(1f, 1f);
+	private Vector2 _scale219 = new Vector2(1f, 1f);
 
 	public override void _Ready()
 	{
@@ -64,6 +100,10 @@ public class NAncientBgContainer : Control
 		OnWindowChange();
 	}
 
+	/// <summary>
+	/// A great way to resize bg assets. Interpolates from 16:9 to other aspect ratios.
+	/// TODO: Adopt for normal events??
+	/// </summary>
 	private void OnWindowChange()
 	{
 		float num = Mathf.Clamp(base.Size.X / base.Size.Y, 1.3333f, 2.3333f);
@@ -71,17 +111,22 @@ public class NAncientBgContainer : Control
 		if (num < 1.7777f)
 		{
 			float weight = Mathf.InverseLerp(1.3333f, 1.7777f, num);
-			base.Position = pos4_3.Lerp(pos16_9, weight);
-			base.Scale = scale4_3.Lerp(scale16_9, weight);
+			base.Position = _pos43.Lerp(_pos169, weight);
+			base.Scale = _scale43.Lerp(_scale169, weight);
 		}
 		else
 		{
 			float weight2 = Mathf.InverseLerp(1.7777f, 2.3333f, num);
-			base.Position = pos16_9.Lerp(pos21_9, weight2);
-			base.Scale = scale16_9.Lerp(scale21_9, weight2);
+			base.Position = _pos169.Lerp(_pos219, weight2);
+			base.Scale = _scale169.Lerp(_scale219, weight2);
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -91,6 +136,7 @@ public class NAncientBgContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -109,6 +155,7 @@ public class NAncientBgContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -123,6 +170,7 @@ public class NAncientBgContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -131,39 +179,40 @@ public class NAncientBgContainer : Control
 			_window = VariantUtils.ConvertTo<Window>(in value);
 			return true;
 		}
-		if (name == PropertyName.pos4_3)
+		if (name == PropertyName._pos43)
 		{
-			pos4_3 = VariantUtils.ConvertTo<Vector2>(in value);
+			_pos43 = VariantUtils.ConvertTo<Vector2>(in value);
 			return true;
 		}
-		if (name == PropertyName.scale4_3)
+		if (name == PropertyName._scale43)
 		{
-			scale4_3 = VariantUtils.ConvertTo<Vector2>(in value);
+			_scale43 = VariantUtils.ConvertTo<Vector2>(in value);
 			return true;
 		}
-		if (name == PropertyName.pos16_9)
+		if (name == PropertyName._pos169)
 		{
-			pos16_9 = VariantUtils.ConvertTo<Vector2>(in value);
+			_pos169 = VariantUtils.ConvertTo<Vector2>(in value);
 			return true;
 		}
-		if (name == PropertyName.scale16_9)
+		if (name == PropertyName._scale169)
 		{
-			scale16_9 = VariantUtils.ConvertTo<Vector2>(in value);
+			_scale169 = VariantUtils.ConvertTo<Vector2>(in value);
 			return true;
 		}
-		if (name == PropertyName.pos21_9)
+		if (name == PropertyName._pos219)
 		{
-			pos21_9 = VariantUtils.ConvertTo<Vector2>(in value);
+			_pos219 = VariantUtils.ConvertTo<Vector2>(in value);
 			return true;
 		}
-		if (name == PropertyName.scale21_9)
+		if (name == PropertyName._scale219)
 		{
-			scale21_9 = VariantUtils.ConvertTo<Vector2>(in value);
+			_scale219 = VariantUtils.ConvertTo<Vector2>(in value);
 			return true;
 		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -172,66 +221,73 @@ public class NAncientBgContainer : Control
 			value = VariantUtils.CreateFrom(in _window);
 			return true;
 		}
-		if (name == PropertyName.pos4_3)
+		if (name == PropertyName._pos43)
 		{
-			value = VariantUtils.CreateFrom(in pos4_3);
+			value = VariantUtils.CreateFrom(in _pos43);
 			return true;
 		}
-		if (name == PropertyName.scale4_3)
+		if (name == PropertyName._scale43)
 		{
-			value = VariantUtils.CreateFrom(in scale4_3);
+			value = VariantUtils.CreateFrom(in _scale43);
 			return true;
 		}
-		if (name == PropertyName.pos16_9)
+		if (name == PropertyName._pos169)
 		{
-			value = VariantUtils.CreateFrom(in pos16_9);
+			value = VariantUtils.CreateFrom(in _pos169);
 			return true;
 		}
-		if (name == PropertyName.scale16_9)
+		if (name == PropertyName._scale169)
 		{
-			value = VariantUtils.CreateFrom(in scale16_9);
+			value = VariantUtils.CreateFrom(in _scale169);
 			return true;
 		}
-		if (name == PropertyName.pos21_9)
+		if (name == PropertyName._pos219)
 		{
-			value = VariantUtils.CreateFrom(in pos21_9);
+			value = VariantUtils.CreateFrom(in _pos219);
 			return true;
 		}
-		if (name == PropertyName.scale21_9)
+		if (name == PropertyName._scale219)
 		{
-			value = VariantUtils.CreateFrom(in scale21_9);
+			value = VariantUtils.CreateFrom(in _scale219);
 			return true;
 		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._window, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName.pos4_3, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName.scale4_3, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName.pos16_9, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName.scale16_9, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName.pos21_9, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName.scale21_9, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._pos43, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._scale43, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._pos169, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._scale169, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._pos219, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._scale219, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 		info.AddProperty(PropertyName._window, Variant.From(in _window));
-		info.AddProperty(PropertyName.pos4_3, Variant.From(in pos4_3));
-		info.AddProperty(PropertyName.scale4_3, Variant.From(in scale4_3));
-		info.AddProperty(PropertyName.pos16_9, Variant.From(in pos16_9));
-		info.AddProperty(PropertyName.scale16_9, Variant.From(in scale16_9));
-		info.AddProperty(PropertyName.pos21_9, Variant.From(in pos21_9));
-		info.AddProperty(PropertyName.scale21_9, Variant.From(in scale21_9));
+		info.AddProperty(PropertyName._pos43, Variant.From(in _pos43));
+		info.AddProperty(PropertyName._scale43, Variant.From(in _scale43));
+		info.AddProperty(PropertyName._pos169, Variant.From(in _pos169));
+		info.AddProperty(PropertyName._scale169, Variant.From(in _scale169));
+		info.AddProperty(PropertyName._pos219, Variant.From(in _pos219));
+		info.AddProperty(PropertyName._scale219, Variant.From(in _scale219));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -240,29 +296,29 @@ public class NAncientBgContainer : Control
 		{
 			_window = value.As<Window>();
 		}
-		if (info.TryGetProperty(PropertyName.pos4_3, out var value2))
+		if (info.TryGetProperty(PropertyName._pos43, out var value2))
 		{
-			pos4_3 = value2.As<Vector2>();
+			_pos43 = value2.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName.scale4_3, out var value3))
+		if (info.TryGetProperty(PropertyName._scale43, out var value3))
 		{
-			scale4_3 = value3.As<Vector2>();
+			_scale43 = value3.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName.pos16_9, out var value4))
+		if (info.TryGetProperty(PropertyName._pos169, out var value4))
 		{
-			pos16_9 = value4.As<Vector2>();
+			_pos169 = value4.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName.scale16_9, out var value5))
+		if (info.TryGetProperty(PropertyName._scale169, out var value5))
 		{
-			scale16_9 = value5.As<Vector2>();
+			_scale169 = value5.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName.pos21_9, out var value6))
+		if (info.TryGetProperty(PropertyName._pos219, out var value6))
 		{
-			pos21_9 = value6.As<Vector2>();
+			_pos219 = value6.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName.scale21_9, out var value7))
+		if (info.TryGetProperty(PropertyName._scale219, out var value7))
 		{
-			scale21_9 = value7.As<Vector2>();
+			_scale219 = value7.As<Vector2>();
 		}
 	}
 }

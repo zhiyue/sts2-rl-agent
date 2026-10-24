@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Reaction;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game;
 
+/// <summary>
+/// Handles miscellaneous multiplayer messages that are for game feel and fun.
+/// </summary>
 public class ReactionSynchronizer : IDisposable
 {
 	private readonly NReactionContainer _container;

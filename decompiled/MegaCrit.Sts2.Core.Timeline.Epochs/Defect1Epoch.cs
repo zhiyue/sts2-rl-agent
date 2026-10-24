@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Booting Up
+/// </summary>
 public class Defect1Epoch : EpochModel
 {
 	public override string Id => "DEFECT1_EPOCH";

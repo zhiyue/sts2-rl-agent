@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// My Face
+/// </summary>
 public class Ironclad7Epoch : EpochModel
 {
 	public override string Id => "IRONCLAD7_EPOCH";

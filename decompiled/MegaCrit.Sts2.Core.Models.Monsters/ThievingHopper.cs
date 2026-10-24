@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Enchantments;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -24,6 +25,9 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class ThievingHopper : MonsterModel
 {
+	/// <summary>
+	/// The priorities used to determine which card to steal from the player's deck.
+	/// </summary>
 	private static readonly Func<CardModel, bool>[] _stealPriorities = new Func<CardModel, bool>[4]
 	{
 		(CardModel c) => !(c.Enchantment is Imbued) && c.Rarity == CardRarity.Uncommon,
@@ -148,12 +152,12 @@ public sealed class ThievingHopper : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<EscapeArtistPower>(base.Creature, 5m, base.Creature, null);
+		await PowerCmd.Apply<EscapeArtistPower>(new ThrowingPlayerChoiceContext(), base.Creature, 5m, base.Creature, null);
 	}
 
 	public override void BeforeRemovedFromRoom()
 	{
-		SfxCmd.StopLoop("event:/sfx/enemy/enemy_attacks/thieving_hopper/thieving_hopper_hover_loop");
+		SfxCmd.StopLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/thieving_hopper/thieving_hopper_hover_loop");
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -183,9 +187,9 @@ public sealed class ThievingHopper : MonsterModel
 		if (creatureNode != null)
 		{
 			Creature creature = LocalContext.GetMe(targets) ?? targets.First();
-			NCreature creatureNode2 = NCombatRoom.Instance.GetCreatureNode(creature);
+			NCreature creatureNode2 = creature.GetCreatureNode();
 			Node2D specialNode = creatureNode.GetSpecialNode<Node2D>("Visuals/SpineBoneNode");
-			if (specialNode != null)
+			if (specialNode != null && creatureNode2 != null)
 			{
 				specialNode.Position = Vector2.Right * (creatureNode2.GlobalPosition.X - creatureNode.GlobalPosition.X);
 			}
@@ -195,23 +199,30 @@ public sealed class ThievingHopper : MonsterModel
 		List<CardModel> cardsToSteal = new List<CardModel>();
 		foreach (Creature target in targets)
 		{
+			if (target.IsDead)
+			{
+				continue;
+			}
 			List<CardModel> list = (from c in CardPile.GetCards(target.Player ?? target.PetOwner, PileType.Draw, PileType.Discard)
 				where c.DeckVersion != null
 				select c).ToList();
-			IEnumerable<CardModel> items = list;
+			IEnumerable<CardModel> enumerable = list;
 			Func<CardModel, bool>[] stealPriorities = _stealPriorities;
 			foreach (Func<CardModel, bool> predicate in stealPriorities)
 			{
-				IEnumerable<CardModel> enumerable = list.Where(predicate);
-				if (enumerable.Any())
+				IEnumerable<CardModel> enumerable2 = list.Where(predicate);
+				if (enumerable2.Any())
 				{
-					items = enumerable;
+					enumerable = enumerable2;
 					break;
 				}
 			}
-			CardModel cardToSteal = base.RunRng.CombatCardGeneration.NextItem(items);
-			await CardPileCmd.RemoveFromCombat(cardToSteal, isBeingPlayed: false);
-			cardsToSteal.Add(cardToSteal);
+			if (enumerable.Any())
+			{
+				CardModel cardToSteal = base.RunRng.CombatCardGeneration.NextItem(enumerable);
+				await CardPileCmd.RemoveFromCombat(cardToSteal);
+				cardsToSteal.Add(cardToSteal);
+			}
 		}
 		await Cmd.Wait(0.6f);
 		foreach (CardModel item in cardsToSteal)
@@ -229,7 +240,7 @@ public sealed class ThievingHopper : MonsterModel
 			}
 			SwipePower swipe = (SwipePower)ModelDb.Power<SwipePower>().ToMutable();
 			await swipe.Steal(item);
-			await PowerCmd.Apply(swipe, base.Creature, 1m, base.Creature, null);
+			await PowerCmd.Apply(new ThrowingPlayerChoiceContext(), swipe, base.Creature, 1m, base.Creature, null);
 		}
 		await DamageCmd.Attack(TheftDamage).FromMonster(this).WithNoAttackerAnim()
 			.WithHitFx("vfx/vfx_attack_blunt")
@@ -256,10 +267,10 @@ public sealed class ThievingHopper : MonsterModel
 	{
 		IsHovering = true;
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/thieving_hopper/thieving_hopper_take_off");
-		SfxCmd.PlayLoop("event:/sfx/enemy/enemy_attacks/thieving_hopper/thieving_hopper_hover_loop");
+		SfxCmd.PlayLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/thieving_hopper/thieving_hopper_hover_loop");
 		await CreatureCmd.TriggerAnim(base.Creature, "Hover", 0f);
 		await Cmd.Wait(1.25f);
-		await PowerCmd.Apply<FlutterPower>(base.Creature, 5m, base.Creature, null);
+		await PowerCmd.Apply<FlutterPower>(new ThrowingPlayerChoiceContext(), base.Creature, 5m, base.Creature, null);
 	}
 
 	private async Task EscapeMove(IReadOnlyList<Creature> targets)
@@ -269,7 +280,7 @@ public sealed class ThievingHopper : MonsterModel
 		await CreatureCmd.TriggerAnim(base.Creature, "Flee", 0.85f);
 		if (IsHovering)
 		{
-			SfxCmd.StopLoop("event:/sfx/enemy/enemy_attacks/thieving_hopper/thieving_hopper_hover_loop");
+			SfxCmd.StopLoop(base.Creature, "event:/sfx/enemy/enemy_attacks/thieving_hopper/thieving_hopper_hover_loop");
 			IsHovering = false;
 		}
 		await Cmd.Wait(1.5f);

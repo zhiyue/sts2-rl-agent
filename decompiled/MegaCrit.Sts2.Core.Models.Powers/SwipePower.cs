@@ -20,7 +20,7 @@ public sealed class SwipePower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Single;
 
-	public override bool IsInstanced => true;
+	public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
 
 	public CardModel? StolenCard
 	{
@@ -62,6 +62,7 @@ public sealed class SwipePower : PowerModel
 		SpecialCardReward specialCardReward = new SpecialCardReward(StolenCard.DeckVersion, base.Target.Player);
 		specialCardReward.SetCustomDescriptionEncounterSource(ModelDb.Encounter<ThievingHopperWeak>().Id);
 		((CombatRoom)runState.CurrentRoom).AddExtraReward(base.Target.Player, specialCardReward);
+		runState.CurrentMapPointHistoryEntry?.GetEntry(base.Target.Player.NetId).MarkLootReturned();
 		return Task.CompletedTask;
 	}
 
@@ -72,6 +73,7 @@ public sealed class SwipePower : PowerModel
 		if (card.DeckVersion != null)
 		{
 			await CardPileCmd.RemoveFromDeck(card.DeckVersion, showPreview: false);
+			card.Owner.RunState.CurrentMapPointHistoryEntry?.GetEntry(card.Owner.NetId).MarkLootStolen();
 		}
 	}
 }

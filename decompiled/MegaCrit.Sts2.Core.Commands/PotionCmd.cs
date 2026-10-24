@@ -18,6 +18,13 @@ public static class PotionCmd
 		return await TryToProcure(ModelDb.Potion<T>().ToMutable(), player);
 	}
 
+	/// <summary>
+	/// We try to Procure the potion. Can fail if the potions bar is full.
+	/// </summary>
+	/// <param name="potion">Potion to be added</param>
+	/// <param name="player">Player who is getting the potion</param>
+	/// <param name="slotIndex">Slot at which to add the potion. If -1, the potion will be added in the first available slot.</param>
+	/// <returns>Potion if it is added successfully. Returns null if it failed.</returns>
 	public static async Task<PotionProcureResult> TryToProcure(PotionModel potion, Player player, int slotIndex = -1)
 	{
 		potion.AssertMutable();

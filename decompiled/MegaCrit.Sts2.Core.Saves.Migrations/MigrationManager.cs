@@ -9,6 +9,11 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Saves.Migrations;
 
+/// <summary>
+/// Manages save schema migrations and version tracking.
+/// This class combines functionality previously spread across MigrationRegistry, SaveSystemBootstrap,
+/// and migration logic from SaveManager.
+/// </summary>
 public class MigrationManager
 {
 	private readonly Dictionary<Type, int> _latestVersions = new Dictionary<Type, int>();
@@ -19,12 +24,20 @@ public class MigrationManager
 
 	private readonly ISaveStore _saveStore;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="T:MegaCrit.Sts2.Core.Saves.Migrations.MigrationManager" /> class.
+	/// </summary>
+	/// <param name="saveStore">The save store to use for file operations</param>
 	public MigrationManager(ISaveStore saveStore)
 	{
 		_saveStore = saveStore;
 		Initialize();
 	}
 
+	/// <summary>
+	/// Initializes the migration system, registering migrations and setting current versions.
+	/// </summary>
+	/// <exception cref="T:MegaCrit.Sts2.Core.Saves.Migrations.InvalidMigrationPathException">Thrown when migration paths are invalid</exception>
 	private void Initialize()
 	{
 		_registry.RegisterAllMigrations(this);
@@ -38,6 +51,9 @@ public class MigrationManager
 		SetMinimumSupportedVersion<ProfileSave>(2);
 	}
 
+	/// <summary>
+	/// Derives the latest version numbers dynamically from registered migrations.
+	/// </summary>
 	private void DeriveAndSetLatestVersions()
 	{
 		foreach (Type key in _registry.Migrations.Keys)
@@ -59,12 +75,21 @@ public class MigrationManager
 		EnsureVersionSet<ProfileSave>();
 	}
 
+	/// <summary>
+	/// Ensures that a version is set for the specified save type.
+	/// </summary>
+	/// <typeparam name="T">The save type</typeparam>
 	private void EnsureVersionSet<T>() where T : ISaveSchema
 	{
 		Type typeFromHandle = typeof(T);
 		_latestVersions.TryAdd(typeFromHandle, 1);
 	}
 
+	/// <summary>
+	/// Validates migration paths for gaps and duplicates.
+	/// </summary>
+	/// <exception cref="T:MegaCrit.Sts2.Core.Saves.Migrations.MigrationPathGapException">Thrown when migration paths have gaps</exception>
+	/// <exception cref="T:MegaCrit.Sts2.Core.Saves.Migrations.DuplicateMigrationException">Thrown when migration paths have duplicates</exception>
 	private void ValidateMigrationPaths()
 	{
 		foreach (Type key in _registry.Migrations.Keys)
@@ -84,6 +109,13 @@ public class MigrationManager
 		return value;
 	}
 
+	/// <summary>
+	/// Gets a list of version numbers that represent gaps in the migration path.
+	/// A gap is defined as a version that is a target in one migration but not a source in any migration,
+	/// except for the highest version which is expected to be only a target.
+	/// </summary>
+	/// <param name="saveType">The save type to check</param>
+	/// <returns>A list of version numbers that represent gaps</returns>
 	private List<int> GetGapsInMigrationPath(Type saveType)
 	{
 		List<int> list = new List<int>();
@@ -105,6 +137,12 @@ public class MigrationManager
 		return list;
 	}
 
+	/// <summary>
+	/// Gets a list of version numbers that are sources for multiple migrations.
+	/// This indicates a conflict in the migration path.
+	/// </summary>
+	/// <param name="saveType">The save type to check</param>
+	/// <returns>A list of version numbers that are sources for multiple migrations</returns>
 	private List<int> GetDuplicateMigrationSources(Type saveType)
 	{
 		if (!_registry.Migrations.TryGetValue(saveType, out List<IMigration> value))
@@ -117,6 +155,14 @@ public class MigrationManager
 			select g.Key).ToList();
 	}
 
+	/// <summary>
+	/// Checks if the migration path for a specific save type is valid.
+	/// Throws the same exceptions as ValidateMigrationPaths for consistency.
+	/// </summary>
+	/// <param name="saveType">The save type to check</param>
+	/// <returns>True if the migration path is valid</returns>
+	/// <exception cref="T:MegaCrit.Sts2.Core.Saves.Migrations.MigrationPathGapException">Thrown when migration paths have gaps</exception>
+	/// <exception cref="T:MegaCrit.Sts2.Core.Saves.Migrations.DuplicateMigrationException">Thrown when migration paths have duplicates</exception>
 	private void IsMigrationPathValid(Type saveType)
 	{
 		List<int> duplicateMigrationSources = GetDuplicateMigrationSources(saveType);
@@ -135,6 +181,10 @@ public class MigrationManager
 		}
 	}
 
+	/// <summary>
+	/// Registers a migration.
+	/// </summary>
+	/// <param name="migration">The migration to register</param>
 	public void RegisterMigration(IMigration migration)
 	{
 		Type saveType = migration.SaveType;
@@ -146,12 +196,23 @@ public class MigrationManager
 		value.Add(migration);
 	}
 
+	/// <summary>
+	/// Sets the minimum supported schema version for a specific save type.
+	/// </summary>
+	/// <typeparam name="T">The save type</typeparam>
+	/// <param name="version">The minimum supported version</param>
 	private void SetMinimumSupportedVersion<T>(int version) where T : ISaveSchema
 	{
 		Type typeFromHandle = typeof(T);
 		_minimumSupportedVersions[typeFromHandle] = version;
 	}
 
+	/// <summary>
+	/// Gets the current schema version for a specific save type.
+	/// </summary>
+	/// <typeparam name="T">The save type that implements the ISaveSchema interface</typeparam>
+	/// <returns>The current version number for the specified save type</returns>
+	/// <exception cref="T:MegaCrit.Sts2.Core.Saves.Migrations.MigrationException">Thrown when no migrations are found for the specified save type</exception>
 	private int GetCurrentVersion<T>() where T : ISaveSchema
 	{
 		Type typeFromHandle = typeof(T);
@@ -162,6 +223,12 @@ public class MigrationManager
 		return value;
 	}
 
+	/// <summary>
+	/// Gets the minimum supported schema version for a specific save type.
+	/// </summary>
+	/// <typeparam name="T">The save type</typeparam>
+	/// <returns>The minimum supported version</returns>
+	/// <exception cref="T:System.InvalidOperationException">Thrown when no minimum supported version has been set</exception>
 	private int GetMinimumSupportedVersion<T>() where T : ISaveSchema
 	{
 		Type typeFromHandle = typeof(T);
@@ -172,6 +239,13 @@ public class MigrationManager
 		return value;
 	}
 
+	/// <summary>
+	/// Gets a migration for a specific save type and version.
+	/// </summary>
+	/// <typeparam name="T">The save type</typeparam>
+	/// <param name="fromVersion">The version to migrate from</param>
+	/// <param name="toVersion">The version to migrate to (used only for validation)</param>
+	/// <returns>The migration, or null if no migration exists</returns>
 	private IMigration? GetMigration<T>(int fromVersion, int toVersion) where T : ISaveSchema
 	{
 		Type typeFromHandle = typeof(T);
@@ -182,6 +256,12 @@ public class MigrationManager
 		return value.FirstOrDefault((IMigration m) => m.FromVersion == fromVersion && m.ToVersion == toVersion);
 	}
 
+	/// <summary>
+	/// Gets the next available version in the migration chain.
+	/// </summary>
+	/// <typeparam name="T">The save type that implements the ISaveSchema interface</typeparam>
+	/// <param name="currentVersion">The current version number to find the next version for</param>
+	/// <returns>The next version number if a migration exists, or null if no migration is available</returns>
 	private int? GetNextVersion<T>(int currentVersion) where T : ISaveSchema
 	{
 		Type typeFromHandle = typeof(T);
@@ -193,11 +273,20 @@ public class MigrationManager
 		return value.FirstOrDefault((IMigration m) => m.FromVersion == versionToFind)?.ToVersion;
 	}
 
+	/// <summary>
+	/// Gets all registered save types that have migrations.
+	/// </summary>
+	/// <returns>The save types</returns>
 	public IEnumerable<Type> GetRegisteredSaveTypes()
 	{
 		return _registry.Migrations.Keys;
 	}
 
+	/// <summary>
+	/// Gets all registered migrations for a specific save type.
+	/// </summary>
+	/// <param name="saveType">The save type</param>
+	/// <returns>The migrations</returns>
 	public IEnumerable<IMigration> GetMigrationsForType(Type saveType)
 	{
 		if (!_registry.Migrations.TryGetValue(saveType, out List<IMigration> value))
@@ -207,6 +296,12 @@ public class MigrationManager
 		return value;
 	}
 
+	/// <summary>
+	/// Extracts the schema version from a JsonObject.
+	/// </summary>
+	/// <param name="json">The JsonObject to extract the version from</param>
+	/// <returns>The schema version</returns>
+	/// <exception cref="T:MegaCrit.Sts2.Core.Saves.Migrations.MissingSchemaVersionException">Thrown when the schema version is not found</exception>
 	private static int ExtractSchemaVersion(MigratingData json)
 	{
 		if (json.Has("schema_version"))
@@ -216,6 +311,11 @@ public class MigrationManager
 		throw new MissingSchemaVersionException($"Schema version not found in JSON: {json}");
 	}
 
+	/// <summary>
+	/// Creates a new save instance with the latest schema version for the type.
+	/// </summary>
+	/// <typeparam name="T">The save type</typeparam>
+	/// <returns>New save instance with current schema version</returns>
 	public T CreateNewSave<T>() where T : ISaveSchema, new()
 	{
 		return new T
@@ -224,6 +324,11 @@ public class MigrationManager
 		};
 	}
 
+	/// <summary>
+	/// Preserves a corrupted save file using standardized naming convention.
+	/// </summary>
+	/// <param name="savePath">The path to the corrupt save file</param>
+	/// <param name="status">The reason for corruption</param>
 	private void PreserveCorruptFile(string savePath, ReadSaveStatus status)
 	{
 		try
@@ -243,6 +348,11 @@ public class MigrationManager
 		}
 	}
 
+	/// <summary>
+	/// Determines if a corrupt file should be preserved based on the status.
+	/// </summary>
+	/// <param name="status">The read save status</param>
+	/// <returns>True if the file should be preserved as corrupt</returns>
 	private static bool ShouldPreserveCorrupt(ReadSaveStatus status)
 	{
 		if (status != ReadSaveStatus.FileNotFound && status != ReadSaveStatus.Success)
@@ -252,6 +362,16 @@ public class MigrationManager
 		return false;
 	}
 
+	/// <summary>
+	/// Loads save data with aggressive recovery attempts, falling back to a .backup if the primary file
+	/// is missing or corrupt. This covers the case where a non-atomic rename on Windows (delete-then-move)
+	/// lost the primary file during a power failure.
+	/// Does NOT create new saves or modify files - that's the caller's responsibility.
+	/// All recovery operations happen in memory only, preserving original files for debugging.
+	/// </summary>
+	/// <typeparam name="T">The type of save data</typeparam>
+	/// <param name="filePath">The path to the save file</param>
+	/// <returns>ReadSaveResult with save data or error status</returns>
 	public ReadSaveResult<T> LoadSave<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] T>(string filePath) where T : ISaveSchema, new()
 	{
 		ReadSaveResult<T> readSaveResult = LoadSaveFromPath<T>(filePath);
@@ -272,6 +392,9 @@ public class MigrationManager
 		return readSaveResult;
 	}
 
+	/// <summary>
+	/// Loads save data from a single file path with aggressive recovery attempts.
+	/// </summary>
 	private ReadSaveResult<T> LoadSaveFromPath<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] T>(string filePath) where T : ISaveSchema, new()
 	{
 		if (!_saveStore.FileExists(filePath))
@@ -297,6 +420,14 @@ public class MigrationManager
 		}
 	}
 
+	/// <summary>
+	/// Attempts to load save data with aggressive recovery attempts, including migration and repair.
+	/// Uses multiple fallback strategies: schema version inference, sequential migrations, JSON repair, and data scavenging.
+	/// </summary>
+	/// <typeparam name="T">The type of save data</typeparam>
+	/// <param name="filePath">The path to the save file (for logging)</param>
+	/// <param name="content">The file content to parse</param>
+	/// <returns>ReadSaveResult with save data or error status</returns>
 	private ReadSaveResult<T> LoadWithAggressiveRecovery<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] T>(string filePath, string content) where T : ISaveSchema, new()
 	{
 		try
@@ -418,11 +549,25 @@ public class MigrationManager
 		}
 	}
 
+	/// <summary>
+	/// Attempts to infer schema version from save structure
+	/// </summary>
+	/// <typeparam name="T">The save type</typeparam>
+	/// <param name="data">The save data to examine</param>
+	/// <returns>Inferred version or null if can't infer</returns>
 	private int? InferSchemaVersionFromStructure<T>(MigratingData data) where T : ISaveSchema
 	{
 		return null;
 	}
 
+	/// <summary>
+	/// Attempts to scavenge usable data from corrupted/old saves by stamping the current schema version
+	/// and deserializing directly. Unknown fields are silently skipped; missing fields get C# defaults.
+	/// SerializableRun is excluded because defaulted combat state (0 HP, empty deck) causes gameplay bugs.
+	/// </summary>
+	/// <typeparam name="T">The save type</typeparam>
+	/// <param name="data">The save data to scavenge from</param>
+	/// <returns>Scavenged save object or null if nothing can be salvaged</returns>
 	private T? RecoverPartialDataFromCorruptSave<T>(MigratingData data) where T : ISaveSchema, new()
 	{
 		if (typeof(T) == typeof(SerializableRun))
@@ -445,6 +590,12 @@ public class MigrationManager
 		}
 	}
 
+	/// <summary>
+	/// Attempts basic JSON repair (fix common issues like trailing commas, missing brackets).
+	/// Limited to safe, conservative repairs only.
+	/// </summary>
+	/// <param name="json">The JSON content to repair</param>
+	/// <returns>Repaired JSON string or null if repair failed</returns>
 	private string? RepairCommonJsonErrors(string json)
 	{
 		if (string.IsNullOrWhiteSpace(json))
@@ -479,6 +630,13 @@ public class MigrationManager
 		}
 	}
 
+	/// <summary>
+	/// Migrates save data using JsonObject.
+	/// </summary>
+	/// <typeparam name="T">The type of save data to migrate</typeparam>
+	/// <param name="jsonObj">The JsonObject to migrate</param>
+	/// <returns>The migrated JsonObject</returns>
+	/// <exception cref="T:MegaCrit.Sts2.Core.Saves.Migrations.MigrationException">Thrown when a migration cannot be found or fails</exception>
 	private MigratingData MigrateDataSequentially<T>(MigratingData jsonObj) where T : ISaveSchema
 	{
 		int num = ExtractSchemaVersion(jsonObj);

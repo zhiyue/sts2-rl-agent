@@ -16,15 +16,15 @@ public sealed class HauntPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		if (cardPlay.Card is Soul)
+		if (cardPlay.Card is Soul && cardPlay.Card.Owner.Creature == base.Owner)
 		{
 			IReadOnlyList<Creature> hittableEnemies = base.CombatState.HittableEnemies;
 			if (hittableEnemies.Count != 0)
 			{
 				Creature item = base.Owner.Player.RunState.Rng.CombatTargets.NextItem(hittableEnemies);
-				await CreatureCmd.Damage(context, new global::_003C_003Ez__ReadOnlySingleElementList<Creature>(item), base.Amount, ValueProp.Unblockable | ValueProp.Unpowered, null, null);
+				await CreatureCmd.Damage(choiceContext, new global::_003C_003Ez__ReadOnlySingleElementList<Creature>(item), base.Amount, ValueProp.Unblockable | ValueProp.Unpowered, null, null);
 			}
 		}
 	}

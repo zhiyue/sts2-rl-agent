@@ -1,17 +1,17 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Godot;
 using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Audio;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
@@ -32,9 +32,9 @@ public sealed class PhantasmalGardener : MonsterModel
 
 	private const string _buffSfx = "event:/sfx/enemy/enemy_attacks/phantasmal_gardeners/phantasmal_gardeners_buff";
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 29, 28);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 27, 26);
 
-	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 33, 32);
+	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 32, 31);
 
 	private int BiteDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 5, 5);
 
@@ -69,10 +69,9 @@ public sealed class PhantasmalGardener : MonsterModel
 
 	public override string DeathSfx => "event:/sfx/enemy/enemy_attacks/phantasmal_gardeners/phantasmal_gardeners_die";
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
-		MegaSkin megaSkin = visuals.SpineBody.NewSkin("custom-skin");
+		MegaSkin megaSkin = spine.NewSkin("custom-skin");
 		MegaSkeletonDataResource data = skeleton.GetData();
 		string slotName = base.Creature.SlotName;
 		if ((slotName == "first" || slotName == "third") ? true : false)
@@ -90,7 +89,7 @@ public sealed class PhantasmalGardener : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<SkittishPower>(base.Creature, SkittishAmount, base.Creature, null);
+		await PowerCmd.Apply<SkittishPower>(new ThrowingPlayerChoiceContext(), base.Creature, SkittishAmount, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -149,9 +148,9 @@ public sealed class PhantasmalGardener : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/phantasmal_gardeners/phantasmal_gardeners_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 1.5f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, EnlargeStr, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, EnlargeStr, base.Creature, null);
 		EnlargeTriggers++;
-		CurrentScale = 1f + 0.1f * (float)Math.Log(EnlargeTriggers + 1);
+		CurrentScale = 1f + 0.1f * Mathf.Log((float)EnlargeTriggers + 1f);
 		NCombatRoom.Instance?.GetCreatureNode(base.Creature)?.SetDefaultScaleTo(CurrentScale, 0.75f);
 	}
 

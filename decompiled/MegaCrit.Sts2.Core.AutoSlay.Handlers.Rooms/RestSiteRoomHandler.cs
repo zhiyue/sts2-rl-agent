@@ -14,6 +14,9 @@ using MegaCrit.Sts2.Core.Rooms;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
 
+/// <summary>
+/// Handles rest site rooms by selecting a random rest option.
+/// </summary>
 public class RestSiteRoomHandler : IRoomHandler, IHandler
 {
 	private const string _roomPath = "/root/Game/RootSceneContainer/Run/RoomContainer/RestSiteRoom";

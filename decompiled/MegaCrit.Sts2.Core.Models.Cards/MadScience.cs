@@ -136,6 +136,9 @@ public sealed class MadScience : CardModel
 		}
 	}
 
+	/// <summary>
+	/// Used for tests.
+	/// </summary>
 	private CardModel? MockedChaosCard
 	{
 		get
@@ -178,6 +181,7 @@ public sealed class MadScience : CardModel
 			CardType.Attack => "mad_science_attack", 
 			CardType.Skill => "mad_science_skill", 
 			CardType.Power => "mad_science_power", 
+			CardType.None => "mad_science_attack", 
 			_ => throw new InvalidOperationException($"Mad Science is invalid type {TinkerTimeType}."), 
 		};
 	}
@@ -197,7 +201,7 @@ public sealed class MadScience : CardModel
 			await ExecuteSkill(cardPlay);
 			break;
 		case CardType.Power:
-			await ExecutePower();
+			await ExecutePower(choiceContext);
 			break;
 		default:
 			throw new ArgumentOutOfRangeException();
@@ -225,20 +229,20 @@ public sealed class MadScience : CardModel
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
 	}
 
-	private async Task ExecutePower()
+	private async Task ExecutePower(PlayerChoiceContext choiceContext)
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		switch (TinkerTimeRider)
 		{
 		case TinkerTime.RiderEffect.Expertise:
-			await PowerCmd.Apply<StrengthPower>(base.Owner.Creature, base.DynamicVars["ExpertiseStrength"].BaseValue, base.Owner.Creature, this);
-			await PowerCmd.Apply<DexterityPower>(base.Owner.Creature, base.DynamicVars["ExpertiseDexterity"].BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner.Creature, base.DynamicVars["ExpertiseStrength"].BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<DexterityPower>(choiceContext, base.Owner.Creature, base.DynamicVars["ExpertiseDexterity"].BaseValue, base.Owner.Creature, this);
 			break;
 		case TinkerTime.RiderEffect.Curious:
-			await PowerCmd.Apply<CuriousPower>(base.Owner.Creature, base.DynamicVars["CuriousReduction"].BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<CuriousPower>(choiceContext, base.Owner.Creature, base.DynamicVars["CuriousReduction"].BaseValue, base.Owner.Creature, this);
 			break;
 		case TinkerTime.RiderEffect.Improvement:
-			await PowerCmd.Apply<ImprovementPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+			await PowerCmd.Apply<ImprovementPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 			break;
 		}
 	}
@@ -265,11 +269,11 @@ public sealed class MadScience : CardModel
 		switch (rider)
 		{
 		case TinkerTime.RiderEffect.Sapping:
-			await PowerCmd.Apply<WeakPower>(target, base.DynamicVars["SappingWeak"].BaseValue, base.Owner.Creature, this);
-			await PowerCmd.Apply<VulnerablePower>(target, base.DynamicVars["SappingVulnerable"].BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<WeakPower>(choiceContext, target, base.DynamicVars["SappingWeak"].BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<VulnerablePower>(choiceContext, target, base.DynamicVars["SappingVulnerable"].BaseValue, base.Owner.Creature, this);
 			break;
 		case TinkerTime.RiderEffect.Choking:
-			await PowerCmd.Apply<StranglePower>(target, base.DynamicVars["ChokingDamage"].BaseValue, base.Owner.Creature, this);
+			await PowerCmd.Apply<StranglePower>(choiceContext, target, base.DynamicVars["ChokingDamage"].BaseValue, base.Owner.Creature, this);
 			break;
 		case TinkerTime.RiderEffect.Energized:
 			await PlayerCmd.GainEnergy(base.DynamicVars["EnergizedEnergy"].IntValue, base.Owner);
@@ -280,7 +284,7 @@ public sealed class MadScience : CardModel
 		case TinkerTime.RiderEffect.Chaos:
 		{
 			CardModel cardModel = ((MockedChaosCard == null) ? CardFactory.GetDistinctForCombat(base.Owner, base.Owner.Character.CardPool.GetUnlockedCards(base.Owner.UnlockState, base.Owner.RunState.CardMultiplayerConstraint), 1, base.Owner.RunState.Rng.CombatCardGeneration).First() : MockedChaosCard);
-			cardModel.EnergyCost.SetThisTurnOrUntilPlayed(0);
+			cardModel.SetToFreeThisTurn();
 			await CardPileCmd.Add(cardModel, PileType.Hand);
 			break;
 		}
@@ -289,6 +293,9 @@ public sealed class MadScience : CardModel
 		}
 	}
 
+	/// <summary>
+	/// ONLY USE THIS IN TESTS!
+	/// </summary>
 	public void MockChaosCard(CardModel card)
 	{
 		AssertMutable();

@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -39,23 +41,23 @@ public sealed class TenderPower : PowerModel
 		}
 	}
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Owner == base.Owner.Player)
 		{
 			CardsPlayedThisTurn++;
 			Flash();
-			await PowerCmd.Apply<StrengthPower>(base.Owner, -1m, base.Applier, null, silent: true);
-			await PowerCmd.Apply<DexterityPower>(base.Owner, -1m, base.Applier, null, silent: true);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner, -1m, base.Applier, null, silent: true);
+			await PowerCmd.Apply<DexterityPower>(choiceContext, base.Owner, -1m, base.Applier, null, silent: true);
 		}
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side == CombatSide.Player)
+		if (participants.Contains(base.Owner))
 		{
-			await PowerCmd.Apply<StrengthPower>(base.Owner, CardsPlayedThisTurn, base.Applier, null, silent: true);
-			await PowerCmd.Apply<DexterityPower>(base.Owner, CardsPlayedThisTurn, base.Applier, null, silent: true);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner, CardsPlayedThisTurn, base.Applier, null, silent: true);
+			await PowerCmd.Apply<DexterityPower>(choiceContext, base.Owner, CardsPlayedThisTurn, base.Applier, null, silent: true);
 			CardsPlayedThisTurn = 0;
 		}
 	}

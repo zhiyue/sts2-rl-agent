@@ -7,6 +7,7 @@ using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Runs;
@@ -14,47 +15,107 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
+/// <summary>
+/// Shows run info in the main menu! Handy!
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NContinueRunInfo.cs")]
 public class NContinueRunInfo : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'AnimShow' method.
+		/// </summary>
 		public static readonly StringName AnimShow = "AnimShow";
 
+		/// <summary>
+		/// Cached name for the 'AnimHide' method.
+		/// </summary>
 		public static readonly StringName AnimHide = "AnimHide";
 
+		/// <summary>
+		/// Cached name for the 'ShowError' method.
+		/// </summary>
 		public static readonly StringName ShowError = "ShowError";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'HasResult' property.
+		/// </summary>
 		public static readonly StringName HasResult = "HasResult";
 
+		/// <summary>
+		/// Cached name for the '_visTween' field.
+		/// </summary>
 		public static readonly StringName _visTween = "_visTween";
 
+		/// <summary>
+		/// Cached name for the '_initPosition' field.
+		/// </summary>
 		public static readonly StringName _initPosition = "_initPosition";
 
+		/// <summary>
+		/// Cached name for the '_runInfoContainer' field.
+		/// </summary>
 		public static readonly StringName _runInfoContainer = "_runInfoContainer";
 
+		/// <summary>
+		/// Cached name for the '_errorContainer' field.
+		/// </summary>
 		public static readonly StringName _errorContainer = "_errorContainer";
 
+		/// <summary>
+		/// Cached name for the '_dateLabel' field.
+		/// </summary>
 		public static readonly StringName _dateLabel = "_dateLabel";
 
+		/// <summary>
+		/// Cached name for the '_goldLabel' field.
+		/// </summary>
 		public static readonly StringName _goldLabel = "_goldLabel";
 
+		/// <summary>
+		/// Cached name for the '_healthLabel' field.
+		/// </summary>
 		public static readonly StringName _healthLabel = "_healthLabel";
 
+		/// <summary>
+		/// Cached name for the '_progressLabel' field.
+		/// </summary>
 		public static readonly StringName _progressLabel = "_progressLabel";
 
+		/// <summary>
+		/// Cached name for the '_ascensionLabel' field.
+		/// </summary>
 		public static readonly StringName _ascensionLabel = "_ascensionLabel";
 
+		/// <summary>
+		/// Cached name for the '_charIcon' field.
+		/// </summary>
 		public static readonly StringName _charIcon = "_charIcon";
 
+		/// <summary>
+		/// Cached name for the '_isShown' field.
+		/// </summary>
 		public static readonly StringName _isShown = "_isShown";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -122,7 +183,15 @@ public class NContinueRunInfo : Control
 	{
 		if (result != null && result.Success && result.SaveData != null)
 		{
-			ShowInfo(result.SaveData);
+			try
+			{
+				ShowInfo(result.SaveData);
+			}
+			catch (Exception value)
+			{
+				Log.Warn($"Exception occurred while displaying continue run info: {value}");
+				ShowError();
+			}
 		}
 		else if (result != null)
 		{
@@ -172,6 +241,11 @@ public class NContinueRunInfo : Control
 		_errorContainer.Visible = true;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -183,6 +257,7 @@ public class NContinueRunInfo : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -213,6 +288,7 @@ public class NContinueRunInfo : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -235,6 +311,7 @@ public class NContinueRunInfo : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -301,6 +378,7 @@ public class NContinueRunInfo : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -367,6 +445,11 @@ public class NContinueRunInfo : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -386,6 +469,7 @@ public class NContinueRunInfo : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -404,6 +488,7 @@ public class NContinueRunInfo : Control
 		info.AddProperty(PropertyName._isShown, Variant.From(in _isShown));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

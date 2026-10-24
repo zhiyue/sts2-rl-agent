@@ -26,7 +26,7 @@ public sealed class BoostAway : CardModel
 	{
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
 		CardModel card = base.CombatState.CreateCard<Dazed>(base.Owner);
-		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, addedByPlayer: true));
+		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, base.Owner));
 		await Cmd.Wait(0.5f);
 	}
 

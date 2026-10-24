@@ -10,10 +10,22 @@ public class PlayerRngSet
 {
 	private readonly Dictionary<PlayerRngType, Rng> _rngs = new Dictionary<PlayerRngType, Rng>();
 
+	/// <summary>
+	/// Determines per-player reward generation. This means:
+	/// * What cards are generated for rewards.
+	/// * What potions are generated for rewards.
+	/// * Whether or not the player gets a potion reward at all.
+	/// </summary>
 	public Rng Rewards => GetRng(PlayerRngType.Rewards);
 
+	/// <summary>
+	/// Determines what the different shops are selling.
+	/// </summary>
 	public Rng Shops => GetRng(PlayerRngType.Shops);
 
+	/// <summary>
+	/// Determines what a transformed card will roll into,
+	/// </summary>
 	public Rng Transformations => GetRng(PlayerRngType.Transformations);
 
 	public uint Seed { get; }

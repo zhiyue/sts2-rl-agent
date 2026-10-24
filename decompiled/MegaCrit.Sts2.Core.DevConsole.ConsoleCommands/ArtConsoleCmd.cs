@@ -60,7 +60,7 @@ public class ArtConsoleCmd : AbstractConsoleCmd
 			{
 				if (!debugAffliction.HasOverlay)
 				{
-					list.Add(new MissingArt(debugAffliction, debugAffliction.OverlayPath, debugAffliction.Description.GetRawText()));
+					list.Add(new MissingArt(debugAffliction, debugAffliction.OverlayPath, debugAffliction.DynamicDescription.GetRawText()));
 				}
 			}
 			break;
@@ -86,7 +86,7 @@ public class ArtConsoleCmd : AbstractConsoleCmd
 			{
 				if (!(debugEnchantment is DeprecatedEnchantment) && !(debugEnchantment.IconPath == debugEnchantment.IntendedIconPath))
 				{
-					list.Add(new MissingArt(debugEnchantment, debugEnchantment.IntendedIconPath, debugEnchantment.Description.GetRawText()));
+					list.Add(new MissingArt(debugEnchantment, debugEnchantment.IntendedIconPath, debugEnchantment.DynamicDescription.GetRawText()));
 				}
 			}
 			break;
@@ -104,7 +104,7 @@ public class ArtConsoleCmd : AbstractConsoleCmd
 			{
 				if (!(allRelic.IconPath == allRelic.PackedIconPath))
 				{
-					list.Add(new MissingArt(allRelic, allRelic.PackedIconPath, allRelic.Description.GetRawText()));
+					list.Add(new MissingArt(allRelic, allRelic.PackedIconPath, allRelic.DynamicDescription.GetRawText()));
 				}
 			}
 			break;

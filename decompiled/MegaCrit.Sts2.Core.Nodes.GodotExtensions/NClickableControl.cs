@@ -9,6 +9,9 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
+/// <summary>
+/// The "clickable"
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/GodotExtensions/NClickableControl.cs")]
 public class NClickableControl : Control
 {
@@ -27,92 +30,221 @@ public class NClickableControl : Control
 	[Signal]
 	public delegate void MousePressedEventHandler(InputEvent inputEvent);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'OnVisibilityChanged' method.
+		/// </summary>
 		public static readonly StringName OnVisibilityChanged = "OnVisibilityChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnFocusHandler' method.
+		/// </summary>
 		public static readonly StringName OnFocusHandler = "OnFocusHandler";
 
+		/// <summary>
+		/// Cached name for the 'OnUnFocusHandler' method.
+		/// </summary>
 		public static readonly StringName OnUnFocusHandler = "OnUnFocusHandler";
 
+		/// <summary>
+		/// Cached name for the 'HandleMousePress' method.
+		/// </summary>
 		public static readonly StringName HandleMousePress = "HandleMousePress";
 
+		/// <summary>
+		/// Cached name for the 'HandleMouseRelease' method.
+		/// </summary>
 		public static readonly StringName HandleMouseRelease = "HandleMouseRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnHoverHandler' method.
+		/// </summary>
 		public static readonly StringName OnHoverHandler = "OnHoverHandler";
 
+		/// <summary>
+		/// Cached name for the 'OnUnhoverHandler' method.
+		/// </summary>
 		public static readonly StringName OnUnhoverHandler = "OnUnhoverHandler";
 
+		/// <summary>
+		/// Cached name for the 'OnPressHandler' method.
+		/// </summary>
 		public static readonly StringName OnPressHandler = "OnPressHandler";
 
+		/// <summary>
+		/// Cached name for the 'OnReleaseHandler' method.
+		/// </summary>
 		public static readonly StringName OnReleaseHandler = "OnReleaseHandler";
 
+		/// <summary>
+		/// Cached name for the 'RefreshFocus' method.
+		/// </summary>
 		public static readonly StringName RefreshFocus = "RefreshFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'CheckMouseDragThreshold' method.
+		/// </summary>
 		public static readonly StringName CheckMouseDragThreshold = "CheckMouseDragThreshold";
 
+		/// <summary>
+		/// Cached name for the 'DebugPress' method.
+		/// </summary>
 		public static readonly StringName DebugPress = "DebugPress";
 
+		/// <summary>
+		/// Cached name for the 'DebugRelease' method.
+		/// </summary>
 		public static readonly StringName DebugRelease = "DebugRelease";
 
+		/// <summary>
+		/// Cached name for the 'ForceClick' method.
+		/// </summary>
 		public static readonly StringName ForceClick = "ForceClick";
 
+		/// <summary>
+		/// Cached name for the 'SetEnabled' method.
+		/// </summary>
 		public static readonly StringName SetEnabled = "SetEnabled";
 
+		/// <summary>
+		/// Cached name for the 'Enable' method.
+		/// </summary>
 		public static readonly StringName Enable = "Enable";
 
+		/// <summary>
+		/// Cached name for the 'Disable' method.
+		/// </summary>
 		public static readonly StringName Disable = "Disable";
 
+		/// <summary>
+		/// Cached name for the 'OnEnable' method.
+		/// </summary>
 		public static readonly StringName OnEnable = "OnEnable";
 
+		/// <summary>
+		/// Cached name for the 'OnDisable' method.
+		/// </summary>
 		public static readonly StringName OnDisable = "OnDisable";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'AllowFocusWhileDisabled' property.
+		/// </summary>
 		public static readonly StringName AllowFocusWhileDisabled = "AllowFocusWhileDisabled";
 
+		/// <summary>
+		/// Cached name for the 'IsFocused' property.
+		/// </summary>
 		public static readonly StringName IsFocused = "IsFocused";
 
+		/// <summary>
+		/// Cached name for the 'IsEnabled' property.
+		/// </summary>
 		public static readonly StringName IsEnabled = "IsEnabled";
 
+		/// <summary>
+		/// Cached name for the '_ignoreDragThreshold' field.
+		/// </summary>
 		public static readonly StringName _ignoreDragThreshold = "_ignoreDragThreshold";
 
+		/// <summary>
+		/// Cached name for the '_isEnabled' field.
+		/// </summary>
 		public static readonly StringName _isEnabled = "_isEnabled";
 
+		/// <summary>
+		/// Cached name for the '_isHovered' field.
+		/// </summary>
 		public static readonly StringName _isHovered = "_isHovered";
 
+		/// <summary>
+		/// Cached name for the '_isControllerFocused' field.
+		/// </summary>
 		public static readonly StringName _isControllerFocused = "_isControllerFocused";
 
+		/// <summary>
+		/// Cached name for the '_isControllerNavigable' field.
+		/// </summary>
 		public static readonly StringName _isControllerNavigable = "_isControllerNavigable";
 
+		/// <summary>
+		/// Cached name for the '_beginDragPosition' field.
+		/// </summary>
 		public static readonly StringName _beginDragPosition = "_beginDragPosition";
 
+		/// <summary>
+		/// Cached name for the '_isPressed' field.
+		/// </summary>
 		public static readonly StringName _isPressed = "_isPressed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Released' signal.
+		/// </summary>
 		public static readonly StringName Released = "Released";
 
+		/// <summary>
+		/// Cached name for the 'Focused' signal.
+		/// </summary>
 		public static readonly StringName Focused = "Focused";
 
+		/// <summary>
+		/// Cached name for the 'Unfocused' signal.
+		/// </summary>
 		public static readonly StringName Unfocused = "Unfocused";
 
+		/// <summary>
+		/// Cached name for the 'MouseReleased' signal.
+		/// </summary>
 		public static readonly StringName MouseReleased = "MouseReleased";
 
+		/// <summary>
+		/// Cached name for the 'MousePressed' signal.
+		/// </summary>
 		public static readonly StringName MousePressed = "MousePressed";
 	}
 
@@ -149,6 +281,7 @@ public class NClickableControl : Control
 
 	public bool IsEnabled => _isEnabled;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.ReleasedEventHandler" />
 	public event ReleasedEventHandler Released
 	{
 		add
@@ -161,6 +294,7 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.FocusedEventHandler" />
 	public event FocusedEventHandler Focused
 	{
 		add
@@ -173,6 +307,7 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.UnfocusedEventHandler" />
 	public event UnfocusedEventHandler Unfocused
 	{
 		add
@@ -185,6 +320,7 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.MouseReleasedEventHandler" />
 	public event MouseReleasedEventHandler MouseReleased
 	{
 		add
@@ -197,6 +333,7 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.MousePressedEventHandler" />
 	public event MousePressedEventHandler MousePressed
 	{
 		add
@@ -218,7 +355,7 @@ public class NClickableControl : Control
 		Connect(SignalName.MousePressed, Callable.From<InputEvent>(HandleMousePress));
 		Connect(SignalName.MouseReleased, Callable.From<InputEvent>(HandleMouseRelease));
 		Connect(CanvasItem.SignalName.VisibilityChanged, Callable.From(OnVisibilityChanged));
-		AddThemeStyleboxOverride(ThemeConstants.Control.focus, _blankFocusStyle);
+		AddThemeStyleboxOverride(ThemeConstants.Control.Focus, _blankFocusStyle);
 		_isControllerNavigable = base.FocusMode == FocusModeEnum.All;
 		if (HasFocus())
 		{
@@ -246,6 +383,10 @@ public class NClickableControl : Control
 		RefreshFocus();
 	}
 
+	/// <summary>
+	/// Called when we start pressing down on the mouse button
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void HandleMousePress(InputEvent inputEvent)
 	{
 		if (_isEnabled && IsVisibleInTree() && IsFocused && inputEvent is InputEventMouseButton inputEventMouseButton && inputEventMouseButton.ButtonIndex == MouseButton.Left)
@@ -256,6 +397,10 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <summary>
+	/// Called when the mouse button is released on this control (had to start the click in this Control too)
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void HandleMouseRelease(InputEvent inputEvent)
 	{
 		if (_isEnabled && IsVisibleInTree() && IsFocused && inputEvent is InputEventMouseButton inputEventMouseButton && inputEventMouseButton.ButtonIndex == MouseButton.Left)
@@ -288,6 +433,11 @@ public class NClickableControl : Control
 		OnPress();
 	}
 
+	/// <summary>
+	/// Middle-man function to prevent base.OnRelease() and to
+	/// allow handling of various input types simultaneously.
+	/// Required because we invoke OnButtonReleased
+	/// </summary>
 	protected void OnReleaseHandler()
 	{
 		if (_isPressed)
@@ -317,22 +467,40 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <summary>
+	/// Called when a user hovers this button or navigates to/focuses on this button (controller).
+	/// </summary>
 	protected virtual void OnFocus()
 	{
 	}
 
+	/// <summary>
+	/// Called when a user unhovers or navigates away from this button (controller).
+	/// </summary>
 	protected virtual void OnUnfocus()
 	{
 	}
 
+	/// <summary>
+	/// Called when a user starts a click or button press.
+	/// </summary>
 	protected virtual void OnPress()
 	{
 	}
 
+	/// <summary>
+	/// Called when the player releases a click or button press.
+	/// NOTE: Doesn't trigger unless the user triggered OnPressDown on this button.
+	/// </summary>
 	protected virtual void OnRelease()
 	{
 	}
 
+	/// <summary>
+	/// WARNING: If overriding, be sure to call the base function to retain
+	/// OnPressDown and OnRelease functionality.
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	public override void _GuiInput(InputEvent inputEvent)
 	{
 		if (inputEvent is InputEventMouseButton inputEventMouseButton && _isEnabled)
@@ -379,12 +547,19 @@ public class NClickableControl : Control
 		});
 	}
 
+	/// <summary>
+	/// Force emits the Released signal and calls OnRelease(), bypassing all hover/focus/pause checks.
+	/// Used by AutoSlay for automated testing.
+	/// </summary>
 	public void ForceClick()
 	{
 		OnRelease();
 		EmitSignal(SignalName.Released, this);
 	}
 
+	/// <summary>
+	/// Helper function to enable/disable this button similar to how Unity handles it
+	/// </summary>
 	public void SetEnabled(bool enabled)
 	{
 		if (enabled)
@@ -397,6 +572,9 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <summary>
+	/// Helper function to enable this button similar to how Unity handles it
+	/// </summary>
 	public void Enable()
 	{
 		if (!_isEnabled)
@@ -412,6 +590,9 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <summary>
+	/// Helper function to disable this button similar to how Unity handles it
+	/// </summary>
 	public void Disable()
 	{
 		if (_isEnabled)
@@ -425,14 +606,25 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <summary>
+	/// Called whenever this button becomes enabled
+	/// </summary>
 	protected virtual void OnEnable()
 	{
 	}
 
+	/// <summary>
+	/// Called whenever this button becomes disabled
+	/// </summary>
 	protected virtual void OnDisable()
 	{
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -480,6 +672,7 @@ public class NClickableControl : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -636,6 +829,7 @@ public class NClickableControl : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -742,6 +936,7 @@ public class NClickableControl : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -788,6 +983,7 @@ public class NClickableControl : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -848,6 +1044,11 @@ public class NClickableControl : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -865,6 +1066,7 @@ public class NClickableControl : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -884,6 +1086,7 @@ public class NClickableControl : Control
 		info.AddSignalEventDelegate(SignalName.MousePressed, backing_MousePressed);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -942,6 +1145,11 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -994,6 +1202,7 @@ public class NClickableControl : Control
 		EmitSignal(SignalName.MousePressed, inputEvent);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -1023,6 +1232,7 @@ public class NClickableControl : Control
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

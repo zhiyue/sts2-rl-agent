@@ -12,6 +12,7 @@ public static class SavedPropertiesTypeCache
 {
 	private static readonly Dictionary<Type, List<PropertyInfo>> _cache;
 
+	/// For serializing over the network, to save space, we map the string names statically to integers
 	private static readonly Dictionary<string, int> _propertyNameToNetIdMap;
 
 	private static readonly List<string> _netIdToPropertyNameMap;

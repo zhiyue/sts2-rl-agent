@@ -13,37 +13,84 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline.UnlockScreens;
 
+/// <summary>
+/// Unlock screen which reveals which cards you unlocked after slotting an Epoch.
+/// We want to let players know that these cards show up on future runs and
+/// allow them to inspect each card.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/UnlockScreens/NUnlockCardsScreen.cs")]
 public class NUnlockCardsScreen : NUnlockScreen
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NUnlockScreen.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Open' method.
+		/// </summary>
 		public new static readonly StringName Open = "Open";
 
+		/// <summary>
+		/// Cached name for the 'OnScreenPreClose' method.
+		/// </summary>
 		public new static readonly StringName OnScreenPreClose = "OnScreenPreClose";
 
+		/// <summary>
+		/// Cached name for the 'OnScreenClose' method.
+		/// </summary>
 		public new static readonly StringName OnScreenClose = "OnScreenClose";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NUnlockScreen.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
+		public new static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
+
+		/// <summary>
+		/// Cached name for the '_cardRow' field.
+		/// </summary>
 		public static readonly StringName _cardRow = "_cardRow";
 
+		/// <summary>
+		/// Cached name for the '_banner' field.
+		/// </summary>
 		public static readonly StringName _banner = "_banner";
 
+		/// <summary>
+		/// Cached name for the '_cardTween' field.
+		/// </summary>
 		public static readonly StringName _cardTween = "_cardTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NUnlockScreen.SignalName
 	{
 	}
@@ -54,7 +101,7 @@ public class NUnlockCardsScreen : NUnlockScreen
 
 	private NCommonBanner _banner;
 
-	private readonly List<NCard> _nodes = new List<NCard>();
+	private readonly List<NGridCardHolder> _holders = new List<NGridCardHolder>();
 
 	private IReadOnlyList<CardModel> _cards;
 
@@ -63,6 +110,18 @@ public class NUnlockCardsScreen : NUnlockScreen
 	private const float _cardXOffset = 350f;
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(_scenePath);
+
+	public override Control? DefaultFocusedControl
+	{
+		get
+		{
+			if (_holders.Count != 0)
+			{
+				return _holders[_holders.Count / 2];
+			}
+			return null;
+		}
+	}
 
 	public static NUnlockCardsScreen Create()
 	{
@@ -98,9 +157,10 @@ public class NUnlockCardsScreen : NUnlockScreen
 			_cardTween.TweenProperty(nGridCardHolder, "modulate", Colors.White, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic)
 				.From(Colors.Black);
 			nCard.ActivateRewardScreenGlow();
-			_nodes.Add(nCard);
+			_holders.Add(nGridCardHolder);
 			num++;
 		}
+		ActiveScreenContext.Instance.FocusOnDefaultControl();
 	}
 
 	public void SetCards(IReadOnlyList<CardModel> cards)
@@ -110,9 +170,9 @@ public class NUnlockCardsScreen : NUnlockScreen
 
 	protected override void OnScreenPreClose()
 	{
-		foreach (NCard node in _nodes)
+		foreach (NGridCardHolder holder in _holders)
 		{
-			node.KillRarityGlow();
+			holder.CardNode?.KillRarityGlow();
 		}
 	}
 
@@ -129,6 +189,11 @@ public class NUnlockCardsScreen : NUnlockScreen
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -142,6 +207,7 @@ public class NUnlockCardsScreen : NUnlockScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -195,6 +261,7 @@ public class NUnlockCardsScreen : NUnlockScreen
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -225,6 +292,7 @@ public class NUnlockCardsScreen : NUnlockScreen
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -246,9 +314,15 @@ public class NUnlockCardsScreen : NUnlockScreen
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
+		if (name == PropertyName.DefaultFocusedControl)
+		{
+			value = VariantUtils.CreateFrom<Control>(DefaultFocusedControl);
+			return true;
+		}
 		if (name == PropertyName._cardRow)
 		{
 			value = VariantUtils.CreateFrom(in _cardRow);
@@ -267,6 +341,11 @@ public class NUnlockCardsScreen : NUnlockScreen
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -274,9 +353,11 @@ public class NUnlockCardsScreen : NUnlockScreen
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._cardRow, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._banner, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._cardTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.DefaultFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -286,6 +367,7 @@ public class NUnlockCardsScreen : NUnlockScreen
 		info.AddProperty(PropertyName._cardTween, Variant.From(in _cardTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

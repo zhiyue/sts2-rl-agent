@@ -40,78 +40,186 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		public List<NCreature> pets;
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'SubscribeToCombatEvents' method.
+		/// </summary>
 		public static readonly StringName SubscribeToCombatEvents = "SubscribeToCombatEvents";
 
+		/// <summary>
+		/// Cached name for the 'AdjustCreatureScaleForAspectRatio' method.
+		/// </summary>
 		public static readonly StringName AdjustCreatureScaleForAspectRatio = "AdjustCreatureScaleForAspectRatio";
 
+		/// <summary>
+		/// Cached name for the 'CreateAllyNodes' method.
+		/// </summary>
 		public static readonly StringName CreateAllyNodes = "CreateAllyNodes";
 
+		/// <summary>
+		/// Cached name for the 'CreateEnemyNodes' method.
+		/// </summary>
 		public static readonly StringName CreateEnemyNodes = "CreateEnemyNodes";
 
+		/// <summary>
+		/// Cached name for the 'RemoveCreatureNode' method.
+		/// </summary>
 		public static readonly StringName RemoveCreatureNode = "RemoveCreatureNode";
 
+		/// <summary>
+		/// Cached name for the 'UpdateCreatureNavigation' method.
+		/// </summary>
 		public static readonly StringName UpdateCreatureNavigation = "UpdateCreatureNavigation";
 
+		/// <summary>
+		/// Cached name for the 'OnActiveScreenUpdated' method.
+		/// </summary>
 		public static readonly StringName OnActiveScreenUpdated = "OnActiveScreenUpdated";
 
+		/// <summary>
+		/// Cached name for the 'EnableControllerNavigation' method.
+		/// </summary>
 		public static readonly StringName EnableControllerNavigation = "EnableControllerNavigation";
 
+		/// <summary>
+		/// Cached name for the 'RandomizeEnemyScalesAndHues' method.
+		/// </summary>
 		public static readonly StringName RandomizeEnemyScalesAndHues = "RandomizeEnemyScalesAndHues";
 
+		/// <summary>
+		/// Cached name for the 'RadialBlur' method.
+		/// </summary>
 		public static readonly StringName RadialBlur = "RadialBlur";
 
+		/// <summary>
+		/// Cached name for the 'SetWaitingForOtherPlayersOverlayVisible' method.
+		/// </summary>
 		public static readonly StringName SetWaitingForOtherPlayersOverlayVisible = "SetWaitingForOtherPlayersOverlayVisible";
 
+		/// <summary>
+		/// Cached name for the 'OnProceedButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnProceedButtonPressed = "OnProceedButtonPressed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Ui' property.
+		/// </summary>
 		public static readonly StringName Ui = "Ui";
 
+		/// <summary>
+		/// Cached name for the 'SceneContainer' property.
+		/// </summary>
 		public static readonly StringName SceneContainer = "SceneContainer";
 
+		/// <summary>
+		/// Cached name for the 'BgContainer' property.
+		/// </summary>
 		public static readonly StringName BgContainer = "BgContainer";
 
+		/// <summary>
+		/// Cached name for the 'Background' property.
+		/// </summary>
 		public static readonly StringName Background = "Background";
 
+		/// <summary>
+		/// Cached name for the 'ProceedButton' property.
+		/// </summary>
 		public static readonly StringName ProceedButton = "ProceedButton";
 
+		/// <summary>
+		/// Cached name for the 'BackCombatVfxContainer' property.
+		/// </summary>
 		public static readonly StringName BackCombatVfxContainer = "BackCombatVfxContainer";
 
+		/// <summary>
+		/// Cached name for the 'CombatVfxContainer' property.
+		/// </summary>
 		public static readonly StringName CombatVfxContainer = "CombatVfxContainer";
 
+		/// <summary>
+		/// Cached name for the 'CreatedMsec' property.
+		/// </summary>
 		public static readonly StringName CreatedMsec = "CreatedMsec";
 
+		/// <summary>
+		/// Cached name for the 'Mode' property.
+		/// </summary>
 		public static readonly StringName Mode = "Mode";
 
+		/// <summary>
+		/// Cached name for the 'EncounterSlots' property.
+		/// </summary>
 		public static readonly StringName EncounterSlots = "EncounterSlots";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the 'FocusedControlFromTopBar' property.
+		/// </summary>
 		public static readonly StringName FocusedControlFromTopBar = "FocusedControlFromTopBar";
 
+		/// <summary>
+		/// Cached name for the '_allyContainer' field.
+		/// </summary>
 		public static readonly StringName _allyContainer = "_allyContainer";
 
+		/// <summary>
+		/// Cached name for the '_enemyContainer' field.
+		/// </summary>
 		public static readonly StringName _enemyContainer = "_enemyContainer";
 
+		/// <summary>
+		/// Cached name for the '_radialBlur' field.
+		/// </summary>
 		public static readonly StringName _radialBlur = "_radialBlur";
 
+		/// <summary>
+		/// Cached name for the '_proceedButton' field.
+		/// </summary>
 		public static readonly StringName _proceedButton = "_proceedButton";
 
+		/// <summary>
+		/// Cached name for the '_waitingForOtherPlayersOverlay' field.
+		/// </summary>
 		public static readonly StringName _waitingForOtherPlayersOverlay = "_waitingForOtherPlayersOverlay";
 
+		/// <summary>
+		/// Cached name for the '_window' field.
+		/// </summary>
 		public static readonly StringName _window = "_window";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -144,6 +252,11 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 
 	private NRadialBlurVfx _radialBlur;
 
+	/// <summary>
+	/// TEMPORARY!
+	/// Used when showing a <see cref="F:MegaCrit.Sts2.Core.Rooms.CombatRoomMode.VisualOnly" /> combat room, to allow proceeding to the next room.
+	/// We'll probably remove this once we have more event-like buttons set up for this.
+	/// </summary>
 	private NProceedButton _proceedButton;
 
 	private Control _waitingForOtherPlayersOverlay;
@@ -153,6 +266,12 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 	private Window _window;
 
 	public static NCombatRoom? Instance => NRun.Instance?.CombatRoom;
+
+	/// <summary>
+	/// This is used by NControllerCardPlay to try to
+	/// initially hover over the last creature that was targeted
+	/// </summary>
+	public Creature? LastTargetedCreature { get; set; }
 
 	public NCombatUi Ui { get; private set; }
 
@@ -168,12 +287,16 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 
 	public NProceedButton ProceedButton => _proceedButton;
 
-	public Node BackCombatVfxContainer { get; private set; }
+	public Control BackCombatVfxContainer { get; private set; }
 
 	public Control CombatVfxContainer { get; private set; }
 
 	public ulong CreatedMsec { get; private set; }
 
+	/// <summary>
+	/// The mode that this combat room is currently in.
+	/// See <see cref="T:MegaCrit.Sts2.Core.Rooms.CombatRoomMode" /> docs for more info.
+	/// </summary>
 	public CombatRoomMode Mode { get; private set; }
 
 	private Control? EncounterSlots { get; set; }
@@ -182,7 +305,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 
 	public Control DefaultFocusedControl => Ui.Hand.CardHolderContainer;
 
-	public Control? FocusedControlFromTopBar => _creatureNodes.FirstOrDefault(delegate(NCreature c)
+	public Control FocusedControlFromTopBar => _creatureNodes.FirstOrDefault(delegate(NCreature c)
 	{
 		if (c != null && c.IsInteractable)
 		{
@@ -197,6 +320,11 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 
 	public event Action? ProceedButtonPressed;
 
+	/// <summary>
+	/// Create a new combat room node.
+	/// </summary>
+	/// <param name="visuals">Data used to determine what visuals should appear in the combat room.</param>
+	/// <param name="mode">The mode that the combat room should start in.</param>
 	public static NCombatRoom? Create(ICombatRoomVisuals visuals, CombatRoomMode mode)
 	{
 		if (TestMode.IsOn)
@@ -216,7 +344,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		SceneContainer = GetNode<Control>("%CombatSceneContainer");
 		_allyContainer = GetNode<Control>("%AllyContainer");
 		_enemyContainer = GetNode<Control>("%EnemyContainer");
-		BackCombatVfxContainer = GetNode<Node2D>("%BackCombatVfxContainer");
+		BackCombatVfxContainer = GetNode<Control>("%BackCombatVfxContainer");
 		CombatVfxContainer = GetNode<Control>("%CombatVfxContainer");
 		_radialBlur = GetNode<NRadialBlurVfx>("RadialBlur");
 		_waitingForOtherPlayersOverlay = GetNode<Control>("%WaitingForOtherPlayers");
@@ -299,6 +427,11 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		}
 	}
 
+	/// <summary>
+	/// For typical combat, this is called as part of combat setup.
+	/// If there is no combat setup (e.g. in pre-finished rooms), then this must be called directly, otherwise the
+	/// background of the combat will not be shown.
+	/// </summary>
 	public void SetUpBackground(IRunState state)
 	{
 		if (Background != null)
@@ -407,6 +540,21 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		}
 	}
 
+	/// <summary>
+	/// Places player creatures and pets in the combat room.
+	/// It places players in an offset grid. Row/column count is determined by the nearest square root of the player
+	/// count.
+	/// Grid rows above the first one are offset successively, and we attempt to fit all the players in the available
+	/// space, leaving enough padding in the center for card plays (usually, see <paramref name="fullyCenterPlayers" />).
+	/// Pets are placed around players' feet.
+	/// Technically we only support four players, but I figured I'd make it easy for modders to expand the number of players!
+	/// </summary>
+	/// <param name="creatureNodes">All player and pet nodes.</param>
+	/// <param name="scaling">Scaling added by the camera.</param>
+	/// <param name="fullyCenterPlayers">Should the players be fully centered in the scene?
+	/// Usually false (to leave enough padding in the center for card plays), but true in certain situations like
+	/// "surrounded" combats.
+	/// </param>
 	public static void PositionPlayersAndPets(List<NCreature> creatureNodes, float scaling, bool fullyCenterPlayers)
 	{
 		List<PlayerAndPets> list = new List<PlayerAndPets>();
@@ -513,11 +661,11 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		}
 		foreach (PlayerAndPets item3 in list)
 		{
-			item3.player.GetParent().MoveChild(item3.player, 0);
+			item3.player.GetParent().MoveChildSafely(item3.player, 0);
 			for (int num17 = 0; num17 < item3.pets.Count; num17++)
 			{
 				NCreature nCreature3 = item3.pets[num17];
-				nCreature3.GetParent().MoveChild(nCreature3, num17 + 1);
+				nCreature3.GetParent().MoveChildSafely(nCreature3, num17 + 1);
 				if (!LocalContext.IsMe(item3.player.Entity))
 				{
 					nCreature3.Visuals.Bounds.Visible = false;
@@ -565,7 +713,10 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		{
 			await node.DeathAnimationTask;
 		}
-		_removingCreatureNodes.Remove(node);
+		if (this.IsValid())
+		{
+			_removingCreatureNodes.Remove(node);
+		}
 	}
 
 	public void AddCreature(Creature creature)
@@ -596,11 +747,11 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		NCreature creatureNode = GetCreatureNode(creature.PetOwner.Creature);
 		Player player = creatureNode.Entity.Player;
 		List<NCreature> list = _creatureNodes.Where((NCreature c) => c.Entity.PetOwner == player && (!(c.Entity.Monster is Osty) || !LocalContext.IsMe(player))).ToList();
-		nCreature.GetParent().MoveChild(nCreature, creatureNode.GetIndex() + 1);
+		nCreature.GetParent().MoveChildSafely(nCreature, creatureNode.GetIndex() + 1);
 		if (creature.Monster is Osty && LocalContext.IsMe(player))
 		{
-			nCreature.OstyScaleToSize(creature.MaxHp, 0f);
-			nCreature.GetParent().MoveChild(nCreature, creatureNode.GetIndex());
+			nCreature.OstyScaleToSize(creature.MaxHp, 0.0);
+			nCreature.GetParent().MoveChildSafely(nCreature, creatureNode.GetIndex());
 			return;
 		}
 		float num = ((list.Count > 1) ? (creatureNode.Visuals.Bounds.Size.X / (float)(list.Count - 1)) : 0f);
@@ -670,6 +821,12 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		RestrictControllerNavigation(Array.Empty<Control>());
 	}
 
+	/// <summary>
+	/// Enables controller navigation for all control nodes on the whitelist (atm we assume these are creature hitboxes).
+	/// Disables controller navigation for un-whitelisted creature hitboxes and cards in hand.
+	/// Use case: restrict navigation to just monsters when we are targeting them with a card.
+	/// </summary>
+	/// <param name="whitelist">Controls that we still want to allow input navigation for</param>
 	public void RestrictControllerNavigation(IEnumerable<Control> whitelist)
 	{
 		foreach (NCreature creatureNode in _creatureNodes)
@@ -681,13 +838,20 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		Ui.Hand.DisableControllerNavigation();
 	}
 
+	/// <summary>
+	/// Enables controller navigation for creatures and cards in hand.
+	/// </summary>
 	public void EnableControllerNavigation()
 	{
 		foreach (NCreature creatureNode in _creatureNodes)
 		{
-			creatureNode.Hitbox.FocusMode = FocusModeEnum.All;
-			creatureNode.Hitbox.FocusNeighborBottom = Ui.Hand.CardHolderContainer.GetPath();
+			if (!creatureNode.Entity.IsDead)
+			{
+				creatureNode.Hitbox.FocusMode = FocusModeEnum.All;
+				creatureNode.Hitbox.FocusNeighborBottom = Ui.Hand.CardHolderContainer.GetPath();
+			}
 		}
+		UpdateCreatureNavigation();
 		Ui.Hand.EnableControllerNavigation();
 	}
 
@@ -717,9 +881,9 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 				MonsterModel monster = item2.Entity.Monster;
 				int value2 = monster.Creature.MonsterMaxHpBeforeModification.Value;
 				float value3 = ((monster.MaxInitialHp != monster.MinInitialHp) ? (((float)(value2 - monster.MinInitialHp) / (float)(monster.MaxInitialHp - monster.MinInitialHp) - 0.5f) * 2f) : 0f);
-				value3 = Math.Clamp(value3, 0f, 1f);
+				value3 = Mathf.Clamp(value3, 0f, 1f);
 				float weight = Math.Max(item2.Visuals.Bounds.Size.X, item2.Visuals.Bounds.Size.Y);
-				float amount = Math.Clamp(Mathf.InverseLerp(250f, 100f, weight), 0f, 1f);
+				float amount = Mathf.Clamp(Mathf.InverseLerp(250f, 100f, weight), 0f, 1f);
 				float num = float.Lerp(0.1f, 0.15f, amount);
 				item2.SetScaleAndHue(1f + value3 * num, Rng.Chaotic.NextFloat(0.05f));
 			}
@@ -736,6 +900,9 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		_creatureNodes.FirstOrDefault((NCreature c) => c.Entity.Monster is Osty && c.Entity.PetOwner == owner)?.AnimShake();
 	}
 
+	/// <summary>
+	/// Plays the splash VFX and adds the liquid overlay on the targeted creature.
+	/// </summary>
 	public void PlaySplashVfx(Creature target, Color tint)
 	{
 		NCreature creatureNode = GetCreatureNode(target);
@@ -774,6 +941,11 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		SubscribeToCombatEvents();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -808,6 +980,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -904,6 +1077,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -970,6 +1144,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -995,7 +1170,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		}
 		if (name == PropertyName.BackCombatVfxContainer)
 		{
-			BackCombatVfxContainer = VariantUtils.ConvertTo<Node>(in value);
+			BackCombatVfxContainer = VariantUtils.ConvertTo<Control>(in value);
 			return true;
 		}
 		if (name == PropertyName.CombatVfxContainer)
@@ -1051,6 +1226,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1084,7 +1260,8 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		}
 		if (name == PropertyName.BackCombatVfxContainer)
 		{
-			value = VariantUtils.CreateFrom<Node>(BackCombatVfxContainer);
+			from = BackCombatVfxContainer;
+			value = VariantUtils.CreateFrom(in from);
 			return true;
 		}
 		if (name == PropertyName.CombatVfxContainer)
@@ -1154,6 +1331,11 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1179,6 +1361,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1187,7 +1370,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		info.AddProperty(PropertyName.SceneContainer, Variant.From<Control>(SceneContainer));
 		info.AddProperty(PropertyName.BgContainer, Variant.From<Control>(BgContainer));
 		info.AddProperty(PropertyName.Background, Variant.From<NCombatBackground>(Background));
-		info.AddProperty(PropertyName.BackCombatVfxContainer, Variant.From<Node>(BackCombatVfxContainer));
+		info.AddProperty(PropertyName.BackCombatVfxContainer, Variant.From<Control>(BackCombatVfxContainer));
 		info.AddProperty(PropertyName.CombatVfxContainer, Variant.From<Control>(CombatVfxContainer));
 		info.AddProperty(PropertyName.CreatedMsec, Variant.From<ulong>(CreatedMsec));
 		info.AddProperty(PropertyName.Mode, Variant.From<CombatRoomMode>(Mode));
@@ -1200,6 +1383,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		info.AddProperty(PropertyName._window, Variant.From(in _window));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1222,7 +1406,7 @@ public class NCombatRoom : Control, IScreenContext, IRoomWithProceedButton
 		}
 		if (info.TryGetProperty(PropertyName.BackCombatVfxContainer, out var value5))
 		{
-			BackCombatVfxContainer = value5.As<Node>();
+			BackCombatVfxContainer = value5.As<Control>();
 		}
 		if (info.TryGetProperty(PropertyName.CombatVfxContainer, out var value6))
 		{

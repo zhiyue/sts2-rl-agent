@@ -4,8 +4,20 @@ using System.Linq;
 
 namespace MegaCrit.Sts2.Core.Map;
 
+/// <summary>
+/// These helper methods make the map more clean looking and less cluttered together which should help with some of the
+/// complaints. Some might look like there's a lot of looping, but I profiled them and all these public static methods
+/// run together take 0 ms on my computer.
+/// </summary>
 public static class MapPostProcessing
 {
+	/// <summary>
+	/// Creates a copy of the given grid that is “centered” by shifting
+	/// all the nodes left or right if two of the leftmost or rightmost columns are empty.
+	/// The MapPoint objects are not modified; they are simply placed into different cells.
+	/// </summary>
+	/// <param name="grid">The original grid to be centered.</param>
+	/// <returns>A grid (modified in place) with nodes moved to center the map.</returns>
 	public static MapPoint?[,] CenterGrid(MapPoint?[,] grid)
 	{
 		int length = grid.GetLength(0);
@@ -68,6 +80,9 @@ public static class MapPostProcessing
 		return grid;
 	}
 
+	/// <summary>
+	/// This method straightens out the path if there's a single line
+	/// </summary>
 	public static MapPoint?[,] StraightenPaths(MapPoint?[,] grid)
 	{
 		int length = grid.GetLength(0);
@@ -111,6 +126,12 @@ public static class MapPostProcessing
 		return grid;
 	}
 
+	/// <summary>
+	/// Returns true if every cell in the given column is null.
+	/// </summary>
+	/// <param name="grid">The grid to check.</param>
+	/// <param name="col">The column index.</param>
+	/// <returns>True if the column is empty; otherwise, false.</returns>
 	private static bool IsColumnEmpty(MapPoint?[,] grid, int col)
 	{
 		int length = grid.GetLength(1);
@@ -124,6 +145,13 @@ public static class MapPostProcessing
 		return true;
 	}
 
+	/// <summary>
+	/// Returns a set of column indices allowed for a neighbor at the specified column.
+	/// Allowed positions are the same column, one column to the left, and one column to the right.
+	/// </summary>
+	/// <param name="column">The reference column.</param>
+	/// <param name="totalColumns">Total number of columns in the grid.</param>
+	/// <returns>A set of allowed column indices.</returns>
 	private static HashSet<int> GetNeighborAllowedPositions(int column, int totalColumns)
 	{
 		HashSet<int> hashSet = new HashSet<int>(3);
@@ -138,6 +166,14 @@ public static class MapPostProcessing
 		return hashSet;
 	}
 
+	/// <summary>
+	/// Computes the set of allowed column indices for a given node based on its parents' and children’s positions.
+	/// For each parent or child, the node must be in the same column or one column to the left or right.
+	/// The final allowed set is the intersection of these constraints.
+	/// </summary>
+	/// <param name="node">The MapPoint to evaluate.</param>
+	/// <param name="totalColumns">Total number of columns in the grid.</param>
+	/// <returns>A set of allowed column indices.</returns>
 	private static HashSet<int> GetAllowedPositions(MapPoint node, int totalColumns)
 	{
 		HashSet<int> hashSet = new HashSet<int>(Enumerable.Range(0, totalColumns));
@@ -152,6 +188,12 @@ public static class MapPostProcessing
 		return hashSet;
 	}
 
+	/// <summary>
+	/// Spreads adjacent MapPoints in the grid by moving nodes to positions that maximize the gap between neighbors,
+	/// subject to connectivity constraints.
+	/// </summary>
+	/// <param name="grid">The grid containing MapPoints.</param>
+	/// <returns>The transformed grid.</returns>
 	public static MapPoint?[,] SpreadAdjacentMapPoints(MapPoint?[,] grid)
 	{
 		int length = grid.GetLength(0);
@@ -204,6 +246,14 @@ public static class MapPostProcessing
 		return grid;
 	}
 
+	/// <summary>
+	/// Computes the minimal horizontal gap from a candidate column to any other node in the same row.
+	/// If there are no other nodes in the row, returns int.MaxValue.
+	/// </summary>
+	/// <param name="candidateCol">The candidate column for the node.</param>
+	/// <param name="rowNodes">All nodes in the row.</param>
+	/// <param name="currentNode">The node being moved.</param>
+	/// <returns>The minimum column distance to any other node.</returns>
 	private static int ComputeGap(int candidateCol, List<MapPoint> rowNodes, MapPoint currentNode)
 	{
 		int num = int.MaxValue;

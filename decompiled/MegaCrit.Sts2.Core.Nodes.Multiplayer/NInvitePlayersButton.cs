@@ -3,6 +3,7 @@ using System.ComponentModel;
 using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
+using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
@@ -15,28 +16,66 @@ namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NInvitePlayersButton.cs")]
 public class NInvitePlayersButton : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'UpdateVisibility' method.
+		/// </summary>
 		public static readonly StringName UpdateVisibility = "UpdateVisibility";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Hotkeys' property.
+		/// </summary>
+		public new static readonly StringName Hotkeys = "Hotkeys";
+
+		/// <summary>
+		/// Cached name for the '_shaderMaterial' field.
+		/// </summary>
 		public static readonly StringName _shaderMaterial = "_shaderMaterial";
 
+		/// <summary>
+		/// Cached name for the '_container' field.
+		/// </summary>
 		public static readonly StringName _container = "_container";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -50,6 +89,8 @@ public class NInvitePlayersButton : NButton
 	private Control _container;
 
 	private StartRunLobby? _startRunLobby;
+
+	protected override string[] Hotkeys => new string[1] { MegaInput.viewMap };
 
 	public override void _Ready()
 	{
@@ -72,6 +113,7 @@ public class NInvitePlayersButton : NButton
 
 	public override void _ExitTree()
 	{
+		base._ExitTree();
 		if (_startRunLobby != null)
 		{
 			_startRunLobby.PlayerConnected -= OnPlayerConnected;
@@ -114,6 +156,11 @@ public class NInvitePlayersButton : NButton
 		_shaderMaterial.SetShaderParameter(_v, 1f);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -127,6 +174,7 @@ public class NInvitePlayersButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -169,6 +217,7 @@ public class NInvitePlayersButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -199,6 +248,7 @@ public class NInvitePlayersButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -215,9 +265,15 @@ public class NInvitePlayersButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
+		if (name == PropertyName.Hotkeys)
+		{
+			value = VariantUtils.CreateFrom<string[]>(Hotkeys);
+			return true;
+		}
 		if (name == PropertyName._shaderMaterial)
 		{
 			value = VariantUtils.CreateFrom(in _shaderMaterial);
@@ -231,15 +287,22 @@ public class NInvitePlayersButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._shaderMaterial, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._container, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.PackedStringArray, PropertyName.Hotkeys, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -248,6 +311,7 @@ public class NInvitePlayersButton : NButton
 		info.AddProperty(PropertyName._container, Variant.From(in _container));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -33,9 +35,9 @@ public sealed class PaelsTears : RelicModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.ForEnergy(this));
 
-	public override Task BeforeTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override Task BeforeSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
-		if (side != CombatSide.Player)
+		if (!participants.Contains(base.Owner.Creature))
 		{
 			return Task.CompletedTask;
 		}
@@ -43,9 +45,9 @@ public sealed class PaelsTears : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side == base.Owner.Creature.Side && HadLeftoverEnergy)
+		if (participants.Contains(base.Owner.Creature) && HadLeftoverEnergy)
 		{
 			Flash();
 			await PlayerCmd.GainEnergy(base.DynamicVars.Energy.BaseValue, base.Owner);

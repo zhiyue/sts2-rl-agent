@@ -140,4 +140,13 @@ public class GodotControllerInputStrategy : IControllerInputStrategy
 	{
 		return _controllerConfig?.GetButtonIcon(hotkey);
 	}
+
+	public string GetControllerName()
+	{
+		if (Input.GetConnectedJoypads().Count == 0)
+		{
+			return "NONE";
+		}
+		return Input.GetJoyName(0);
+	}
 }

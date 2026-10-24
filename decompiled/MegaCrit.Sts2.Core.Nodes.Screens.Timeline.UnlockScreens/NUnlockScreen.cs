@@ -8,32 +8,72 @@ using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline.UnlockScreens;
 
+/// <summary>
+/// Abstract class of the Unlock Screens. Used for general animation and some logistics required for the Timeline Screen.
+/// All Unlock Screens in the Timeline must use this!
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/UnlockScreens/NUnlockScreen.cs")]
-public abstract class NUnlockScreen : Control
+public abstract class NUnlockScreen : Control, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ConnectSignals' method.
+		/// </summary>
 		public static readonly StringName ConnectSignals = "ConnectSignals";
 
+		/// <summary>
+		/// Cached name for the 'Open' method.
+		/// </summary>
 		public static readonly StringName Open = "Open";
 
+		/// <summary>
+		/// Cached name for the 'OnScreenPreClose' method.
+		/// </summary>
 		public static readonly StringName OnScreenPreClose = "OnScreenPreClose";
 
+		/// <summary>
+		/// Cached name for the 'OnScreenClose' method.
+		/// </summary>
 		public static readonly StringName OnScreenClose = "OnScreenClose";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
+		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
+
+		/// <summary>
+		/// Cached name for the '_unlockConfirmButton' field.
+		/// </summary>
 		public static readonly StringName _unlockConfirmButton = "_unlockConfirmButton";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -41,6 +81,8 @@ public abstract class NUnlockScreen : Control
 	private NUnlockConfirmButton? _unlockConfirmButton;
 
 	private Tween? _tween;
+
+	public virtual Control? DefaultFocusedControl => null;
 
 	public override void _Ready()
 	{
@@ -61,9 +103,14 @@ public abstract class NUnlockScreen : Control
 		}));
 	}
 
+	/// <summary>
+	/// Useful for UI stuff because this Node is in the Scene so the positions are accurate.
+	/// See: NUnlockEpochScreen where we animate the Epochs on screen open!
+	/// </summary>
 	public virtual void Open()
 	{
 		NTimelineScreen.Instance.DisableInput();
+		NTimelineScreen.Instance.CurrentUnlockScreen = this;
 		_unlockConfirmButton?.Disable();
 		_tween?.FastForwardToCompletion();
 		_tween = CreateTween();
@@ -77,21 +124,27 @@ public abstract class NUnlockScreen : Control
 	protected async Task Close()
 	{
 		Log.Info($"Closing: {base.Name}");
+		if (NTimelineScreen.Instance.CurrentUnlockScreen == this)
+		{
+			NTimelineScreen.Instance.CurrentUnlockScreen = null;
+		}
 		_tween?.FastForwardToCompletion();
 		OnScreenPreClose();
 		_tween = CreateTween().SetParallel();
 		_tween.TweenProperty(this, "modulate", StsColors.transparentBlack, 1.0);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		OnScreenClose();
-		if (!NTimelineScreen.Instance.IsScreenQueued())
+		if (await _tween.AwaitFinished(this))
 		{
-			await NTimelineScreen.Instance.HideBackstopAndShowUi(showBackButton: true);
+			OnScreenClose();
+			if (!NTimelineScreen.Instance.IsScreenQueued())
+			{
+				await NTimelineScreen.Instance.HideBackstopAndShowUi(showBackButton: true);
+			}
+			else
+			{
+				NTimelineScreen.Instance.OpenQueuedScreen();
+			}
+			this.QueueFreeSafely();
 		}
-		else
-		{
-			NTimelineScreen.Instance.OpenQueuedScreen();
-		}
-		this.QueueFreeSafely();
 	}
 
 	protected virtual void OnScreenPreClose()
@@ -102,6 +155,11 @@ public abstract class NUnlockScreen : Control
 	{
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -114,6 +172,7 @@ public abstract class NUnlockScreen : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -150,6 +209,7 @@ public abstract class NUnlockScreen : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -176,6 +236,7 @@ public abstract class NUnlockScreen : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -192,9 +253,15 @@ public abstract class NUnlockScreen : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
+		if (name == PropertyName.DefaultFocusedControl)
+		{
+			value = VariantUtils.CreateFrom<Control>(DefaultFocusedControl);
+			return true;
+		}
 		if (name == PropertyName._unlockConfirmButton)
 		{
 			value = VariantUtils.CreateFrom(in _unlockConfirmButton);
@@ -208,15 +275,22 @@ public abstract class NUnlockScreen : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._unlockConfirmButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._tween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.DefaultFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -225,6 +299,7 @@ public abstract class NUnlockScreen : Control
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -22,13 +22,13 @@ public sealed class Hellraiser : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<HellraiserPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		await PowerCmd.Apply<HellraiserPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	public override async Task OnEnqueuePlayVfx(Creature? target)
 	{
 		NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(NHellraiserVfx.Create(base.Owner.Creature));
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
 	}
 
 	protected override void OnUpgrade()

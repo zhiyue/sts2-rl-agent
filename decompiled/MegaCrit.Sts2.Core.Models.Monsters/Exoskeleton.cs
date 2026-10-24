@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -45,14 +46,14 @@ public sealed class Exoskeleton : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<HardToKillPower>(base.Creature, 9m, base.Creature, null);
+		await PowerCmd.Apply<HardToKillPower>(new ThrowingPlayerChoiceContext(), base.Creature, 9m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
 		MoveState moveState = new MoveState("SKITTER_MOVE", SkitterMove, new MultiAttackIntent(SkitterDamage, SkitterRepeats));
-		MoveState moveState2 = new MoveState("MANDIBLE_MOVE", MandiblesMove, new SingleAttackIntent(MandiblesDamage));
+		MoveState moveState2 = new MoveState("MANDIBLES_MOVE", MandiblesMove, new SingleAttackIntent(MandiblesDamage));
 		MoveState moveState3 = new MoveState("ENRAGE_MOVE", EnrageMove, new BuffIntent());
 		RandomBranchState randomBranchState = new RandomBranchState("RAND");
 		randomBranchState.AddBranch(moveState, MoveRepeatType.CannotRepeat, 1f);
@@ -95,7 +96,7 @@ public sealed class Exoskeleton : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/roaches/roaches_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "Buff", 0.3f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

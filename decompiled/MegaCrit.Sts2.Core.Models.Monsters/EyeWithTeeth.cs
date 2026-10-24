@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -29,7 +30,7 @@ public sealed class EyeWithTeeth : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<IllusionPower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<IllusionPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -46,7 +47,7 @@ public sealed class EyeWithTeeth : MonsterModel
 		SfxCmd.Play(AttackSfx);
 		await CreatureCmd.TriggerAnim(base.Creature, "Attack", 0.7f);
 		VfxCmd.PlayOnCreatureCenters(targets, "vfx/vfx_attack_slash");
-		await CardPileCmd.AddToCombatAndPreview<Dazed>(targets, PileType.Discard, 3, addedByPlayer: false);
+		await CardPileCmd.AddToCombatAndPreview<Dazed>(targets, PileType.Discard, 3, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

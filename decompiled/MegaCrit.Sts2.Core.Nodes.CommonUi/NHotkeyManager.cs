@@ -11,22 +11,45 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// Class that manages Hotkeys/shortcuts for various buttons and UI in the game.
+/// Manages which buttons get priority if multiple of them share the same Hotkey
+/// (typically the last one added gets priority)
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NHotkeyManager.cs")]
 public class NHotkeyManager : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'AddBlockingScreen' method.
+		/// </summary>
 		public static readonly StringName AddBlockingScreen = "AddBlockingScreen";
 
+		/// <summary>
+		/// Cached name for the 'RemoveBlockingScreen' method.
+		/// </summary>
 		public static readonly StringName RemoveBlockingScreen = "RemoveBlockingScreen";
 
+		/// <summary>
+		/// Cached name for the '_UnhandledInput' method.
+		/// </summary>
 		public new static readonly StringName _UnhandledInput = "_UnhandledInput";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -97,6 +120,12 @@ public class NHotkeyManager : Node
 		}
 	}
 
+	/// <summary>
+	/// we want to block all previous hotkeys while this screen is open
+	/// New hotkeys can be added on top though.
+	/// ex: we don't want to be able to hotkey to view our draw pile if the pause menu is open
+	/// </summary>
+	/// <param name="screen">Screen that is block all previous hotkey input</param>
 	public void AddBlockingScreen(Node screen)
 	{
 		Action action = delegate
@@ -115,6 +144,10 @@ public class NHotkeyManager : Node
 		_blockingScreens.Add(screen, action);
 	}
 
+	/// <summary>
+	/// Removes the all hotkey blockers related to a screen.
+	/// </summary>
+	/// <param name="screen">Screen that want to remove the hotkey blockage from</param>
 	public void RemoveBlockingScreen(Node screen)
 	{
 		if (_blockingScreens.TryGetValue(screen, out Action value))
@@ -135,11 +168,12 @@ public class NHotkeyManager : Node
 
 	public override void _UnhandledInput(InputEvent inputEvent)
 	{
-		if (NDevConsole.Instance.Visible)
+		if (!NGame.IsGameFocusedWindow() || NDevConsole.Instance.Visible)
 		{
 			return;
 		}
-		Control control = GetViewport()?.GuiGetFocusOwner();
+		Viewport viewport = GetViewport();
+		Control control = viewport?.GuiGetFocusOwner();
 		if (control != null && ((control is LineEdit lineEdit && lineEdit.IsEditing()) || (control is NMegaTextEdit nMegaTextEdit && nMegaTextEdit.IsEditing())))
 		{
 			return;
@@ -152,6 +186,7 @@ public class NHotkeyManager : Node
 				if (action != null)
 				{
 					Callable.From(action.Invoke).CallDeferred();
+					viewport?.SetInputAsHandled();
 				}
 			}
 		}
@@ -163,11 +198,17 @@ public class NHotkeyManager : Node
 				if (action2 != null)
 				{
 					Callable.From(action2.Invoke).CallDeferred();
+					viewport?.SetInputAsHandled();
 				}
 			}
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -187,6 +228,7 @@ public class NHotkeyManager : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -211,6 +253,7 @@ public class NHotkeyManager : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -229,12 +272,14 @@ public class NHotkeyManager : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

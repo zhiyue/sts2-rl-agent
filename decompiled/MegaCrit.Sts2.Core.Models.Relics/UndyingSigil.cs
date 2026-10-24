@@ -8,6 +8,10 @@ using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MegaCrit.Sts2.Core.Models.Relics;
 
+/// <summary>
+/// This relic doesn't actually _do_ anything; Doom checks for its existence and makes enemy Doom trigger at the
+/// start of the enemy's turn instead of the end of the enemy's turn (so enemies die before they can attack).
+/// </summary>
 public sealed class UndyingSigil : RelicModel
 {
 	private const string _damageDecrease = "DamageDecrease";

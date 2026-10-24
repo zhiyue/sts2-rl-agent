@@ -12,34 +12,76 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NDecimillipedeSegmentVfx.cs")]
 public class NDecimillipedeSegmentVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Regenerate' method.
+		/// </summary>
 		public static readonly StringName Regenerate = "Regenerate";
 
+		/// <summary>
+		/// Cached name for the 'EndRegenerate' method.
+		/// </summary>
 		public static readonly StringName EndRegenerate = "EndRegenerate";
 
+		/// <summary>
+		/// Cached name for the 'Wither' method.
+		/// </summary>
 		public static readonly StringName Wither = "Wither";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_damageParticleNodes' field.
+		/// </summary>
 		public static readonly StringName _damageParticleNodes = "_damageParticleNodes";
 
+		/// <summary>
+		/// Cached name for the '_particleGravity' field.
+		/// </summary>
 		public static readonly StringName _particleGravity = "_particleGravity";
 
+		/// <summary>
+		/// Cached name for the '_particleSpeedScale' field.
+		/// </summary>
 		public static readonly StringName _particleSpeedScale = "_particleSpeedScale";
 
+		/// <summary>
+		/// Cached name for the '_particleVelocityMinMax' field.
+		/// </summary>
 		public static readonly StringName _particleVelocityMinMax = "_particleVelocityMinMax";
 
+		/// <summary>
+		/// Cached name for the '_sprayNodes' field.
+		/// </summary>
 		public static readonly StringName _sprayNodes = "_sprayNodes";
 
+		/// <summary>
+		/// Cached name for the '_parent' field.
+		/// </summary>
 		public static readonly StringName _parent = "_parent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -138,6 +180,11 @@ public class NDecimillipedeSegmentVfx : Node
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -156,6 +203,7 @@ public class NDecimillipedeSegmentVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -192,6 +240,7 @@ public class NDecimillipedeSegmentVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -218,6 +267,7 @@ public class NDecimillipedeSegmentVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -249,6 +299,7 @@ public class NDecimillipedeSegmentVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -287,6 +338,11 @@ public class NDecimillipedeSegmentVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -300,6 +356,7 @@ public class NDecimillipedeSegmentVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -315,6 +372,7 @@ public class NDecimillipedeSegmentVfx : Node
 		info.AddProperty(PropertyName._parent, Variant.From(in _parent));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -8,50 +9,139 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Nodes.Combat;
 
 [ScriptPath("res://src/Core/Nodes/Combat/NCreatureVisuals.cs")]
 public class NCreatureVisuals : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'GetCurrentBody' method.
+		/// </summary>
+		public static readonly StringName GetCurrentBody = "GetCurrentBody";
+
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
+		public new static readonly StringName _EnterTree = "_EnterTree";
+
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'SetScaleAndHue' method.
+		/// </summary>
 		public static readonly StringName SetScaleAndHue = "SetScaleAndHue";
 
+		/// <summary>
+		/// Cached name for the 'IsPlayingHurtAnimation' method.
+		/// </summary>
 		public static readonly StringName IsPlayingHurtAnimation = "IsPlayingHurtAnimation";
 
+		/// <summary>
+		/// Cached name for the 'TryApplyLiquidOverlay' method.
+		/// </summary>
 		public static readonly StringName TryApplyLiquidOverlay = "TryApplyLiquidOverlay";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
-		public static readonly StringName Body = "Body";
-
+		/// <summary>
+		/// Cached name for the 'Bounds' property.
+		/// </summary>
 		public static readonly StringName Bounds = "Bounds";
 
+		/// <summary>
+		/// Cached name for the 'IntentPosition' property.
+		/// </summary>
 		public static readonly StringName IntentPosition = "IntentPosition";
 
+		/// <summary>
+		/// Cached name for the 'OrbPosition' property.
+		/// </summary>
 		public static readonly StringName OrbPosition = "OrbPosition";
 
+		/// <summary>
+		/// Cached name for the 'TalkPosition' property.
+		/// </summary>
 		public static readonly StringName TalkPosition = "TalkPosition";
 
+		/// <summary>
+		/// Cached name for the 'IsSpineNode' property.
+		/// </summary>
+		public static readonly StringName IsSpineNode = "IsSpineNode";
+
+		/// <summary>
+		/// Cached name for the 'HasSpineAnimation' property.
+		/// </summary>
 		public static readonly StringName HasSpineAnimation = "HasSpineAnimation";
 
+		/// <summary>
+		/// Cached name for the 'IsUsingPhobiaModeBody' property.
+		/// </summary>
+		public static readonly StringName IsUsingPhobiaModeBody = "IsUsingPhobiaModeBody";
+
+		/// <summary>
+		/// Cached name for the 'VfxSpawnPosition' property.
+		/// </summary>
 		public static readonly StringName VfxSpawnPosition = "VfxSpawnPosition";
 
+		/// <summary>
+		/// Cached name for the 'DefaultScale' property.
+		/// </summary>
 		public static readonly StringName DefaultScale = "DefaultScale";
 
+		/// <summary>
+		/// Cached name for the '_body' field.
+		/// </summary>
+		public static readonly StringName _body = "_body";
+
+		/// <summary>
+		/// Cached name for the '_phobiaModeBody' field.
+		/// </summary>
+		public static readonly StringName _phobiaModeBody = "_phobiaModeBody";
+
+		/// <summary>
+		/// Cached name for the '_hue' field.
+		/// </summary>
 		public static readonly StringName _hue = "_hue";
 
+		/// <summary>
+		/// Cached name for the '_liquidOverlayTimer' field.
+		/// </summary>
 		public static readonly StringName _liquidOverlayTimer = "_liquidOverlayTimer";
 
+		/// <summary>
+		/// Cached name for the '_savedNormalMaterial' field.
+		/// </summary>
 		public static readonly StringName _savedNormalMaterial = "_savedNormalMaterial";
 
+		/// <summary>
+		/// Cached name for the '_currentLiquidOverlayMaterial' field.
+		/// </summary>
 		public static readonly StringName _currentLiquidOverlayMaterial = "_currentLiquidOverlayMaterial";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -64,6 +154,10 @@ public class NCreatureVisuals : Node2D
 
 	private const double _baseLiquidOverlayDuration = 1.0;
 
+	private Node2D _body;
+
+	private Node2D? _phobiaModeBody;
+
 	private float _hue = 1f;
 
 	private double _liquidOverlayTimer;
@@ -72,7 +166,7 @@ public class NCreatureVisuals : Node2D
 
 	private ShaderMaterial? _currentLiquidOverlayMaterial;
 
-	public Node2D Body { get; private set; }
+	private CancellationTokenSource _cts = new CancellationTokenSource();
 
 	public Control Bounds { get; private set; }
 
@@ -82,45 +176,101 @@ public class NCreatureVisuals : Node2D
 
 	public Marker2D? TalkPosition { get; private set; }
 
-	public bool HasSpineAnimation
+	private bool IsSpineNode
 	{
 		get
 		{
-			if (GodotObject.IsInstanceValid(Body))
+			if (GodotObject.IsInstanceValid(_body))
 			{
-				return Body.GetClass() == "SpineSprite";
+				return _body.GetClass() == "SpineSprite";
 			}
 			return false;
 		}
 	}
 
+	public bool HasSpineAnimation => SpineBody != null;
+
+	public bool IsUsingPhobiaModeBody => _phobiaModeBody == GetCurrentBody();
+
 	public MegaSprite? SpineBody { get; private set; }
 
+	public SpineAnimationAccess SpineAnimation => new SpineAnimationAccess(SpineBody);
+
+	/// <summary>
+	/// Position we spawn things like hit vfx. Sometimes the center of the creatures isn't always the center of the visual.
+	/// </summary>
 	public Marker2D VfxSpawnPosition { get; private set; }
 
 	public float DefaultScale { get; set; } = 1f;
 
+	public Node2D GetCurrentBody()
+	{
+		Node2D phobiaModeBody = _phobiaModeBody;
+		if (phobiaModeBody == null || !phobiaModeBody.Visible)
+		{
+			return _body;
+		}
+		return _phobiaModeBody;
+	}
+
 	public override void _Ready()
 	{
-		Body = GetNode<Node2D>("%Visuals");
+		_body = GetNode<Node2D>("%Visuals");
+		_phobiaModeBody = GetNodeOrNull<Node2D>("%PhobiaModeVisuals");
 		Bounds = GetNode<Control>("%Bounds");
 		IntentPosition = GetNode<Marker2D>("%IntentPos");
 		VfxSpawnPosition = GetNode<Marker2D>("%CenterPos");
 		OrbPosition = (HasNode("%OrbPos") ? GetNode<Marker2D>("%OrbPos") : IntentPosition);
 		TalkPosition = (HasNode("%TalkPos") ? GetNode<Marker2D>("%TalkPos") : null);
-		if (HasSpineAnimation)
+		if (IsSpineNode)
 		{
-			SpineBody = new MegaSprite(Body);
+			SpineBody = new MegaSprite(_body);
+			if (SpineBody.GetSkeleton()?.GetData() == null)
+			{
+				GD.PushWarning($"Spine skeleton data failed to load for {base.Name}, disabling spine animation.");
+				SpineBody = null;
+			}
 		}
 		_savedNormalMaterial = null;
 		_currentLiquidOverlayMaterial = null;
 	}
 
+	public override void _EnterTree()
+	{
+		_cts = new CancellationTokenSource();
+	}
+
+	public override void _ExitTree()
+	{
+		_cts.Cancel();
+	}
+
+	public void UpdatePhobiaMode(MonsterModel? model)
+	{
+		if (_phobiaModeBody != null)
+		{
+			_phobiaModeBody.Visible = SaveManager.Instance.PrefsSave.PhobiaMode;
+			_body.Visible = !_phobiaModeBody.Visible;
+		}
+		if (SpineBody != null)
+		{
+			MegaSkeleton skeleton = SpineBody.GetSkeleton();
+			if (skeleton != null)
+			{
+				model?.OnPhobiaModeToggled(SaveManager.Instance.PrefsSave.PhobiaMode, SpineBody, skeleton);
+			}
+		}
+	}
+
 	public void SetUpSkin(MonsterModel model)
 	{
-		if (SpineBody?.GetSkeleton() != null)
+		if (SpineBody != null)
 		{
-			model.SetupSkins(this);
+			MegaSkeleton skeleton = SpineBody.GetSkeleton();
+			if (skeleton != null)
+			{
+				model.SetupSkins(SpineBody, skeleton);
+			}
 		}
 	}
 
@@ -149,13 +299,7 @@ public class NCreatureVisuals : Node2D
 
 	public bool IsPlayingHurtAnimation()
 	{
-		if (SpineBody?.GetSkeleton() != null)
-		{
-			return SpineBody.GetAnimationState().GetCurrent(0).GetAnimation()
-				.GetName()
-				.Equals("hurt");
-		}
-		return false;
+		return SpineAnimation.GetCurrentAnimationName() == "hurt";
 	}
 
 	public void TryApplyLiquidOverlay(Color tint)
@@ -188,18 +332,26 @@ public class NCreatureVisuals : Node2D
 				double num = (1.0 - _liquidOverlayTimer) / 1.0;
 				_currentLiquidOverlayMaterial.SetShaderParameter(_overlayInfluence, 1.0 - num);
 				_liquidOverlayTimer -= GetProcessDeltaTime();
-				await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+				await this.AwaitProcessFrame(_cts.Token);
 			}
 			SpineBody.SetNormalMaterial(_savedNormalMaterial);
 			_currentLiquidOverlayMaterial = null;
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(4);
+		List<MethodInfo> list = new List<MethodInfo>(7);
+		list.Add(new MethodInfo(MethodName.GetCurrentBody, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Node2D"), exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.SetScaleAndHue, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Float, "scale", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
@@ -213,12 +365,30 @@ public class NCreatureVisuals : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
+		if (method == MethodName.GetCurrentBody && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<Node2D>(GetCurrentBody());
+			return true;
+		}
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._EnterTree && args.Count == 0)
+		{
+			_EnterTree();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -242,10 +412,23 @@ public class NCreatureVisuals : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
+		if (method == MethodName.GetCurrentBody)
+		{
+			return true;
+		}
 		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName._EnterTree)
+		{
+			return true;
+		}
+		if (method == MethodName._ExitTree)
 		{
 			return true;
 		}
@@ -264,14 +447,10 @@ public class NCreatureVisuals : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
-		if (name == PropertyName.Body)
-		{
-			Body = VariantUtils.ConvertTo<Node2D>(in value);
-			return true;
-		}
 		if (name == PropertyName.Bounds)
 		{
 			Bounds = VariantUtils.ConvertTo<Control>(in value);
@@ -302,6 +481,16 @@ public class NCreatureVisuals : Node2D
 			DefaultScale = VariantUtils.ConvertTo<float>(in value);
 			return true;
 		}
+		if (name == PropertyName._body)
+		{
+			_body = VariantUtils.ConvertTo<Node2D>(in value);
+			return true;
+		}
+		if (name == PropertyName._phobiaModeBody)
+		{
+			_phobiaModeBody = VariantUtils.ConvertTo<Node2D>(in value);
+			return true;
+		}
 		if (name == PropertyName._hue)
 		{
 			_hue = VariantUtils.ConvertTo<float>(in value);
@@ -325,14 +514,10 @@ public class NCreatureVisuals : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
-		if (name == PropertyName.Body)
-		{
-			value = VariantUtils.CreateFrom<Node2D>(Body);
-			return true;
-		}
 		if (name == PropertyName.Bounds)
 		{
 			value = VariantUtils.CreateFrom<Control>(Bounds);
@@ -357,9 +542,23 @@ public class NCreatureVisuals : Node2D
 			value = VariantUtils.CreateFrom(in from);
 			return true;
 		}
+		bool from2;
+		if (name == PropertyName.IsSpineNode)
+		{
+			from2 = IsSpineNode;
+			value = VariantUtils.CreateFrom(in from2);
+			return true;
+		}
 		if (name == PropertyName.HasSpineAnimation)
 		{
-			value = VariantUtils.CreateFrom<bool>(HasSpineAnimation);
+			from2 = HasSpineAnimation;
+			value = VariantUtils.CreateFrom(in from2);
+			return true;
+		}
+		if (name == PropertyName.IsUsingPhobiaModeBody)
+		{
+			from2 = IsUsingPhobiaModeBody;
+			value = VariantUtils.CreateFrom(in from2);
 			return true;
 		}
 		if (name == PropertyName.VfxSpawnPosition)
@@ -371,6 +570,16 @@ public class NCreatureVisuals : Node2D
 		if (name == PropertyName.DefaultScale)
 		{
 			value = VariantUtils.CreateFrom<float>(DefaultScale);
+			return true;
+		}
+		if (name == PropertyName._body)
+		{
+			value = VariantUtils.CreateFrom(in _body);
+			return true;
+		}
+		if (name == PropertyName._phobiaModeBody)
+		{
+			value = VariantUtils.CreateFrom(in _phobiaModeBody);
 			return true;
 		}
 		if (name == PropertyName._hue)
@@ -396,16 +605,24 @@ public class NCreatureVisuals : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
-		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.Body, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._body, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._phobiaModeBody, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.Bounds, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.IntentPosition, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.OrbPosition, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.TalkPosition, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.IsSpineNode, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.HasSpineAnimation, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.IsUsingPhobiaModeBody, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.VfxSpawnPosition, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName.DefaultScale, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName._hue, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -415,70 +632,77 @@ public class NCreatureVisuals : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
-		info.AddProperty(PropertyName.Body, Variant.From<Node2D>(Body));
 		info.AddProperty(PropertyName.Bounds, Variant.From<Control>(Bounds));
 		info.AddProperty(PropertyName.IntentPosition, Variant.From<Marker2D>(IntentPosition));
 		info.AddProperty(PropertyName.OrbPosition, Variant.From<Marker2D>(OrbPosition));
 		info.AddProperty(PropertyName.TalkPosition, Variant.From<Marker2D>(TalkPosition));
 		info.AddProperty(PropertyName.VfxSpawnPosition, Variant.From<Marker2D>(VfxSpawnPosition));
 		info.AddProperty(PropertyName.DefaultScale, Variant.From<float>(DefaultScale));
+		info.AddProperty(PropertyName._body, Variant.From(in _body));
+		info.AddProperty(PropertyName._phobiaModeBody, Variant.From(in _phobiaModeBody));
 		info.AddProperty(PropertyName._hue, Variant.From(in _hue));
 		info.AddProperty(PropertyName._liquidOverlayTimer, Variant.From(in _liquidOverlayTimer));
 		info.AddProperty(PropertyName._savedNormalMaterial, Variant.From(in _savedNormalMaterial));
 		info.AddProperty(PropertyName._currentLiquidOverlayMaterial, Variant.From(in _currentLiquidOverlayMaterial));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
 		base.RestoreGodotObjectData(info);
-		if (info.TryGetProperty(PropertyName.Body, out var value))
+		if (info.TryGetProperty(PropertyName.Bounds, out var value))
 		{
-			Body = value.As<Node2D>();
+			Bounds = value.As<Control>();
 		}
-		if (info.TryGetProperty(PropertyName.Bounds, out var value2))
+		if (info.TryGetProperty(PropertyName.IntentPosition, out var value2))
 		{
-			Bounds = value2.As<Control>();
+			IntentPosition = value2.As<Marker2D>();
 		}
-		if (info.TryGetProperty(PropertyName.IntentPosition, out var value3))
+		if (info.TryGetProperty(PropertyName.OrbPosition, out var value3))
 		{
-			IntentPosition = value3.As<Marker2D>();
+			OrbPosition = value3.As<Marker2D>();
 		}
-		if (info.TryGetProperty(PropertyName.OrbPosition, out var value4))
+		if (info.TryGetProperty(PropertyName.TalkPosition, out var value4))
 		{
-			OrbPosition = value4.As<Marker2D>();
+			TalkPosition = value4.As<Marker2D>();
 		}
-		if (info.TryGetProperty(PropertyName.TalkPosition, out var value5))
+		if (info.TryGetProperty(PropertyName.VfxSpawnPosition, out var value5))
 		{
-			TalkPosition = value5.As<Marker2D>();
+			VfxSpawnPosition = value5.As<Marker2D>();
 		}
-		if (info.TryGetProperty(PropertyName.VfxSpawnPosition, out var value6))
+		if (info.TryGetProperty(PropertyName.DefaultScale, out var value6))
 		{
-			VfxSpawnPosition = value6.As<Marker2D>();
+			DefaultScale = value6.As<float>();
 		}
-		if (info.TryGetProperty(PropertyName.DefaultScale, out var value7))
+		if (info.TryGetProperty(PropertyName._body, out var value7))
 		{
-			DefaultScale = value7.As<float>();
+			_body = value7.As<Node2D>();
 		}
-		if (info.TryGetProperty(PropertyName._hue, out var value8))
+		if (info.TryGetProperty(PropertyName._phobiaModeBody, out var value8))
 		{
-			_hue = value8.As<float>();
+			_phobiaModeBody = value8.As<Node2D>();
 		}
-		if (info.TryGetProperty(PropertyName._liquidOverlayTimer, out var value9))
+		if (info.TryGetProperty(PropertyName._hue, out var value9))
 		{
-			_liquidOverlayTimer = value9.As<double>();
+			_hue = value9.As<float>();
 		}
-		if (info.TryGetProperty(PropertyName._savedNormalMaterial, out var value10))
+		if (info.TryGetProperty(PropertyName._liquidOverlayTimer, out var value10))
 		{
-			_savedNormalMaterial = value10.As<Material>();
+			_liquidOverlayTimer = value10.As<double>();
 		}
-		if (info.TryGetProperty(PropertyName._currentLiquidOverlayMaterial, out var value11))
+		if (info.TryGetProperty(PropertyName._savedNormalMaterial, out var value11))
 		{
-			_currentLiquidOverlayMaterial = value11.As<ShaderMaterial>();
+			_savedNormalMaterial = value11.As<Material>();
+		}
+		if (info.TryGetProperty(PropertyName._currentLiquidOverlayMaterial, out var value12))
+		{
+			_currentLiquidOverlayMaterial = value12.As<ShaderMaterial>();
 		}
 	}
 }

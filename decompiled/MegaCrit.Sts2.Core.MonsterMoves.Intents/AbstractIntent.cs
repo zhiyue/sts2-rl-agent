@@ -11,6 +11,9 @@ using MegaCrit.Sts2.Core.Localization;
 
 namespace MegaCrit.Sts2.Core.MonsterMoves.Intents;
 
+/// <summary>
+/// The data backend for intents. See NIntent.cs to update visuals
+/// </summary>
 public abstract class AbstractIntent
 {
 	protected const string _locTable = "intents";
@@ -70,7 +73,7 @@ public abstract class AbstractIntent
 	protected virtual LocString GetIntentDescription(IEnumerable<Creature> targets, Creature owner)
 	{
 		LocString locString = new LocString("intents", IntentPrefix + ".description");
-		CombatState? combatState = owner.CombatState;
+		ICombatState? combatState = owner.CombatState;
 		locString.Add("IsMultiplayer", combatState != null && combatState.RunState.Players.Count > 1);
 		return locString;
 	}

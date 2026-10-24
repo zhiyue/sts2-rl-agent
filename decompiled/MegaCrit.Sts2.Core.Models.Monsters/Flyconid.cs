@@ -4,13 +4,12 @@ using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.TestSupport;
 
@@ -54,29 +53,25 @@ public sealed class Flyconid : MonsterModel
 	{
 		if (TestMode.IsOff)
 		{
-			NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(base.Creature);
-			NFlyconidSporesVfx node = creatureNode.Visuals.Body.GetNode<NFlyconidSporesVfx>("%VfxController");
-			node.SetSporeTypeIsVulnerable(isVulnerable: true);
+			base.Creature.GetCreatureNode()?.Visuals.GetCurrentBody().GetNode<NFlyconidSporesVfx>("%VfxController")?.SetSporeTypeIsVulnerable(isVulnerable: true);
 		}
 		SfxCmd.Play(CastSfx);
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.5f);
-		await PowerCmd.Apply<VulnerablePower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	private async Task FrailSporesMove(IReadOnlyList<Creature> targets)
 	{
 		if (TestMode.IsOff)
 		{
-			NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(base.Creature);
-			NFlyconidSporesVfx node = creatureNode.Visuals.Body.GetNode<NFlyconidSporesVfx>("%VfxController");
-			node.SetSporeTypeIsVulnerable(isVulnerable: false);
+			base.Creature.GetCreatureNode()?.Visuals.GetCurrentBody().GetNode<NFlyconidSporesVfx>("%VfxController")?.SetSporeTypeIsVulnerable(isVulnerable: false);
 		}
 		await DamageCmd.Attack(SporeDamage).FromMonster(this).WithAttackerAnim("Cast", 0.5f)
 			.WithAttackerFx(null, CastSfx)
 			.WithWaitBeforeHit(0f, 0.6f)
 			.WithHitVfxNode((Creature t) => NSporeImpactVfx.Create(t, new Color("8aad7d")))
 			.Execute(null);
-		await PowerCmd.Apply<FrailPower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	private async Task SmashMove(IReadOnlyList<Creature> targets)

@@ -31,7 +31,7 @@ public sealed class KinglyPunch : CardModel
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
 		new DamageVar(8m, ValueProp.Move),
-		new DynamicVar("Increase", 3m)
+		new DynamicVar("Increase", 4m)
 	});
 
 	public KinglyPunch()
@@ -61,6 +61,7 @@ public sealed class KinglyPunch : CardModel
 
 	protected override void OnUpgrade()
 	{
+		base.DynamicVars.Damage.UpgradeValueBy(2m);
 		base.DynamicVars["Increase"].UpgradeValueBy(2m);
 	}
 

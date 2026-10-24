@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -29,7 +30,7 @@ public sealed class SewerClam : MonsterModel
 	{
 		await base.AfterAddedToRoom();
 		int valueIfAscension = AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 9, 8);
-		await PowerCmd.Apply<PlatingPower>(base.Creature, valueIfAscension, base.Creature, null);
+		await PowerCmd.Apply<PlatingPower>(new ThrowingPlayerChoiceContext(), base.Creature, valueIfAscension, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -47,7 +48,7 @@ public sealed class SewerClam : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/sewer_clam/sewer_clam_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 1f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 4m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 4m, base.Creature, null);
 	}
 
 	private async Task JetMove(IReadOnlyList<Creature> targets)

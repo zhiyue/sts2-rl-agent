@@ -13,39 +13,87 @@ using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 
+/// <summary>
+/// The resolution dropdown in the OptionsScreen.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NResolutionDropdown.cs")]
 public class NResolutionDropdown : NSettingsDropdown
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSettingsDropdown.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RefreshCurrentlySelectedResolution' method.
+		/// </summary>
 		public static readonly StringName RefreshCurrentlySelectedResolution = "RefreshCurrentlySelectedResolution";
 
+		/// <summary>
+		/// Cached name for the 'PopulateDropdownItems' method.
+		/// </summary>
 		public static readonly StringName PopulateDropdownItems = "PopulateDropdownItems";
 
+		/// <summary>
+		/// Cached name for the 'OnWindowChange' method.
+		/// </summary>
 		public static readonly StringName OnWindowChange = "OnWindowChange";
 
+		/// <summary>
+		/// Cached name for the 'RefreshEnabled' method.
+		/// </summary>
 		public static readonly StringName RefreshEnabled = "RefreshEnabled";
 
+		/// <summary>
+		/// Cached name for the 'OnEnable' method.
+		/// </summary>
 		public new static readonly StringName OnEnable = "OnEnable";
 
+		/// <summary>
+		/// Cached name for the 'OnDisable' method.
+		/// </summary>
 		public new static readonly StringName OnDisable = "OnDisable";
 
+		/// <summary>
+		/// Cached name for the 'OnDropdownItemSelected' method.
+		/// </summary>
 		public static readonly StringName OnDropdownItemSelected = "OnDropdownItemSelected";
 
+		/// <summary>
+		/// Cached name for the 'DoesResolutionFit' method.
+		/// </summary>
 		public static readonly StringName DoesResolutionFit = "DoesResolutionFit";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSettingsDropdown.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_dropdownItemScene' field.
+		/// </summary>
 		public static readonly StringName _dropdownItemScene = "_dropdownItemScene";
 
+		/// <summary>
+		/// Cached name for the '_arrow' field.
+		/// </summary>
 		public static readonly StringName _arrow = "_arrow";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSettingsDropdown.SignalName
 	{
 	}
@@ -83,6 +131,10 @@ public class NResolutionDropdown : NSettingsDropdown
 		}
 	}
 
+	/// <summary>
+	/// A separate function as we repopulate the list of resolutions whenever the player
+	/// changes the Display they wish to play the game on.
+	/// </summary>
 	public void PopulateDropdownItems()
 	{
 		ClearDropdownItems();
@@ -215,6 +267,11 @@ public class NResolutionDropdown : NSettingsDropdown
 		return list;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -242,6 +299,7 @@ public class NResolutionDropdown : NSettingsDropdown
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -319,6 +377,7 @@ public class NResolutionDropdown : NSettingsDropdown
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -365,6 +424,7 @@ public class NResolutionDropdown : NSettingsDropdown
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -381,6 +441,7 @@ public class NResolutionDropdown : NSettingsDropdown
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -397,6 +458,11 @@ public class NResolutionDropdown : NSettingsDropdown
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -406,6 +472,7 @@ public class NResolutionDropdown : NSettingsDropdown
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -414,6 +481,7 @@ public class NResolutionDropdown : NSettingsDropdown
 		info.AddProperty(PropertyName._arrow, Variant.From(in _arrow));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

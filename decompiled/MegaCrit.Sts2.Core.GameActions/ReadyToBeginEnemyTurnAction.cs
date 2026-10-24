@@ -9,6 +9,11 @@ using MegaCrit.Sts2.Core.Logging;
 
 namespace MegaCrit.Sts2.Core.GameActions;
 
+/// <summary>
+/// This action indicates that the player is ready to proceed to phase two of the end of the turn, where player state
+/// cleanup and switching to the next side occurs. It comes after EndPlayerTurnAction.
+/// Note that this action is automatically enqueued without player intervention.
+/// </summary>
 public class ReadyToBeginEnemyTurnAction : GameAction
 {
 	private readonly Player _player;

@@ -6,6 +6,9 @@ using MegaCrit.Sts2.Core.Platform;
 
 namespace MegaCrit.Sts2.Core.Models.Achievements;
 
+/// <summary>
+/// Grants an achievement when the player obtains a large number of Stars.
+/// </summary>
 public class SkillRegent2Achievement : AchievementModel
 {
 	private const int _starThreshold = 20;

@@ -46,7 +46,7 @@ public sealed class CrystalSphere : EventModel
 		base.DynamicVars["UncoverFutureCost"].BaseValue += (decimal)base.Rng.NextInt(1, 50);
 	}
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		if (runState.Players.All((Player p) => p.Gold >= 100))
 		{

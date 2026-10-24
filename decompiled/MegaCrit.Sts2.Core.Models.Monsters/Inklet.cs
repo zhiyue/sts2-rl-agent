@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -16,6 +17,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class Inklet : MonsterModel
 {
+	private const string _piercingGazeMove = "PIERCING_GAZE_MOVE";
+
 	private const string _attackTripleTrigger = "TRIPLE_ATTACK";
 
 	private const int _whirlwindRepeat = 3;
@@ -54,7 +57,7 @@ public sealed class Inklet : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<SlipperyPower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<SlipperyPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -125,5 +128,10 @@ public sealed class Inklet : MonsterModel
 		creatureAnimator.AddAnyState("Dead", state);
 		creatureAnimator.AddAnyState("Hit", animState5);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "PIERCING_GAZE_MOVE";
 	}
 }

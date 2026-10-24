@@ -25,7 +25,7 @@ public sealed class DoorsOfLightAndDark : EventModel
 
 	private Task Light()
 	{
-		IEnumerable<CardModel> enumerable = PileType.Deck.GetPile(base.Owner).Cards.Where((CardModel c) => c?.IsUpgradable ?? false).ToList().StableShuffle(base.Owner.RunState.Rng.Niche)
+		IEnumerable<CardModel> enumerable = PileType.Deck.GetPile(base.Owner).Cards.Where((CardModel c) => c?.IsUpgradable ?? false).ToList().StableShuffle(base.Rng)
 			.Take(base.DynamicVars.Cards.IntValue);
 		foreach (CardModel item in enumerable)
 		{

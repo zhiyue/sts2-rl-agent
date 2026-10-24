@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -22,6 +23,8 @@ public sealed class FossilStalker : MonsterModel
 	private const string _attackDouble = "event:/sfx/enemy/enemy_attacks/fossil_stalker/fossil_stalker_attack_double";
 
 	private const string _attackSingle = "event:/sfx/enemy/enemy_attacks/fossil_stalker/fossil_stalker_attack_single";
+
+	protected override bool HasPhobiaSpineSkin => true;
 
 	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 54, 51);
 
@@ -42,7 +45,7 @@ public sealed class FossilStalker : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<SuckPower>(base.Creature, 3m, base.Creature, null);
+		await PowerCmd.Apply<SuckPower>(new ThrowingPlayerChoiceContext(), base.Creature, 3m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -68,7 +71,7 @@ public sealed class FossilStalker : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/fossil_stalker/fossil_stalker_attack_buff")
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
-		await PowerCmd.Apply<FrailPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
 	}
 
 	private async Task LatchMove(IReadOnlyList<Creature> targets)

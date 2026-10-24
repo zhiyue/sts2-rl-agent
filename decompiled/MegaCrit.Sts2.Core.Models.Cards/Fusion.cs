@@ -16,8 +16,10 @@ public sealed class Fusion : CardModel
 		HoverTipFactory.FromOrb<PlasmaOrb>()
 	});
 
+	public override IEnumerable<CardKeyword> CanonicalKeywords => new global::_003C_003Ez__ReadOnlySingleElementList<CardKeyword>(CardKeyword.Exhaust);
+
 	public Fusion()
-		: base(2, CardType.Skill, CardRarity.Uncommon, TargetType.Self)
+		: base(1, CardType.Skill, CardRarity.Uncommon, TargetType.Self)
 	{
 	}
 
@@ -29,6 +31,6 @@ public sealed class Fusion : CardModel
 
 	protected override void OnUpgrade()
 	{
-		base.EnergyCost.UpgradeBy(-1);
+		RemoveKeyword(CardKeyword.Exhaust);
 	}
 }

@@ -25,6 +25,6 @@ public sealed class FocusPotion : PotionModel
 
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
-		await PowerCmd.Apply<FocusPower>(base.Owner.Creature, base.DynamicVars["FocusPower"].BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<FocusPower>(choiceContext, base.Owner.Creature, base.DynamicVars["FocusPower"].BaseValue, base.Owner.Creature, null);
 	}
 }

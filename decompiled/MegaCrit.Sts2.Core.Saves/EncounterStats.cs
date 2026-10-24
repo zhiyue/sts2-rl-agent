@@ -6,6 +6,10 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// Holds progress data on a per encounter basis.
+/// Used by SerializableProgress. Useful for the Bestiary, Statistics, Achievements, and Epochs.
+/// </summary>
 public class EncounterStats
 {
 	[JsonPropertyName("encounter_id")]
@@ -14,6 +18,9 @@ public class EncounterStats
 	[JsonPropertyName("fight_stats")]
 	public List<FightStats> FightStats { get; init; } = new List<FightStats>();
 
+	/// <summary>
+	/// How many times the player has won against this encounter.
+	/// </summary>
 	[JsonIgnore]
 	public int TotalWins
 	{
@@ -27,6 +34,9 @@ public class EncounterStats
 		}
 	}
 
+	/// <summary>
+	/// How many times the player has died to this encounter.
+	/// </summary>
 	[JsonIgnore]
 	public int TotalLosses
 	{
@@ -40,6 +50,9 @@ public class EncounterStats
 		}
 	}
 
+	/// <summary>
+	/// Increments a victory against this encounter.
+	/// </summary>
 	public void IncrementWin(ModelId characterId)
 	{
 		FightStats fightStats = FightStats.First((FightStats fight) => fight.Character == characterId);
@@ -47,6 +60,9 @@ public class EncounterStats
 		Log.Info($"{characterId} has won against encounter {Id}. That's {fightStats.Wins} wins");
 	}
 
+	/// <summary>
+	/// Increments a loss against this encounter.
+	/// </summary>
 	public void IncrementLoss(ModelId characterId)
 	{
 		FightStats fightStats = FightStats.First((FightStats fight) => fight.Character == characterId);

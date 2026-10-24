@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Godot;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
@@ -22,8 +21,29 @@ using MegaCrit.Sts2.Core.Unlocks;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Game;
 
+/// <summary>
+/// Synchronizes treasure room shared relic picking in multiplayer.
+/// After opening the treasure chest, players are presented with multiple relics. They may vote on any one of the relics
+/// to take. After all players cast a vote:
+/// - If only one player votes for a relic, then that player gets the relic.
+/// - If multiple players have voted for a relic, they play rock-paper-scissors. The winning player gets the relic.
+/// - If no one has voted for a relic, a random loser of a rock-paper-scissors game gets the relic.
+/// </summary>
 public class TreasureRoomRelicSynchronizer
 {
+	public class PlayerVote
+	{
+		/// <summary>
+		/// Index of relic voted on. If null, then player skipped.
+		/// </summary>
+		public int? index;
+
+		/// <summary>
+		/// If true, then the player has voted. False if the player has not yet picked an option.
+		/// </summary>
+		public bool voteReceived;
+	}
+
 	private readonly IPlayerCollection _playerCollection;
 
 	private readonly ulong _localPlayerId;
@@ -34,13 +54,18 @@ public class TreasureRoomRelicSynchronizer
 
 	private readonly Rng _rng;
 
-	private readonly MegaCrit.Sts2.Core.Logging.Logger _logger = new MegaCrit.Sts2.Core.Logging.Logger("TreasureRoomRelicSynchronizer", LogType.GameSync);
+	private readonly Logger _logger = new Logger("TreasureRoomRelicSynchronizer", LogType.GameSync);
 
 	private List<RelicModel>? _currentRelics;
 
-	private readonly List<int?> _votes = new List<int?>();
+	private readonly List<PlayerVote> _votes = new List<PlayerVote>();
 
-	private int? _predictedVote;
+	private PlayerVote? _predictedVote;
+
+	/// <summary>
+	/// Set to true if the player skips the relic in singleplayer.
+	/// </summary>
+	private bool _singleplayerSkipped;
 
 	public IReadOnlyList<RelicModel>? CurrentRelics => _currentRelics;
 
@@ -59,6 +84,10 @@ public class TreasureRoomRelicSynchronizer
 		_rng = rng;
 	}
 
+	/// <summary>
+	/// Call this when the treasure room is opened to generate the relics that are selected.
+	/// CurrentRelics will be null until this is called.
+	/// </summary>
 	public void BeginRelicPicking()
 	{
 		if (CurrentRelics != null)
@@ -70,24 +99,29 @@ public class TreasureRoomRelicSynchronizer
 		_predictedVote = null;
 		foreach (Player player in _playerCollection.Players)
 		{
-			_votes.Add(null);
+			_votes.Add(new PlayerVote
+			{
+				voteReceived = false
+			});
 			IRunState runState = player.RunState;
 			if (Hook.ShouldGenerateTreasure(runState, player))
 			{
 				RelicRarity rarity = RelicFactory.RollRarity(_rng);
-				RelicModel item = TryGetRelicForTutorial(runState.UnlockState) ?? _sharedGrabBag.PullFromFront(rarity, runState);
+				RelicModel item = TryGetRelicForTutorial(runState.UnlockState) ?? _sharedGrabBag.PullFromFront(rarity, runState) ?? RelicFactory.FallbackRelic;
 				_currentRelics.Add(item);
 			}
 		}
 		if (_currentRelics.Count > 0)
 		{
-			if (RunManager.Instance.IsSinglePlayerOrFakeMultiplayer && _playerCollection.Players.Count > 1)
+			if (RunManager.Instance.IsSingleplayerOrFakeMultiplayer && _playerCollection.Players.Count > 1)
 			{
 				foreach (Player player2 in _playerCollection.Players)
 				{
 					if (player2 != LocalPlayer)
 					{
-						_votes[_playerCollection.GetPlayerSlotIndex(player2)] = _rng.NextInt(_currentRelics.Count);
+						PlayerVote playerVote = _votes[_playerCollection.GetPlayerSlotIndex(player2)];
+						playerVote.index = _rng.NextInt(_currentRelics.Count);
+						playerVote.voteReceived = true;
 					}
 				}
 			}
@@ -99,21 +133,59 @@ public class TreasureRoomRelicSynchronizer
 		}
 	}
 
-	public void PickRelicLocally(int index)
+	/// <summary>
+	/// Little semantic sugar which calls PickRelicLocally with null.
+	/// </summary>
+	public void SkipRelicLocally()
 	{
-		_logger.Debug($"Relic index {index} ({_currentRelics?[index]}) is being picked by local player {LocalPlayer.NetId}");
+		PickRelicLocally(null);
+	}
+
+	/// <summary>
+	/// Called when the local player chooses a relic to vote for.
+	/// Note that this immediately invokes `VotesChanged` with the new vote. However, the vote is not confirmed until
+	/// the resulting action round-trips to the host.
+	/// </summary>
+	/// <param name="index">The index of the relic in CurrentRelics that the player voted for, or null if the player
+	/// chose to skip.</param>
+	public void PickRelicLocally(int? index)
+	{
+		if (index.HasValue)
+		{
+			_logger.Debug($"Relic index {index} ({_currentRelics?[index.Value]}) is being picked by local player {LocalPlayer.NetId}");
+		}
+		else
+		{
+			_logger.Debug($"Relic has been skipped by local player {LocalPlayer.NetId}");
+		}
 		if (_currentRelics == null)
 		{
 			throw new InvalidOperationException("Attempted to pick relic while relic picking is not active!");
 		}
-		_predictedVote = index;
+		_predictedVote = new PlayerVote
+		{
+			index = index,
+			voteReceived = true
+		};
 		_actionQueueSynchronizer.RequestEnqueue(new PickRelicAction(LocalPlayer, index));
 		this.VotesChanged?.Invoke();
 	}
 
-	public void OnPicked(Player player, int index)
+	/// <summary>
+	/// Called when any player (local or remote) has voted for a relic.
+	/// </summary>
+	/// <param name="player">The player that voted.</param>
+	/// <param name="index">The index of the relic in CurrentRelics that the player voted for.</param>
+	public void OnPicked(Player player, int? index)
 	{
-		_logger.Debug($"Player {player} picked relic at index {index}: {_currentRelics?[index]}");
+		if (index.HasValue)
+		{
+			_logger.Debug($"Player {player} picked relic at index {index}: {_currentRelics?[index.Value]}");
+		}
+		else
+		{
+			_logger.Debug($"Player {player} skipped relic");
+		}
 		if (_currentRelics == null)
 		{
 			_logger.Warn("Attempted to pick relic while relic picking is not active!");
@@ -123,17 +195,24 @@ public class TreasureRoomRelicSynchronizer
 		{
 			throw new IndexOutOfRangeException($"Attempted to pick relic at index {index}, but there are only {_currentRelics.Count} to choose from!");
 		}
-		_votes[_playerCollection.GetPlayerSlotIndex(player)] = index;
+		if (!index.HasValue && _playerCollection.Players.Count == 1)
+		{
+			_singleplayerSkipped = true;
+			return;
+		}
+		PlayerVote playerVote = _votes[_playerCollection.GetPlayerSlotIndex(player)];
+		playerVote.index = index;
+		playerVote.voteReceived = true;
 		this.VotesChanged?.Invoke();
-		if (!_votes.All((int? v) => v.HasValue))
+		if (!_votes.All((PlayerVote v) => v.voteReceived))
 		{
 			return;
 		}
-		if (_predictedVote.HasValue)
+		if (_predictedVote != null)
 		{
-			int value = _predictedVote.Value;
+			PlayerVote predictedVote = _predictedVote;
 			_predictedVote = null;
-			if (_votes[_playerCollection.GetPlayerSlotIndex(LocalPlayer)] != value)
+			if (_votes[_playerCollection.GetPlayerSlotIndex(LocalPlayer)].index != predictedVote.index)
 			{
 				this.VotesChanged?.Invoke();
 			}
@@ -152,10 +231,13 @@ public class TreasureRoomRelicSynchronizer
 		for (int j = 0; j < _votes.Count; j++)
 		{
 			Player item = _playerCollection.Players[j];
-			int value = _votes[j].Value;
-			List<Player> valueOrDefault = dictionary.GetValueOrDefault(value, new List<Player>());
-			valueOrDefault.Add(item);
-			dictionary[value] = valueOrDefault;
+			PlayerVote playerVote = _votes[j];
+			if (playerVote.index.HasValue)
+			{
+				List<Player> valueOrDefault = dictionary.GetValueOrDefault(playerVote.index.Value, new List<Player>());
+				valueOrDefault.Add(item);
+				dictionary[playerVote.index.Value] = valueOrDefault;
+			}
 		}
 		List<RelicPickingResult> results = new List<RelicPickingResult>();
 		List<RelicModel> list = new List<RelicModel>();
@@ -181,34 +263,73 @@ public class TreasureRoomRelicSynchronizer
 				results.Add(RelicPickingResult.GenerateRelicFight(item2.Value, relicModel, () => _rng.NextItem(possibleMoves)));
 			}
 		}
-		List<Player> list2 = _playerCollection.Players.Where((Player p) => results.Find((RelicPickingResult r) => r.player == p) == null).ToList();
-		list.StableShuffle(_rng);
-		for (int num = 0; num < Mathf.Min(list.Count, list2.Count); num++)
+		List<Player> list2 = _playerCollection.Players.Where(delegate(Player p)
 		{
-			results.Add(new RelicPickingResult
+			bool flag = results.Find((RelicPickingResult r) => r.player == p) != null;
+			PlayerVote playerVote2 = _votes[_playerCollection.GetPlayerSlotIndex(p)];
+			bool flag2 = playerVote2.voteReceived && !playerVote2.index.HasValue;
+			return !flag && !flag2;
+		}).ToList();
+		list.StableShuffle(_rng);
+		for (int num = 0; num < list.Count; num++)
+		{
+			if (num < list2.Count)
 			{
-				type = RelicPickingResultType.ConsolationPrize,
-				player = list2[num],
-				relic = list[num]
-			});
+				results.Add(new RelicPickingResult
+				{
+					type = RelicPickingResultType.ConsolationPrize,
+					player = list2[num],
+					relic = list[num]
+				});
+			}
+			else
+			{
+				results.Add(new RelicPickingResult
+				{
+					type = RelicPickingResultType.Skipped,
+					player = null,
+					relic = list[num]
+				});
+			}
 		}
 		this.RelicsAwarded?.Invoke(results);
+	}
+
+	/// <summary>
+	/// Called when the room is exited.
+	/// Used to avoid emitting an error in the legitimate case where the player never completes relic picking in singleplayer.
+	/// </summary>
+	public void OnRoomExited()
+	{
+		if (_singleplayerSkipped)
+		{
+			EndRelicVoting();
+		}
 	}
 
 	private void EndRelicVoting()
 	{
 		_currentRelics = null;
+		_singleplayerSkipped = false;
 	}
 
-	public int? GetPlayerVote(Player player)
+	/// <summary>
+	/// Returns the relic that the player is currently voting for.
+	/// If the player has not yet voted for a relic, then null is returned.
+	/// </summary>
+	public PlayerVote GetPlayerVote(Player player)
 	{
-		if (player == LocalPlayer && _predictedVote.HasValue)
+		if (player == LocalPlayer && _predictedVote != null)
 		{
 			return _predictedVote;
 		}
 		return _votes[_playerCollection.GetPlayerSlotIndex(player)];
 	}
 
+	/// <summary>
+	/// Completes relic picking immediately with no relics awarded.
+	/// Called when the chest is empty (e.g., due to SilverCrucible).
+	/// </summary>
 	public void CompleteWithNoRelics()
 	{
 		_logger.Debug("Completing relic picking with no relics (empty chest)");
@@ -216,6 +337,10 @@ public class TreasureRoomRelicSynchronizer
 		_currentRelics = null;
 	}
 
+	/// <summary>
+	/// If treasure room rarity should be forced because the player is currently playing a tutorial run, this returns
+	/// a non-null rarity. Otherwise, the rarity is randomized.
+	/// </summary>
 	private RelicModel? TryGetRelicForTutorial(UnlockState unlockState)
 	{
 		if (unlockState.NumberOfRuns == 0 && LocalContext.GetMe(_playerCollection).RunState.MapPointHistory.SelectMany((IReadOnlyList<MapPointHistoryEntry> l) => l).Count((MapPointHistoryEntry p) => p.HasRoomOfType(RoomType.Treasure)) == 1)

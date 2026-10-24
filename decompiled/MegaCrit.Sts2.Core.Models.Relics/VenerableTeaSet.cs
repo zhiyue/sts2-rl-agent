@@ -48,19 +48,13 @@ public sealed class VenerableTeaSet : RelicModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterEnergyReset(Player player)
+	public override async Task AfterEnergyReset(Player player)
 	{
-		if (base.Owner != player)
+		if (base.Owner == player && GainEnergyInNextCombat)
 		{
-			return Task.CompletedTask;
+			Flash();
+			await PlayerCmd.GainEnergy(base.DynamicVars.Energy.BaseValue, base.Owner);
+			GainEnergyInNextCombat = false;
 		}
-		if (!GainEnergyInNextCombat)
-		{
-			return Task.CompletedTask;
-		}
-		Flash();
-		PlayerCmd.GainEnergy(base.DynamicVars.Energy.BaseValue, base.Owner);
-		GainEnergyInNextCombat = false;
-		return Task.CompletedTask;
 	}
 }

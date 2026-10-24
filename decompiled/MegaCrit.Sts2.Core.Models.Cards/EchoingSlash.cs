@@ -22,7 +22,7 @@ public sealed class EchoingSlash : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await using AttackContext attackContext = await AttackCommand.CreateContextAsync(base.CombatState, this);
+		await using AttackContext attackContext = await AttackCommand.CreateContextAsync(base.CombatState, choiceContext, this);
 		int attackCount = 1;
 		while (attackCount > 0)
 		{

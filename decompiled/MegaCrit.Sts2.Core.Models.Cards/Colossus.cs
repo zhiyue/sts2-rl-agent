@@ -25,7 +25,7 @@ public sealed class Colossus : CardModel
 	});
 
 	public Colossus()
-		: base(1, CardType.Skill, CardRarity.Rare, TargetType.Self)
+		: base(1, CardType.Skill, CardRarity.Uncommon, TargetType.Self)
 	{
 	}
 
@@ -33,7 +33,7 @@ public sealed class Colossus : CardModel
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<ColossusPower>(base.Owner.Creature, base.DynamicVars["Colossus"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<ColossusPower>(choiceContext, base.Owner.Creature, base.DynamicVars["Colossus"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

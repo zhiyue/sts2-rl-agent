@@ -7,29 +7,51 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.sts2.Core.Nodes.TopBar;
 
 [ScriptPath("res://src/Core/Nodes/TopBar/NTopBarModifier.cs")]
-public class NTopBarModifier : Control
+public class NTopBarModifier : NClickableControl
 {
-	public new class MethodName : Control.MethodName
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
+	public new class MethodName : NClickableControl.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
-		public static readonly StringName OnMouseEntered = "OnMouseEntered";
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
+		public new static readonly StringName OnFocus = "OnFocus";
 
-		public static readonly StringName OnMouseExited = "OnMouseExited";
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
+		public new static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
-	public new class PropertyName : Control.PropertyName
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
+	public new class PropertyName : NClickableControl.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 	}
 
-	public new class SignalName : Control.SignalName
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
+	public new class SignalName : NClickableControl.SignalName
 	{
 	}
 
@@ -55,33 +77,37 @@ public class NTopBarModifier : Control
 	public override void _Ready()
 	{
 		_icon = GetNode<TextureRect>("Icon");
-		Connect(Control.SignalName.MouseEntered, Callable.From(OnMouseEntered));
-		Connect(Control.SignalName.MouseExited, Callable.From(OnMouseExited));
 		_icon.Texture = _modifier.Icon;
 		_hoverTip = new HoverTip(_modifier.Title, _modifier.Description);
+		ConnectSignals();
 	}
 
-	private void OnMouseEntered()
+	protected override void OnFocus()
 	{
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
-		nHoverTipSet.GlobalPosition = base.GlobalPosition + new Vector2(0f, base.Size.Y + 20f);
+		NHoverTipSet.CreateAndShow(this, _hoverTip)?.SetGlobalPosition(base.GlobalPosition + new Vector2(0f, base.Size.Y + 20f));
 	}
 
-	private void OnMouseExited()
+	protected override void OnUnfocus()
 	{
 		NHoverTipSet.Remove(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	internal static List<MethodInfo> GetGodotMethodList()
+	internal new static List<MethodInfo> GetGodotMethodList()
 	{
 		List<MethodInfo> list = new List<MethodInfo>(3);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
-		list.Add(new MethodInfo(MethodName.OnMouseEntered, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
-		list.Add(new MethodInfo(MethodName.OnMouseExited, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.OnFocus, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.OnUnfocus, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -91,21 +117,22 @@ public class NTopBarModifier : Control
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.OnMouseEntered && args.Count == 0)
+		if (method == MethodName.OnFocus && args.Count == 0)
 		{
-			OnMouseEntered();
+			OnFocus();
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.OnMouseExited && args.Count == 0)
+		if (method == MethodName.OnUnfocus && args.Count == 0)
 		{
-			OnMouseExited();
+			OnUnfocus();
 			ret = default(godot_variant);
 			return true;
 		}
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -113,17 +140,18 @@ public class NTopBarModifier : Control
 		{
 			return true;
 		}
-		if (method == MethodName.OnMouseEntered)
+		if (method == MethodName.OnFocus)
 		{
 			return true;
 		}
-		if (method == MethodName.OnMouseExited)
+		if (method == MethodName.OnUnfocus)
 		{
 			return true;
 		}
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -135,6 +163,7 @@ public class NTopBarModifier : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -146,14 +175,20 @@ public class NTopBarModifier : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	internal static List<PropertyInfo> GetGodotPropertyList()
+	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
 		List<PropertyInfo> list = new List<PropertyInfo>();
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._icon, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -161,6 +196,7 @@ public class NTopBarModifier : Control
 		info.AddProperty(PropertyName._icon, Variant.From(in _icon));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

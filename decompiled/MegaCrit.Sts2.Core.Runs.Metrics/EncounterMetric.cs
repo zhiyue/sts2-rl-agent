@@ -1,3 +1,5 @@
+using System;
+
 namespace MegaCrit.Sts2.Core.Runs.Metrics;
 
 public struct EncounterMetric
@@ -11,7 +13,7 @@ public struct EncounterMetric
 	public EncounterMetric(string id, int damage, int turns)
 	{
 		this.id = id;
-		this.damage = damage;
+		this.damage = Math.Clamp(damage, 0, 100);
 		this.turns = turns;
 	}
 }

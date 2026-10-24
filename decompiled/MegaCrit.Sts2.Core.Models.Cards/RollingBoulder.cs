@@ -27,7 +27,7 @@ public sealed class RollingBoulder : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<RollingBoulderPower>(base.Owner.Creature, base.DynamicVars["RollingBoulderPower"].IntValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<RollingBoulderPower>(choiceContext, base.Owner.Creature, base.DynamicVars["RollingBoulderPower"].IntValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

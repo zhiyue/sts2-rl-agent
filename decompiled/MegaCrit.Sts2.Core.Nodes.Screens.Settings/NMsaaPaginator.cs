@@ -9,26 +9,53 @@ using MegaCrit.Sts2.Core.Saves;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 
+/// <summary>
+/// Sets your 2D MSAA setting. Affects how "jagged" sprites and other 2D things look. Notably when rotated.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Settings/NMsaaPaginator.cs")]
 public class NMsaaPaginator : NPaginator, IResettableSettingNode
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NPaginator.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetFromSettings' method.
+		/// </summary>
 		public static readonly StringName SetFromSettings = "SetFromSettings";
 
+		/// <summary>
+		/// Cached name for the 'OnIndexChanged' method.
+		/// </summary>
 		public new static readonly StringName OnIndexChanged = "OnIndexChanged";
 
+		/// <summary>
+		/// Cached name for the 'GetMsaaLabel' method.
+		/// </summary>
 		public static readonly StringName GetMsaaLabel = "GetMsaaLabel";
 
+		/// <summary>
+		/// Cached name for the 'GetMsaa' method.
+		/// </summary>
 		public static readonly StringName GetMsaa = "GetMsaa";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NPaginator.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NPaginator.SignalName
 	{
 	}
@@ -81,6 +108,11 @@ public class NMsaaPaginator : NPaginator, IResettableSettingNode
 		};
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -102,6 +134,7 @@ public class NMsaaPaginator : NPaginator, IResettableSettingNode
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -136,6 +169,7 @@ public class NMsaaPaginator : NPaginator, IResettableSettingNode
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -162,12 +196,14 @@ public class NMsaaPaginator : NPaginator, IResettableSettingNode
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

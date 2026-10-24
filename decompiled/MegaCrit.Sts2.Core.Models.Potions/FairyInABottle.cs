@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -17,10 +18,16 @@ public sealed class FairyInABottle : PotionModel
 
 	public override bool CanBeGeneratedInCombat => false;
 
+	/// <summary>
+	/// This should never be executed directly by <see cref="T:MegaCrit.Sts2.Core.GameActions.UsePotionAction" />.
+	/// It is only triggered by <see cref="M:MegaCrit.Sts2.Core.Models.Potions.FairyInABottle.AfterPreventingDeath(MegaCrit.Sts2.Core.Entities.Creatures.Creature)" />.
+	/// </summary>
+	/// <param name="choiceContext"></param>
+	/// <param name="target"></param>
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
-		await CreatureCmd.Heal(target, (decimal)target.MaxHp * 0.3m);
+		await CreatureCmd.Heal(target, Math.Max((decimal)target.MaxHp * 0.3m, 1m));
 	}
 
 	public override bool ShouldDie(Creature creature)

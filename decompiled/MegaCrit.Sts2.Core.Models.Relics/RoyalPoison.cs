@@ -17,7 +17,7 @@ public sealed class RoyalPoison : RelicModel
 
 	public override async Task AfterPlayerTurnStart(PlayerChoiceContext choiceContext, Player player)
 	{
-		if (player == base.Owner && player.Creature.CombatState.RoundNumber <= 1)
+		if (player == base.Owner && base.Owner.PlayerCombatState.TurnNumber <= 1)
 		{
 			Flash();
 			await CreatureCmd.Damage(choiceContext, base.Owner.Creature, base.DynamicVars.Damage, null, null);

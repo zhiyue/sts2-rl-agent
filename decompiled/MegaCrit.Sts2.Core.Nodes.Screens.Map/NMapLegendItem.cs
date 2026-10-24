@@ -13,31 +13,68 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
+/// <summary>
+/// A single line on the map legend. Has some hover logic, will eventually require controller
+/// support so players can navigate to this and read what each map icon represents.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Map/NMapLegendItem.cs")]
 public class NMapLegendItem : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetMapPointType' method.
+		/// </summary>
 		public static readonly StringName SetMapPointType = "SetMapPointType";
 
+		/// <summary>
+		/// Cached name for the 'SetLocalizedFields' method.
+		/// </summary>
 		public static readonly StringName SetLocalizedFields = "SetLocalizedFields";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 
+		/// <summary>
+		/// Cached name for the '_scaleDownTween' field.
+		/// </summary>
 		public static readonly StringName _scaleDownTween = "_scaleDownTween";
 
+		/// <summary>
+		/// Cached name for the '_pointType' field.
+		/// </summary>
 		public static readonly StringName _pointType = "_pointType";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -62,6 +99,10 @@ public class NMapLegendItem : NButton
 		_icon = GetNode<TextureRect>("Icon");
 	}
 
+	/// <summary>
+	/// Helper method which grabs the Node's name and finds the appropriate map point type.
+	/// </summary>
+	/// <param name="name">Name of this Godot node.</param>
 	private void SetMapPointType(string name)
 	{
 		_pointType = name switch
@@ -76,6 +117,11 @@ public class NMapLegendItem : NButton
 		};
 	}
 
+	/// <summary>
+	/// Helper method which grabs the Node's name and then finds the appropriate
+	/// LocString for this LegendItem's label and HoverTip text fields.
+	/// </summary>
+	/// <param name="name">Name of this Godot node.</param>
 	private void SetLocalizedFields(string name)
 	{
 		string text = name switch
@@ -98,7 +144,7 @@ public class NMapLegendItem : NButton
 		_icon.Scale = _hoverScale;
 		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
 		Control parent = GetParent<Control>();
-		nHoverTipSet.GlobalPosition = parent.GlobalPosition + new Vector2(parent.Size.X - nHoverTipSet.Size.X, parent.Size.Y);
+		nHoverTipSet?.SetGlobalPosition(parent.GlobalPosition + new Vector2(parent.Size.X - nHoverTipSet.Size.X, parent.Size.Y));
 		NMapScreen.Instance.HighlightPointType(_pointType);
 	}
 
@@ -111,6 +157,11 @@ public class NMapLegendItem : NButton
 		NHoverTipSet.Remove(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -129,6 +180,7 @@ public class NMapLegendItem : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -165,6 +217,7 @@ public class NMapLegendItem : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -191,6 +244,7 @@ public class NMapLegendItem : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -212,6 +266,7 @@ public class NMapLegendItem : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -233,6 +288,11 @@ public class NMapLegendItem : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -243,6 +303,7 @@ public class NMapLegendItem : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -252,6 +313,7 @@ public class NMapLegendItem : NButton
 		info.AddProperty(PropertyName._pointType, Variant.From(in _pointType));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

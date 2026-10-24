@@ -3,6 +3,10 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// Holds progress data on a per card basis.
+/// Used by SerializableProgress
+/// </summary>
 public class CardStats
 {
 	[JsonPropertyName("id")]

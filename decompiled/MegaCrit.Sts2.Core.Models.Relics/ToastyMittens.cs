@@ -25,7 +25,7 @@ public sealed class ToastyMittens : RelicModel
 		HoverTipFactory.FromPower<StrengthPower>()
 	});
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
 		if (player != base.Owner.Creature.Player)
 		{
@@ -35,7 +35,7 @@ public sealed class ToastyMittens : RelicModel
 		await CardPileCmd.ShuffleIfNecessary(choiceContext, base.Owner);
 		IReadOnlyList<CardModel> cards = PileType.Draw.GetPile(player).Cards;
 		CardModel cardModel = null;
-		if (combatState.RoundNumber == 1)
+		if (base.Owner.PlayerCombatState.TurnNumber == 1)
 		{
 			cardModel = cards.FirstOrDefault((CardModel c) => !c.Keywords.Contains(CardKeyword.Innate));
 		}
@@ -47,6 +47,6 @@ public sealed class ToastyMittens : RelicModel
 		{
 			await CardCmd.Exhaust(choiceContext, cardModel);
 		}
-		await PowerCmd.Apply<StrengthPower>(player.Creature, base.DynamicVars.Strength.BaseValue, player.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(choiceContext, player.Creature, base.DynamicVars.Strength.BaseValue, player.Creature, null);
 	}
 }

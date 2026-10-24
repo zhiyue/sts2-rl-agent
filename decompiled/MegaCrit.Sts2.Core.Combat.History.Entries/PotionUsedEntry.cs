@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Text;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.Combat.History.Entries;
@@ -27,8 +29,8 @@ public class PotionUsedEntry : CombatHistoryEntry
 		}
 	}
 
-	public PotionUsedEntry(PotionModel potion, Creature? target, int roundNumber, CombatSide currentSide, CombatHistory history)
-		: base(potion.Owner.Creature, roundNumber, currentSide, history)
+	public PotionUsedEntry(PotionModel potion, Creature? target, int roundNumber, CombatSide currentSide, CombatHistory history, IEnumerable<Player> players)
+		: base(potion.Owner.Creature, roundNumber, currentSide, history, players)
 	{
 		Potion = potion;
 		Target = target;

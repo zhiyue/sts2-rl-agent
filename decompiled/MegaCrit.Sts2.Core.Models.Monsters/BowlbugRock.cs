@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -16,9 +17,11 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class BowlbugRock : MonsterModel
 {
+	private const string _dizzyMove = "DIZZY_MOVE";
+
 	private const string _stunTrigger = "Stun";
 
-	private const string _unstunTrigger = "Unstun";
+	private const string _wakeUpTrigger = "Unstun";
 
 	private bool _isOffBalance;
 
@@ -51,9 +54,8 @@ public sealed class BowlbugRock : MonsterModel
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Insect;
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
 		skeleton.SetSkin(skeleton.GetData().FindSkin("rock"));
 		skeleton.SetSlotsToSetupPose();
 	}
@@ -61,7 +63,7 @@ public sealed class BowlbugRock : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<ImbalancedPower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<ImbalancedPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -87,9 +89,15 @@ public sealed class BowlbugRock : MonsterModel
 			.Execute(null);
 		if (IsOffBalance)
 		{
-			SfxCmd.Play("event:/sfx/enemy/enemy_attacks/workbug_rock/workbug_rock_stun");
-			await CreatureCmd.TriggerAnim(base.Creature, "Stun", 0.6f);
+			await Stun();
 		}
+	}
+
+	private async Task Stun()
+	{
+		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/workbug_rock/workbug_rock_stun");
+		await CreatureCmd.TriggerAnim(base.Creature, "Stun", 0.6f);
+		await CreatureCmd.Stun(base.Creature, DizzyMove);
 	}
 
 	private async Task DizzyMove(IReadOnlyList<Creature> targets)
@@ -105,22 +113,31 @@ public sealed class BowlbugRock : MonsterModel
 		AnimState animState3 = new AnimState("headbutt");
 		AnimState animState4 = new AnimState("hurt");
 		AnimState animState5 = new AnimState("hurt_stunned");
+		AnimState animState6 = new AnimState("wake_up");
 		AnimState state = new AnimState("die");
-		AnimState animState6 = new AnimState("stun");
+		AnimState animState7 = new AnimState("stun");
 		AnimState nextState = new AnimState("stunned_loop", isLooping: true);
 		animState2.NextState = animState;
 		animState4.NextState = animState;
 		animState3.NextState = animState;
-		animState6.NextState = nextState;
+		animState7.NextState = nextState;
 		animState5.NextState = nextState;
+		animState6.NextState = animState;
 		CreatureAnimator creatureAnimator = new CreatureAnimator(animState, controller);
 		creatureAnimator.AddAnyState("Dead", state);
 		creatureAnimator.AddAnyState("Cast", animState2);
 		creatureAnimator.AddAnyState("Attack", animState3);
 		creatureAnimator.AddAnyState("Hit", animState4, () => !IsOffBalance);
 		creatureAnimator.AddAnyState("Hit", animState5, () => IsOffBalance);
-		creatureAnimator.AddAnyState("Stun", animState6);
-		creatureAnimator.AddAnyState("Unstun", animState);
+		creatureAnimator.AddAnyState("Stun", animState7);
+		creatureAnimator.AddAnyState("Unstun", animState6);
 		return creatureAnimator;
+	}
+
+	public override List<BestiaryMonsterMove> GenerateBestiaryMoveList(NCreatureVisuals? creatureVisuals)
+	{
+		List<BestiaryMonsterMove> list = base.GenerateBestiaryMoveList(creatureVisuals);
+		list.Insert(1, BestiaryMonsterMove.FromStun(Stun));
+		return list;
 	}
 }

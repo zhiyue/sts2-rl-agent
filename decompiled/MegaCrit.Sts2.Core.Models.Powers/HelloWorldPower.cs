@@ -17,7 +17,7 @@ public sealed class HelloWorldPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
 		if (player == base.Owner.Player && base.AmountOnTurnStart >= 1)
 		{
@@ -25,7 +25,7 @@ public sealed class HelloWorldPower : PowerModel
 			IEnumerable<CardModel> distinctForCombat = CardFactory.GetDistinctForCombat(base.Owner.Player, from c in base.Owner.Player.Character.CardPool.GetUnlockedCards(base.Owner.Player.UnlockState, base.Owner.Player.RunState.CardMultiplayerConstraint)
 				where c.Rarity == CardRarity.Common
 				select c, base.AmountOnTurnStart, base.Owner.Player.RunState.Rng.CombatCardGeneration);
-			await CardPileCmd.AddGeneratedCardsToCombat(distinctForCombat, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardsToCombat(distinctForCombat, PileType.Hand, base.Owner.Player);
 		}
 	}
 }

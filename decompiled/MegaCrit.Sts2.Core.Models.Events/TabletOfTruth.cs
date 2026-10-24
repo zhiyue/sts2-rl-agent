@@ -88,7 +88,7 @@ public sealed class TabletOfTruth : EventModel
 			return owner.Creature.MaxHp - 1;
 		default:
 			Log.Error($"DecipherCount: {DecipherCount} should not be called.");
-			return 999;
+			return 999999999;
 		}
 	}
 

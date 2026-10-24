@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 
+/// <summary>
+/// Console commands which kills the player
+/// </summary>
 public class DieConsoleCmd : AbstractConsoleCmd
 {
 	public override string CmdName => "die";

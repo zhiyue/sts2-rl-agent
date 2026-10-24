@@ -35,6 +35,10 @@ public sealed class PrismaticGem : RelicModel
 		{
 			return options;
 		}
+		if (!options.Flags.HasFlag(CardCreationFlags.IsCardReward))
+		{
+			return options;
+		}
 		if (options.CustomCardPool != null)
 		{
 			return options;

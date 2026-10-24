@@ -4,6 +4,10 @@ using MegaCrit.Sts2.Core.Nodes.Vfx.Ui;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
+/// <summary>
+/// Creates VFX warning that the player is low.
+/// Uses NLowHpBorderVfx, but avoids creating more than one at a time.
+/// </summary>
 public static class PlayerHurtVignetteHelper
 {
 	private static NLowHpBorderVfx? _currentVfx;

@@ -70,6 +70,10 @@ public class NetSingleplayerGameService : INetGameService
 		_isLoading = isLoading;
 	}
 
+	public void SetBufferMessages(bool bufferMessages)
+	{
+	}
+
 	public string? GetRawLobbyIdentifier()
 	{
 		return null;

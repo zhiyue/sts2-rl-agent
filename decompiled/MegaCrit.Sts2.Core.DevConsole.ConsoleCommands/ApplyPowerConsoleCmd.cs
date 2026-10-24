@@ -6,6 +6,8 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Entities.Powers;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
 
 namespace MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
@@ -65,7 +67,8 @@ public class ApplyPowerConsoleCmd : AbstractConsoleCmd
 		}
 		Creature creature = creatures[result2];
 		PowerModel powerModel = creature.Powers.FirstOrDefault((PowerModel p) => p.GetType() == power.GetType());
-		Task task = ((!power.IsInstanced && powerModel != null) ? PowerCmd.ModifyAmount(powerModel, result, null, null) : PowerCmd.Apply(power.ToMutable(), creature, result, null, null));
+		PlayerChoiceContext choiceContext = new BlockingPlayerChoiceContext();
+		Task task = ((power.InstanceType == PowerInstanceType.None && powerModel != null) ? PowerCmd.ModifyAmount(choiceContext, powerModel, result, null, null) : PowerCmd.Apply(choiceContext, power.ToMutable(), creature, result, null, null));
 		string reference = (creature.IsPlayer ? "PLAYER" : creature.Monster.Id.Entry);
 		return new CmdResult(task, success: true, "AppliedPower: [" + string.Join(",", new ReadOnlySpan<string>(in reference)) + "]");
 	}

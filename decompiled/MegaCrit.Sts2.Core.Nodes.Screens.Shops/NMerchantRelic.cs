@@ -18,32 +18,71 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 [ScriptPath("res://src/Core/Nodes/Screens/Shops/NMerchantRelic.cs")]
 public class NMerchantRelic : NMerchantSlot
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NMerchantSlot.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'UpdateVisual' method.
+		/// </summary>
 		public new static readonly StringName UpdateVisual = "UpdateVisual";
 
+		/// <summary>
+		/// Cached name for the 'CreateHoverTip' method.
+		/// </summary>
 		public new static readonly StringName CreateHoverTip = "CreateHoverTip";
 
+		/// <summary>
+		/// Cached name for the 'OnPreview' method.
+		/// </summary>
 		public new static readonly StringName OnPreview = "OnPreview";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NMerchantSlot.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Visual' property.
+		/// </summary>
 		public new static readonly StringName Visual = "Visual";
 
+		/// <summary>
+		/// Cached name for the '_iconSize' field.
+		/// </summary>
 		public static readonly StringName _iconSize = "_iconSize";
 
+		/// <summary>
+		/// Cached name for the '_relicHolder' field.
+		/// </summary>
 		public static readonly StringName _relicHolder = "_relicHolder";
 
+		/// <summary>
+		/// Cached name for the '_relicNode' field.
+		/// </summary>
 		public static readonly StringName _relicNode = "_relicNode";
 
+		/// <summary>
+		/// Cached name for the '_relicNodePosition' field.
+		/// </summary>
 		public static readonly StringName _relicNodePosition = "_relicNodePosition";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NMerchantSlot.SignalName
 	{
 	}
@@ -135,16 +174,19 @@ public class NMerchantRelic : NMerchantSlot
 	protected override void CreateHoverTip()
 	{
 		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _relicNode.Model.HoverTips);
-		nHoverTipSet.GlobalPosition = base.GlobalPosition;
-		if (base.GlobalPosition.X > GetViewport().GetVisibleRect().Size.X * 0.5f)
+		nHoverTipSet?.SetGlobalPosition(base.GlobalPosition);
+		if (nHoverTipSet != null)
 		{
-			nHoverTipSet.SetAlignment(this, HoverTipAlignment.Left);
-			nHoverTipSet.GlobalPosition -= base.Size * 0.5f * base.Scale;
-		}
-		else
-		{
-			nHoverTipSet.SetAlignment(this, HoverTipAlignment.Right);
-			nHoverTipSet.GlobalPosition += Vector2.Right * base.Size.X * 0.5f * base.Scale + Vector2.Up * base.Size.Y * 0.5f * base.Scale;
+			if (base.GlobalPosition.X > GetViewport().GetVisibleRect().Size.X * 0.5f)
+			{
+				nHoverTipSet.SetAlignment(this, HoverTipAlignment.Left);
+				nHoverTipSet.GlobalPosition -= base.Size * 0.5f * base.Scale;
+			}
+			else
+			{
+				nHoverTipSet.SetAlignment(this, HoverTipAlignment.Right);
+				nHoverTipSet.GlobalPosition += Vector2.Right * base.Size.X * 0.5f * base.Scale + Vector2.Up * base.Size.Y * 0.5f * base.Scale;
+			}
 		}
 	}
 
@@ -169,6 +211,11 @@ public class NMerchantRelic : NMerchantSlot
 		_relicEntry.PurchaseCompleted -= OnSuccessfulPurchase;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -181,6 +228,7 @@ public class NMerchantRelic : NMerchantSlot
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -217,6 +265,7 @@ public class NMerchantRelic : NMerchantSlot
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -243,6 +292,7 @@ public class NMerchantRelic : NMerchantSlot
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -269,6 +319,7 @@ public class NMerchantRelic : NMerchantSlot
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -300,6 +351,11 @@ public class NMerchantRelic : NMerchantSlot
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -312,6 +368,7 @@ public class NMerchantRelic : NMerchantSlot
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -322,6 +379,7 @@ public class NMerchantRelic : NMerchantSlot
 		info.AddProperty(PropertyName._relicNodePosition, Variant.From(in _relicNodePosition));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

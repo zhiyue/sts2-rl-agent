@@ -3,6 +3,7 @@ using System.Linq;
 using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Badges;
 using MegaCrit.Sts2.Core.Platform;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs.History;
@@ -40,6 +41,7 @@ public static class RunHistoryUtilities
 				Deck = player.Deck,
 				Relics = player.Relics,
 				Potions = player.Potions,
+				Badges = GetBadgesForPlayer(run, player, victory, isAbandoned),
 				MaxPotionSlotCount = player.MaxPotionSlotCount
 			};
 			list.Add(item);
@@ -70,12 +72,23 @@ public static class RunHistoryUtilities
 		}
 	}
 
+	private static IEnumerable<SerializableBadge> GetBadgesForPlayer(SerializableRun run, SerializablePlayer player, bool won, bool isAbandoned)
+	{
+		List<SerializableBadge> list = new List<SerializableBadge>();
+		if (isAbandoned)
+		{
+			return list;
+		}
+		List<Badge> badges = ScoreUtility.GetBadges(run, player.NetId, won);
+		foreach (Badge item in badges)
+		{
+			list.Add(item.ToSerializable());
+		}
+		return list;
+	}
+
 	private static GameMode GetGameMode(SerializableRun run)
 	{
-		if (run.DailyTime.HasValue)
-		{
-			return GameMode.Daily;
-		}
-		return GameMode.Standard;
+		return run.GameMode;
 	}
 }

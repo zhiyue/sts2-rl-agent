@@ -14,35 +14,77 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline.UnlockScreens;
 
+/// <summary>
+/// Unlock screen which appears after unlocking any new character
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/UnlockScreens/NUnlockCharacterScreen.cs")]
 public class NUnlockCharacterScreen : NUnlockScreen
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NUnlockScreen.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Open' method.
+		/// </summary>
 		public new static readonly StringName Open = "Open";
 
+		/// <summary>
+		/// Cached name for the 'OnScreenPreClose' method.
+		/// </summary>
 		public new static readonly StringName OnScreenPreClose = "OnScreenPreClose";
 
+		/// <summary>
+		/// Cached name for the 'OnScreenClose' method.
+		/// </summary>
 		public new static readonly StringName OnScreenClose = "OnScreenClose";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NUnlockScreen.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_topLabel' field.
+		/// </summary>
 		public static readonly StringName _topLabel = "_topLabel";
 
+		/// <summary>
+		/// Cached name for the '_bottomLabel' field.
+		/// </summary>
 		public static readonly StringName _bottomLabel = "_bottomLabel";
 
+		/// <summary>
+		/// Cached name for the '_spineAnchor' field.
+		/// </summary>
 		public static readonly StringName _spineAnchor = "_spineAnchor";
 
+		/// <summary>
+		/// Cached name for the '_creatureVisuals' field.
+		/// </summary>
 		public static readonly StringName _creatureVisuals = "_creatureVisuals";
 
+		/// <summary>
+		/// Cached name for the '_rareGlow' field.
+		/// </summary>
 		public static readonly StringName _rareGlow = "_rareGlow";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public new static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NUnlockScreen.SignalName
 	{
 	}
@@ -100,9 +142,9 @@ public class NUnlockCharacterScreen : NUnlockScreen
 		_tween.TweenProperty(_topLabel, "modulate", Colors.White, 1.0).SetDelay(1.0);
 		_tween.TweenProperty(_bottomLabel, "modulate", Colors.White, 1.0).SetDelay(1.5);
 		_tween.TweenProperty(_rareGlow, "modulate:a", 1f, 0.5).SetDelay(1.0);
-		_creatureVisuals.SpineBody.GetAnimationState().AddAnimation("idle_loop");
-		_creatureVisuals.SpineBody.GetAnimationState().AddAnimation("attack", 0.5f, loop: false);
-		_creatureVisuals.SpineBody.GetAnimationState().AddAnimation("idle_loop");
+		_creatureVisuals.SpineAnimation.AddAnimation("idle_loop");
+		_creatureVisuals.SpineAnimation.AddAnimation("attack", 0.5f, loop: false);
+		_creatureVisuals.SpineAnimation.AddAnimation("idle_loop");
 	}
 
 	protected override void OnScreenPreClose()
@@ -117,6 +159,11 @@ public class NUnlockCharacterScreen : NUnlockScreen
 		NTimelineScreen.Instance.EnableInput();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -128,6 +175,7 @@ public class NUnlockCharacterScreen : NUnlockScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -158,6 +206,7 @@ public class NUnlockCharacterScreen : NUnlockScreen
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -180,6 +229,7 @@ public class NUnlockCharacterScreen : NUnlockScreen
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -216,6 +266,7 @@ public class NUnlockCharacterScreen : NUnlockScreen
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -252,6 +303,11 @@ public class NUnlockCharacterScreen : NUnlockScreen
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -265,6 +321,7 @@ public class NUnlockCharacterScreen : NUnlockScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -277,6 +334,7 @@ public class NUnlockCharacterScreen : NUnlockScreen
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

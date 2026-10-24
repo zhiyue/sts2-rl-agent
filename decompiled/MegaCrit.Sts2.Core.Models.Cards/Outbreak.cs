@@ -26,7 +26,8 @@ public sealed class Outbreak : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<OutbreakPower>(base.Owner.Creature, base.DynamicVars["OutbreakPower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<OutbreakPower>(choiceContext, base.Owner.Creature, base.DynamicVars["OutbreakPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

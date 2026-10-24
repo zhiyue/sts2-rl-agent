@@ -25,6 +25,6 @@ public sealed class PowderedDemise : PotionModel
 	protected override async Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
-		await PowerCmd.Apply<DemisePower>(target, base.DynamicVars["Demise"].BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<DemisePower>(choiceContext, target, base.DynamicVars["Demise"].BaseValue, base.Owner.Creature, null);
 	}
 }

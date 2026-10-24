@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
@@ -23,9 +24,9 @@ public sealed class SelfFormingClay : RelicModel
 
 	public override async Task AfterDamageReceived(PlayerChoiceContext choiceContext, Creature target, DamageResult result, ValueProp props, Creature? dealer, CardModel? cardSource)
 	{
-		if (target == base.Owner.Creature && result.UnblockedDamage > 0)
+		if (CombatManager.Instance.IsInProgress && target == base.Owner.Creature && result.UnblockedDamage > 0)
 		{
-			await PowerCmd.Apply<SelfFormingClayPower>(base.Owner.Creature, base.DynamicVars["BlockNextTurn"].BaseValue, base.Owner.Creature, null);
+			await PowerCmd.Apply<SelfFormingClayPower>(choiceContext, base.Owner.Creature, base.DynamicVars["BlockNextTurn"].BaseValue, base.Owner.Creature, null);
 		}
 	}
 }

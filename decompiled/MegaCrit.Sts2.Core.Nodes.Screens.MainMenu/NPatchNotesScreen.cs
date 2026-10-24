@@ -8,6 +8,7 @@ using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
@@ -19,62 +20,146 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NPatchNotesScreen.cs")]
 public class NPatchNotesScreen : Control, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'CreateNewPatchEntry' method.
+		/// </summary>
 		public static readonly StringName CreateNewPatchEntry = "CreateNewPatchEntry";
 
+		/// <summary>
+		/// Cached name for the 'NextPatchNote' method.
+		/// </summary>
 		public static readonly StringName NextPatchNote = "NextPatchNote";
 
+		/// <summary>
+		/// Cached name for the 'PreviousPatchNote' method.
+		/// </summary>
 		public static readonly StringName PreviousPatchNote = "PreviousPatchNote";
 
+		/// <summary>
+		/// Cached name for the 'Open' method.
+		/// </summary>
 		public static readonly StringName Open = "Open";
 
+		/// <summary>
+		/// Cached name for the 'Close' method.
+		/// </summary>
 		public static readonly StringName Close = "Close";
 
+		/// <summary>
+		/// Cached name for the 'LoadPatchNoteText' method.
+		/// </summary>
 		public static readonly StringName LoadPatchNoteText = "LoadPatchNoteText";
 
+		/// <summary>
+		/// Cached name for the 'ReadPatchNoteFile' method.
+		/// </summary>
 		public static readonly StringName ReadPatchNoteFile = "ReadPatchNoteFile";
 
+		/// <summary>
+		/// Cached name for the 'UpdateDateLabel' method.
+		/// </summary>
 		public static readonly StringName UpdateDateLabel = "UpdateDateLabel";
 
+		/// <summary>
+		/// Cached name for the 'GetFileNameFromPath' method.
+		/// </summary>
 		public static readonly StringName GetFileNameFromPath = "GetFileNameFromPath";
 
+		/// <summary>
+		/// Cached name for the 'RemoveFileExtension' method.
+		/// </summary>
 		public static readonly StringName RemoveFileExtension = "RemoveFileExtension";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'IsOpen' property.
+		/// </summary>
 		public static readonly StringName IsOpen = "IsOpen";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_screenContents' field.
+		/// </summary>
 		public static readonly StringName _screenContents = "_screenContents";
 
+		/// <summary>
+		/// Cached name for the '_marginContainer' field.
+		/// </summary>
 		public static readonly StringName _marginContainer = "_marginContainer";
 
+		/// <summary>
+		/// Cached name for the '_prevButton' field.
+		/// </summary>
 		public static readonly StringName _prevButton = "_prevButton";
 
+		/// <summary>
+		/// Cached name for the '_nextButton' field.
+		/// </summary>
 		public static readonly StringName _nextButton = "_nextButton";
 
+		/// <summary>
+		/// Cached name for the '_patchNotesToggle' field.
+		/// </summary>
 		public static readonly StringName _patchNotesToggle = "_patchNotesToggle";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_dateLabel' field.
+		/// </summary>
 		public static readonly StringName _dateLabel = "_dateLabel";
 
+		/// <summary>
+		/// Cached name for the '_patchText' field.
+		/// </summary>
 		public static readonly StringName _patchText = "_patchText";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_cachedScene' field.
+		/// </summary>
 		public static readonly StringName _cachedScene = "_cachedScene";
 
+		/// <summary>
+		/// Cached name for the '_index' field.
+		/// </summary>
 		public static readonly StringName _index = "_index";
 
+		/// <summary>
+		/// Cached name for the '_currentScrollLine' field.
+		/// </summary>
 		public static readonly StringName _currentScrollLine = "_currentScrollLine";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -99,7 +184,7 @@ public class NPatchNotesScreen : Control, IScreenContext
 
 	private PackedScene _cachedScene;
 
-	private const string _patchNotesPath = "res://localization/eng/patch_notes";
+	private const string _engPatchNotesPath = "res://localization/eng/patch_notes";
 
 	private List<string>? _patchNotePaths;
 
@@ -143,7 +228,7 @@ public class NPatchNotesScreen : Control, IScreenContext
 	{
 		_screenContents = _cachedScene.Instantiate<NScrollableContainer>(PackedScene.GenEditState.Disabled);
 		this.AddChildSafely(_screenContents);
-		MoveChild(_screenContents, 0);
+		this.MoveChildSafely(_screenContents, 0);
 		_marginContainer = _screenContents.GetNode<MarginContainer>("Content");
 		_patchText = _screenContents.GetNode<MegaRichTextLabel>("Content/PatchText");
 		_dateLabel = _patchText.GetNode<MegaLabel>("DateLabel");
@@ -242,10 +327,30 @@ public class NPatchNotesScreen : Control, IScreenContext
 		UpdateDateLabel(patchNotePath);
 	}
 
-	private static string ReadPatchNoteFile(string patchNotePath)
+	private static string ReadPatchNoteFile(string engPatchNotePath)
 	{
-		using FileAccess fileAccess = FileAccess.Open(patchNotePath, FileAccess.ModeFlags.Read);
-		return fileAccess.GetAsText();
+		string language = LocManager.Instance.Language;
+		if (language != "eng")
+		{
+			string fileNameFromPath = GetFileNameFromPath(engPatchNotePath);
+			string text = "res://localization/" + language + "/patch_notes/" + fileNameFromPath;
+			if (FileAccess.FileExists(text))
+			{
+				using FileAccess fileAccess = FileAccess.Open(text, FileAccess.ModeFlags.Read);
+				if (fileAccess != null)
+				{
+					return fileAccess.GetAsText();
+				}
+				Log.Warn("Failed to open localized patch notes: " + text);
+			}
+		}
+		using FileAccess fileAccess2 = FileAccess.Open(engPatchNotePath, FileAccess.ModeFlags.Read);
+		if (fileAccess2 == null)
+		{
+			Log.Error("Failed to open patch notes: " + engPatchNotePath);
+			return "";
+		}
+		return fileAccess2.GetAsText();
 	}
 
 	private void UpdateDateLabel(string patchNotePath)
@@ -284,6 +389,11 @@ public class NPatchNotesScreen : Control, IScreenContext
 		return false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -300,7 +410,7 @@ public class NPatchNotesScreen : Control, IScreenContext
 		}, null));
 		list.Add(new MethodInfo(MethodName.ReadPatchNoteFile, new PropertyInfo(Variant.Type.String, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
 		{
-			new PropertyInfo(Variant.Type.String, "patchNotePath", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			new PropertyInfo(Variant.Type.String, "engPatchNotePath", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
 		list.Add(new MethodInfo(MethodName.UpdateDateLabel, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -317,6 +427,7 @@ public class NPatchNotesScreen : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -408,6 +519,7 @@ public class NPatchNotesScreen : Control, IScreenContext
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -458,6 +570,7 @@ public class NPatchNotesScreen : Control, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -529,6 +642,7 @@ public class NPatchNotesScreen : Control, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -605,6 +719,11 @@ public class NPatchNotesScreen : Control, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -626,6 +745,7 @@ public class NPatchNotesScreen : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -645,6 +765,7 @@ public class NPatchNotesScreen : Control, IScreenContext
 		info.AddProperty(PropertyName._currentScrollLine, Variant.From(in _currentScrollLine));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

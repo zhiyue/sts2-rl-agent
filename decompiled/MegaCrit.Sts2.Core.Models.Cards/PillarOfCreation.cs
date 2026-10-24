@@ -23,7 +23,7 @@ public sealed class PillarOfCreation : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<PillarOfCreationPower>(base.Owner.Creature, base.DynamicVars.Block.BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<PillarOfCreationPower>(choiceContext, base.Owner.Creature, base.DynamicVars.Block.BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

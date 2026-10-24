@@ -29,16 +29,34 @@ internal class LocManagerSerializerContext : JsonSerializerContext, IJsonTypeInf
 
 	private const BindingFlags InstanceMemberBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<Dictionary<string, int>> DictionaryStringInt32 => _DictionaryStringInt32 ?? (_DictionaryStringInt32 = (JsonTypeInfo<Dictionary<string, int>>)base.Options.GetTypeInfo(typeof(Dictionary<string, int>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<Dictionary<string, string>> DictionaryStringString => _DictionaryStringString ?? (_DictionaryStringString = (JsonTypeInfo<Dictionary<string, string>>)base.Options.GetTypeInfo(typeof(Dictionary<string, string>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<int> Int32 => _Int32 ?? (_Int32 = (JsonTypeInfo<int>)base.Options.GetTypeInfo(typeof(int)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<string> String => _String ?? (_String = (JsonTypeInfo<string>)base.Options.GetTypeInfo(typeof(string)));
 
+	/// <summary>
+	/// The default <see cref="T:System.Text.Json.Serialization.JsonSerializerContext" /> associated with a default <see cref="T:System.Text.Json.JsonSerializerOptions" /> instance.
+	/// </summary>
 	public static LocManagerSerializerContext Default { get; } = new LocManagerSerializerContext(new JsonSerializerOptions(s_defaultOptions));
 
+	/// <summary>
+	/// The source-generated options associated with this context.
+	/// </summary>
 	protected override JsonSerializerOptions? GeneratedSerializerOptions { get; } = s_defaultOptions;
 
 	private JsonTypeInfo<Dictionary<string, int>> Create_DictionaryStringInt32(JsonSerializerOptions options)
@@ -123,11 +141,13 @@ internal class LocManagerSerializerContext : JsonSerializerContext, IJsonTypeInf
 		return jsonTypeInfo;
 	}
 
+	/// <inheritdoc />
 	public LocManagerSerializerContext()
 		: base(null)
 	{
 	}
 
+	/// <inheritdoc />
 	public LocManagerSerializerContext(JsonSerializerOptions options)
 		: base(options)
 	{
@@ -175,6 +195,7 @@ internal class LocManagerSerializerContext : JsonSerializerContext, IJsonTypeInf
 		return converter;
 	}
 
+	/// <inheritdoc />
 	public override JsonTypeInfo? GetTypeInfo(Type type)
 	{
 		base.Options.TryGetTypeInfo(type, out JsonTypeInfo typeInfo);

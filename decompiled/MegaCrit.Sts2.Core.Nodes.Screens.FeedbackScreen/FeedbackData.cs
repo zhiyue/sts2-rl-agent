@@ -21,4 +21,16 @@ public struct FeedbackData
 
 	[JsonPropertyName("platform_branch")]
 	public string? platformBranch;
+
+	[JsonPropertyName("session_id")]
+	public string sessionId;
+
+	[JsonPropertyName("is_modded")]
+	public bool isModded;
+
+	[JsonPropertyName("is_full_console")]
+	public bool isFullConsole;
+
+	[JsonPropertyName("lang")]
+	public string lang;
 }

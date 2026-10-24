@@ -15,32 +15,71 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.StatsScreen;
 [ScriptPath("res://src/Core/Nodes/Screens/StatsScreen/NCharacterStats.cs")]
 public class NCharacterStats : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'LoadStats' method.
+		/// </summary>
 		public static readonly StringName LoadStats = "LoadStats";
 
+		/// <summary>
+		/// Cached name for the 'CreateSection' method.
+		/// </summary>
 		public static readonly StringName CreateSection = "CreateSection";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_characterIcon' field.
+		/// </summary>
 		public static readonly StringName _characterIcon = "_characterIcon";
 
+		/// <summary>
+		/// Cached name for the '_statsContainer' field.
+		/// </summary>
 		public static readonly StringName _statsContainer = "_statsContainer";
 
+		/// <summary>
+		/// Cached name for the '_nameLabel' field.
+		/// </summary>
 		public static readonly StringName _nameLabel = "_nameLabel";
 
+		/// <summary>
+		/// Cached name for the '_unlocksLabel' field.
+		/// </summary>
 		public static readonly StringName _unlocksLabel = "_unlocksLabel";
 
+		/// <summary>
+		/// Cached name for the '_playtimeEntry' field.
+		/// </summary>
 		public static readonly StringName _playtimeEntry = "_playtimeEntry";
 
+		/// <summary>
+		/// Cached name for the '_winLossEntry' field.
+		/// </summary>
 		public static readonly StringName _winLossEntry = "_winLossEntry";
 
+		/// <summary>
+		/// Cached name for the '_streakEntry' field.
+		/// </summary>
 		public static readonly StringName _streakEntry = "_streakEntry";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -90,7 +129,7 @@ public class NCharacterStats : Node
 		_nameLabel = GetNode<MegaLabel>("%NameLabel");
 		_unlocksLabel = GetNode<MegaLabel>("%UnlocksLabel");
 		_nameLabel.SetTextAutoSize(byId.Title.GetRawText());
-		_nameLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, byId.NameColor);
+		_nameLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, byId.NameColor);
 		LoadStats();
 	}
 
@@ -124,6 +163,10 @@ public class NCharacterStats : Node
 		_streakEntry.SetBottomText(locString.GetFormattedText());
 	}
 
+	/// <summary>
+	/// Helper function to create a Section in the StatsScreen.
+	/// </summary>
+	/// <param name="imgUrl"></param>
 	private NStatEntry CreateSection(string imgUrl)
 	{
 		NStatEntry nStatEntry = NStatEntry.Create(imgUrl);
@@ -131,6 +174,11 @@ public class NCharacterStats : Node
 		return nStatEntry;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -144,6 +192,7 @@ public class NCharacterStats : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -167,6 +216,7 @@ public class NCharacterStats : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -185,6 +235,7 @@ public class NCharacterStats : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -226,6 +277,7 @@ public class NCharacterStats : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -267,6 +319,11 @@ public class NCharacterStats : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -281,6 +338,7 @@ public class NCharacterStats : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -294,6 +352,7 @@ public class NCharacterStats : Node
 		info.AddProperty(PropertyName._streakEntry, Variant.From(in _streakEntry));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

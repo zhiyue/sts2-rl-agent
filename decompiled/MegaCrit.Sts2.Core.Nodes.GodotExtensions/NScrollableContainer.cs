@@ -10,71 +10,174 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
+/// <summary>
+/// Manages scrolling of a container.
+/// This should be put on an object that doesn't scroll, and then the content to be scrolled should be a child named
+/// Content or Mask/Content.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/GodotExtensions/NScrollableContainer.cs")]
 public class NScrollableContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetContent' method.
+		/// </summary>
 		public static readonly StringName SetContent = "SetContent";
 
+		/// <summary>
+		/// Cached name for the 'UpdatePadding' method.
+		/// </summary>
+		public static readonly StringName UpdatePadding = "UpdatePadding";
+
+		/// <summary>
+		/// Cached name for the 'DisableScrollingIfContentFits' method.
+		/// </summary>
 		public static readonly StringName DisableScrollingIfContentFits = "DisableScrollingIfContentFits";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'UpdateScrollLimitBottom' method.
+		/// </summary>
 		public static readonly StringName UpdateScrollLimitBottom = "UpdateScrollLimitBottom";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'ProcessControllerEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessControllerEvent = "ProcessControllerEvent";
 
+		/// <summary>
+		/// Cached name for the 'ProcessMouseEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessMouseEvent = "ProcessMouseEvent";
 
+		/// <summary>
+		/// Cached name for the 'ProcessScrollEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessScrollEvent = "ProcessScrollEvent";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'InstantlyScrollToTop' method.
+		/// </summary>
 		public static readonly StringName InstantlyScrollToTop = "InstantlyScrollToTop";
 
+		/// <summary>
+		/// Cached name for the 'ProcessGuiFocus' method.
+		/// </summary>
 		public static readonly StringName ProcessGuiFocus = "ProcessGuiFocus";
 
+		/// <summary>
+		/// Cached name for the 'UpdateScrollPosition' method.
+		/// </summary>
 		public static readonly StringName UpdateScrollPosition = "UpdateScrollPosition";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ScrollViewportTop' property.
+		/// </summary>
 		public static readonly StringName ScrollViewportTop = "ScrollViewportTop";
 
+		/// <summary>
+		/// Cached name for the 'ScrollViewportSize' property.
+		/// </summary>
 		public static readonly StringName ScrollViewportSize = "ScrollViewportSize";
 
+		/// <summary>
+		/// Cached name for the 'ScrollLimitBottom' property.
+		/// </summary>
 		public static readonly StringName ScrollLimitBottom = "ScrollLimitBottom";
 
+		/// <summary>
+		/// Cached name for the 'Scrollbar' property.
+		/// </summary>
 		public static readonly StringName Scrollbar = "Scrollbar";
 
+		/// <summary>
+		/// Cached name for the '_controllerScrollAmount' field.
+		/// </summary>
 		public static readonly StringName _controllerScrollAmount = "_controllerScrollAmount";
 
+		/// <summary>
+		/// Cached name for the '_startDragPosY' field.
+		/// </summary>
 		public static readonly StringName _startDragPosY = "_startDragPosY";
 
+		/// <summary>
+		/// Cached name for the '_targetDragPosY' field.
+		/// </summary>
 		public static readonly StringName _targetDragPosY = "_targetDragPosY";
 
+		/// <summary>
+		/// Cached name for the '_isDragging' field.
+		/// </summary>
 		public static readonly StringName _isDragging = "_isDragging";
 
+		/// <summary>
+		/// Cached name for the '_paddingTop' field.
+		/// </summary>
 		public static readonly StringName _paddingTop = "_paddingTop";
 
+		/// <summary>
+		/// Cached name for the '_paddingBottom' field.
+		/// </summary>
 		public static readonly StringName _paddingBottom = "_paddingBottom";
 
+		/// <summary>
+		/// Cached name for the '_content' field.
+		/// </summary>
 		public static readonly StringName _content = "_content";
 
+		/// <summary>
+		/// Cached name for the '_scrollbarPressed' field.
+		/// </summary>
 		public static readonly StringName _scrollbarPressed = "_scrollbarPressed";
 
+		/// <summary>
+		/// Cached name for the '_disableScrollingIfContentFits' field.
+		/// </summary>
 		public static readonly StringName _disableScrollingIfContentFits = "_disableScrollingIfContentFits";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -151,6 +254,9 @@ public class NScrollableContainer : Control
 		}));
 	}
 
+	/// <summary>
+	/// If the content to be scrolled is dynamic (e.g. a tab in the settings menu, then you can change it using this method.
+	/// </summary>
 	public void SetContent(Control? content, float paddingTop = 0f, float paddingBottom = 0f)
 	{
 		Callable callable = Callable.From(UpdateScrollLimitBottom);
@@ -162,12 +268,20 @@ public class NScrollableContainer : Control
 		if (_content != null)
 		{
 			_content.Connect(CanvasItem.SignalName.ItemRectChanged, Callable.From(UpdateScrollLimitBottom));
-			_paddingTop = paddingTop;
-			_paddingBottom = paddingBottom;
-			UpdateScrollLimitBottom();
+			UpdatePadding(paddingTop, paddingBottom);
 		}
 	}
 
+	public void UpdatePadding(float paddingTop = 0f, float paddingBottom = 0f)
+	{
+		_paddingTop = paddingTop;
+		_paddingBottom = paddingBottom;
+		UpdateScrollLimitBottom();
+	}
+
+	/// <summary>
+	/// If this is called, then scrolling is disabled when the content fits entirely within the scroll container.
+	/// </summary>
 	public void DisableScrollingIfContentFits()
 	{
 		_disableScrollingIfContentFits = true;
@@ -225,6 +339,9 @@ public class NScrollableContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Detects mouse click up/down and updates our scroll target accordingly.
+	/// </summary>
 	private void ProcessMouseEvent(InputEvent inputEvent)
 	{
 		if (_content == null)
@@ -257,6 +374,10 @@ public class NScrollableContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Detects mouse wheel up/down and updates our scroll target accordingly
+	/// </summary>
+	/// <param name="inputEvent"></param>
 	private void ProcessScrollEvent(InputEvent inputEvent)
 	{
 		_targetDragPosY += ScrollHelper.GetDragForScrollEvent(inputEvent);
@@ -286,7 +407,7 @@ public class NScrollableContainer : Control
 
 	private void ProcessGuiFocus(Control focusedControl)
 	{
-		if (_content != null && IsVisibleInTree() && NControllerManager.Instance.IsUsingController && _content.IsAncestorOf(focusedControl))
+		if (_content != null && IsVisibleInTree() && NControllerManager.Instance.IsUsingController && !(focusedControl is NDropdownItem) && _content.IsAncestorOf(focusedControl))
 		{
 			float num = _content.GlobalPosition.Y - focusedControl.GlobalPosition.Y;
 			float value = num + ScrollViewportSize * 0.5f;
@@ -340,14 +461,24 @@ public class NScrollableContainer : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(15);
+		List<MethodInfo> list = new List<MethodInfo>(16);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.SetContent, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "content", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false),
+			new PropertyInfo(Variant.Type.Float, "paddingTop", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+			new PropertyInfo(Variant.Type.Float, "paddingBottom", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+		}, null));
+		list.Add(new MethodInfo(MethodName.UpdatePadding, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+		{
 			new PropertyInfo(Variant.Type.Float, "paddingTop", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
 			new PropertyInfo(Variant.Type.Float, "paddingBottom", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
@@ -391,6 +522,7 @@ public class NScrollableContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -403,6 +535,12 @@ public class NScrollableContainer : Control
 		if (method == MethodName.SetContent && args.Count == 3)
 		{
 			SetContent(VariantUtils.ConvertTo<Control>(in args[0]), VariantUtils.ConvertTo<float>(in args[1]), VariantUtils.ConvertTo<float>(in args[2]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.UpdatePadding && args.Count == 2)
+		{
+			UpdatePadding(VariantUtils.ConvertTo<float>(in args[0]), VariantUtils.ConvertTo<float>(in args[1]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -487,6 +625,7 @@ public class NScrollableContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -495,6 +634,10 @@ public class NScrollableContainer : Control
 			return true;
 		}
 		if (method == MethodName.SetContent)
+		{
+			return true;
+		}
+		if (method == MethodName.UpdatePadding)
 		{
 			return true;
 		}
@@ -553,6 +696,7 @@ public class NScrollableContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -609,6 +753,7 @@ public class NScrollableContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -684,6 +829,11 @@ public class NScrollableContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -704,6 +854,7 @@ public class NScrollableContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -720,6 +871,7 @@ public class NScrollableContainer : Control
 		info.AddProperty(PropertyName._disableScrollingIfContentFits, Variant.From(in _disableScrollingIfContentFits));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

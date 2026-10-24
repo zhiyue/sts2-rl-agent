@@ -16,6 +16,12 @@ namespace MegaCrit.Sts2.Core.Models.Events;
 
 public sealed class TinkerTime : EventModel
 {
+	/// <summary>
+	/// A "rider" is an additional effect that accompanies the card's base effect.
+	/// The MadScience card has a base effect (deal damage, gain block, or apply a power)
+	/// plus a rider effect chosen by the player during the TinkerTime event.
+	/// Each card type (Attack/Skill/Power) has three possible riders to choose from.
+	/// </summary>
 	public enum RiderEffect
 	{
 		None,

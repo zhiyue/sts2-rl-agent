@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Cards;
@@ -42,7 +43,12 @@ public sealed class TheLanternKey : EventModel
 
 	private Task Fight()
 	{
-		EnterCombatWithoutExitingEvent<MysteriousKnightEventEncounter>(new global::_003C_003Ez__ReadOnlySingleElementList<Reward>(new SpecialCardReward(base.Owner.RunState.CreateCard<LanternKey>(base.Owner), base.Owner)), shouldResumeAfterCombat: false);
+		List<Reward> list = new List<Reward>();
+		foreach (Player player in base.Owner.RunState.Players)
+		{
+			list.Add(new SpecialCardReward(player.RunState.CreateCard<LanternKey>(player), player));
+		}
+		EnterCombatWithoutExitingEvent<MysteriousKnightEventEncounter>(list, shouldResumeAfterCombat: false);
 		return Task.CompletedTask;
 	}
 }

@@ -18,7 +18,7 @@ public sealed class DeathMarch : CardModel
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[3]
 	{
 		new CalculationBaseVar(8m),
-		new ExtraDamageVar(3m),
+		new ExtraDamageVar(4m),
 		new CalculatedDamageVar(ValueProp.Move).WithMultiplier((CardModel card, Creature? _) => CombatManager.Instance.History.Entries.OfType<CardDrawnEntry>().Count((CardDrawnEntry e) => e.HappenedThisTurn(card.CombatState) && e.Actor == card.Owner.Creature && !e.FromHandDraw))
 	});
 
@@ -38,6 +38,6 @@ public sealed class DeathMarch : CardModel
 	protected override void OnUpgrade()
 	{
 		base.DynamicVars.CalculationBase.UpgradeValueBy(1m);
-		base.DynamicVars.ExtraDamage.UpgradeValueBy(1m);
+		base.DynamicVars.ExtraDamage.UpgradeValueBy(2m);
 	}
 }

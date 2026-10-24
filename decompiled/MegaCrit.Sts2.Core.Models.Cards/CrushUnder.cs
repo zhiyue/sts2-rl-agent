@@ -43,7 +43,7 @@ public sealed class CrushUnder : CardModel
 			.WithHitFx("vfx/vfx_heavy_blunt", null, "blunt_attack.mp3")
 			.WithHitVfxSpawnedAtBase()
 			.Execute(choiceContext);
-		await PowerCmd.Apply<CrushUnderPower>(enemies, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<CrushUnderPower>(choiceContext, enemies, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

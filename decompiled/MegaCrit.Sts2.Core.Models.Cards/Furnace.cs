@@ -13,7 +13,7 @@ public sealed class Furnace : CardModel
 {
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => HoverTipFactory.FromForge();
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new ForgeVar(4));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new ForgeVar(5));
 
 	public Furnace()
 		: base(1, CardType.Power, CardRarity.Uncommon, TargetType.Self)
@@ -22,8 +22,8 @@ public sealed class Furnace : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<FurnacePower>(base.Owner.Creature, base.DynamicVars.Forge.BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<FurnacePower>(choiceContext, base.Owner.Creature, base.DynamicVars.Forge.BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

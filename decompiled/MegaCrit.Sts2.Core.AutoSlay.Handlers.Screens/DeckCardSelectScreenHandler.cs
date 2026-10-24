@@ -12,6 +12,12 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles the deck card selection screen (removal, transform, etc).
+/// The screen has two confirm buttons: one for the main grid, and one in the preview container.
+/// When selecting exactly MaxSelect cards, the screen auto-shows the preview, so we need to click
+/// the preview confirm button, not the main one.
+/// </summary>
 public class DeckCardSelectScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NDeckCardSelectScreen);

@@ -21,8 +21,8 @@ public sealed class Debilitate : CardModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new DamageVar(7m, ValueProp.Move),
-		new PowerVar<DebilitatePower>(3m)
+		new DamageVar(10m, ValueProp.Move),
+		new PowerVar<DebilitatePower>(2m)
 	});
 
 	public Debilitate()
@@ -36,7 +36,7 @@ public sealed class Debilitate : CardModel
 		await DamageCmd.Attack(base.DynamicVars.Damage.BaseValue).FromCard(this).Targeting(cardPlay.Target)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(choiceContext);
-		await PowerCmd.Apply<DebilitatePower>(cardPlay.Target, base.DynamicVars["DebilitatePower"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<DebilitatePower>(choiceContext, cardPlay.Target, base.DynamicVars["DebilitatePower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

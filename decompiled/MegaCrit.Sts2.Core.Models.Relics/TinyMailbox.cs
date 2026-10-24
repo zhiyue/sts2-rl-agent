@@ -9,7 +9,7 @@ namespace MegaCrit.Sts2.Core.Models.Relics;
 
 public sealed class TinyMailbox : RelicModel
 {
-	public override RelicRarity Rarity => RelicRarity.Common;
+	public override RelicRarity Rarity => RelicRarity.Uncommon;
 
 	public override bool TryModifyRestSiteHealRewards(Player player, List<Reward> rewards, bool isMimicked)
 	{
@@ -17,6 +17,7 @@ public sealed class TinyMailbox : RelicModel
 		{
 			return false;
 		}
+		rewards.Add(new PotionReward(player));
 		rewards.Add(new PotionReward(player));
 		Flash();
 		return true;

@@ -13,17 +13,23 @@ public sealed class Pantograph : RelicModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new HealVar(25m));
 
-	public override async Task AfterRoomEntered(AbstractRoom room)
+	public override Task AfterRoomEntered(AbstractRoom room)
 	{
-		if (!base.Owner.Creature.IsDead)
+		if (base.Owner.Creature.IsDead)
 		{
-			bool flag = base.Owner.RunState.Map.BossMapPoint.parents.Contains(base.Owner.RunState.CurrentMapPoint);
-			base.Status = (flag ? RelicStatus.Active : RelicStatus.Normal);
-			if (room.RoomType == RoomType.Boss)
-			{
-				Flash();
-				await CreatureCmd.Heal(base.Owner.Creature, base.DynamicVars.Heal.BaseValue);
-			}
+			return Task.CompletedTask;
+		}
+		bool flag = base.Owner.RunState.Map.BossMapPoint.parents.Contains(base.Owner.RunState.CurrentMapPoint);
+		base.Status = (flag ? RelicStatus.Active : RelicStatus.Normal);
+		return Task.CompletedTask;
+	}
+
+	public override async Task BeforeCombatStart()
+	{
+		if (!base.Owner.Creature.IsDead && base.Owner.RunState.CurrentRoom.RoomType == RoomType.Boss)
+		{
+			Flash();
+			await CreatureCmd.Heal(base.Owner.Creature, base.DynamicVars.Heal.BaseValue);
 		}
 	}
 }

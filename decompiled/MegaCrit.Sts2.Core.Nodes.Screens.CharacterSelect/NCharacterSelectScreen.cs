@@ -33,7 +33,6 @@ using MegaCrit.Sts2.Core.Nodes.Multiplayer;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 using MegaCrit.Sts2.Core.Platform;
-using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
@@ -46,108 +45,266 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 [ScriptPath("res://src/Core/Nodes/Screens/CharacterSelect/NCharacterSelectScreen.cs")]
 public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharacterSelectButtonDelegate
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'CheckForMultiplayerAscensionPopup' method.
+		/// </summary>
+		public static readonly StringName CheckForMultiplayerAscensionPopup = "CheckForMultiplayerAscensionPopup";
+
+		/// <summary>
+		/// Cached name for the 'InitializeSingleplayer' method.
+		/// </summary>
 		public static readonly StringName InitializeSingleplayer = "InitializeSingleplayer";
 
+		/// <summary>
+		/// Cached name for the 'InitCharacterButtons' method.
+		/// </summary>
 		public static readonly StringName InitCharacterButtons = "InitCharacterButtons";
 
+		/// <summary>
+		/// Cached name for the 'UpdateRandomCharacterVisibility' method.
+		/// </summary>
 		public static readonly StringName UpdateRandomCharacterVisibility = "UpdateRandomCharacterVisibility";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'DebugUnlockAllCharacters' method.
+		/// </summary>
 		public static readonly StringName DebugUnlockAllCharacters = "DebugUnlockAllCharacters";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuClosed' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuClosed = "OnSubmenuClosed";
 
+		/// <summary>
+		/// Cached name for the 'OnEmbarkPressed' method.
+		/// </summary>
 		public static readonly StringName OnEmbarkPressed = "OnEmbarkPressed";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'CleanUpLobby' method.
+		/// </summary>
 		public static readonly StringName CleanUpLobby = "CleanUpLobby";
 
-		public static readonly StringName RollRandomCharacter = "RollRandomCharacter";
-
+		/// <summary>
+		/// Cached name for the 'OnAscensionPanelLevelChanged' method.
+		/// </summary>
 		public static readonly StringName OnAscensionPanelLevelChanged = "OnAscensionPanelLevelChanged";
 
+		/// <summary>
+		/// Cached name for the 'OnUnreadyPressed' method.
+		/// </summary>
 		public static readonly StringName OnUnreadyPressed = "OnUnreadyPressed";
 
+		/// <summary>
+		/// Cached name for the 'UpdateRichPresence' method.
+		/// </summary>
 		public static readonly StringName UpdateRichPresence = "UpdateRichPresence";
 
+		/// <summary>
+		/// Cached name for the 'MaxAscensionChanged' method.
+		/// </summary>
 		public static readonly StringName MaxAscensionChanged = "MaxAscensionChanged";
 
+		/// <summary>
+		/// Cached name for the 'AscensionChanged' method.
+		/// </summary>
 		public static readonly StringName AscensionChanged = "AscensionChanged";
 
+		/// <summary>
+		/// Cached name for the 'SeedChanged' method.
+		/// </summary>
 		public static readonly StringName SeedChanged = "SeedChanged";
 
+		/// <summary>
+		/// Cached name for the 'ModifiersChanged' method.
+		/// </summary>
 		public static readonly StringName ModifiersChanged = "ModifiersChanged";
 
+		/// <summary>
+		/// Cached name for the 'AfterInitialized' method.
+		/// </summary>
 		public static readonly StringName AfterInitialized = "AfterInitialized";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the 'ShouldShowActDropdown' property.
+		/// </summary>
 		public static readonly StringName ShouldShowActDropdown = "ShouldShowActDropdown";
 
+		/// <summary>
+		/// Cached name for the '_name' field.
+		/// </summary>
 		public static readonly StringName _name = "_name";
 
+		/// <summary>
+		/// Cached name for the '_infoPanel' field.
+		/// </summary>
 		public static readonly StringName _infoPanel = "_infoPanel";
 
+		/// <summary>
+		/// Cached name for the '_description' field.
+		/// </summary>
 		public static readonly StringName _description = "_description";
 
+		/// <summary>
+		/// Cached name for the '_hp' field.
+		/// </summary>
 		public static readonly StringName _hp = "_hp";
 
+		/// <summary>
+		/// Cached name for the '_gold' field.
+		/// </summary>
 		public static readonly StringName _gold = "_gold";
 
+		/// <summary>
+		/// Cached name for the '_relicTitle' field.
+		/// </summary>
 		public static readonly StringName _relicTitle = "_relicTitle";
 
+		/// <summary>
+		/// Cached name for the '_relicDescription' field.
+		/// </summary>
 		public static readonly StringName _relicDescription = "_relicDescription";
 
+		/// <summary>
+		/// Cached name for the '_relicIcon' field.
+		/// </summary>
 		public static readonly StringName _relicIcon = "_relicIcon";
 
+		/// <summary>
+		/// Cached name for the '_relicIconOutline' field.
+		/// </summary>
 		public static readonly StringName _relicIconOutline = "_relicIconOutline";
 
+		/// <summary>
+		/// Cached name for the '_selectedButton' field.
+		/// </summary>
 		public static readonly StringName _selectedButton = "_selectedButton";
 
+		/// <summary>
+		/// Cached name for the '_charButtonContainer' field.
+		/// </summary>
 		public static readonly StringName _charButtonContainer = "_charButtonContainer";
 
+		/// <summary>
+		/// Cached name for the '_bgContainer' field.
+		/// </summary>
 		public static readonly StringName _bgContainer = "_bgContainer";
 
+		/// <summary>
+		/// Cached name for the '_readyAndWaitingContainer' field.
+		/// </summary>
 		public static readonly StringName _readyAndWaitingContainer = "_readyAndWaitingContainer";
 
+		/// <summary>
+		/// Cached name for the '_backButton' field.
+		/// </summary>
 		public new static readonly StringName _backButton = "_backButton";
 
+		/// <summary>
+		/// Cached name for the '_unreadyButton' field.
+		/// </summary>
 		public static readonly StringName _unreadyButton = "_unreadyButton";
 
+		/// <summary>
+		/// Cached name for the '_embarkButton' field.
+		/// </summary>
 		public static readonly StringName _embarkButton = "_embarkButton";
 
+		/// <summary>
+		/// Cached name for the '_ascensionPanel' field.
+		/// </summary>
 		public static readonly StringName _ascensionPanel = "_ascensionPanel";
 
+		/// <summary>
+		/// Cached name for the '_actDropdown' field.
+		/// </summary>
 		public static readonly StringName _actDropdown = "_actDropdown";
 
+		/// <summary>
+		/// Cached name for the '_actDropdownLabel' field.
+		/// </summary>
 		public static readonly StringName _actDropdownLabel = "_actDropdownLabel";
 
+		/// <summary>
+		/// Cached name for the '_remotePlayerContainer' field.
+		/// </summary>
 		public static readonly StringName _remotePlayerContainer = "_remotePlayerContainer";
 
+		/// <summary>
+		/// Cached name for the '_characterUnlockAnimationBackstop' field.
+		/// </summary>
 		public static readonly StringName _characterUnlockAnimationBackstop = "_characterUnlockAnimationBackstop";
 
+		/// <summary>
+		/// Cached name for the '_randomCharacterButton' field.
+		/// </summary>
 		public static readonly StringName _randomCharacterButton = "_randomCharacterButton";
 
+		/// <summary>
+		/// Cached name for the '_infoPanelTween' field.
+		/// </summary>
 		public static readonly StringName _infoPanelTween = "_infoPanelTween";
 
+		/// <summary>
+		/// Cached name for the '_infoPanelPosFinalVal' field.
+		/// </summary>
 		public static readonly StringName _infoPanelPosFinalVal = "_infoPanelPosFinalVal";
 
+		/// <summary>
+		/// Cached name for the '_delayEmbarkForCharacterSelect' field.
+		/// </summary>
+		public static readonly StringName _delayEmbarkForCharacterSelect = "_delayEmbarkForCharacterSelect";
+
+		/// <summary>
+		/// Cached name for the '_charSelectButtonScene' field.
+		/// </summary>
 		public static readonly StringName _charSelectButtonScene = "_charSelectButtonScene";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
 	}
@@ -203,6 +360,8 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 	private Vector2 _infoPanelPosFinalVal;
 
 	private const string _sceneCharSelectButtonPath = "res://scenes/screens/char_select/char_select_button.tscn";
+
+	private bool _delayEmbarkForCharacterSelect;
 
 	[Export(PropertyHint.None, "")]
 	private PackedScene _charSelectButtonScene;
@@ -267,7 +426,6 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		_ascensionPanel.Connect(NAscensionPanel.SignalName.AscensionLevelChanged, Callable.From(OnAscensionPanelLevelChanged));
 		_unreadyButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OnUnreadyPressed));
 		_unreadyButton.Disable();
-		base.ProcessMode = ProcessModeEnum.Disabled;
 		InitCharacterButtons();
 		Type type = BootstrapSettingsUtil.Get();
 		if (type != null)
@@ -286,6 +444,8 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		_lobby = new StartRunLobby(GameMode.Standard, gameService, this, maxPlayers);
 		_ascensionPanel.Initialize(MultiplayerUiMode.Host);
 		_lobby.AddLocalHostPlayer(new UnlockState(SaveManager.Instance.Progress), SaveManager.Instance.Progress.MaxMultiplayerAscension);
+		OnAscensionPanelLevelChanged();
+		CheckForMultiplayerAscensionPopup();
 		AfterInitialized();
 	}
 
@@ -298,9 +458,28 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		_lobby = new StartRunLobby(GameMode.Standard, gameService, this, -1);
 		_ascensionPanel.Initialize(MultiplayerUiMode.Client);
 		_lobby.InitializeFromMessage(message);
+		CheckForMultiplayerAscensionPopup();
 		AfterInitialized();
 	}
 
+	/// <summary>
+	/// Checks if we need to show the Ascension Multiplayer FTUE-like popup and displays one if so.
+	/// </summary>
+	private void CheckForMultiplayerAscensionPopup()
+	{
+		if (SaveManager.Instance.Progress.MaxMultiplayerAscension > 0 && !SaveManager.Instance.SeenPopup("ascension_multiplayer_ftue"))
+		{
+			NAscensionMultiplayerFtue nAscensionMultiplayerFtue = NAscensionMultiplayerFtue.Create();
+			if (nAscensionMultiplayerFtue != null)
+			{
+				NModalContainer.Instance.Add(nAscensionMultiplayerFtue);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Opens this screen
+	/// </summary>
 	public void InitializeSingleplayer()
 	{
 		_lobby = new StartRunLobby(GameMode.Standard, new NetSingleplayerGameService(), this, 1);
@@ -322,6 +501,26 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		_charButtonContainer.AddChildSafely(_randomCharacterButton);
 		_randomCharacterButton.Init(ModelDb.Character<RandomCharacter>(), this);
 		UpdateRandomCharacterVisibility();
+		List<NCharacterSelectButton> list = (from c in _charButtonContainer.GetChildren().OfType<NCharacterSelectButton>()
+			where c.Visible
+			select c).ToList();
+		for (int num = 0; num < list.Count; num++)
+		{
+			list[num].FocusNeighborTop = list[num].GetPath();
+			list[num].FocusNeighborBottom = list[num].GetPath();
+			NCharacterSelectButton nCharacterSelectButton2 = list[num];
+			NodePath path;
+			if (num <= 0)
+			{
+				path = list[list.Count - 1].GetPath();
+			}
+			else
+			{
+				path = list[num - 1].GetPath();
+			}
+			nCharacterSelectButton2.FocusNeighborLeft = path;
+			list[num].FocusNeighborRight = ((num < list.Count - 1) ? list[num + 1].GetPath() : list[0].GetPath());
+		}
 	}
 
 	private void UpdateRandomCharacterVisibility()
@@ -405,12 +604,11 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		{
 			RefreshButtonSelectionForPlayer(player);
 		}
-		base.ProcessMode = ProcessModeEnum.Inherit;
 	}
 
 	private async Task PlayUnlockCharacterAnimation(ModelId character)
 	{
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame();
 		_backButton.Disable();
 		_embarkButton.Disable();
 		_infoPanel.Visible = false;
@@ -476,55 +674,60 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 
 	public override void _Process(double delta)
 	{
-		if (_lobby.NetService.IsConnected)
+		if (_lobby != null && _lobby.NetService.IsConnected)
 		{
 			_lobby.NetService.Update();
 		}
 	}
 
-	private void CleanUpLobby(bool disconnectSession)
+	private void CleanUpLobby(bool disconnectSession, NetError error = NetError.Quit)
 	{
-		_lobby.CleanUp(disconnectSession);
+		_lobby.CleanUp(disconnectSession, error);
 		_lobby = null;
-		if (GodotObject.IsInstanceValid(this))
-		{
-			base.ProcessMode = ProcessModeEnum.Disabled;
-		}
+	}
+
+	private void OnLocalCharacterChangedForRandom(CharacterModel characterModel)
+	{
+		NGame.Instance?.ScreenShake(ShakeStrength.Weak, ShakeDuration.Short, 90f);
+		SfxCmd.Play(characterModel.CharacterSelectSfx);
+		Control control = PreloadManager.Cache.GetScene(characterModel.CharacterSelectBg).Instantiate<Control>(PackedScene.GenEditState.Disabled);
+		control.Name = characterModel.Id.Entry + "_bg";
+		_bgContainer.AddChildSafely(control);
+		_delayEmbarkForCharacterSelect = true;
 	}
 
 	private async Task StartNewSingleplayerRun(string seed, List<ActModel> acts)
 	{
 		Log.Info($"Embarking on a singleplayer {_lobby.LocalPlayer.character.Id.Entry} run. Ascension: {_lobby.Ascension} Seed: {seed}");
 		int ascensionToEmbark = _lobby.Ascension;
-		if (_lobby.LocalPlayer.character is RandomCharacter)
+		if (_delayEmbarkForCharacterSelect)
 		{
-			RollRandomCharacter();
-			CharacterModel character = _lobby.LocalPlayer.character;
-			int maxAscension = SaveManager.Instance.Progress.GetOrCreateCharacterStats(_lobby.LocalPlayer.character.Id).MaxAscension;
-			ascensionToEmbark = Math.Min(maxAscension, ascensionToEmbark);
-			NGame.Instance?.ScreenShake(ShakeStrength.Weak, ShakeDuration.Short, 90f);
-			SfxCmd.Play(character.CharacterSelectSfx);
-			Control control = PreloadManager.Cache.GetScene(character.CharacterSelectBg).Instantiate<Control>(PackedScene.GenEditState.Disabled);
-			control.Name = character.Id.Entry + "_bg";
-			_bgContainer.AddChildSafely(control);
-			if (ascensionToEmbark < maxAscension)
-			{
-				_ascensionPanel.SetAscensionLevel(ascensionToEmbark);
-			}
-			await Task.Delay(1000);
+			await Cmd.Wait(1f);
+			_delayEmbarkForCharacterSelect = false;
 		}
-		SfxCmd.Play(_lobby.LocalPlayer.character.CharacterTransitionSfx);
-		await NGame.Instance.Transition.FadeOut(0.8f, _lobby.LocalPlayer.character.CharacterSelectTransitionPath);
-		await NGame.Instance.StartNewSingleplayerRun(_lobby.LocalPlayer.character, shouldSave: true, acts, Array.Empty<ModifierModel>(), seed, ascensionToEmbark);
+		try
+		{
+			SfxCmd.Play(_lobby.LocalPlayer.character.CharacterTransitionSfx);
+			await NGame.Instance.Transition.FadeOut(0.8f, _lobby.LocalPlayer.character.CharacterSelectTransitionPath);
+			await NGame.Instance.StartNewSingleplayerRun(_lobby.LocalPlayer.character, shouldSave: true, acts, Array.Empty<ModifierModel>(), seed, GameMode.Standard, ascensionToEmbark);
+		}
+		catch (Exception ex)
+		{
+			Log.Error($"Exception starting singleplayer run : {ex}");
+			CleanUpLobby(disconnectSession: true, NetError.InternalError);
+			await NGame.Instance.ReturnToMainMenuWithInternalError(ex);
+			return;
+		}
 		CleanUpLobby(disconnectSession: false);
 	}
 
 	private async Task StartNewMultiplayerRun(string seed, List<ActModel> acts)
 	{
 		Log.Info($"Embarking on a multiplayer run. Players: {string.Join(",", _lobby.Players)}. Ascension: {_lobby.Ascension} Seed: {seed}");
-		if (_lobby.LocalPlayer.character is RandomCharacter)
+		if (_delayEmbarkForCharacterSelect)
 		{
-			RollRandomCharacter();
+			await Cmd.Wait(1f);
+			_delayEmbarkForCharacterSelect = false;
 		}
 		SfxCmd.Play(_lobby.LocalPlayer.character.CharacterTransitionSfx);
 		await NGame.Instance.Transition.FadeOut(0.8f, _lobby.LocalPlayer.character.CharacterSelectTransitionPath);
@@ -534,14 +737,25 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 			using (new NetLoadingHandle(_lobby.NetService))
 			{
 				acts[0] = _settings.Act;
-				RunState runState = RunState.CreateForNewRun(_lobby.Players.Select((LobbyPlayer p) => Player.CreateForNewRun(p.character, UnlockState.FromSerializable(p.unlockState), p.id)).ToList(), acts.Select((ActModel a) => a.ToMutable()).ToList(), _settings.Modifiers, _lobby.Ascension, seed);
-				RunManager.Instance.SetUpNewMultiPlayer(runState, _lobby, _settings.SaveRunHistory);
-				await PreloadManager.LoadRunAssets(runState.Players.Select((Player p) => p.Character));
-				await RunManager.Instance.FinalizeStartingRelics();
-				RunManager.Instance.Launch();
-				NGame.Instance.RootSceneContainer.SetCurrentScene(NRun.Create(runState));
-				await RunManager.Instance.SetActInternal(0);
-				await SaveManager.Instance.SaveRun(null);
+				RunState runState;
+				try
+				{
+					runState = RunState.CreateForNewRun(_lobby.Players.Select((LobbyPlayer p) => Player.CreateForNewRun(p.character, UnlockState.FromSerializable(p.unlockState), p.id)).ToList(), acts.Select((ActModel a) => a.ToMutable()).ToList(), _settings.Modifiers, GameMode.Standard, _lobby.Ascension, seed);
+					RunManager.Instance.SetUpNewMultiplayer(runState, _lobby, _settings.SaveRunHistory);
+					await PreloadManager.LoadRunAssets(runState.Players.Select((Player p) => p.Character));
+					await RunManager.Instance.FinalizeStartingRelics();
+					RunManager.Instance.Launch();
+					NGame.Instance.RootSceneContainer.SetCurrentScene(NRun.Create(runState));
+					await RunManager.Instance.SetActInternal(0);
+					await SaveManager.Instance.SaveRun(null);
+				}
+				catch (Exception ex)
+				{
+					Log.Error($"Exception starting bootstrap multiplayer run : {ex}");
+					CleanUpLobby(disconnectSession: true, NetError.InternalError);
+					await NGame.Instance.ReturnToMainMenuWithInternalError(ex);
+					return;
+				}
 				CleanUpLobby(disconnectSession: false);
 				await _settings.Setup(LocalContext.GetMe(runState));
 				switch (_settings.RoomType)
@@ -566,17 +780,24 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		}
 		else
 		{
-			await NGame.Instance.StartNewMultiplayerRun(_lobby, shouldSave: true, acts, Array.Empty<ModifierModel>(), seed, _lobby.Ascension);
+			try
+			{
+				await NGame.Instance.StartNewMultiplayerRun(_lobby, shouldSave: true, acts, Array.Empty<ModifierModel>(), seed, _lobby.Ascension);
+			}
+			catch (Exception ex2)
+			{
+				Log.Error($"Exception starting multiplayer run : {ex2}");
+				CleanUpLobby(disconnectSession: true, NetError.InternalError);
+				await NGame.Instance.ReturnToMainMenuWithInternalError(ex2);
+				return;
+			}
 			CleanUpLobby(disconnectSession: false);
 		}
 	}
 
-	private void RollRandomCharacter()
-	{
-		CharacterModel[] items = ModelDb.AllCharacters.ToArray();
-		_lobby.SetLocalCharacter(Rng.Chaotic.NextItem(items));
-	}
-
+	/// <summary>
+	/// Called when the player selects a Character! Also called when you open the character select screen.
+	/// </summary>
 	public void SelectCharacter(NCharacterSelectButton charSelectButton, CharacterModel characterModel)
 	{
 		if (!charSelectButton.IsRandom)
@@ -671,6 +892,11 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		}
 	}
 
+	/// <summary>
+	/// Called when the ascension is changed from the ascension panel.
+	/// When the host hits the left and right arrow, we want to send the ascension change to clients.
+	/// On the clients, this is called when the ascension sync message is received, but we don't want to do anything.
+	/// </summary>
 	private void OnAscensionPanelLevelChanged()
 	{
 		if (_lobby.NetService.Type != NetGameType.Client && _lobby.Ascension != _ascensionPanel.Ascension)
@@ -679,6 +905,9 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		}
 	}
 
+	/// <summary>
+	/// Called when the player presses the unready button in multiplayer. You can't unready in singleplayer.
+	/// </summary>
 	private void OnUnreadyPressed(NButton _)
 	{
 		_lobby.SetReady(ready: false);
@@ -686,6 +915,7 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		{
 			item.Enable();
 		}
+		_selectedButton?.TryGrabFocus();
 		_readyAndWaitingContainer.Visible = false;
 		_embarkButton.Enable();
 		_backButton.Enable();
@@ -700,6 +930,12 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		}
 	}
 
+	/// <summary>
+	/// Called when another player joins with a max ascension level lower than the current one.
+	/// Also called when the lobby is first initialized.
+	/// Also called in singleplayer if choosing a character changes the max ascension.
+	/// Called on both host and client.
+	/// </summary>
 	public void MaxAscensionChanged()
 	{
 		_ascensionPanel.SetMaxAscension(_lobby.MaxAscension);
@@ -713,8 +949,12 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		UpdateRandomCharacterVisibility();
 	}
 
-	public void PlayerChanged(LobbyPlayer player)
+	public void PlayerChanged(LobbyPlayer player, bool isRandomCharacterResolution)
 	{
+		if (player.id == _lobby.LocalPlayer.id && isRandomCharacterResolution)
+		{
+			OnLocalCharacterChangedForRandom(player.character);
+		}
 		_remotePlayerContainer.OnPlayerChanged(player);
 		RefreshButtonSelectionForPlayer(player);
 	}
@@ -779,6 +1019,9 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		}
 		NAudioManager.Instance?.StopMusic();
 		_ascensionPanel.Cleanup();
+		_ascensionPanel.Disable();
+		_embarkButton.Disable();
+		_unreadyButton.Disable();
 		if (_lobby.NetService.Type == NetGameType.Singleplayer)
 		{
 			TaskHelper.RunSafely(StartNewSingleplayerRun(seed, acts));
@@ -791,11 +1034,14 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 
 	public void LocalPlayerDisconnected(NetErrorInfo info)
 	{
-		if (info.SelfInitiated && info.GetReason() == NetError.Quit)
+		if ((info.SelfInitiated && info.GetReason() == NetError.Quit) || !this.IsValid() || _stack == null)
 		{
 			return;
 		}
-		_stack.Pop();
+		if (_stack.Peek() == this)
+		{
+			_stack.Pop();
+		}
 		if (TestMode.IsOff)
 		{
 			NErrorPopup nErrorPopup = NErrorPopup.Create(info);
@@ -828,12 +1074,18 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		NGame.Instance.DebugSeedOverride = null;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
 		List<MethodInfo> list = new List<MethodInfo>(21);
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false), MethodFlags.Normal | MethodFlags.Static, null, null));
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
+		list.Add(new MethodInfo(MethodName.CheckForMultiplayerAscensionPopup, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.InitializeSingleplayer, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.InitCharacterButtons, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.UpdateRandomCharacterVisibility, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -854,9 +1106,9 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		}, null));
 		list.Add(new MethodInfo(MethodName.CleanUpLobby, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
-			new PropertyInfo(Variant.Type.Bool, "disconnectSession", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			new PropertyInfo(Variant.Type.Bool, "disconnectSession", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+			new PropertyInfo(Variant.Type.Int, "error", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
 		}, null));
-		list.Add(new MethodInfo(MethodName.RollRandomCharacter, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnAscensionPanelLevelChanged, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnUnreadyPressed, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
@@ -871,6 +1123,7 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -882,6 +1135,12 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		if (method == MethodName._Ready && args.Count == 0)
 		{
 			_Ready();
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.CheckForMultiplayerAscensionPopup && args.Count == 0)
+		{
+			CheckForMultiplayerAscensionPopup();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -939,15 +1198,9 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 			ret = default(godot_variant);
 			return true;
 		}
-		if (method == MethodName.CleanUpLobby && args.Count == 1)
+		if (method == MethodName.CleanUpLobby && args.Count == 2)
 		{
-			CleanUpLobby(VariantUtils.ConvertTo<bool>(in args[0]));
-			ret = default(godot_variant);
-			return true;
-		}
-		if (method == MethodName.RollRandomCharacter && args.Count == 0)
-		{
-			RollRandomCharacter();
+			CleanUpLobby(VariantUtils.ConvertTo<bool>(in args[0]), VariantUtils.ConvertTo<NetError>(in args[1]));
 			ret = default(godot_variant);
 			return true;
 		}
@@ -1014,6 +1267,7 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -1022,6 +1276,10 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 			return true;
 		}
 		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName.CheckForMultiplayerAscensionPopup)
 		{
 			return true;
 		}
@@ -1065,10 +1323,6 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		{
 			return true;
 		}
-		if (method == MethodName.RollRandomCharacter)
-		{
-			return true;
-		}
 		if (method == MethodName.OnAscensionPanelLevelChanged)
 		{
 			return true;
@@ -1104,6 +1358,7 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -1227,6 +1482,11 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 			_infoPanelPosFinalVal = VariantUtils.ConvertTo<Vector2>(in value);
 			return true;
 		}
+		if (name == PropertyName._delayEmbarkForCharacterSelect)
+		{
+			_delayEmbarkForCharacterSelect = VariantUtils.ConvertTo<bool>(in value);
+			return true;
+		}
 		if (name == PropertyName._charSelectButtonScene)
 		{
 			_charSelectButtonScene = VariantUtils.ConvertTo<PackedScene>(in value);
@@ -1235,6 +1495,7 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -1368,6 +1629,11 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 			value = VariantUtils.CreateFrom(in _infoPanelPosFinalVal);
 			return true;
 		}
+		if (name == PropertyName._delayEmbarkForCharacterSelect)
+		{
+			value = VariantUtils.CreateFrom(in _delayEmbarkForCharacterSelect);
+			return true;
+		}
 		if (name == PropertyName._charSelectButtonScene)
 		{
 			value = VariantUtils.CreateFrom(in _charSelectButtonScene);
@@ -1376,6 +1642,11 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1404,12 +1675,14 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._randomCharacterButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._infoPanelTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._infoPanelPosFinalVal, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._delayEmbarkForCharacterSelect, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._charSelectButtonScene, PropertyHint.ResourceType, "PackedScene", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.InitialFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName.ShouldShowActDropdown, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1438,9 +1711,11 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		info.AddProperty(PropertyName._randomCharacterButton, Variant.From(in _randomCharacterButton));
 		info.AddProperty(PropertyName._infoPanelTween, Variant.From(in _infoPanelTween));
 		info.AddProperty(PropertyName._infoPanelPosFinalVal, Variant.From(in _infoPanelPosFinalVal));
+		info.AddProperty(PropertyName._delayEmbarkForCharacterSelect, Variant.From(in _delayEmbarkForCharacterSelect));
 		info.AddProperty(PropertyName._charSelectButtonScene, Variant.From(in _charSelectButtonScene));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1541,9 +1816,13 @@ public class NCharacterSelectScreen : NSubmenu, IStartRunLobbyListener, ICharact
 		{
 			_infoPanelPosFinalVal = value24.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName._charSelectButtonScene, out var value25))
+		if (info.TryGetProperty(PropertyName._delayEmbarkForCharacterSelect, out var value25))
 		{
-			_charSelectButtonScene = value25.As<PackedScene>();
+			_delayEmbarkForCharacterSelect = value25.As<bool>();
+		}
+		if (info.TryGetProperty(PropertyName._charSelectButtonScene, out var value26))
+		{
+			_charSelectButtonScene = value26.As<PackedScene>();
 		}
 	}
 }

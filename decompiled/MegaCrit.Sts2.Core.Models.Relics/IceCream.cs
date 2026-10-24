@@ -9,11 +9,11 @@ public sealed class IceCream : RelicModel
 
 	public override bool ShouldPlayerResetEnergy(Player player)
 	{
-		if (player.Creature.CombatState.RoundNumber == 1)
+		if (player != base.Owner)
 		{
 			return true;
 		}
-		if (player != base.Owner)
+		if (base.Owner.PlayerCombatState.TurnNumber == 1)
 		{
 			return true;
 		}

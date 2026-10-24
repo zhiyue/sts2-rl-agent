@@ -10,13 +10,13 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Map;
-using MegaCrit.Sts2.Core.Models.Acts;
 using MegaCrit.Sts2.Core.Models.Encounters;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Runs;
+using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.Core.Timeline.Epochs;
 using MegaCrit.Sts2.Core.Unlocks;
 
@@ -38,6 +38,10 @@ public abstract class ActModel : AbstractModel
 
 	private IEnumerable<MonsterModel>? _allMonsters;
 
+	/// <summary>
+	/// The subset of shared Ancients that will be available in a mutable act instance.
+	/// Will differ from run to run.
+	/// </summary>
 	private List<AncientEventModel>? _sharedAncientSubset;
 
 	private ActModel _canonicalInstance;
@@ -60,8 +64,29 @@ public abstract class ActModel : AbstractModel
 
 	public Texture2D MapBotBg => PreloadManager.Cache.GetCompressedTexture2D(MapBotBgPath);
 
+	/// <summary>
+	/// The index where the act can appear when the list of acts is generated.
+	/// 0 =&gt; first act, 1 =&gt; second act, 2 =&gt; third act.
+	/// Returns negative if this act should never be organically shown to the player.
+	/// </summary>
+	public abstract int Index { get; }
+
+	/// <summary>
+	/// Whether this is the default unlocked act.
+	/// For example, Overgrowth is unlocked by default, but Underdocks is not.
+	/// </summary>
+	public abstract bool IsDefault { get; }
+
+	/// <summary>
+	/// Color of the dots on the map after you've traveled through them.
+	/// Also affects the color of the Boss and Ancient nodes.
+	/// </summary>
 	public abstract Color MapTraveledColor { get; }
 
+	/// <summary>
+	/// Color of the dots on the map for paths you haven't traveled.
+	/// Also affects the color of the Boss node before you get adjacent to it.
+	/// </summary>
 	public abstract Color MapUntraveledColor { get; }
 
 	public abstract Color MapBgColor { get; }
@@ -106,36 +131,80 @@ public abstract class ActModel : AbstractModel
 
 	protected virtual int NumberOfWeakEncounters => 3;
 
+	/// <summary>
+	/// The number of rooms we have for an act, not including any external modifications (ie multiplayer)
+	/// NOTE: this excludes the boss room or ancient room
+	/// </summary>
 	protected abstract int BaseNumberOfRooms { get; }
 
+	/// <summary>
+	/// All the monster encounters in this act.
+	/// Do not put conditional checks in here.
+	/// </summary>
 	public IEnumerable<EncounterModel> AllEncounters => _allEncounters ?? (_allEncounters = GenerateAllEncounters());
 
+	/// <summary>
+	/// All the weak monster encounters in this act.
+	/// </summary>
 	public IEnumerable<EncounterModel> AllWeakEncounters => _allWeakEncounters ?? (_allWeakEncounters = AllEncounters.Where((EncounterModel e) => e != null && e.RoomType == RoomType.Monster && e.IsWeak));
 
+	/// <summary>
+	/// All the regular (non-weak) monster encounters in this act.
+	/// </summary>
 	public IEnumerable<EncounterModel> AllRegularEncounters => _allRegularEncounters ?? (_allRegularEncounters = AllEncounters.Where((EncounterModel e) => e != null && e.RoomType == RoomType.Monster && !e.IsWeak));
 
+	/// <summary>
+	/// All the elite monster encounters in this act.
+	/// </summary>
 	public IEnumerable<EncounterModel> AllEliteEncounters => _allEliteEncounters ?? (_allEliteEncounters = AllEncounters.Where((EncounterModel e) => e.RoomType == RoomType.Elite));
 
+	/// <summary>
+	/// All the boss encounters in this act.
+	/// </summary>
 	public IEnumerable<EncounterModel> AllBossEncounters => _allBossEncounters ?? (_allBossEncounters = AllEncounters.Where((EncounterModel e) => e.RoomType == RoomType.Boss));
 
+	/// <summary>
+	/// All the monsters you can encounter in this act.
+	/// </summary>
 	public IEnumerable<MonsterModel> AllMonsters => _allMonsters ?? (_allMonsters = AllEncounters.SelectMany((EncounterModel e) => e.AllPossibleMonsters).Distinct());
 
 	public Achievement DefeatedAllEnemiesAchievement => Enum.Parse<Achievement>("Defeat" + base.Id.Entry.Capitalize() + "Enemies");
 
+	/// <summary>
+	/// The path for this act's Treasure Chest Spine animation resource.
+	/// </summary>
 	public virtual string ChestSpineResourcePath => "res://animations/backgrounds/treasure_room/chest_room_act_" + FilePathIdentifier + "_skel_data.tres";
 
+	/// <summary>
+	/// The normal (non-stroke) skin name for this act's chest.
+	/// </summary>
 	public abstract string ChestSpineSkinNameNormal { get; }
 
+	/// <summary>
+	/// The stroke-outline skin name for this act's chest.
+	/// </summary>
 	public abstract string ChestSpineSkinNameStroke { get; }
 
 	public virtual MegaSkeletonDataResource ChestSpineResource => new MegaSkeletonDataResource(PreloadManager.Cache.GetAsset<Resource>(ChestSpineResourcePath));
 
 	public abstract string ChestOpenSfx { get; }
 
+	/// <summary>
+	/// Overridden by ActModel to define what order bosses should be encountered in.
+	/// </summary>
 	public abstract IEnumerable<EncounterModel> BossDiscoveryOrder { get; }
 
+	/// <summary>
+	/// All the Ancients that are available in this act.
+	/// Ignores Unlocks/Epoch state.
+	/// Does not include shared Ancients.
+	/// </summary>
 	public abstract IEnumerable<AncientEventModel> AllAncients { get; }
 
+	/// <summary>
+	/// All the events that are available in this act (ignores Unlocks/Epoch state).
+	/// Does not include shared events.
+	/// </summary>
 	public abstract IEnumerable<EventModel> AllEvents { get; }
 
 	public ActModel CanonicalInstance
@@ -157,12 +226,24 @@ public abstract class ActModel : AbstractModel
 
 	public override bool ShouldReceiveCombatHooks => false;
 
+	/// <summary>
+	/// The boss encounter that has been rolled for this mutable instance of the act.
+	/// </summary>
 	public EncounterModel BossEncounter => _rooms.Boss;
 
+	/// <summary>
+	/// The second boss encounter for Double Boss mode (Ascension 10+), if set.
+	/// </summary>
 	public EncounterModel? SecondBossEncounter => _rooms.SecondBoss;
 
+	/// <summary>
+	/// Whether this act has a second boss (Double Boss ascension mode).
+	/// </summary>
 	public bool HasSecondBoss => _rooms.HasSecondBoss;
 
+	/// <summary>
+	/// The Ancient event that has been rolled for this mutable instance of the act.
+	/// </summary>
 	public AncientEventModel Ancient => _rooms.Ancient;
 
 	public string BackgroundScenePath => SceneHelper.GetScenePath($"backgrounds/{FilePathIdentifier}/{FilePathIdentifier}_background");
@@ -172,6 +253,11 @@ public abstract class ActModel : AbstractModel
 		return PreloadManager.Cache.GetScene(RestSiteBackgroundPath).Instantiate<Control>(PackedScene.GenEditState.Disabled);
 	}
 
+	/// <summary>
+	/// Returns the number of rooms we have for an act accounting for if we are in multiplayer or not.
+	/// NOTE: this excludes the boss room or ancient room
+	/// </summary>
+	/// <returns></returns>
 	public int GetNumberOfRooms(bool isMultiplayer)
 	{
 		int num = BaseNumberOfRooms;
@@ -182,18 +268,35 @@ public abstract class ActModel : AbstractModel
 		return num;
 	}
 
+	/// <summary>
+	/// Returns the number of floors for this act, which includes the boss floor and ancient floor
+	/// </summary>
+	/// <param name="isMultiplayer"></param>
+	/// <returns></returns>
 	public int GetNumberOfFloors(bool isMultiplayer)
 	{
 		return GetNumberOfRooms(isMultiplayer) + 2;
 	}
 
+	/// <summary>
+	/// Generates every encounter that is in this act.
+	/// Overriden in subclasses, but should only be called once by <see cref="P:MegaCrit.Sts2.Core.Models.ActModel.AllEncounters" /> so it can be cached.
+	/// </summary>
 	public abstract IEnumerable<EncounterModel> GenerateAllEncounters();
+
+	/// <summary>
+	/// Returns true if the act is unlocked given the passed unlock state, false otherwise.
+	/// </summary>
+	public abstract bool IsUnlocked(UnlockState unlockState);
 
 	protected override void DeepCloneFields()
 	{
 		_rooms = new RoomSet();
 	}
 
+	/// <summary>
+	/// Returns every Ancient in this act that the player has unlocked.
+	/// </summary>
 	public abstract IEnumerable<AncientEventModel> GetUnlockedAncients(UnlockState state);
 
 	protected string GetFullLayerPath(string layerName)
@@ -201,6 +304,10 @@ public abstract class ActModel : AbstractModel
 		return $"res://scenes/backgrounds/{FilePathIdentifier}/layers/{FilePathIdentifier}_{layerName}.tscn";
 	}
 
+	/// <summary>
+	/// Set the subset of shared Ancients that will be available in a mutable act instance.
+	/// Generally called in <see cref="M:MegaCrit.Sts2.Core.Runs.RunManager.GenerateRooms" />, and will differ from run to run.
+	/// </summary>
 	public void SetSharedAncientSubset(List<AncientEventModel> sharedAncientSubset)
 	{
 		AssertMutable();
@@ -278,11 +385,14 @@ public abstract class ActModel : AbstractModel
 		_rooms.Ancient = rng.NextItem(GetUnlockedAncients(unlockState).Concat(_sharedAncientSubset ?? new List<AncientEventModel>()));
 	}
 
+	/// <summary>
+	/// Called after a load. Re-generates specific rooms if necessary.
+	/// </summary>
 	public void ValidateRoomsAfterLoad(Rng rng)
 	{
 		if (_rooms.Boss is DeprecatedEncounter)
 		{
-			_rooms.Boss = rng.NextItem(AllBossEncounters);
+			_rooms.Boss = rng.NextItem(AllBossEncounters.Where((EncounterModel e) => e.Id != _rooms.SecondBoss?.Id));
 		}
 		if (_rooms.SecondBoss is DeprecatedEncounter)
 		{
@@ -406,31 +516,82 @@ public abstract class ActModel : AbstractModel
 
 	public abstract MapPointTypeCounts GetMapPointTypes(Rng mapRng);
 
+	/// <summary>
+	/// Creates the map for this act.
+	/// </summary>
 	public ActMap CreateMap(RunState runState, bool replaceTreasureWithElites)
 	{
 		return StandardActMap.CreateFor(runState, replaceTreasureWithElites);
 	}
 
-	public static IEnumerable<ActModel> GetRandomList(string seed, UnlockState unlockState, bool isMultiplayer)
+	/// <summary>
+	/// Get a list of random ActModels.
+	/// The ActModel at index 0 will be Act 1, index 1 will be Act 2, etc.
+	/// This list is not _truly_ random; a given ActModel will only be rolled for the act index it belongs in.
+	/// For example, Overgrowth may or may not be at index 0, but it will never be at index 1 or 2.
+	/// </summary>
+	/// <param name="rng">Rng to use for randomly rolling alternate acts.</param>
+	/// <param name="unlockState">The object to use for checking unlock state.</param>
+	/// <param name="isMultiplayer">Set to true if we are in a multiplayer run. Disables checking local progress save
+	/// for alt acts.</param>
+	/// <returns>Randomized list of acts.</returns>
+	public static IEnumerable<ActModel> GetRandomList(Rng rng, UnlockState unlockState, bool isMultiplayer)
 	{
-		List<ActModel> list = GetDefaultList().ToList();
-		Rng rng = new Rng((uint)StringHelper.GetDeterministicHashCode(seed));
-		bool flag = unlockState.IsEpochRevealed<UnderdocksEpoch>();
-		bool flag2 = !isMultiplayer && !SaveManager.Instance.Progress.DiscoveredActs.Contains(ModelDb.Act<Underdocks>().Id);
-		if (flag && (flag2 || rng.NextBool()))
+		IReadOnlyList<IReadOnlyList<ActModel>> actsByIndex = ModelDb.ActsByIndex;
+		List<ActModel> list = new List<ActModel>();
+		for (int i = 0; i < actsByIndex.Count; i++)
 		{
-			list[0] = ModelDb.Act<Underdocks>();
+			ActModel actModel = null;
+			List<ActModel> list2 = new List<ActModel>();
+			foreach (ActModel item in actsByIndex[i])
+			{
+				if (item.IsUnlocked(unlockState))
+				{
+					if (!item.IsDefault && !isMultiplayer && !SaveManager.Instance.Progress.DiscoveredActs.Contains(item.Id) && TestMode.IsOff)
+					{
+						actModel = item;
+						break;
+					}
+					list2.Add(item);
+				}
+			}
+			if (actModel == null)
+			{
+				actModel = rng.NextItem(list2) ?? throw new InvalidOperationException($"No unlocked acts for index {i}!");
+			}
+			list.Add(actModel);
 		}
 		return list;
 	}
 
+	/// <summary>
+	/// Get the default list of ActModels.
+	/// Act 1 (index 0) is <see cref="T:MegaCrit.Sts2.Core.Models.Acts.Overgrowth" />.
+	/// Act 2 is <see cref="T:MegaCrit.Sts2.Core.Models.Acts.Hive" />.
+	/// Act 3 is <see cref="T:MegaCrit.Sts2.Core.Models.Acts.Glory" />.
+	/// </summary>
+	/// <returns></returns>
 	public static IReadOnlyList<ActModel> GetDefaultList()
 	{
-		return new global::_003C_003Ez__ReadOnlyArray<ActModel>(new ActModel[3]
+		IReadOnlyList<IReadOnlyList<ActModel>> actsByIndex = ModelDb.ActsByIndex;
+		List<ActModel> list = new List<ActModel>();
+		for (int i = 0; i < actsByIndex.Count; i++)
 		{
-			ModelDb.Act<Overgrowth>(),
-			ModelDb.Act<Hive>(),
-			ModelDb.Act<Glory>()
-		});
+			ActModel actModel = null;
+			foreach (ActModel item in actsByIndex[i])
+			{
+				if (item.IsDefault)
+				{
+					actModel = item;
+					break;
+				}
+			}
+			if (actModel == null)
+			{
+				throw new InvalidOperationException($"No default act for index {i}!");
+			}
+			list.Add(actModel);
+		}
+		return list;
 	}
 }

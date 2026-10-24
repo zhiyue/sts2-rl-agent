@@ -10,24 +10,51 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NHunterKillerVfx.cs")]
 public class NHunterKillerVfx : Node
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationEvent' method.
+		/// </summary>
 		public static readonly StringName OnAnimationEvent = "OnAnimationEvent";
 
+		/// <summary>
+		/// Cached name for the 'OnAnimationStart' method.
+		/// </summary>
 		public static readonly StringName OnAnimationStart = "OnAnimationStart";
 
+		/// <summary>
+		/// Cached name for the 'OnParticlesStart' method.
+		/// </summary>
 		public static readonly StringName OnParticlesStart = "OnParticlesStart";
 
+		/// <summary>
+		/// Cached name for the 'OnParticlesEnd' method.
+		/// </summary>
 		public static readonly StringName OnParticlesEnd = "OnParticlesEnd";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_particles' field.
+		/// </summary>
 		public static readonly StringName _particles = "_particles";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node.SignalName
 	{
 	}
@@ -63,7 +90,7 @@ public class NHunterKillerVfx : Node
 
 	private void OnAnimationStart(GodotObject spineSprite, GodotObject animationState, GodotObject trackEntry)
 	{
-		if (new MegaAnimationState(animationState).GetCurrent(0).GetAnimation().GetName() != "cast")
+		if (new MegaAnimationState(animationState).GetCurrentAnimationName() != "cast")
 		{
 			OnParticlesEnd();
 		}
@@ -79,6 +106,11 @@ public class NHunterKillerVfx : Node
 		_particles.Emitting = false;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -102,6 +134,7 @@ public class NHunterKillerVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -138,6 +171,7 @@ public class NHunterKillerVfx : Node
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -164,6 +198,7 @@ public class NHunterKillerVfx : Node
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -175,6 +210,7 @@ public class NHunterKillerVfx : Node
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -186,6 +222,11 @@ public class NHunterKillerVfx : Node
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -194,6 +235,7 @@ public class NHunterKillerVfx : Node
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -201,6 +243,7 @@ public class NHunterKillerVfx : Node
 		info.AddProperty(PropertyName._particles, Variant.From(in _particles));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

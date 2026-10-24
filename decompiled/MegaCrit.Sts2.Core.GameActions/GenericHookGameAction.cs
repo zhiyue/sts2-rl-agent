@@ -13,6 +13,11 @@ public class GenericHookGameAction : GameAction
 
 	private readonly GameActionType _gameActionType;
 
+	/// <summary>
+	/// See CombatManagerMultiplayerTest.
+	/// </summary>
+	public Task? debugArtificialDelayAfterTask;
+
 	public override bool RecordableToReplay => false;
 
 	public HookPlayerChoiceContext? ChoiceContext { get; private set; }
@@ -51,6 +56,10 @@ public class GenericHookGameAction : GameAction
 		await _choiceContextSetSource.Task;
 		_executionStartedSource.SetResult();
 		await ChoiceContext.Task;
+		if (debugArtificialDelayAfterTask != null)
+		{
+			await debugArtificialDelayAfterTask;
+		}
 	}
 
 	public override INetAction ToNetAction()
@@ -60,6 +69,6 @@ public class GenericHookGameAction : GameAction
 
 	public override string ToString()
 	{
-		return $"{"GenericHookGameAction"} id {HookId} owner {OwnerId}";
+		return $"{"GenericHookGameAction"} id {HookId} owner {OwnerId} source {ChoiceContext?.Source} last involved {ChoiceContext?.LastInvolvedModel}";
 	}
 }

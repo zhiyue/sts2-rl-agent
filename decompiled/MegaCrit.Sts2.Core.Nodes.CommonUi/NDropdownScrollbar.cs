@@ -8,49 +8,112 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace MegaCrit.Sts2.Core.Nodes.CommonUi;
 
+/// <summary>
+/// A custom scrollbar component made especially for NDropdownContainer
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/CommonUi/NDropdownScrollbar.cs")]
 public class NDropdownScrollbar : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RefreshTrainBounds' method.
+		/// </summary>
 		public static readonly StringName RefreshTrainBounds = "RefreshTrainBounds";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnShow' method.
+		/// </summary>
 		public static readonly StringName OnShow = "OnShow";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the 'ClampTrain' method.
+		/// </summary>
 		public static readonly StringName ClampTrain = "ClampTrain";
 
+		/// <summary>
+		/// Cached name for the 'SetTrainPositionFromPercentage' method.
+		/// </summary>
 		public static readonly StringName SetTrainPositionFromPercentage = "SetTrainPositionFromPercentage";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_dropdownContainer' field.
+		/// </summary>
 		public static readonly StringName _dropdownContainer = "_dropdownContainer";
 
+		/// <summary>
+		/// Cached name for the '_train' field.
+		/// </summary>
 		public static readonly StringName _train = "_train";
 
+		/// <summary>
+		/// Cached name for the 'hasControl' field.
+		/// </summary>
 		public static readonly StringName hasControl = "hasControl";
 
+		/// <summary>
+		/// Cached name for the '_startDragPos' field.
+		/// </summary>
 		public static readonly StringName _startDragPos = "_startDragPos";
 
+		/// <summary>
+		/// Cached name for the '_targetDragPos' field.
+		/// </summary>
 		public static readonly StringName _targetDragPos = "_targetDragPos";
 
+		/// <summary>
+		/// Cached name for the '_scrollLimitTop' field.
+		/// </summary>
 		public static readonly StringName _scrollLimitTop = "_scrollLimitTop";
 
+		/// <summary>
+		/// Cached name for the '_scrollLimitBottom' field.
+		/// </summary>
 		public static readonly StringName _scrollLimitBottom = "_scrollLimitBottom";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -140,6 +203,11 @@ public class NDropdownScrollbar : NButton
 		_train.Position = new Vector2(_train.Position.X, _scrollLimitBottom + percentage * (_scrollLimitTop - _scrollLimitBottom));
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -166,6 +234,7 @@ public class NDropdownScrollbar : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -232,6 +301,7 @@ public class NDropdownScrollbar : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -278,6 +348,7 @@ public class NDropdownScrollbar : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -319,6 +390,7 @@ public class NDropdownScrollbar : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -360,6 +432,11 @@ public class NDropdownScrollbar : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -374,6 +451,7 @@ public class NDropdownScrollbar : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -387,6 +465,7 @@ public class NDropdownScrollbar : NButton
 		info.AddProperty(PropertyName._scrollLimitBottom, Variant.From(in _scrollLimitBottom));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

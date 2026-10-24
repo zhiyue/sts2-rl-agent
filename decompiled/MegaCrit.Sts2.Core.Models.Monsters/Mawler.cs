@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves;
@@ -53,7 +54,7 @@ public sealed class Mawler : MonsterModel
 	private async Task RoarMove(IReadOnlyList<Creature> targets)
 	{
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.5f);
-		await PowerCmd.Apply<VulnerablePower>(targets, 3m, base.Creature, null);
+		await PowerCmd.Apply<VulnerablePower>(new ThrowingPlayerChoiceContext(), targets, 3m, base.Creature, null);
 	}
 
 	private async Task ClawMove(IReadOnlyList<Creature> targets)

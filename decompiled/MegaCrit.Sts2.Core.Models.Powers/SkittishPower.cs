@@ -16,6 +16,10 @@ public sealed class SkittishPower : PowerModel
 {
 	private class Data
 	{
+		/// <summary>
+		/// Has the owner gained block from Skittish this turn?
+		/// Skittish should only trigger once per turn, so we can skip when this is true.
+		/// </summary>
 		public bool hasGainedBlockThisTurn;
 	}
 
@@ -49,11 +53,11 @@ public sealed class SkittishPower : PowerModel
 		return new Data();
 	}
 
-	public override async Task AfterAttack(AttackCommand command)
+	public override async Task AfterAttack(PlayerChoiceContext choiceContext, AttackCommand command)
 	{
 		if (!HasGainedBlockThisTurn && command.DamageProps.HasFlag(ValueProp.Move) && command.ModelSource is CardModel)
 		{
-			DamageResult damageResult = command.Results.FirstOrDefault((DamageResult r) => r.Receiver == base.Owner);
+			DamageResult damageResult = command.Results.SelectMany((List<DamageResult> r) => r).FirstOrDefault((DamageResult r) => r.Receiver == base.Owner);
 			if (damageResult != null && damageResult.UnblockedDamage != 0)
 			{
 				HasGainedBlockThisTurn = true;
@@ -64,7 +68,7 @@ public sealed class SkittishPower : PowerModel
 		}
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
 		if (side != base.Owner.Side)
 		{
@@ -75,5 +79,10 @@ public sealed class SkittishPower : PowerModel
 			}
 			HasGainedBlockThisTurn = false;
 		}
+	}
+
+	public override decimal GetScaledAmountForMultiplayer(ICombatState combatState, Creature? applier, decimal amount, Creature target, CardModel? cardSource)
+	{
+		return amount * (1m + (decimal)(combatState.Players.Count - 1) * 0.5m);
 	}
 }

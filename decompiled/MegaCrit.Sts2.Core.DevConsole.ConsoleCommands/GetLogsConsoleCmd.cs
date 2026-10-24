@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Nodes.Debug;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
@@ -29,7 +30,7 @@ public class GetLogsConsoleCmd : AbstractConsoleCmd
 
 	public override string CmdName => "getlogs";
 
-	public override string Args => "<name:string>";
+	public override string Args => "[test-feedback] <name:string>";
 
 	public override string Description => "Gathers logs, automatically zips them to a file containing 'name', and opens the directory containing the zip file.";
 
@@ -40,12 +41,28 @@ public class GetLogsConsoleCmd : AbstractConsoleCmd
 	public override CmdResult Process(Player? issuingPlayer, string[] args)
 	{
 		string extraName = "";
+		bool flag = false;
 		if (args.Length != 0)
 		{
-			extraName = "-" + args[0];
+			if (args[0] == "test-feedback")
+			{
+				flag = true;
+			}
+			else
+			{
+				extraName = "-" + args[0];
+			}
 		}
 		string bugReportPath = GetBugReportPath(extraName);
-		TaskHelper.RunSafely(GrabLogs(bugReportPath));
+		if (flag)
+		{
+			using FileAccessStream outputStream = new FileAccessStream(bugReportPath, Godot.FileAccess.ModeFlags.Write);
+			ZipFeedbackLogs(outputStream, SaveManager.Instance.CurrentProfileId);
+		}
+		else
+		{
+			TaskHelper.RunSafely(GrabLogs(bugReportPath));
+		}
 		return new CmdResult(success: true, "Zipping files to '" + bugReportPath + "'...");
 	}
 
@@ -70,8 +87,8 @@ public class GetLogsConsoleCmd : AbstractConsoleCmd
 		if (consoleVisible)
 		{
 			NDevConsole.Instance.HideConsole();
-			await NDevConsole.Instance.ToSignal(NDevConsole.Instance.GetTree(), SceneTree.SignalName.ProcessFrame);
-			await NDevConsole.Instance.ToSignal(NDevConsole.Instance.GetTree(), SceneTree.SignalName.ProcessFrame);
+			await NDevConsole.Instance.AwaitProcessFrame();
+			await NDevConsole.Instance.AwaitProcessFrame();
 		}
 		Image image = NDevConsole.Instance.GetViewport().GetTexture().GetImage();
 		if (consoleVisible)
@@ -158,6 +175,11 @@ public class GetLogsConsoleCmd : AbstractConsoleCmd
 		ArchiveBytes(screenshotBytes, archive, "screenshot.png");
 	}
 
+	/// <summary>
+	/// Builds a ZIP of logs and saves tailored for the feedback upload path.
+	/// Unlike <see cref="M:MegaCrit.Sts2.Core.DevConsole.ConsoleCommands.GetLogsConsoleCmd.ZipFiles(System.IO.Stream,System.Byte[])" />, this excludes the screenshot (already sent as a separate multipart part)
+	/// and inactive profiles. Only the most recent run history file is included.
+	/// </summary>
 	public static void ZipFeedbackLogs(Stream outputStream, int profileId)
 	{
 		if (RunManager.Instance.IsInProgress && RunManager.Instance.CombatReplayWriter.IsRecordingReplay)
@@ -240,6 +262,13 @@ public class GetLogsConsoleCmd : AbstractConsoleCmd
 				list3.Add(Path.GetRelativePath(text, text6));
 			}
 		}
+		foreach (string allSaveFile in GetAllSaveFiles(text))
+		{
+			if (allSaveFile.EndsWith(".corrupt") && DateTimeOffset.Now - File.GetLastWriteTime(allSaveFile) < TimeSpan.FromDays(1))
+			{
+				list3.Add(Path.GetRelativePath(text, allSaveFile));
+			}
+		}
 		foreach (string item2 in list3)
 		{
 			string text7 = Path.Combine(text, item2);
@@ -262,6 +291,10 @@ public class GetLogsConsoleCmd : AbstractConsoleCmd
 		}
 	}
 
+	/// <summary>
+	/// Best-effort collection of Linux core dumps via systemd-coredump.
+	/// Silently does nothing if coredumpctl is unavailable or no dumps are found.
+	/// </summary>
 	private static void TryCollectLinuxCoreDump(ZipArchive archive)
 	{
 		if (OS.GetName() != "Linux")
@@ -353,6 +386,11 @@ public class GetLogsConsoleCmd : AbstractConsoleCmd
 		}
 	}
 
+	/// <summary>
+	/// Returns all save files in the account directory.
+	/// Includes everything to ensure we capture info that might give clues for debugging,
+	/// including old migrations or other unexpected files.
+	/// </summary>
 	private static IEnumerable<string> GetAllSaveFiles(string accountBasePath)
 	{
 		if (!Directory.Exists(accountBasePath))
@@ -365,6 +403,14 @@ public class GetLogsConsoleCmd : AbstractConsoleCmd
 		}
 	}
 
+	/// <summary>
+	/// Reads text from a stream, truncating to the tail if it exceeds <paramref name="maxBytes" />.
+	/// When truncated, skips past any partial UTF-8 character and partial line at the seek point,
+	/// then prepends a truncation marker.
+	/// </summary>
+	/// <param name="stream">A readable, seekable stream containing UTF-8 text.</param>
+	/// <param name="maxBytes">Maximum bytes to read from the tail. 0 means no limit.</param>
+	/// <returns>The full or truncated text content.</returns>
 	public static string ReadTailText(Stream stream, long maxBytes)
 	{
 		bool flag = false;

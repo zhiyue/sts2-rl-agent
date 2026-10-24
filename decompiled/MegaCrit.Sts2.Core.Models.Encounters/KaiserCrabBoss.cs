@@ -8,11 +8,15 @@ namespace MegaCrit.Sts2.Core.Models.Encounters;
 
 public sealed class KaiserCrabBoss : EncounterModel
 {
+	public const string kaiserCrabCustomTrackName = "kaiser_crab_progress";
+
 	private const string _crusherSlot = "crusher";
 
 	private const string _rocketSlot = "rocket";
 
 	public override string BossNodePath => "res://images/map/placeholder/" + base.Id.Entry.ToLowerInvariant() + "_icon";
+
+	public override string CustomBgm => "event:/music/act2_boss_kaiser_crab";
 
 	protected override bool HasCustomBackground => true;
 

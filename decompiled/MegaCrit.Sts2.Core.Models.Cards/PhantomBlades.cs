@@ -28,8 +28,8 @@ public sealed class PhantomBlades : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<PhantomBladesPower>(base.Owner.Creature, base.DynamicVars["PhantomBladesPower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<PhantomBladesPower>(choiceContext, base.Owner.Creature, base.DynamicVars["PhantomBladesPower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

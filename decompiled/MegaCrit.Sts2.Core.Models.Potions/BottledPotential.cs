@@ -25,7 +25,7 @@ public sealed class BottledPotential : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		NCombatRoom.Instance?.PlaySplashVfx(target, new Color("e645db"));
-		await CardPileCmd.Add(PileType.Hand.GetPile(base.Owner).Cards, PileType.Draw);
+		await CardPileCmd.Add(PileType.Hand.GetPile(target.Player).Cards, PileType.Draw);
 		await CardPileCmd.Shuffle(choiceContext, target.Player);
 		await CardPileCmd.Draw(choiceContext, base.DynamicVars.Cards.BaseValue, target.Player);
 	}

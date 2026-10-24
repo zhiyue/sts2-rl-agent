@@ -20,110 +20,271 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NSovereignBladeVfx.cs")]
 public class NSovereignBladeVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'Forge' method.
+		/// </summary>
 		public static readonly StringName Forge = "Forge";
 
+		/// <summary>
+		/// Cached name for the 'Attack' method.
+		/// </summary>
 		public static readonly StringName Attack = "Attack";
 
+		/// <summary>
+		/// Cached name for the 'OnTargetingBegan' method.
+		/// </summary>
 		public static readonly StringName OnTargetingBegan = "OnTargetingBegan";
 
+		/// <summary>
+		/// Cached name for the 'OnTargetingEnded' method.
+		/// </summary>
 		public static readonly StringName OnTargetingEnded = "OnTargetingEnded";
 
+		/// <summary>
+		/// Cached name for the 'OnFocused' method.
+		/// </summary>
 		public static readonly StringName OnFocused = "OnFocused";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocused' method.
+		/// </summary>
 		public static readonly StringName OnUnfocused = "OnUnfocused";
 
+		/// <summary>
+		/// Cached name for the 'UpdateHoverTip' method.
+		/// </summary>
 		public static readonly StringName UpdateHoverTip = "UpdateHoverTip";
 
+		/// <summary>
+		/// Cached name for the 'FireSparks' method.
+		/// </summary>
 		public static readonly StringName FireSparks = "FireSparks";
 
+		/// <summary>
+		/// Cached name for the 'FireFlames' method.
+		/// </summary>
 		public static readonly StringName FireFlames = "FireFlames";
 
+		/// <summary>
+		/// Cached name for the 'EndSlash' method.
+		/// </summary>
 		public static readonly StringName EndSlash = "EndSlash";
 
+		/// <summary>
+		/// Cached name for the 'CleanupForge' method.
+		/// </summary>
 		public static readonly StringName CleanupForge = "CleanupForge";
 
+		/// <summary>
+		/// Cached name for the 'CleanupAttack' method.
+		/// </summary>
 		public static readonly StringName CleanupAttack = "CleanupAttack";
 
+		/// <summary>
+		/// Cached name for the 'RemoveSovereignBlade' method.
+		/// </summary>
 		public static readonly StringName RemoveSovereignBlade = "RemoveSovereignBlade";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'OrbitProgress' property.
+		/// </summary>
 		public static readonly StringName OrbitProgress = "OrbitProgress";
 
+		/// <summary>
+		/// Cached name for the '_spineNode' field.
+		/// </summary>
 		public static readonly StringName _spineNode = "_spineNode";
 
+		/// <summary>
+		/// Cached name for the '_bladeGlow' field.
+		/// </summary>
 		public static readonly StringName _bladeGlow = "_bladeGlow";
 
+		/// <summary>
+		/// Cached name for the '_forgeSparks' field.
+		/// </summary>
 		public static readonly StringName _forgeSparks = "_forgeSparks";
 
+		/// <summary>
+		/// Cached name for the '_spawnFlames' field.
+		/// </summary>
 		public static readonly StringName _spawnFlames = "_spawnFlames";
 
+		/// <summary>
+		/// Cached name for the '_spawnFlamesBack' field.
+		/// </summary>
 		public static readonly StringName _spawnFlamesBack = "_spawnFlamesBack";
 
+		/// <summary>
+		/// Cached name for the '_slashParticles' field.
+		/// </summary>
 		public static readonly StringName _slashParticles = "_slashParticles";
 
+		/// <summary>
+		/// Cached name for the '_chargeParticles' field.
+		/// </summary>
 		public static readonly StringName _chargeParticles = "_chargeParticles";
 
+		/// <summary>
+		/// Cached name for the '_spikeParticles' field.
+		/// </summary>
 		public static readonly StringName _spikeParticles = "_spikeParticles";
 
+		/// <summary>
+		/// Cached name for the '_spikeParticles2' field.
+		/// </summary>
 		public static readonly StringName _spikeParticles2 = "_spikeParticles2";
 
+		/// <summary>
+		/// Cached name for the '_spikeCircle' field.
+		/// </summary>
 		public static readonly StringName _spikeCircle = "_spikeCircle";
 
+		/// <summary>
+		/// Cached name for the '_spikeCircle2' field.
+		/// </summary>
 		public static readonly StringName _spikeCircle2 = "_spikeCircle2";
 
+		/// <summary>
+		/// Cached name for the '_hilt' field.
+		/// </summary>
 		public static readonly StringName _hilt = "_hilt";
 
+		/// <summary>
+		/// Cached name for the '_hilt2' field.
+		/// </summary>
 		public static readonly StringName _hilt2 = "_hilt2";
 
+		/// <summary>
+		/// Cached name for the '_detail' field.
+		/// </summary>
 		public static readonly StringName _detail = "_detail";
 
+		/// <summary>
+		/// Cached name for the '_trail' field.
+		/// </summary>
 		public static readonly StringName _trail = "_trail";
 
+		/// <summary>
+		/// Cached name for the '_orbitPath' field.
+		/// </summary>
 		public static readonly StringName _orbitPath = "_orbitPath";
 
+		/// <summary>
+		/// Cached name for the '_hitbox' field.
+		/// </summary>
 		public static readonly StringName _hitbox = "_hitbox";
 
+		/// <summary>
+		/// Cached name for the '_selectionReticle' field.
+		/// </summary>
 		public static readonly StringName _selectionReticle = "_selectionReticle";
 
+		/// <summary>
+		/// Cached name for the '_attackTween' field.
+		/// </summary>
 		public static readonly StringName _attackTween = "_attackTween";
 
+		/// <summary>
+		/// Cached name for the '_scaleTween' field.
+		/// </summary>
 		public static readonly StringName _scaleTween = "_scaleTween";
 
+		/// <summary>
+		/// Cached name for the '_sparkDelay' field.
+		/// </summary>
 		public static readonly StringName _sparkDelay = "_sparkDelay";
 
+		/// <summary>
+		/// Cached name for the '_glowTween' field.
+		/// </summary>
 		public static readonly StringName _glowTween = "_glowTween";
 
+		/// <summary>
+		/// Cached name for the '_trailFadeTween' field.
+		/// </summary>
+		public static readonly StringName _trailFadeTween = "_trailFadeTween";
+
+		/// <summary>
+		/// Cached name for the '_trailStart' field.
+		/// </summary>
 		public static readonly StringName _trailStart = "_trailStart";
 
+		/// <summary>
+		/// Cached name for the '_bladeSize' field.
+		/// </summary>
 		public static readonly StringName _bladeSize = "_bladeSize";
 
+		/// <summary>
+		/// Cached name for the '_targetOrbitPosition' field.
+		/// </summary>
 		public static readonly StringName _targetOrbitPosition = "_targetOrbitPosition";
 
+		/// <summary>
+		/// Cached name for the '_isBehindCharacter' field.
+		/// </summary>
 		public static readonly StringName _isBehindCharacter = "_isBehindCharacter";
 
+		/// <summary>
+		/// Cached name for the '_isFocused' field.
+		/// </summary>
 		public static readonly StringName _isFocused = "_isFocused";
 
+		/// <summary>
+		/// Cached name for the '_hoverTip' field.
+		/// </summary>
 		public static readonly StringName _hoverTip = "_hoverTip";
 
+		/// <summary>
+		/// Cached name for the '_isForging' field.
+		/// </summary>
 		public static readonly StringName _isForging = "_isForging";
 
+		/// <summary>
+		/// Cached name for the '_isAttacking' field.
+		/// </summary>
 		public static readonly StringName _isAttacking = "_isAttacking";
 
+		/// <summary>
+		/// Cached name for the '_isKeyPressed' field.
+		/// </summary>
 		public static readonly StringName _isKeyPressed = "_isKeyPressed";
 
+		/// <summary>
+		/// Cached name for the '_testCharge' field.
+		/// </summary>
 		public static readonly StringName _testCharge = "_testCharge";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -177,6 +338,8 @@ public class NSovereignBladeVfx : Node2D
 	private Tween? _sparkDelay;
 
 	private Tween? _glowTween;
+
+	private Tween? _trailFadeTween;
 
 	private Vector2 _trailStart;
 
@@ -250,7 +413,10 @@ public class NSovereignBladeVfx : Node2D
 		_bladeGlow.Visible = false;
 		_trail.GlobalPosition = Vector2.Zero;
 		_trail.ClearPoints();
-		_animController.GetAnimationState().SetAnimation("idle_loop");
+		this.RunWhenSpineReady(_animController, delegate(MegaAnimationState animState)
+		{
+			animState.SetAnimation("idle_loop");
+		});
 		_spineNode.Scale = Vector2.Zero;
 		_spineNode.Visible = true;
 		NTargetManager.Instance.Connect(NTargetManager.SignalName.TargetingBegan, Callable.From(OnTargetingBegan));
@@ -265,6 +431,7 @@ public class NSovereignBladeVfx : Node2D
 		_scaleTween?.Kill();
 		_sparkDelay?.Kill();
 		_glowTween?.Kill();
+		_trailFadeTween?.Kill();
 		_owner.Creature.Died -= OnOwnerDied;
 	}
 
@@ -291,7 +458,7 @@ public class NSovereignBladeVfx : Node2D
 		if (flag != _isBehindCharacter && _bladeSize < 0.6f)
 		{
 			_isBehindCharacter = !_isBehindCharacter;
-			GetParent().MoveChild(this, (!flag) ? (GetParent().GetChildCount() - 1) : 0);
+			GetParent().MoveChildSafely(this, (!flag) ? (GetParent().GetChildCount() - 1) : 0);
 		}
 		Transform2D transform2D = _orbitPath.Curve.SampleBakedWithRotation((float)(OrbitProgress % 1.0) * bakedLength);
 		Vector2 vector = _orbitPath.GlobalTransform * transform2D.Origin;
@@ -412,17 +579,23 @@ public class NSovereignBladeVfx : Node2D
 	private void UpdateHoverTip()
 	{
 		bool flag = _isFocused && !_isAttacking && !NTargetManager.Instance.IsInSelection && _hitbox.MouseFilter != Control.MouseFilterEnum.Ignore;
-		if (flag && _hoverTip == null)
+		if (flag)
 		{
-			_hoverTip = NHoverTipSet.CreateAndShow(_hitbox, HoverTipFactory.FromCard(Card));
-			_hoverTip.GlobalPosition = _hitbox.GlobalPosition + Vector2.Right * _hitbox.Size.X;
 			_selectionReticle.OnSelect();
+			if (_hoverTip == null)
+			{
+				_hoverTip = NHoverTipSet.CreateAndShow(_hitbox, HoverTipFactory.FromCard(Card));
+				_hoverTip?.SetGlobalPosition(_hitbox.GlobalPosition + Vector2.Right * _hitbox.Size.X);
+			}
 		}
-		else if (!flag && _hoverTip != null)
+		else if (!flag)
 		{
-			NHoverTipSet.Remove(_hitbox);
 			_selectionReticle.OnDeselect();
-			_hoverTip = null;
+			if (_hoverTip != null)
+			{
+				NHoverTipSet.Remove(_hitbox);
+				_hoverTip = null;
+			}
 		}
 	}
 
@@ -446,7 +619,8 @@ public class NSovereignBladeVfx : Node2D
 		_trail.AddPoint(_trailStart);
 		_trail.AddPoint(GetNode<Node2D>("SpineSword/SwordBone/ScaleContainer/SpikeCircle").GlobalPosition);
 		_trail.Modulate = Colors.White;
-		CreateTween().TweenProperty(_trail, "modulate:a", 0f, 0.20000000298023224);
+		_trailFadeTween = CreateTween();
+		_trailFadeTween.TweenProperty(_trail, "modulate:a", 0f, 0.20000000298023224);
 	}
 
 	private void CleanupForge()
@@ -480,6 +654,11 @@ public class NSovereignBladeVfx : Node2D
 		RemoveSovereignBlade();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -513,6 +692,7 @@ public class NSovereignBladeVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -615,6 +795,7 @@ public class NSovereignBladeVfx : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -685,6 +866,7 @@ public class NSovereignBladeVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -803,6 +985,11 @@ public class NSovereignBladeVfx : Node2D
 			_glowTween = VariantUtils.ConvertTo<Tween>(in value);
 			return true;
 		}
+		if (name == PropertyName._trailFadeTween)
+		{
+			_trailFadeTween = VariantUtils.ConvertTo<Tween>(in value);
+			return true;
+		}
 		if (name == PropertyName._trailStart)
 		{
 			_trailStart = VariantUtils.ConvertTo<Vector2>(in value);
@@ -856,6 +1043,7 @@ public class NSovereignBladeVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -974,6 +1162,11 @@ public class NSovereignBladeVfx : Node2D
 			value = VariantUtils.CreateFrom(in _glowTween);
 			return true;
 		}
+		if (name == PropertyName._trailFadeTween)
+		{
+			value = VariantUtils.CreateFrom(in _trailFadeTween);
+			return true;
+		}
 		if (name == PropertyName._trailStart)
 		{
 			value = VariantUtils.CreateFrom(in _trailStart);
@@ -1027,6 +1220,11 @@ public class NSovereignBladeVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -1053,6 +1251,7 @@ public class NSovereignBladeVfx : Node2D
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._scaleTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._sparkDelay, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._glowTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._trailFadeTween, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Vector2, PropertyName._trailStart, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName._bladeSize, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName.OrbitProgress, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
@@ -1067,6 +1266,7 @@ public class NSovereignBladeVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1094,6 +1294,7 @@ public class NSovereignBladeVfx : Node2D
 		info.AddProperty(PropertyName._scaleTween, Variant.From(in _scaleTween));
 		info.AddProperty(PropertyName._sparkDelay, Variant.From(in _sparkDelay));
 		info.AddProperty(PropertyName._glowTween, Variant.From(in _glowTween));
+		info.AddProperty(PropertyName._trailFadeTween, Variant.From(in _trailFadeTween));
 		info.AddProperty(PropertyName._trailStart, Variant.From(in _trailStart));
 		info.AddProperty(PropertyName._bladeSize, Variant.From(in _bladeSize));
 		info.AddProperty(PropertyName._targetOrbitPosition, Variant.From(in _targetOrbitPosition));
@@ -1106,6 +1307,7 @@ public class NSovereignBladeVfx : Node2D
 		info.AddProperty(PropertyName._testCharge, Variant.From(in _testCharge));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1202,45 +1404,49 @@ public class NSovereignBladeVfx : Node2D
 		{
 			_glowTween = value23.As<Tween>();
 		}
-		if (info.TryGetProperty(PropertyName._trailStart, out var value24))
+		if (info.TryGetProperty(PropertyName._trailFadeTween, out var value24))
 		{
-			_trailStart = value24.As<Vector2>();
+			_trailFadeTween = value24.As<Tween>();
 		}
-		if (info.TryGetProperty(PropertyName._bladeSize, out var value25))
+		if (info.TryGetProperty(PropertyName._trailStart, out var value25))
 		{
-			_bladeSize = value25.As<float>();
+			_trailStart = value25.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName._targetOrbitPosition, out var value26))
+		if (info.TryGetProperty(PropertyName._bladeSize, out var value26))
 		{
-			_targetOrbitPosition = value26.As<Vector2>();
+			_bladeSize = value26.As<float>();
 		}
-		if (info.TryGetProperty(PropertyName._isBehindCharacter, out var value27))
+		if (info.TryGetProperty(PropertyName._targetOrbitPosition, out var value27))
 		{
-			_isBehindCharacter = value27.As<bool>();
+			_targetOrbitPosition = value27.As<Vector2>();
 		}
-		if (info.TryGetProperty(PropertyName._isFocused, out var value28))
+		if (info.TryGetProperty(PropertyName._isBehindCharacter, out var value28))
 		{
-			_isFocused = value28.As<bool>();
+			_isBehindCharacter = value28.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._hoverTip, out var value29))
+		if (info.TryGetProperty(PropertyName._isFocused, out var value29))
 		{
-			_hoverTip = value29.As<NHoverTipSet>();
+			_isFocused = value29.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._isForging, out var value30))
+		if (info.TryGetProperty(PropertyName._hoverTip, out var value30))
 		{
-			_isForging = value30.As<bool>();
+			_hoverTip = value30.As<NHoverTipSet>();
 		}
-		if (info.TryGetProperty(PropertyName._isAttacking, out var value31))
+		if (info.TryGetProperty(PropertyName._isForging, out var value31))
 		{
-			_isAttacking = value31.As<bool>();
+			_isForging = value31.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._isKeyPressed, out var value32))
+		if (info.TryGetProperty(PropertyName._isAttacking, out var value32))
 		{
-			_isKeyPressed = value32.As<bool>();
+			_isAttacking = value32.As<bool>();
 		}
-		if (info.TryGetProperty(PropertyName._testCharge, out var value33))
+		if (info.TryGetProperty(PropertyName._isKeyPressed, out var value33))
 		{
-			_testCharge = value33.As<float>();
+			_isKeyPressed = value33.As<bool>();
+		}
+		if (info.TryGetProperty(PropertyName._testCharge, out var value34))
+		{
+			_testCharge = value34.As<float>();
 		}
 	}
 }

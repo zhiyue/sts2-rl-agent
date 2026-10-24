@@ -18,34 +18,76 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.ModdingScreen;
 [ScriptPath("res://src/Core/Nodes/Screens/ModdingScreen/NModMenuRow.cs")]
 public class NModMenuRow : NClickableControl
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NClickableControl.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'SetSelected' method.
+		/// </summary>
 		public static readonly StringName SetSelected = "SetSelected";
 
+		/// <summary>
+		/// Cached name for the 'OnTickboxToggled' method.
+		/// </summary>
 		public static readonly StringName OnTickboxToggled = "OnTickboxToggled";
 
+		/// <summary>
+		/// Cached name for the 'GetPlatformIcon' method.
+		/// </summary>
 		public static readonly StringName GetPlatformIcon = "GetPlatformIcon";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NClickableControl.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_selectionHighlight' field.
+		/// </summary>
 		public static readonly StringName _selectionHighlight = "_selectionHighlight";
 
+		/// <summary>
+		/// Cached name for the '_tickbox' field.
+		/// </summary>
 		public static readonly StringName _tickbox = "_tickbox";
 
+		/// <summary>
+		/// Cached name for the '_screen' field.
+		/// </summary>
 		public static readonly StringName _screen = "_screen";
 
+		/// <summary>
+		/// Cached name for the '_isSelected' field.
+		/// </summary>
 		public static readonly StringName _isSelected = "_isSelected";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NClickableControl.SignalName
 	{
 	}
@@ -85,15 +127,40 @@ public class NModMenuRow : NClickableControl
 			MegaRichTextLabel node2 = GetNode<MegaRichTextLabel>("Title");
 			TextureRect node3 = GetNode<TextureRect>("PlatformIcon");
 			Panel selectionHighlight = _selectionHighlight;
-			Color modulate = _selectionHighlight.Modulate;
-			modulate.A = 0f;
-			selectionHighlight.Modulate = modulate;
+			Color color = _selectionHighlight.Modulate;
+			color.A = 0f;
+			selectionHighlight.Modulate = color;
 			node.IsTicked = !(SaveManager.Instance.SettingsSave.ModSettings?.IsModDisabled(Mod) ?? false);
 			node.Connect(NTickbox.SignalName.Toggled, Callable.From<NTickbox>(OnTickboxToggled));
-			node2.Text = Mod.manifest?.name ?? Mod.pckName;
+			node2.Text = Mod.manifest?.name ?? Mod.manifest?.id ?? "<null>";
 			node3.Texture = GetPlatformIcon(Mod.modSource);
-			node2.Modulate = (Mod.wasLoaded ? Colors.White : StsColors.gray);
-			node3.Modulate = (Mod.wasLoaded ? Colors.White : StsColors.gray);
+			ModLoadState state = Mod.state;
+			switch (state)
+			{
+			case ModLoadState.Loaded:
+				color = Colors.White;
+				break;
+			case ModLoadState.Failed:
+				color = StsColors.red;
+				break;
+			case ModLoadState.Disabled:
+				color = StsColors.gray;
+				break;
+			case ModLoadState.DisabledDuplicate:
+				color = StsColors.gray;
+				break;
+			case ModLoadState.AddedAtRuntime:
+				color = StsColors.gray;
+				break;
+			case ModLoadState.None:
+				color = StsColors.purple;
+				break;
+			default:
+				global::_003CPrivateImplementationDetails_003E.ThrowSwitchExpressionException(state);
+				break;
+			}
+			Color modulate = (node2.Modulate = color);
+			node3.Modulate = modulate;
 			ConnectSignals();
 		}
 	}
@@ -155,13 +222,12 @@ public class NModMenuRow : NClickableControl
 		{
 			ModSettings modSettings = (settingsSave.ModSettings = new ModSettings());
 		}
-		if (tickbox.IsTicked)
+		foreach (SettingsSaveMod mod in SaveManager.Instance.SettingsSave.ModSettings.ModList)
 		{
-			SaveManager.Instance.SettingsSave.ModSettings.DisabledMods.RemoveAll((DisabledMod m) => m.Name == Mod.pckName && m.Source == Mod.modSource);
-		}
-		else
-		{
-			SaveManager.Instance.SettingsSave.ModSettings.DisabledMods.Add(new DisabledMod(Mod));
+			if (mod.Id == Mod?.manifest?.id && mod.Source == Mod.modSource)
+			{
+				mod.IsEnabled = tickbox.IsTicked;
+			}
 		}
 		_screen.OnModEnabledOrDisabled();
 	}
@@ -177,6 +243,11 @@ public class NModMenuRow : NClickableControl
 		});
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -200,6 +271,7 @@ public class NModMenuRow : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -259,6 +331,7 @@ public class NModMenuRow : NClickableControl
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -293,6 +366,7 @@ public class NModMenuRow : NClickableControl
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -319,6 +393,7 @@ public class NModMenuRow : NClickableControl
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -345,6 +420,11 @@ public class NModMenuRow : NClickableControl
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -356,6 +436,7 @@ public class NModMenuRow : NClickableControl
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -366,6 +447,7 @@ public class NModMenuRow : NClickableControl
 		info.AddProperty(PropertyName._isSelected, Variant.From(in _isSelected));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

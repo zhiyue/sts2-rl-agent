@@ -33,7 +33,7 @@ public sealed class Voltaic : CardModel
 	public override IEnumerable<CardKeyword> CanonicalKeywords => new global::_003C_003Ez__ReadOnlySingleElementList<CardKeyword>(CardKeyword.Exhaust);
 
 	public Voltaic()
-		: base(2, CardType.Skill, CardRarity.Rare, TargetType.Self)
+		: base(3, CardType.Skill, CardRarity.Rare, TargetType.Self)
 	{
 	}
 

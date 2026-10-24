@@ -29,6 +29,6 @@ public sealed class PotionOfDoom : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		NCombatRoom.Instance?.PlaySplashVfx(target, Colors.Purple);
-		await PowerCmd.Apply<DoomPower>(target, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<DoomPower>(choiceContext, target, base.DynamicVars.Doom.BaseValue, base.Owner.Creature, null);
 	}
 }

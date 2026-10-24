@@ -5,6 +5,9 @@ using System.Text.Json.Serialization;
 
 namespace MegaCrit.Sts2.Core.Debug;
 
+/// <summary>
+/// Custom JsonConverter for DateTime to handle the specific format in the JSON.
+/// </summary>
 public class CustomDateTimeConverter : JsonConverter<DateTime>
 {
 	public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

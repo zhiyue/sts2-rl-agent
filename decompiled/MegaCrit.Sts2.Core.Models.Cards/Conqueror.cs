@@ -26,7 +26,7 @@ public sealed class Conqueror : CardModel
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		await ForgeCmd.Forge(base.DynamicVars.Forge.IntValue, base.Owner, this);
-		await PowerCmd.Apply<ConquerorPower>(cardPlay.Target, 1m, base.Owner.Creature, this);
+		await PowerCmd.Apply<ConquerorPower>(choiceContext, cardPlay.Target, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

@@ -29,44 +29,101 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 [ScriptPath("res://src/Core/Nodes/Screens/MainMenu/NMultiplayerSubmenu.cs")]
 public class NMultiplayerSubmenu : NSubmenu
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'UpdateButtons' method.
+		/// </summary>
 		public static readonly StringName UpdateButtons = "UpdateButtons";
 
+		/// <summary>
+		/// Cached name for the 'AbandonRun' method.
+		/// </summary>
 		public static readonly StringName AbandonRun = "AbandonRun";
 
+		/// <summary>
+		/// Cached name for the 'StartLoad' method.
+		/// </summary>
 		public static readonly StringName StartLoad = "StartLoad";
 
+		/// <summary>
+		/// Cached name for the 'OnHostPressed' method.
+		/// </summary>
 		public static readonly StringName OnHostPressed = "OnHostPressed";
 
+		/// <summary>
+		/// Cached name for the 'FastHost' method.
+		/// </summary>
 		public static readonly StringName FastHost = "FastHost";
 
+		/// <summary>
+		/// Cached name for the 'OpenJoinFriendsScreen' method.
+		/// </summary>
 		public static readonly StringName OpenJoinFriendsScreen = "OpenJoinFriendsScreen";
 
+		/// <summary>
+		/// Cached name for the 'OnJoinFriendsPressed' method.
+		/// </summary>
 		public static readonly StringName OnJoinFriendsPressed = "OnJoinFriendsPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuShown' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuShown = "OnSubmenuShown";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_hostButton' field.
+		/// </summary>
 		public static readonly StringName _hostButton = "_hostButton";
 
+		/// <summary>
+		/// Cached name for the '_loadButton' field.
+		/// </summary>
 		public static readonly StringName _loadButton = "_loadButton";
 
+		/// <summary>
+		/// Cached name for the '_abandonButton' field.
+		/// </summary>
 		public static readonly StringName _abandonButton = "_abandonButton";
 
+		/// <summary>
+		/// Cached name for the '_joinButton' field.
+		/// </summary>
 		public static readonly StringName _joinButton = "_joinButton";
 
+		/// <summary>
+		/// Cached name for the '_loadingOverlay' field.
+		/// </summary>
 		public static readonly StringName _loadingOverlay = "_loadingOverlay";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
 	}
@@ -155,7 +212,8 @@ public class NMultiplayerSubmenu : NSubmenu
 		{
 			return;
 		}
-		ReadSaveResult<SerializableRun> readSaveResult = SaveManager.Instance.LoadAndCanonicalizeMultiplayerRunSave(PlatformUtil.GetLocalPlayerId(PlatformUtil.PrimaryPlatform));
+		ulong localPlayerId = PlatformUtil.GetLocalPlayerId(PlatformUtil.PrimaryPlatform);
+		ReadSaveResult<SerializableRun> readSaveResult = SaveManager.Instance.LoadAndCanonicalizeMultiplayerRunSave(localPlayerId);
 		if (readSaveResult.Success && readSaveResult.SaveData != null)
 		{
 			try
@@ -165,8 +223,7 @@ public class NMultiplayerSubmenu : NSubmenu
 				RunHistoryUtilities.CreateRunHistoryEntry(saveData, victory: false, isAbandoned: true, saveData.PlatformType);
 				if (saveData.DailyTime.HasValue)
 				{
-					PlatformUtil.GetLocalPlayerId(saveData.PlatformType);
-					int score = ScoreUtility.CalculateScore(saveData, won: false);
+					int score = ScoreUtility.CalculateDailyScore(saveData, localPlayerId, isVictory: false);
 					TaskHelper.RunSafely(DailyRunUtility.UploadScore(saveData.DailyTime.Value, score, saveData.Players));
 				}
 			}
@@ -242,26 +299,29 @@ public class NMultiplayerSubmenu : NSubmenu
 			}
 			if (!netErrorInfo.HasValue)
 			{
-				if (run.Modifiers.Count > 0)
+				switch (run.GameMode)
 				{
-					if (run.DailyTime.HasValue)
-					{
-						NDailyRunLoadScreen submenuType = _stack.GetSubmenuType<NDailyRunLoadScreen>();
-						submenuType.InitializeAsHost(netService, run);
-						_stack.Push(submenuType);
-					}
-					else
-					{
-						NCustomRunLoadScreen submenuType2 = _stack.GetSubmenuType<NCustomRunLoadScreen>();
-						submenuType2.InitializeAsHost(netService, run);
-						_stack.Push(submenuType2);
-					}
-				}
-				else
+				case GameMode.Daily:
 				{
-					NMultiplayerLoadGameScreen submenuType3 = _stack.GetSubmenuType<NMultiplayerLoadGameScreen>();
+					NDailyRunLoadScreen submenuType3 = _stack.GetSubmenuType<NDailyRunLoadScreen>();
 					submenuType3.InitializeAsHost(netService, run);
 					_stack.Push(submenuType3);
+					break;
+				}
+				case GameMode.Custom:
+				{
+					NCustomRunLoadScreen submenuType2 = _stack.GetSubmenuType<NCustomRunLoadScreen>();
+					submenuType2.InitializeAsHost(netService, run);
+					_stack.Push(submenuType2);
+					break;
+				}
+				default:
+				{
+					NMultiplayerLoadGameScreen submenuType = _stack.GetSubmenuType<NMultiplayerLoadGameScreen>();
+					submenuType.InitializeAsHost(netService, run);
+					_stack.Push(submenuType);
+					break;
+				}
 				}
 			}
 			else
@@ -299,6 +359,11 @@ public class NMultiplayerSubmenu : NSubmenu
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -331,6 +396,7 @@ public class NMultiplayerSubmenu : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -407,6 +473,7 @@ public class NMultiplayerSubmenu : NSubmenu
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -453,6 +520,7 @@ public class NMultiplayerSubmenu : NSubmenu
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -484,6 +552,7 @@ public class NMultiplayerSubmenu : NSubmenu
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -520,6 +589,11 @@ public class NMultiplayerSubmenu : NSubmenu
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -533,6 +607,7 @@ public class NMultiplayerSubmenu : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -544,6 +619,7 @@ public class NMultiplayerSubmenu : NSubmenu
 		info.AddProperty(PropertyName._loadingOverlay, Variant.From(in _loadingOverlay));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

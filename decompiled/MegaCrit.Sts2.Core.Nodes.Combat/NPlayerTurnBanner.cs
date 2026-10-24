@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Audio.Debug;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.addons.mega_text;
 
@@ -17,22 +18,46 @@ namespace MegaCrit.Sts2.Core.Nodes.Combat;
 [ScriptPath("res://src/Core/Nodes/Combat/NPlayerTurnBanner.cs")]
 public class NPlayerTurnBanner : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_turnLabel' field.
+		/// </summary>
 		public static readonly StringName _turnLabel = "_turnLabel";
 
+		/// <summary>
+		/// Cached name for the '_roundNumber' field.
+		/// </summary>
 		public static readonly StringName _roundNumber = "_roundNumber";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -89,14 +114,21 @@ public class NPlayerTurnBanner : Control
 		tween.TweenProperty(this, "modulate:a", 1f, 1.0).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 		tween.TweenProperty(_label, "position", _label.Position + new Vector2(0f, -50f), 1.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
 		tween.TweenProperty(_turnLabel, "position", _turnLabel.Position + new Vector2(0f, 50f), 1.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Expo);
-		await ToSignal(tween, Tween.SignalName.Finished);
-		tween = CreateTween();
-		tween.TweenInterval(0.4);
-		tween.TweenProperty(this, "modulate:a", 0f, 0.30000001192092896).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
-		await ToSignal(tween, Tween.SignalName.Finished);
-		this.QueueFreeSafely();
+		if (await tween.AwaitFinished(this))
+		{
+			tween = CreateTween();
+			tween.TweenInterval(0.4);
+			tween.TweenProperty(this, "modulate:a", 0f, 0.30000001192092896).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Sine);
+			await tween.AwaitFinished(this);
+			this.QueueFreeSafely();
+		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -109,6 +141,7 @@ public class NPlayerTurnBanner : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -138,6 +171,7 @@ public class NPlayerTurnBanner : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -152,6 +186,7 @@ public class NPlayerTurnBanner : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -173,6 +208,7 @@ public class NPlayerTurnBanner : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -194,6 +230,11 @@ public class NPlayerTurnBanner : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -204,6 +245,7 @@ public class NPlayerTurnBanner : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -213,6 +255,7 @@ public class NPlayerTurnBanner : Control
 		info.AddProperty(PropertyName._roundNumber, Variant.From(in _roundNumber));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

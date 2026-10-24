@@ -7,11 +7,13 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
@@ -39,17 +41,17 @@ public sealed class GremlinMerc : MonsterModel
 
 	private int DoubleSmashRepeat => 2;
 
-	public int HeheDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 9, 8);
+	private int HeheDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 9, 8);
 
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<SurprisePower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<SurprisePower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
 		foreach (Player player in base.Creature.CombatState.Players)
 		{
 			ThieveryPower thieveryPower = (ThieveryPower)ModelDb.Power<ThieveryPower>().ToMutable();
 			thieveryPower.Target = player.Creature;
-			await PowerCmd.Apply(thieveryPower, base.Creature, 20m, base.Creature, null);
+			await PowerCmd.Apply(new ThrowingPlayerChoiceContext(), thieveryPower, base.Creature, 20m, base.Creature, null);
 		}
 	}
 
@@ -74,7 +76,8 @@ public sealed class GremlinMerc : MonsterModel
 		{
 			_hasSpoken = true;
 			LocString line = MonsterModel.L10NMonsterLookup("GREMLIN_MERC.moves.GIMME.banter");
-			TalkCmd.Play(line, base.Creature);
+			TalkCmd.Play(line, base.Creature, VfxColor.Purple, VfxDuration.VeryShort);
+			await Cmd.CustomScaledWait(0.25f, 0.5f);
 		}
 		VfxCmd.PlayOnCreatureCenters(targets, "vfx/vfx_coin_explosion_regular");
 		await DamageCmd.Attack(GimmeDamage).WithHitCount(GimmeRepeat).FromMonster(this)
@@ -103,7 +106,7 @@ public sealed class GremlinMerc : MonsterModel
 		{
 			await powerInstance.Steal();
 		}
-		await PowerCmd.Apply<WeakPower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	private async Task HeheMove(IReadOnlyList<Creature> targets)
@@ -116,7 +119,7 @@ public sealed class GremlinMerc : MonsterModel
 		{
 			await powerInstance.Steal();
 		}
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

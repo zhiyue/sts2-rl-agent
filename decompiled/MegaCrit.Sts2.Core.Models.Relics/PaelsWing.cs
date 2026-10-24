@@ -9,7 +9,6 @@ using MegaCrit.Sts2.Core.Factories;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Rewards;
-using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Models.Relics;
@@ -77,14 +76,8 @@ public sealed class PaelsWing : RelicModel
 		{
 			return false;
 		}
-		alternatives.Add(new CardRewardAlternative("SACRIFICE", OnSacrificeSynchronized, PostAlternateCardRewardAction.DismissScreenAndRemoveReward));
+		alternatives.Add(new CardRewardAlternative("SACRIFICE", OnSacrifice, PostAlternateCardRewardAction.EndSelectionAndCompleteReward));
 		return true;
-	}
-
-	private async Task OnSacrificeSynchronized()
-	{
-		RunManager.Instance.RewardSynchronizer.SyncLocalPaelsWingSacrifice(this);
-		await OnSacrifice();
 	}
 
 	public async Task OnSacrifice()

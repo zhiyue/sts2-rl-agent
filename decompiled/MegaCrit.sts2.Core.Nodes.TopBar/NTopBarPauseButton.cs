@@ -23,33 +23,61 @@ namespace MegaCrit.Sts2.Core.Nodes.TopBar;
 [ScriptPath("res://src/Core/Nodes/TopBar/NTopBarPauseButton.cs")]
 public class NTopBarPauseButton : NTopBarButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NTopBarButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'IsOpen' method.
+		/// </summary>
 		public new static readonly StringName IsOpen = "IsOpen";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'ToggleAnimState' method.
+		/// </summary>
 		public static readonly StringName ToggleAnimState = "ToggleAnimState";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NTopBarButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'Hotkeys' property.
+		/// </summary>
 		public new static readonly StringName Hotkeys = "Hotkeys";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NTopBarButton.SignalName
 	{
 	}
 
 	private static readonly StringName _v = new StringName("v");
-
-	private static readonly HoverTip _hoverTip = new HoverTip(new LocString("static_hover_tips", "SETTINGS.title"), new LocString("static_hover_tips", "SETTINGS.description"));
 
 	private const float _hoverAngle = -(float)Math.PI;
 
@@ -103,71 +131,63 @@ public class NTopBarPauseButton : NTopBarButton
 
 	protected override async Task AnimPressDown(CancellationTokenSource cancelToken)
 	{
-		float timer = 0f;
-		float startAngle = _icon.Rotation;
-		float targetAngle = startAngle + (float)Math.PI / 4f;
-		for (; timer < 0.25f; timer += (float)GetProcessDeltaTime())
+		if (_icon.IsValid())
 		{
-			if (cancelToken.IsCancellationRequested)
+			float num = 0f;
+			float startAngle = _icon.Rotation;
+			float targetAngle = startAngle + (float)Math.PI / 4f;
+			while (num < 0.25f)
 			{
-				return;
+				_icon.Rotation = Mathf.LerpAngle(startAngle, targetAngle, Ease.CubicOut(num / 0.25f));
+				_hsv?.SetShaderParameter(_v, Mathf.Lerp(1.1f, 0.4f, Ease.CubicOut(num / 0.25f)));
+				float num2 = num;
+				num = num2 + await this.AwaitProcessFrame(cancelToken.Token);
 			}
-			_icon.Rotation = Mathf.LerpAngle(startAngle, targetAngle, Ease.CubicOut(timer / 0.25f));
-			_hsv?.SetShaderParameter(_v, Mathf.Lerp(1.1f, 0.4f, Ease.CubicOut(timer / 0.25f)));
-			if (!this.IsValid() || !IsInsideTree())
-			{
-				return;
-			}
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			_icon.Rotation = targetAngle;
+			_hsv?.SetShaderParameter(_v, 0.4f);
 		}
-		_icon.Rotation = targetAngle;
-		_hsv?.SetShaderParameter(_v, 0.4f);
 	}
 
 	protected override async Task AnimHover(CancellationTokenSource cancelToken)
 	{
-		float timer = 0f;
-		float startAngle = _icon.Rotation;
-		for (; timer < 0.5f; timer += (float)GetProcessDeltaTime())
+		if (_icon.IsValid())
 		{
-			if (cancelToken.IsCancellationRequested)
+			float num = 0f;
+			float startAngle = _icon.Rotation;
+			while (num < 0.5f)
 			{
-				return;
+				_icon.Rotation = Mathf.LerpAngle(startAngle, -(float)Math.PI, Ease.BackOut(num / 0.5f));
+				float num2 = num;
+				num = num2 + await this.AwaitProcessFrame(cancelToken.Token);
 			}
-			_icon.Rotation = Mathf.LerpAngle(startAngle, -(float)Math.PI, Ease.BackOut(timer / 0.5f));
-			if (!this.IsValid() || !IsInsideTree())
-			{
-				return;
-			}
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			_icon.Rotation = -(float)Math.PI;
 		}
-		_icon.Rotation = -(float)Math.PI;
 	}
 
 	protected override async Task AnimUnhover(CancellationTokenSource cancelToken)
 	{
-		float timer = 0f;
-		float startAngle = _icon.Rotation;
-		for (; timer < 1f; timer += (float)GetProcessDeltaTime())
+		if (_icon.IsValid())
 		{
-			if (cancelToken.IsCancellationRequested)
+			float num = 0f;
+			float startAngle = _icon.Rotation;
+			while (num < 1f)
 			{
-				return;
+				_icon.Rotation = Mathf.LerpAngle(startAngle, 0f, Ease.ElasticOut(num / 1f));
+				_hsv?.SetShaderParameter(_v, Mathf.Lerp(1.1f, 0.9f, Ease.ExpoOut(num / 1f)));
+				_icon.Scale = NTopBarButton._hoverScale.Lerp(Vector2.One, Ease.ExpoOut(num / 1f));
+				float num2 = num;
+				num = num2 + await this.AwaitProcessFrame(cancelToken.Token);
 			}
-			_icon.Rotation = Mathf.LerpAngle(startAngle, 0f, Ease.ElasticOut(timer / 1f));
-			_hsv?.SetShaderParameter(_v, Mathf.Lerp(1.1f, 0.9f, Ease.ExpoOut(timer / 1f)));
-			_icon.Scale = NTopBarButton._hoverScale.Lerp(Vector2.One, Ease.ExpoOut(timer / 1f));
-			if (!this.IsValid() || !IsInsideTree())
-			{
-				return;
-			}
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			_hsv?.SetShaderParameter(_v, 0.9f);
+			_icon.Rotation = 0f;
+			_icon.Scale = Vector2.One;
 		}
-		_hsv?.SetShaderParameter(_v, 0.9f);
-		_icon.Rotation = 0f;
-		_icon.Scale = Vector2.One;
 	}
 
+	/// <summary>
+	/// Toggles the anim state of this button.
+	/// Utilized when an external UI (ie BackButton) closes this screen.
+	/// </summary>
 	public void ToggleAnimState()
 	{
 		UpdateScreenOpen();
@@ -176,8 +196,9 @@ public class NTopBarPauseButton : NTopBarButton
 	protected override void OnFocus()
 	{
 		base.OnFocus();
-		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, _hoverTip);
-		nHoverTipSet.GlobalPosition = base.GlobalPosition + new Vector2(base.Size.X - nHoverTipSet.Size.X, base.Size.Y + 20f);
+		HoverTip hoverTip = new HoverTip(new LocString("static_hover_tips", "SETTINGS.title"), new LocString("static_hover_tips", "SETTINGS.description"));
+		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, hoverTip);
+		nHoverTipSet?.SetGlobalPosition(base.GlobalPosition + new Vector2(base.Size.X - nHoverTipSet.Size.X, base.Size.Y + 20f));
 	}
 
 	protected override void OnUnfocus()
@@ -186,6 +207,11 @@ public class NTopBarPauseButton : NTopBarButton
 		NHoverTipSet.Remove(this);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -202,6 +228,7 @@ public class NTopBarPauseButton : NTopBarButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -243,6 +270,7 @@ public class NTopBarPauseButton : NTopBarButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -273,6 +301,7 @@ public class NTopBarPauseButton : NTopBarButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -284,6 +313,11 @@ public class NTopBarPauseButton : NTopBarButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -292,12 +326,14 @@ public class NTopBarPauseButton : NTopBarButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

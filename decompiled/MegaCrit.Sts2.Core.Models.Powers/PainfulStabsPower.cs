@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Commands.Builders;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -30,22 +31,27 @@ public sealed class PainfulStabsPower : PowerModel
 		return creature != base.Owner;
 	}
 
-	public override async Task AfterAttack(AttackCommand command)
+	public override async Task AfterAttack(PlayerChoiceContext choiceContext, AttackCommand command)
 	{
-		if (command.Attacker != base.Owner || command.TargetSide == base.Owner.Side || !command.DamageProps.IsPoweredAttack() || !command.Results.Any((DamageResult r) => r.UnblockedDamage > 0))
+		if (command.Attacker != base.Owner || command.TargetSide == base.Owner.Side || !command.DamageProps.IsPoweredAttack())
+		{
+			return;
+		}
+		List<DamageResult> list = command.Results.SelectMany((List<DamageResult> r) => r).ToList();
+		if (!list.Any((DamageResult r) => r.UnblockedDamage > 0))
 		{
 			return;
 		}
 		Dictionary<Creature, List<DamageResult>> damageResultsByCreature = new Dictionary<Creature, List<DamageResult>>();
-		foreach (DamageResult result in command.Results)
+		foreach (DamageResult item in list)
 		{
-			if (result.Receiver.IsPlayer)
+			if (item.Receiver.IsPlayer)
 			{
-				if (!damageResultsByCreature.ContainsKey(result.Receiver))
+				if (!damageResultsByCreature.ContainsKey(item.Receiver))
 				{
-					damageResultsByCreature.Add(result.Receiver, new List<DamageResult>());
+					damageResultsByCreature.Add(item.Receiver, new List<DamageResult>());
 				}
-				damageResultsByCreature[result.Receiver].Add(result);
+				damageResultsByCreature[item.Receiver].Add(item);
 			}
 		}
 		bool anyWoundApplied = false;
@@ -53,7 +59,7 @@ public sealed class PainfulStabsPower : PowerModel
 		{
 			int num = damageResultsByCreature[key].Count((DamageResult r) => r.UnblockedDamage > 0);
 			anyWoundApplied = anyWoundApplied || num > 0;
-			await CardPileCmd.AddToCombatAndPreview<Wound>(key, PileType.Discard, base.Amount * num, addedByPlayer: false);
+			await CardPileCmd.AddToCombatAndPreview<Wound>(key, PileType.Discard, base.Amount * num, null);
 		}
 		if (anyWoundApplied)
 		{

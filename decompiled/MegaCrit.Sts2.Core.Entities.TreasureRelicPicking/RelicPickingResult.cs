@@ -12,10 +12,26 @@ public class RelicPickingResult
 
 	public required RelicModel relic;
 
-	public required Player player;
+	/// <summary>
+	/// This is only null if type is Skipped.
+	/// </summary>
+	public required Player? player;
 
 	public RelicPickingFight? fight;
 
+	/// <summary>
+	/// Generates a relic fight and returns it as a relic picking result.
+	/// The relic fight follows these rules:
+	/// - It's a rock-paper-scissors game.
+	/// - Each round, each player rolls a move using the generateMove function that is passed.
+	/// - If there are not exactly two distinct moves rolled, then the round ends in a tie.
+	/// - If there are two distinct moves rolled, everyone who rolled the losing move is eliminated.
+	/// - The game plays rounds until there is only one player left, who is awarded the relic.
+	/// </summary>
+	/// <param name="players">The players involved in the fight.</param>
+	/// <param name="relic">The relic that will be awarded to the winning player.</param>
+	/// <param name="generateMove">Method that is called once per player every round to generate moves for each player.</param>
+	/// <returns>The result of the fight. The `fight` member is guaranteed to be non-null and contain at least one round.</returns>
 	public static RelicPickingResult GenerateRelicFight(List<Player> players, RelicModel relic, Func<RelicPickingFightMove> generateMove)
 	{
 		RelicPickingFight relicPickingFight = new RelicPickingFight();

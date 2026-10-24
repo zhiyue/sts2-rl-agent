@@ -22,11 +22,16 @@ public sealed class BlessedAntler : RelicModel
 		new CardsVar(3)
 	});
 
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlyArray<IHoverTip>(new IHoverTip[2]
+	protected override IEnumerable<IHoverTip> ExtraHoverTips
 	{
-		HoverTipFactory.ForEnergy(this),
-		HoverTipFactory.FromCard<Dazed>()
-	});
+		get
+		{
+			List<IHoverTip> list = new List<IHoverTip>();
+			list.Add(HoverTipFactory.ForEnergy(this));
+			list.AddRange(HoverTipFactory.FromCardWithCardHoverTips<Dazed>());
+			return new _003C_003Ez__ReadOnlyList<IHoverTip>(list);
+		}
+	}
 
 	public override decimal ModifyMaxEnergy(Player player, decimal amount)
 	{
@@ -37,9 +42,9 @@ public sealed class BlessedAntler : RelicModel
 		return amount + (decimal)base.DynamicVars.Energy.IntValue;
 	}
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, ICombatState combatState)
 	{
-		if (player == base.Owner && combatState.RoundNumber == 1)
+		if (player == base.Owner && base.Owner.PlayerCombatState.TurnNumber == 1)
 		{
 			Flash();
 			List<CardModel> list = new List<CardModel>();
@@ -47,7 +52,7 @@ public sealed class BlessedAntler : RelicModel
 			{
 				list.Add(combatState.CreateCard<Dazed>(base.Owner));
 			}
-			CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Draw, addedByPlayer: true, CardPilePosition.Random));
+			CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardsToCombat(list, PileType.Draw, base.Owner, CardPilePosition.Random));
 			await Cmd.Wait(3f);
 		}
 	}

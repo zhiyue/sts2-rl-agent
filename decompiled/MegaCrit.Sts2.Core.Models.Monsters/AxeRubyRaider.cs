@@ -13,6 +13,10 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 
 public sealed class AxeRubyRaider : MonsterModel
 {
+	private const string _swing1Move = "SWING_1";
+
+	private const string _swing2Move = "SWING_2";
+
 	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 21, 20);
 
 	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 23, 22);
@@ -55,5 +59,14 @@ public sealed class AxeRubyRaider : MonsterModel
 			.WithAttackerFx(null, AttackSfx)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		if (moveStateId != "SWING_1")
+		{
+			return moveStateId != "SWING_2";
+		}
+		return false;
 	}
 }

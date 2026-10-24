@@ -2,6 +2,9 @@ using System;
 
 namespace MegaCrit.Sts2.Core.Events.Custom.CrystalSphereEvent;
 
+/// <summary>
+/// Represents a cell on the grid for the Crystal SphereMinigame
+/// </summary>
 public class CrystalSphereCell
 {
 	private bool _isHidden;
@@ -16,6 +19,9 @@ public class CrystalSphereCell
 
 	public int Y { get; private set; }
 
+	/// <summary>
+	/// If true, then this cell is still obscured by fog.
+	/// </summary>
 	public bool IsHidden
 	{
 		get

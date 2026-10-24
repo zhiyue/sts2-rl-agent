@@ -11,6 +11,8 @@ public sealed class WaterfallGiantBoss : EncounterModel
 
 	public override string CustomBgm => "event:/music/act1_b_boss_waterfall_giant";
 
+	protected override bool HasCustomBackground => true;
+
 	public override string BossNodePath => "res://images/map/placeholder/" + base.Id.Entry.ToLowerInvariant() + "_icon";
 
 	public override MegaSkeletonDataResource? BossNodeSpineResource => null;

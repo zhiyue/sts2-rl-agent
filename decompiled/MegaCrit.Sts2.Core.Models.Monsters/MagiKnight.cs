@@ -7,13 +7,13 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.Core.ValueProps;
@@ -23,6 +23,8 @@ namespace MegaCrit.Sts2.Core.Models.Monsters;
 public sealed class MagiKnight : MonsterModel
 {
 	private static readonly LocString _dampenDialogue = new LocString("powers", "DAMPEN_POWER.banter");
+
+	private const string _prepMove = "PREP_MOVE";
 
 	private const string _bombTrigger = "BombCast";
 
@@ -55,7 +57,7 @@ public sealed class MagiKnight : MonsterModel
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
-		MoveState moveState = new MoveState("FIRST_POWER_SHIELD_MOVE", PowerShieldMove, new SingleAttackIntent(PowerShieldDamage), new DefendIntent());
+		MoveState moveState = new MoveState("POWER_SHIELD_MOVE", PowerShieldMove, new SingleAttackIntent(PowerShieldDamage), new DefendIntent());
 		MoveState moveState2 = new MoveState("DAMPEN_MOVE", DampenMove, new DebuffIntent());
 		MoveState moveState3 = new MoveState("PREP_MOVE", PrepMove, new DefendIntent());
 		MoveState moveState4 = new MoveState("MAGIC_BOMB", MagicBombMove, new SingleAttackIntent(BombDamage));
@@ -86,11 +88,11 @@ public sealed class MagiKnight : MonsterModel
 			dampenPower.AddCaster(base.Creature);
 			if (flag)
 			{
-				await PowerCmd.Apply(dampenPower, target, 1m, base.Creature, null);
+				await PowerCmd.Apply(new ThrowingPlayerChoiceContext(), dampenPower, target, 1m, base.Creature, null);
 			}
 		}
-		NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(NSpeechBubbleVfx.Create(_dampenDialogue.GetFormattedText(), base.Creature, 2.0));
-		await Cmd.Wait(0.25f);
+		TalkCmd.Play(_dampenDialogue, base.Creature, VfxColor.Orange, VfxDuration.Long);
+		await Cmd.Wait(0.5f);
 	}
 
 	private async Task PowerShieldMove(IReadOnlyList<Creature> targets)
@@ -111,22 +113,22 @@ public sealed class MagiKnight : MonsterModel
 
 	private async Task MagicBombMove(IReadOnlyList<Creature> targets)
 	{
-		if (TestMode.IsOff)
+		if (TestMode.IsOff && base.CombatState.IsLiveCombat())
 		{
 			Vector2? vector = null;
 			foreach (Creature target in targets)
 			{
-				NCreature creatureNode = NCombatRoom.Instance.GetCreatureNode(target);
+				NCreature creatureNode = target.GetCreatureNode();
 				if (!vector.HasValue || vector.Value.X > creatureNode.GlobalPosition.X)
 				{
 					vector = creatureNode.GlobalPosition;
 				}
 			}
-			NCreature creatureNode2 = NCombatRoom.Instance.GetCreatureNode(base.Creature);
+			NCreature creatureNode2 = base.Creature.GetCreatureNode();
 			Node2D specialNode = creatureNode2.GetSpecialNode<Node2D>("Visuals/AttackDistanceControl");
-			if (specialNode != null)
+			if (specialNode != null && vector.HasValue)
 			{
-				float x = creatureNode2.Visuals.Body.Scale.X;
+				float x = creatureNode2.Visuals.GetCurrentBody().Scale.X;
 				specialNode.Position = Vector2.Left * ((creatureNode2.GlobalPosition.X - vector.Value.X - 600f) / x);
 			}
 		}
@@ -164,5 +166,10 @@ public sealed class MagiKnight : MonsterModel
 		creatureAnimator.AddAnyState("RamAttack", animState3);
 		creatureAnimator.AddAnyState("ShieldAttack", animState4);
 		return creatureAnimator;
+	}
+
+	protected override bool ShouldShowMoveInBestiary(string moveStateId)
+	{
+		return moveStateId != "PREP_MOVE";
 	}
 }

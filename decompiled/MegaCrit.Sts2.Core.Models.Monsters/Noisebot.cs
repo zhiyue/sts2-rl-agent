@@ -22,9 +22,9 @@ public sealed class Noisebot : MonsterModel
 {
 	private const int _noiseStatusCount = 2;
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 24, 23);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 19, 18);
 
-	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 29, 28);
+	public override int MaxInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 24, 23);
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Armor;
 
@@ -58,10 +58,10 @@ public sealed class Noisebot : MonsterModel
 			CardPileAddResult[] statusCards = new CardPileAddResult[2];
 			CardModel card = base.CombatState.CreateCard<Dazed>(player);
 			CardPileAddResult[] array = statusCards;
-			array[0] = await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, addedByPlayer: false);
+			array[0] = await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, null);
 			CardModel card2 = base.CombatState.CreateCard<Dazed>(player);
 			array = statusCards;
-			array[1] = await CardPileCmd.AddGeneratedCardToCombat(card2, PileType.Draw, addedByPlayer: false, CardPilePosition.Random);
+			array[1] = await CardPileCmd.AddGeneratedCardToCombat(card2, PileType.Draw, null, CardPilePosition.Random);
 			if (LocalContext.IsMe(player))
 			{
 				CardCmd.PreviewCardPileAdd(statusCards);

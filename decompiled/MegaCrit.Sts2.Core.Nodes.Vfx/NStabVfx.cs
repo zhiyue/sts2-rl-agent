@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.TestSupport;
@@ -18,32 +19,71 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NStabVfx.cs")]
 public class NStabVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SetColor' method.
+		/// </summary>
 		public static readonly StringName SetColor = "SetColor";
 
+		/// <summary>
+		/// Cached name for the 'GenerateSpawnPosition' method.
+		/// </summary>
 		public static readonly StringName GenerateSpawnPosition = "GenerateSpawnPosition";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_primaryVfx' field.
+		/// </summary>
 		public static readonly StringName _primaryVfx = "_primaryVfx";
 
+		/// <summary>
+		/// Cached name for the '_secondaryVfx' field.
+		/// </summary>
 		public static readonly StringName _secondaryVfx = "_secondaryVfx";
 
+		/// <summary>
+		/// Cached name for the '_creatureCenter' field.
+		/// </summary>
 		public static readonly StringName _creatureCenter = "_creatureCenter";
 
+		/// <summary>
+		/// Cached name for the '_vfxColor' field.
+		/// </summary>
 		public static readonly StringName _vfxColor = "_vfxColor";
 
+		/// <summary>
+		/// Cached name for the '_facingEnemies' field.
+		/// </summary>
 		public static readonly StringName _facingEnemies = "_facingEnemies";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -62,6 +102,14 @@ public class NStabVfx : Node2D
 
 	private Tween? _tween;
 
+	/// <summary>
+	/// Stab vfx is a silly line that goes into the creature center.
+	/// Pass in the creature vfx center position!
+	/// </summary>
+	/// <param name="target">The creature to target</param>
+	/// <param name="facingEnemies">Whether the VFX is facing enemies</param>
+	/// <param name="vfxColor">The color of the VFX</param>
+	/// <returns>The created VFX instance or null if in test mode</returns>
 	public static NStabVfx? Create(Creature? target, bool facingEnemies = false, VfxColor vfxColor = VfxColor.Red)
 	{
 		if (TestMode.IsOn)
@@ -129,6 +177,9 @@ public class NStabVfx : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Spawns our stab vfx in a random position to the left or right of the target.
+	/// </summary>
 	private Vector2 GenerateSpawnPosition()
 	{
 		Vector2 vector = new Vector2(Rng.Chaotic.NextFloat(-12f, 12f), Rng.Chaotic.NextFloat(-64f, 64f));
@@ -147,10 +198,15 @@ public class NStabVfx : Node2D
 		_tween.TweenProperty(this, "modulate:a", 1f, 0.25);
 		_tween.TweenProperty(_primaryVfx, "position", _creatureCenter, 0.5).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Elastic);
 		_tween.TweenProperty(this, "modulate:a", 0f, 0.25).SetDelay(0.25);
-		await ToSignal(_tween, Tween.SignalName.Finished);
+		await _tween.AwaitFinished(this);
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -162,6 +218,7 @@ public class NStabVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -191,6 +248,7 @@ public class NStabVfx : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -213,6 +271,7 @@ public class NStabVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -249,6 +308,7 @@ public class NStabVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -285,6 +345,11 @@ public class NStabVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -298,6 +363,7 @@ public class NStabVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -310,6 +376,7 @@ public class NStabVfx : Node2D
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

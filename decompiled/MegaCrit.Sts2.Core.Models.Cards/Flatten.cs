@@ -61,7 +61,7 @@ public sealed class Flatten : CardModel
 		return Task.CompletedTask;
 	}
 
-	public override Task AfterAttack(AttackCommand command)
+	public override Task AfterAttack(PlayerChoiceContext choiceContext, AttackCommand command)
 	{
 		if (command.Attacker == null)
 		{

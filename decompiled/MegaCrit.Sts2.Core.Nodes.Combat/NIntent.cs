@@ -18,50 +18,121 @@ namespace MegaCrit.Sts2.Core.Nodes.Combat;
 [ScriptPath("res://src/Core/Nodes/Combat/NIntent.cs")]
 public class NIntent : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the 'DebugToggleVisibility' method.
+		/// </summary>
 		public static readonly StringName DebugToggleVisibility = "DebugToggleVisibility";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'UpdateVisuals' method.
+		/// </summary>
 		public static readonly StringName UpdateVisuals = "UpdateVisuals";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'PlayPerform' method.
+		/// </summary>
 		public static readonly StringName PlayPerform = "PlayPerform";
 
+		/// <summary>
+		/// Cached name for the 'SetFrozen' method.
+		/// </summary>
 		public static readonly StringName SetFrozen = "SetFrozen";
 
+		/// <summary>
+		/// Cached name for the 'OnHovered' method.
+		/// </summary>
 		public static readonly StringName OnHovered = "OnHovered";
 
+		/// <summary>
+		/// Cached name for the 'OnUnhovered' method.
+		/// </summary>
 		public static readonly StringName OnUnhovered = "OnUnhovered";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_intentHolder' field.
+		/// </summary>
 		public static readonly StringName _intentHolder = "_intentHolder";
 
+		/// <summary>
+		/// Cached name for the '_intentSprite' field.
+		/// </summary>
 		public static readonly StringName _intentSprite = "_intentSprite";
 
+		/// <summary>
+		/// Cached name for the '_valueLabel' field.
+		/// </summary>
 		public static readonly StringName _valueLabel = "_valueLabel";
 
+		/// <summary>
+		/// Cached name for the '_intentParticle' field.
+		/// </summary>
 		public static readonly StringName _intentParticle = "_intentParticle";
 
+		/// <summary>
+		/// Cached name for the '_timeOffset' field.
+		/// </summary>
 		public static readonly StringName _timeOffset = "_timeOffset";
 
+		/// <summary>
+		/// Cached name for the '_timeAccumulator' field.
+		/// </summary>
 		public static readonly StringName _timeAccumulator = "_timeAccumulator";
 
+		/// <summary>
+		/// Cached name for the '_isFrozen' field.
+		/// </summary>
 		public static readonly StringName _isFrozen = "_isFrozen";
 
+		/// <summary>
+		/// Cached name for the '_animationName' field.
+		/// </summary>
 		public static readonly StringName _animationName = "_animationName";
+
+		/// <summary>
+		/// Cached name for the '_combatRoom' field.
+		/// </summary>
+		public static readonly StringName _combatRoom = "_combatRoom";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -98,7 +169,11 @@ public class NIntent : Control
 
 	private string? _animationName;
 
+	private readonly List<Texture2D> _animationFrames = new List<Texture2D>();
+
 	private int? _animationFrame;
+
+	private NCombatRoom? _combatRoom;
 
 	public static IEnumerable<string> AssetPaths
 	{
@@ -125,7 +200,11 @@ public class NIntent : Control
 	public override void _EnterTree()
 	{
 		CombatManager.Instance.StateTracker.CombatStateChanged += OnCombatStateChanged;
-		NCombatRoom.Instance.Ui.DebugToggleIntent += DebugToggleVisibility;
+		if (NCombatRoom.Instance != null)
+		{
+			_combatRoom = NCombatRoom.Instance;
+			_combatRoom.Ui.DebugToggleIntent += DebugToggleVisibility;
+		}
 	}
 
 	private void DebugToggleVisibility()
@@ -136,7 +215,10 @@ public class NIntent : Control
 	public override void _ExitTree()
 	{
 		CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
-		NCombatRoom.Instance.Ui.DebugToggleIntent -= DebugToggleVisibility;
+		if (_combatRoom != null)
+		{
+			_combatRoom.Ui.DebugToggleIntent -= DebugToggleVisibility;
+		}
 	}
 
 	public void UpdateIntent(AbstractIntent intent, IEnumerable<Creature> targets, Creature owner)
@@ -163,6 +245,12 @@ public class NIntent : Control
 			_animationName = animation;
 			_animationFrame = null;
 			_timeAccumulator = 0f;
+			int animationFrameCount = IntentAnimData.GetAnimationFrameCount(animation);
+			_animationFrames.Clear();
+			for (int i = 0; i < animationFrameCount; i++)
+			{
+				_animationFrames.Add(PreloadManager.Cache.GetTexture2D(IntentAnimData.GetAnimationFrame(animation, i)));
+			}
 		}
 		_intentParticle.Texture = _intent.GetTexture(_targets, _owner);
 		MegaRichTextLabel valueLabel = _valueLabel;
@@ -174,14 +262,13 @@ public class NIntent : Control
 	public override void _Process(double delta)
 	{
 		_intentHolder.Position = Vector2.Up * (Mathf.Sin((float)Time.GetTicksMsec() * 0.001f * (float)Math.PI + _timeOffset) * 10f + 8f);
-		if (_animationName != null)
+		if (_animationFrames.Count > 0)
 		{
-			int num = (int)(_timeAccumulator * 15f) % IntentAnimData.GetAnimationFrameCount(_animationName);
+			int num = (int)(_timeAccumulator * 15f) % _animationFrames.Count;
 			if (_animationFrame != num)
 			{
-				string animationFrame = IntentAnimData.GetAnimationFrame(_animationName, num);
 				_animationFrame = num;
-				_intentSprite.Texture = PreloadManager.Cache.GetTexture2D(animationFrame);
+				_intentSprite.Texture = _animationFrames[num];
 			}
 			_timeAccumulator += (float)delta;
 		}
@@ -217,6 +304,11 @@ public class NIntent : Control
 		NCombatRoom.Instance?.GetCreatureNode(_owner)?.HideHoverTips();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -244,6 +336,7 @@ public class NIntent : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -327,6 +420,7 @@ public class NIntent : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -377,6 +471,7 @@ public class NIntent : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -420,9 +515,15 @@ public class NIntent : Control
 			_animationName = VariantUtils.ConvertTo<string>(in value);
 			return true;
 		}
+		if (name == PropertyName._combatRoom)
+		{
+			_combatRoom = VariantUtils.ConvertTo<NCombatRoom>(in value);
+			return true;
+		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -466,9 +567,19 @@ public class NIntent : Control
 			value = VariantUtils.CreateFrom(in _animationName);
 			return true;
 		}
+		if (name == PropertyName._combatRoom)
+		{
+			value = VariantUtils.CreateFrom(in _combatRoom);
+			return true;
+		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -481,9 +592,11 @@ public class NIntent : Control
 		list.Add(new PropertyInfo(Variant.Type.Float, PropertyName._timeAccumulator, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._isFrozen, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.String, PropertyName._animationName, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._combatRoom, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -496,8 +609,10 @@ public class NIntent : Control
 		info.AddProperty(PropertyName._timeAccumulator, Variant.From(in _timeAccumulator));
 		info.AddProperty(PropertyName._isFrozen, Variant.From(in _isFrozen));
 		info.AddProperty(PropertyName._animationName, Variant.From(in _animationName));
+		info.AddProperty(PropertyName._combatRoom, Variant.From(in _combatRoom));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -533,6 +648,10 @@ public class NIntent : Control
 		if (info.TryGetProperty(PropertyName._animationName, out var value8))
 		{
 			_animationName = value8.As<string>();
+		}
+		if (info.TryGetProperty(PropertyName._combatRoom, out var value9))
+		{
+			_combatRoom = value9.As<NCombatRoom>();
 		}
 	}
 }

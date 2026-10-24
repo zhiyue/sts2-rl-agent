@@ -19,38 +19,86 @@ public class NBgLayerDebug : Control
 		C
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the 'ReloadLayers' method.
+		/// </summary>
 		public static readonly StringName ReloadLayers = "ReloadLayers";
 
+		/// <summary>
+		/// Cached name for the 'UpdateLayers' method.
+		/// </summary>
 		public static readonly StringName UpdateLayers = "UpdateLayers";
 
+		/// <summary>
+		/// Cached name for the 'AddLayer' method.
+		/// </summary>
 		public static readonly StringName AddLayer = "AddLayer";
 
+		/// <summary>
+		/// Cached name for the 'ToLayerName' method.
+		/// </summary>
 		public static readonly StringName ToLayerName = "ToLayerName";
 
+		/// <summary>
+		/// Cached name for the 'ClearLayers' method.
+		/// </summary>
 		public static readonly StringName ClearLayers = "ClearLayers";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'VisibleLayer' property.
+		/// </summary>
 		public static readonly StringName VisibleLayer = "VisibleLayer";
 
+		/// <summary>
+		/// Cached name for the 'ReloadLayersCallable' property.
+		/// </summary>
 		public static readonly StringName ReloadLayersCallable = "ReloadLayersCallable";
 
+		/// <summary>
+		/// Cached name for the '_layerA' field.
+		/// </summary>
 		public static readonly StringName _layerA = "_layerA";
 
+		/// <summary>
+		/// Cached name for the '_layerB' field.
+		/// </summary>
 		public static readonly StringName _layerB = "_layerB";
 
+		/// <summary>
+		/// Cached name for the '_layerC' field.
+		/// </summary>
 		public static readonly StringName _layerC = "_layerC";
 
+		/// <summary>
+		/// Cached name for the '_visibleLayer' field.
+		/// </summary>
 		public static readonly StringName _visibleLayer = "_visibleLayer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -190,6 +238,11 @@ public class NBgLayerDebug : Control
 		ClearLayers();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -211,6 +264,7 @@ public class NBgLayerDebug : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -270,6 +324,7 @@ public class NBgLayerDebug : Control
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -304,6 +359,7 @@ public class NBgLayerDebug : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -335,6 +391,7 @@ public class NBgLayerDebug : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -371,6 +428,11 @@ public class NBgLayerDebug : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -384,6 +446,7 @@ public class NBgLayerDebug : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -395,6 +458,7 @@ public class NBgLayerDebug : Control
 		info.AddProperty(PropertyName._visibleLayer, Variant.From(in _visibleLayer));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

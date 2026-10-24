@@ -15,6 +15,7 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Rewards;
+using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.addons.mega_text;
 
@@ -29,48 +30,111 @@ public class NRewardButton : NButton
 	[Signal]
 	public delegate void RewardSkippedEventHandler(NRewardButton button);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Reload' method.
+		/// </summary>
 		public static readonly StringName Reload = "Reload";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderParam' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderParam = "UpdateShaderParam";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_background' field.
+		/// </summary>
 		public static readonly StringName _background = "_background";
 
+		/// <summary>
+		/// Cached name for the '_iconContainer' field.
+		/// </summary>
 		public static readonly StringName _iconContainer = "_iconContainer";
 
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_reticle' field.
+		/// </summary>
 		public static readonly StringName _reticle = "_reticle";
 
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_currentTween' field.
+		/// </summary>
 		public static readonly StringName _currentTween = "_currentTween";
 
+		/// <summary>
+		/// Cached name for the '_hsvDefault' field.
+		/// </summary>
 		public static readonly StringName _hsvDefault = "_hsvDefault";
 
+		/// <summary>
+		/// Cached name for the '_hsvHover' field.
+		/// </summary>
 		public static readonly StringName _hsvHover = "_hsvHover";
 
+		/// <summary>
+		/// Cached name for the '_hsvDown' field.
+		/// </summary>
 		public static readonly StringName _hsvDown = "_hsvDown";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'RewardClaimed' signal.
+		/// </summary>
 		public static readonly StringName RewardClaimed = "RewardClaimed";
 
+		/// <summary>
+		/// Cached name for the 'RewardSkipped' signal.
+		/// </summary>
 		public static readonly StringName RewardSkipped = "RewardSkipped";
 	}
 
@@ -108,6 +172,7 @@ public class NRewardButton : NButton
 
 	public static IEnumerable<string> AssetPaths => new global::_003C_003Ez__ReadOnlySingleElementList<string>(ScenePath);
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Rewards.NRewardButton.RewardClaimedEventHandler" />
 	public event RewardClaimedEventHandler RewardClaimed
 	{
 		add
@@ -120,6 +185,7 @@ public class NRewardButton : NButton
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Rewards.NRewardButton.RewardSkippedEventHandler" />
 	public event RewardSkippedEventHandler RewardSkipped
 	{
 		add
@@ -181,7 +247,7 @@ public class NRewardButton : NButton
 	private async Task GetReward()
 	{
 		Disable();
-		if (await Reward.OnSelectWrapper())
+		if (await RunManager.Instance.RewardsSetSynchronizer.SelectLocalReward(Reward))
 		{
 			if (TestMode.IsOff)
 			{
@@ -236,8 +302,8 @@ public class NRewardButton : NButton
 		_currentTween?.Kill();
 		_hsv.SetShaderParameter(_v, _hsvHover);
 		NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, Reward.HoverTips);
-		nHoverTipSet.GlobalPosition = base.GlobalPosition + Vector2.Left * 45f;
-		nHoverTipSet.SetAlignment(this, HoverTipAlignment.Left);
+		nHoverTipSet?.SetGlobalPosition(base.GlobalPosition + Vector2.Left * 45f);
+		nHoverTipSet?.SetAlignment(this, HoverTipAlignment.Left);
 		_reticle.OnSelect();
 	}
 
@@ -258,6 +324,11 @@ public class NRewardButton : NButton
 		_hsv.SetShaderParameter(_v, value);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -275,6 +346,7 @@ public class NRewardButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -323,6 +395,7 @@ public class NRewardButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -357,6 +430,7 @@ public class NRewardButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -408,6 +482,7 @@ public class NRewardButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -459,6 +534,11 @@ public class NRewardButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -475,6 +555,7 @@ public class NRewardButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -492,6 +573,7 @@ public class NRewardButton : NButton
 		info.AddSignalEventDelegate(SignalName.RewardSkipped, backing_RewardSkipped);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -542,6 +624,11 @@ public class NRewardButton : NButton
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotSignalList()
 	{
@@ -567,6 +654,7 @@ public class NRewardButton : NButton
 		EmitSignal(SignalName.RewardSkipped, button);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -584,6 +672,7 @@ public class NRewardButton : NButton
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

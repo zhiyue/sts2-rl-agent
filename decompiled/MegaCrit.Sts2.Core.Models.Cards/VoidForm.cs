@@ -10,6 +10,8 @@ namespace MegaCrit.Sts2.Core.Models.Cards;
 
 public sealed class VoidForm : CardModel
 {
+	public override IEnumerable<CardKeyword> CanonicalKeywords => new global::_003C_003Ez__ReadOnlySingleElementList<CardKeyword>(CardKeyword.Ethereal);
+
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new PowerVar<VoidFormPower>(2m));
 
 	public VoidForm()
@@ -19,13 +21,13 @@ public sealed class VoidForm : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<VoidFormPower>(base.Owner.Creature, base.DynamicVars["VoidFormPower"].BaseValue, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<VoidFormPower>(choiceContext, base.Owner.Creature, base.DynamicVars["VoidFormPower"].BaseValue, base.Owner.Creature, this);
 		PlayerCmd.EndTurn(base.Owner, canBackOut: false);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars["VoidFormPower"].UpgradeValueBy(1m);
+		RemoveKeyword(CardKeyword.Ethereal);
 	}
 }

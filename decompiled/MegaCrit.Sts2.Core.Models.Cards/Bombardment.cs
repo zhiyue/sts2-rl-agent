@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -42,7 +41,11 @@ public sealed class Bombardment : CardModel
 			.Execute(choiceContext);
 	}
 
-	public override async Task BeforeHandDraw(Player player, PlayerChoiceContext choiceContext, CombatState combatState)
+	/// <remarks>
+	/// We use Early here to prevent it from double-triggering if another auto-pre-play phase effect (like
+	/// <see cref="T:MegaCrit.Sts2.Core.Models.Powers.MayhemPower" />) also causes it to Exhaust.
+	/// </remarks>
+	public override async Task AfterAutoPrePlayPhaseEnteredEarly(PlayerChoiceContext choiceContext, Player player)
 	{
 		CardPile? pile = base.Pile;
 		if (pile != null && pile.Type == PileType.Exhaust && player == base.Owner)

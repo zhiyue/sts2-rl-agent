@@ -18,8 +18,8 @@ public sealed class LeadingStrike : CardModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
-		new CardsVar("Shivs", 1),
-		new DamageVar(7m, ValueProp.Move)
+		new CardsVar("Shivs", 2),
+		new DamageVar(3m, ValueProp.Move)
 	});
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromCard<Shiv>());

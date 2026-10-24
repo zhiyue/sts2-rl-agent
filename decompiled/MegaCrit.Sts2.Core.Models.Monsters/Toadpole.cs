@@ -6,11 +6,11 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
-using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
@@ -56,10 +56,9 @@ public sealed class Toadpole : MonsterModel
 
 	public override DamageSfxType TakeDamageSfxType => DamageSfxType.Slime;
 
-	public override void SetupSkins(NCreatureVisuals visuals)
+	public override void SetupSkins(MegaSprite spine, MegaSkeleton skeleton)
 	{
-		MegaSkeleton skeleton = visuals.SpineBody.GetSkeleton();
-		MegaSkin megaSkin = visuals.SpineBody.NewSkin("custom-skin");
+		MegaSkin megaSkin = spine.NewSkin("custom-skin");
 		MegaSkeletonDataResource data = skeleton.GetData();
 		megaSkin.AddSkin(data.FindSkin(MegaCrit.Sts2.Core.Random.Rng.Chaotic.NextItem(_eyeOptions)));
 		megaSkin.AddSkin(data.FindSkin(MegaCrit.Sts2.Core.Random.Rng.Chaotic.NextItem(_patternOptions)));
@@ -88,7 +87,7 @@ public sealed class Toadpole : MonsterModel
 
 	private async Task SpikeSpitMove(IReadOnlyList<Creature> targets)
 	{
-		await PowerCmd.Apply<ThornsPower>(base.Creature, -SpikenAmount, base.Creature, null);
+		await PowerCmd.Apply<ThornsPower>(new ThrowingPlayerChoiceContext(), base.Creature, -SpikenAmount, base.Creature, null);
 		await DamageCmd.Attack(SpikeSpitDamage).WithHitCount(SpikeSpitRepeat).FromMonster(this)
 			.WithAttackerAnim("AttackTriple", 0.3f)
 			.OnlyPlayAnimOnce()
@@ -108,7 +107,7 @@ public sealed class Toadpole : MonsterModel
 	private async Task SpikenMove(IReadOnlyList<Creature> targets)
 	{
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 0.2f);
-		await PowerCmd.Apply<ThornsPower>(base.Creature, SpikenAmount, base.Creature, null);
+		await PowerCmd.Apply<ThornsPower>(new ThrowingPlayerChoiceContext(), base.Creature, SpikenAmount, base.Creature, null);
 	}
 
 	public override CreatureAnimator GenerateAnimator(MegaSprite controller)

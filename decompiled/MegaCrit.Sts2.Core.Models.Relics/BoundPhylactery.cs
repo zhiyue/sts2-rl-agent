@@ -24,9 +24,14 @@ public sealed class BoundPhylactery : RelicModel
 		await SummonPet();
 	}
 
+	/// <summary>
+	/// We use AfterEnergyResetLate instead of <see cref="M:MegaCrit.Sts2.Core.Hooks.Hook.AfterEnergyReset(MegaCrit.Sts2.Core.Combat.ICombatState,MegaCrit.Sts2.Core.Entities.Players.Player)" /> or
+	/// <see cref="M:MegaCrit.Sts2.Core.Hooks.Hook.BeforeSideTurnStart(MegaCrit.Sts2.Core.Combat.ICombatState,MegaCrit.Sts2.Core.Combat.CombatSide,System.Collections.Generic.IReadOnlyList{MegaCrit.Sts2.Core.Entities.Creatures.Creature})" /> because we want to allow effects that check for Osty's existence (like
+	/// <see cref="T:MegaCrit.Sts2.Core.Models.Cards.Friendship" />) to run before we summon Osty.
+	/// </summary>
 	public override async Task AfterEnergyResetLate(Player player)
 	{
-		if (player == base.Owner && player.Creature.CombatState.RoundNumber != 1)
+		if (player == base.Owner && base.Owner.PlayerCombatState.TurnNumber != 1)
 		{
 			await SummonPet();
 		}

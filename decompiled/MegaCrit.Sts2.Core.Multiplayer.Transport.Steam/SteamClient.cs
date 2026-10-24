@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,14 +48,15 @@ public class SteamClient : NetClient
 
 	public Task<NetErrorInfo?> ConnectToLobbyOwnedByFriend(ulong steamPlayerId, CancellationToken cancelToken = default(CancellationToken))
 	{
-		_logger.Info($"Initializing Steam client. Our player id: {NetId}");
-		_logger.Debug($"Attempting to connect to lobby of player {steamPlayerId}");
+		_logger.Info($"Attempting to connect to lobby. Our player id: {NetId}. Other player's id: {steamPlayerId}.");
 		if (!SteamFriends.GetFriendGamePlayed(new CSteamID(steamPlayerId), out var pFriendGameInfo))
 		{
-			throw new InvalidOperationException($"Tried to join game of {steamPlayerId}, but they are not playing a game!");
+			Log.Warn("Tried to join a friend's Steam game, but they're not playing any game. Likely a stale invite");
+			return Task.FromResult((NetErrorInfo?)new NetErrorInfo(NetError.InvalidJoin, selfInitiated: false));
 		}
 		if (pFriendGameInfo.m_gameID != new CGameID(2868840uL) || pFriendGameInfo.m_steamIDLobby.m_SteamID == 0L)
 		{
+			Log.Warn("Tried to join a friend's Steam game, but they are not playing STS2 or they are not in a lobby. Likely a stale invite");
 			return Task.FromResult((NetErrorInfo?)new NetErrorInfo(NetError.InvalidJoin, selfInitiated: false));
 		}
 		return ConnectToLobby(pFriendGameInfo.m_steamIDLobby.m_SteamID, cancelToken);
@@ -96,19 +96,14 @@ public class SteamClient : NetClient
 					ConnectionResult connectionResult = await _connectingTaskCompletionSource.Task;
 					if (connectionResult.disconnectionReason.HasValue)
 					{
-						SteamNetworkingSockets.CloseConnection(_conn.Value, (int)connectionResult.disconnectionReason.Value, connectionResult.debugReason, bEnableLinger: false);
-						_conn = null;
-						_connectingTaskCompletionSource = null;
-						SteamMatchmaking.LeaveLobby(_lobbyId.Value);
-						_lobbyId = null;
-						_netStatusChangedCallback.Dispose();
-						_netStatusChangedCallback = null;
+						CleanupConnection((int)connectionResult.disconnectionReason.Value, connectionResult.debugReason);
 						result = new NetErrorInfo(connectionResult.disconnectionReason.Value, connectionResult.debugReason, selfInitiated: false);
 					}
 					else if (_conn.Value.m_HSteamNetConnection != connectionResult.connection.Value.m_HSteamNetConnection)
 					{
 						_logger.Error("Got different connection back from OnNetStatusChanged than we expected!");
-						DisconnectFromHostInternal(SteamDisconnectionReason.AppInternalError, "Invalid OnNetStatusChanged hConn", now: true, selfInitiated: false);
+						SteamNetworkingSockets.CloseConnection(connectionResult.connection.Value, 0, null, bEnableLinger: false);
+						CleanupConnection(1017, "Invalid OnNetStatusChanged hConn");
 						result = new NetErrorInfo(NetError.InternalError, selfInitiated: false);
 					}
 					else
@@ -202,6 +197,22 @@ public class SteamClient : NetClient
 		DisconnectFromHostInternal(reason.ToSteam(), string.Empty, now, selfInitiated: true);
 	}
 
+	private void CleanupLobby()
+	{
+		SteamMatchmaking.LeaveLobby(_lobbyId.Value);
+		_lobbyId = null;
+		_netStatusChangedCallback?.Dispose();
+		_netStatusChangedCallback = null;
+	}
+
+	private void CleanupConnection(int closeReason, string? debugReason)
+	{
+		SteamNetworkingSockets.CloseConnection(_conn.Value, closeReason, debugReason, bEnableLinger: false);
+		_conn = null;
+		_connectingTaskCompletionSource = null;
+		CleanupLobby();
+	}
+
 	private void DisconnectFromHostInternal(SteamDisconnectionReason reason, string? debugReason, bool now, bool selfInitiated)
 	{
 		_logger.Debug($"Disconnecting from host (now: {now} reason: {reason} debug: {debugReason})");
@@ -209,6 +220,7 @@ public class SteamClient : NetClient
 		SteamMatchmaking.LeaveLobby(_lobbyId.Value);
 		ulong steamID = _hostNetId.m_SteamID;
 		_conn = null;
+		_lobbyId = null;
 		_connectingTaskCompletionSource = null;
 		_netStatusChangedCallback?.Dispose();
 		_netStatusChangedCallback = null;
@@ -226,10 +238,7 @@ public class SteamClient : NetClient
 		}
 		else if (_lobbyId.HasValue)
 		{
-			SteamMatchmaking.LeaveLobby(_lobbyId.Value);
-			_lobbyId = null;
-			_netStatusChangedCallback?.Dispose();
-			_netStatusChangedCallback = null;
+			CleanupLobby();
 		}
 	}
 

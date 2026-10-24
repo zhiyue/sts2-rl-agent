@@ -18,12 +18,12 @@ public sealed class SleightOfFleshPower : PowerModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => Array.Empty<DynamicVar>();
 
-	public override async Task AfterPowerAmountChanged(PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
+	public override async Task AfterPowerAmountChanged(PlayerChoiceContext choiceContext, PowerModel power, decimal amount, Creature? applier, CardModel? cardSource)
 	{
 		if (!(amount == 0m) && power.GetTypeForAmount(amount) == PowerType.Debuff && power.Owner.IsEnemy && applier == base.Owner && !(power is ITemporaryPower))
 		{
 			Flash();
-			await CreatureCmd.Damage(new ThrowingPlayerChoiceContext(), power.Owner, base.Amount, ValueProp.Unpowered, base.Owner, null);
+			await CreatureCmd.Damage(choiceContext, power.Owner, base.Amount, ValueProp.Unpowered, base.Owner, null);
 		}
 	}
 }

@@ -16,6 +16,10 @@ public sealed class WellLaidPlansPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Counter;
 
+	/// <summary>
+	/// We use BeforeFlushLate instead of BeforeFlush here so that the player can have full information about the other
+	/// BeforeFlush effects before choosing a card to retain.
+	/// </summary>
 	public override async Task BeforeFlushLate(PlayerChoiceContext choiceContext, Player player)
 	{
 		if (player != base.Owner.Player || !Hook.ShouldFlush(player.Creature.CombatState, player))

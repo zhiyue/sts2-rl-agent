@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -21,33 +22,76 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NHyperbeamVfx.cs")]
 public class NHyperbeamVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'ApplyRotation' method.
+		/// </summary>
 		public static readonly StringName ApplyRotation = "ApplyRotation";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ShowLaser' method.
+		/// </summary>
 		public static readonly StringName ShowLaser = "ShowLaser";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_anticipationParticles' field.
+		/// </summary>
 		public static readonly StringName _anticipationParticles = "_anticipationParticles";
 
+		/// <summary>
+		/// Cached name for the '_laserParticles' field.
+		/// </summary>
 		public static readonly StringName _laserParticles = "_laserParticles";
 
+		/// <summary>
+		/// Cached name for the '_laserEndParticles' field.
+		/// </summary>
 		public static readonly StringName _laserEndParticles = "_laserEndParticles";
 
+		/// <summary>
+		/// Cached name for the '_laserLine' field.
+		/// </summary>
 		public static readonly StringName _laserLine = "_laserLine";
 
+		/// <summary>
+		/// Cached name for the '_laserContainer' field.
+		/// </summary>
 		public static readonly StringName _laserContainer = "_laserContainer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
+
+	private const string _hyperbeamSfxPath = "event:/sfx/characters/defect/defect_hyperbeam";
 
 	public static readonly string scenePath = SceneHelper.GetScenePath("vfx/vfx_hyperbeam");
 
@@ -70,6 +114,13 @@ public class NHyperbeamVfx : Node2D
 
 	public static readonly float hyperbeamLaserDuration = 0.5f;
 
+	private CancellationTokenSource? _cts;
+
+	public override void _ExitTree()
+	{
+		_cts?.Cancel();
+	}
+
 	public static NHyperbeamVfx? Create(Creature owner, Creature target)
 	{
 		if (TestMode.IsOn)
@@ -82,9 +133,9 @@ public class NHyperbeamVfx : Node2D
 		{
 			Vector2 vfxSpawnPosition = nCreature.VfxSpawnPosition;
 			Player player = owner.Player;
-			if (player != null && player.Character is Defect defect)
+			if (player != null && player.Character is Defect)
 			{
-				vfxSpawnPosition += defect.EyelineOffset;
+				vfxSpawnPosition += Defect.EyelineOffset;
 			}
 			return Create(vfxSpawnPosition, nCreature2.VfxSpawnPosition);
 		}
@@ -131,29 +182,37 @@ public class NHyperbeamVfx : Node2D
 
 	private async Task PlaySequence()
 	{
+		_cts = new CancellationTokenSource();
+		SfxCmd.Play("event:/sfx/characters/defect/defect_hyperbeam");
 		ShowLaser(showing: false);
 		for (int i = 0; i < _anticipationParticles.Count; i++)
 		{
 			_anticipationParticles[i].Restart();
 		}
-		await Cmd.Wait(hyperbeamAnticipationDuration);
+		await Cmd.Wait(hyperbeamAnticipationDuration, _cts.Token);
 		ShowLaser(showing: true);
 		NGame.Instance?.ScreenShake(ShakeStrength.Medium, ShakeDuration.Normal);
-		await Cmd.Wait(hyperbeamLaserDuration);
+		await Cmd.Wait(hyperbeamLaserDuration, _cts.Token);
 		ShowLaser(showing: false);
 		for (int j = 0; j < _laserEndParticles.Count; j++)
 		{
 			_laserEndParticles[j].Restart();
 		}
 		NGame.Instance?.ScreenShake(ShakeStrength.Strong, ShakeDuration.Short);
-		await Cmd.Wait(2f);
+		await Cmd.Wait(2f, _cts.Token);
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(4);
+		List<MethodInfo> list = new List<MethodInfo>(5);
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Node2D"), exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Vector2, "defectEyePosition", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
@@ -172,9 +231,16 @@ public class NHyperbeamVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName.Create && args.Count == 2)
 		{
 			ret = VariantUtils.CreateFrom<NHyperbeamVfx>(Create(VariantUtils.ConvertTo<Vector2>(in args[0]), VariantUtils.ConvertTo<Vector2>(in args[1])));
@@ -213,9 +279,14 @@ public class NHyperbeamVfx : Node2D
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
+		if (method == MethodName._ExitTree)
+		{
+			return true;
+		}
 		if (method == MethodName.Create)
 		{
 			return true;
@@ -235,6 +306,7 @@ public class NHyperbeamVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -266,6 +338,7 @@ public class NHyperbeamVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -297,6 +370,11 @@ public class NHyperbeamVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -309,6 +387,7 @@ public class NHyperbeamVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -320,6 +399,7 @@ public class NHyperbeamVfx : Node2D
 		info.AddProperty(PropertyName._laserContainer, Variant.From(in _laserContainer));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

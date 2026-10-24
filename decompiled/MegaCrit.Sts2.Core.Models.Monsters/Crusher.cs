@@ -3,15 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
+using MegaCrit.Sts2.Core.Nodes.Audio;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.Screens.Bestiary;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Backgrounds;
 using MegaCrit.Sts2.Core.ValueProps;
 
@@ -21,7 +25,19 @@ public sealed class Crusher : MonsterModel
 {
 	public const string deathVfxPath = "vfx/monsters/kaiser_crab_boss_explosion";
 
+	private const string _attackSlamSfx = "event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_attack_slam";
+
+	private const string _attackScoopSfx = "event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_attack_scoop";
+
+	private const string _attackScissorSfx = "event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_attack_scissor";
+
+	private const string _buffSfx = "event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_buff";
+
+	private const string _slamSfx = "event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_attack_slam";
+
 	private NKaiserCrabBossBackground? _background;
+
+	public override string DeathSfx => "event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_die";
 
 	public override IEnumerable<string> AssetPaths
 	{
@@ -32,7 +48,7 @@ public sealed class Crusher : MonsterModel
 			CollectionsMarshal.SetCount(list, num);
 			Span<string> span = CollectionsMarshal.AsSpan(list);
 			int index = 0;
-			span[index] = "vfx/monsters/kaiser_crab_boss_explosion";
+			span[index] = SceneHelper.GetScenePath("vfx/monsters/kaiser_crab_boss_explosion");
 			List<string> first = list;
 			return first.Concat(base.AssetPaths);
 		}
@@ -51,13 +67,14 @@ public sealed class Crusher : MonsterModel
 			AssertMutable();
 			if (_background == null)
 			{
-				_background = NCombatRoom.Instance.Background.GetNode<NKaiserCrabBossBackground>("%KaiserCrab");
+				Control control = NCombatRoom.Instance?.Background ?? NBestiary.Instance?.Layout ?? throw new InvalidOperationException();
+				_background = control.GetNode<NKaiserCrabBossBackground>("%KaiserCrab");
 			}
 			return _background;
 		}
 	}
 
-	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 209, 199);
+	public override int MinInitialHp => AscensionHelper.GetValueIfAscension(AscensionLevel.ToughEnemies, 219, 209);
 
 	public override int MaxInitialHp => MinInitialHp;
 
@@ -68,6 +85,8 @@ public sealed class Crusher : MonsterModel
 	private int BugStingDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 7, 6);
 
 	private int BugStingTimes => 2;
+
+	private int AdaptStrengthGain => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 3, 2);
 
 	private int GuardedStrikeDamage => AscensionHelper.GetValueIfAscension(AscensionLevel.DeadlyEnemies, 14, 12);
 
@@ -95,8 +114,9 @@ public sealed class Crusher : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<BackAttackLeftPower>(base.Creature, 1m, base.Creature, null);
-		await PowerCmd.Apply<CrabRagePower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<BackAttackLeftPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<CrabRagePower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
+		Background.SetVisible(visible: true);
 	}
 
 	public override Task AfterCurrentHpChanged(Creature creature, decimal delta)
@@ -115,53 +135,60 @@ public sealed class Crusher : MonsterModel
 		{
 			return Task.CompletedTask;
 		}
+		NAudioManager.Instance.PlayOneShot(DeathSfx);
 		Background.PlayArmDeathAnim(NKaiserCrabBossBackground.ArmSide.Left);
 		if (CombatManager.Instance.IsOverOrEnding)
 		{
 			Background.PlayBodyDeathAnim();
+			NRunMusicController.Instance?.UpdateMusicParameter("kaiser_crab_progress", 5f);
+		}
+		else
+		{
+			NRunMusicController.Instance?.UpdateMusicParameter("kaiser_crab_progress", 2f);
 		}
 		return Task.CompletedTask;
 	}
 
 	private async Task ThrashMove(IReadOnlyList<Creature> targets)
 	{
+		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_attack_scoop");
 		await Background.PlayAttackAnim(NKaiserCrabBossBackground.ArmSide.Left, "attack_heavy", 1f);
-		await DamageCmd.Attack(ThrashDamage).FromMonster(this).WithAttackerFx(null, AttackSfx)
-			.WithHitFx("vfx/vfx_attack_blunt", null, "heavy_attack.mp3")
+		await DamageCmd.Attack(ThrashDamage).FromMonster(this).WithHitFx("vfx/vfx_attack_blunt", "event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_attack_slam")
 			.Execute(null);
 	}
 
 	private async Task BugStingMove(IReadOnlyList<Creature> targets)
 	{
+		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_attack_scissor");
 		await Background.PlayAttackAnim(NKaiserCrabBossBackground.ArmSide.Left, "attack_double", 0.5f);
 		await DamageCmd.Attack(BugStingDamage).WithHitCount(BugStingTimes).FromMonster(this)
-			.WithAttackerFx(null, AttackSfx)
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(null);
-		await PowerCmd.Apply<WeakPower>(targets, 2m, base.Creature, null);
-		await PowerCmd.Apply<FrailPower>(targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<WeakPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
+		await PowerCmd.Apply<FrailPower>(new ThrowingPlayerChoiceContext(), targets, 2m, base.Creature, null);
 	}
 
 	private async Task AdaptMove(IReadOnlyList<Creature> targets)
 	{
+		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_buff");
 		await Background.PlayAttackAnim(NKaiserCrabBossBackground.ArmSide.Left, "buff", 0.8f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, AdaptStrengthGain, base.Creature, null);
 	}
 
 	private async Task EnlargingStrikeMove(IReadOnlyList<Creature> targets)
 	{
+		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_attack_slam");
 		await Background.PlayAttackAnim(NKaiserCrabBossBackground.ArmSide.Left, "attack_med", 0.65f);
-		await DamageCmd.Attack(EnlargingStrikeDamage).FromMonster(this).WithAttackerFx(null, AttackSfx)
-			.WithHitFx("vfx/vfx_heavy_blunt", null, "heavy_attack.mp3")
+		await DamageCmd.Attack(EnlargingStrikeDamage).FromMonster(this).WithHitFx("vfx/vfx_heavy_blunt", null, "heavy_attack.mp3")
 			.WithHitVfxSpawnedAtBase()
 			.Execute(null);
 	}
 
 	private async Task GuardedStrikeMove(IReadOnlyList<Creature> targets)
 	{
+		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/kaiser_crab/kaiser_crab_left_attack_slam");
 		await Background.PlayAttackAnim(NKaiserCrabBossBackground.ArmSide.Left, "attack_med", 0.65f);
-		await DamageCmd.Attack(GuardedStrikeDamage).FromMonster(this).WithAttackerFx(null, AttackSfx)
-			.WithHitFx("vfx/vfx_heavy_blunt", null, "heavy_attack.mp3")
+		await DamageCmd.Attack(GuardedStrikeDamage).FromMonster(this).WithHitFx("vfx/vfx_heavy_blunt", null, "heavy_attack.mp3")
 			.WithHitVfxSpawnedAtBase()
 			.Execute(null);
 		await CreatureCmd.GainBlock(base.Creature, 18m, ValueProp.Move, null);

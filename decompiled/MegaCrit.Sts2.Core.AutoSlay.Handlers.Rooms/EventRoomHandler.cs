@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -23,6 +24,11 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
 
+/// <summary>
+/// Handles event rooms by selecting random choices.
+/// Some events trigger combat mid-event (e.g., DenseVegetation's "Rest" option).
+/// This handler detects and handles those combats before returning to the event.
+/// </summary>
 public class EventRoomHandler : IRoomHandler, IHandler
 {
 	private const string _roomPath = "/root/Game/RootSceneContainer/Run/RoomContainer/EventRoom";
@@ -88,8 +94,16 @@ public class EventRoomHandler : IRoomHandler, IHandler
 			{
 				break;
 			}
+			List<NEventOptionButton> list3 = list2.Where((NEventOptionButton o) => o.Option.WillKillPlayer == null || o.Event.Owner == null || !o.Option.WillKillPlayer(o.Event.Owner)).ToList();
+			if (list3.Count > 0)
+			{
+				list2 = list3;
+			}
 			NEventOptionButton choice = random.NextItem(list2);
-			AutoSlayLog.Action("Selecting event option: " + choice.Event.Id.Entry);
+			AutoSlayLog.Action($"Selecting event option: {choice.Event.Id.Entry} (option: {choice.Option.Title.GetFormattedText()})");
+			HashSet<NEventOptionButton> previousButtons = new HashSet<NEventOptionButton>(from o in UiHelper.FindAll<NEventOptionButton>(eventRoom)
+				where !o.Option.IsLocked
+				select o);
 			await UiHelper.Click(choice);
 			if (choice.Option.IsProceed)
 			{
@@ -109,13 +123,55 @@ public class EventRoomHandler : IRoomHandler, IHandler
 				{
 					return true;
 				}
-				return !GodotObject.IsInstanceValid(eventRoom) || !eventRoom.IsInsideTree() || UiHelper.FindAll<NEventOptionButton>(eventRoom).Any((NEventOptionButton o) => !o.Option.IsLocked);
-			}, ct, TimeSpan.FromSeconds(5L), "Event options did not reappear after choice");
+				if (!GodotObject.IsInstanceValid(eventRoom) || !eventRoom.IsInsideTree())
+				{
+					return true;
+				}
+				if (CombatManager.Instance.IsInProgress)
+				{
+					return true;
+				}
+				List<NEventOptionButton> list4 = (from o in UiHelper.FindAll<NEventOptionButton>(eventRoom)
+					where !o.Option.IsLocked
+					select o).ToList();
+				return list4.Count == 0 || !previousButtons.SetEquals(list4);
+			}, ct, TimeSpan.FromSeconds(5L), "Event options did not change after choice");
 			NOverlayStack? instance = NOverlayStack.Instance;
 			if (instance != null && instance.ScreenCount > 0)
 			{
 				AutoSlayLog.Action("Overlay screen opened during event, deferring to drain loop");
 				break;
+			}
+			if (CombatManager.Instance.IsInProgress)
+			{
+				AutoSlayLog.Action("Combat started during event (combat layout), handling combat");
+				await HandleEventCombat(ct);
+				if (!GodotObject.IsInstanceValid(eventRoom) || !eventRoom.IsInsideTree())
+				{
+					AutoSlayLog.Action("Event room gone after combat");
+					break;
+				}
+				await WaitHelper.Until(delegate
+				{
+					if (GodotObject.IsInstanceValid(eventRoom) && eventRoom.IsInsideTree())
+					{
+						NMapScreen? instance2 = NMapScreen.Instance;
+						if (instance2 == null || !instance2.IsOpen)
+						{
+							NOverlayStack? instance3 = NOverlayStack.Instance;
+							if (instance3 == null || instance3.ScreenCount <= 0)
+							{
+								return UiHelper.FindAll<NEventOptionButton>(eventRoom).Any((NEventOptionButton o) => !o.Option.IsLocked);
+							}
+						}
+					}
+					return true;
+				}, ct, TimeSpan.FromSeconds(10L), "Event did not resume after combat layout combat");
+				if (!GodotObject.IsInstanceValid(eventRoom) || !eventRoom.IsInsideTree())
+				{
+					AutoSlayLog.Action("Event room gone after combat");
+					break;
+				}
 			}
 			iterations++;
 		}
@@ -131,9 +187,9 @@ public class EventRoomHandler : IRoomHandler, IHandler
 		await WaitHelper.Until(() => CombatManager.Instance.IsInProgress, ct, AutoSlayConfig.nodeWaitTimeout, "Event combat not started");
 		AutoSlayLog.Action("Event combat started, applying buffs and killing enemies");
 		Creature player = LocalContext.GetMe(RunManager.Instance.DebugOnlyGetState()).Creature;
-		await PowerCmd.Apply<StrengthPower>(player, 100m, player, null);
-		await PowerCmd.Apply<PlatingPower>(player, 100m, player, null);
-		await PowerCmd.Apply<RegenPower>(player, 100m, player, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), player, 100m, player, null);
+		await PowerCmd.Apply<PlatingPower>(new ThrowingPlayerChoiceContext(), player, 100m, player, null);
+		await PowerCmd.Apply<RegenPower>(new ThrowingPlayerChoiceContext(), player, 100m, player, null);
 		int killAttempts = 0;
 		int noEnemyWaitLoops = 0;
 		while (CombatManager.Instance.IsInProgress && killAttempts < 20)
@@ -189,6 +245,10 @@ public class EventRoomHandler : IRoomHandler, IHandler
 		return await WaitHelper.ForNode<Node>(root, "/root/Game/RootSceneContainer/Run/RoomContainer/EventRoom", ct);
 	}
 
+	/// <summary>
+	/// Waits for event options to become available.
+	/// </summary>
+	/// <returns>True if the event was fully handled (custom events), false if options loop should run.</returns>
 	private async Task<bool> WaitForEventOptions(Node eventRoom, CancellationToken ct)
 	{
 		NAncientEventLayout nAncientEventLayout = UiHelper.FindFirst<NAncientEventLayout>(eventRoom);
@@ -219,6 +279,11 @@ public class EventRoomHandler : IRoomHandler, IHandler
 		return false;
 	}
 
+	/// <summary>
+	/// Handles the FakeMerchant custom event.
+	/// This event uses NProceedButton instead of NEventOptionButton.
+	/// We simply click the proceed button to leave.
+	/// </summary>
 	private async Task HandleFakeMerchantEvent(NFakeMerchant fakeMerchant, CancellationToken ct)
 	{
 		AutoSlayLog.Action("Handling FakeMerchant event");
@@ -232,6 +297,9 @@ public class EventRoomHandler : IRoomHandler, IHandler
 		await UiHelper.Click(proceedButton);
 	}
 
+	/// <summary>
+	/// Handles Ancient events which require clicking through dialogue before options appear.
+	/// </summary>
 	private async Task HandleAncientEventDialogue(NAncientEventLayout ancientLayout, CancellationToken ct)
 	{
 		AutoSlayLog.Info("Detected Ancient event, clicking through dialogue");

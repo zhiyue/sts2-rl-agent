@@ -17,12 +17,12 @@ public sealed class TheSealedThrone : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<TheSealedThronePower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
+		await PowerCmd.Apply<TheSealedThronePower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()
 	{
-		AddKeyword(CardKeyword.Innate);
+		base.EnergyCost.UpgradeBy(-1);
 	}
 }

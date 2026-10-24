@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -44,7 +45,7 @@ public sealed class PhilosophersStone : RelicModel
 			return Task.CompletedTask;
 		}
 		Flash();
-		return PowerCmd.Apply<StrengthPower>(creature, base.DynamicVars["StrengthPower"].BaseValue, null, null);
+		return PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), creature, base.DynamicVars["StrengthPower"].BaseValue, null, null);
 	}
 
 	public override async Task AfterRoomEntered(AbstractRoom room)
@@ -55,7 +56,7 @@ public sealed class PhilosophersStone : RelicModel
 				where c.IsAlive
 				select c;
 			Flash();
-			await PowerCmd.Apply<StrengthPower>(targets, base.DynamicVars["StrengthPower"].BaseValue, null, null);
+			await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), targets, base.DynamicVars["StrengthPower"].BaseValue, null, null);
 		}
 	}
 }

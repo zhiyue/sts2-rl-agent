@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.InteropServices;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Acts;
 using MegaCrit.Sts2.Core.Models.CardPools;
@@ -47,8 +48,18 @@ public static class ModelDb
 
 	private static IEnumerable<RelicModel>? _allRelics;
 
+	private static List<ActModel>? _acts;
+
+	private static List<List<ActModel>>? _actsByIndex;
+
+	private static List<BadgeModel>? _badges;
+
 	private static List<AchievementModel>? _achievements;
 
+	/// <summary>
+	/// Returns every single class that subclasses AbstractModel.
+	/// Prefer this over using AbstractModelSubtypes.All because it also returns models in mods.
+	/// </summary>
 	public static Type[] AllAbstractModelSubtypes
 	{
 		get
@@ -60,18 +71,36 @@ public static class ModelDb
 		}
 	}
 
+	/// <summary>
+	/// Every Affliction defined in the game code, including mock ones for testing.
+	/// </summary>
 	public static IEnumerable<AfflictionModel> DebugAfflictions => from t in AllAbstractModelSubtypes
 		where t.IsSubclassOf(typeof(AfflictionModel))
 		select (AfflictionModel)Get(t);
 
+	/// <summary>
+	/// Every Enchantment defined in the game code, including mock ones for testing.
+	/// </summary>
 	public static IEnumerable<EnchantmentModel> DebugEnchantments => from t in AllAbstractModelSubtypes
 		where t.IsSubclassOf(typeof(EnchantmentModel))
 		select (EnchantmentModel)Get(t);
 
+	/// <summary>
+	/// Get all the cards in the game (ignores Unlocks/Epoch state).
+	/// Be careful using this, it includes cards that you shouldn't be able to randomly roll for rewards.
+	/// </summary>
 	public static IEnumerable<CardModel> AllCards => _allCards ?? (_allCards = AllCardPools.SelectMany((CardPoolModel p) => p.AllCards).Concat(AllCharacters.SelectMany((CharacterModel c) => c.StartingDeck).Distinct()).Distinct());
 
+	/// <summary>
+	/// Get all the card pools in the game.
+	/// Ignores Unlocks/Epoch state.
+	/// </summary>
 	public static IEnumerable<CardPoolModel> AllCardPools => _allCardPools ?? (_allCardPools = AllCharacterCardPools.Concat(AllSharedCardPools).Distinct());
 
+	/// <summary>
+	/// The card pools that are shared across all characters.
+	/// WARNING: Do NOT add TestCardPool to this list, or test cards might accidentally appear in-game.
+	/// </summary>
 	public static IEnumerable<CardPoolModel> AllSharedCardPools => new global::_003C_003Ez__ReadOnlyArray<CardPoolModel>(new CardPoolModel[7]
 	{
 		CardPool<ColorlessCardPool>(),
@@ -83,8 +112,14 @@ public static class ModelDb
 		CardPool<TokenCardPool>()
 	});
 
+	/// <summary>
+	/// Get all the card pools in the game that belong to specific characters.
+	/// </summary>
 	public static IEnumerable<CardPoolModel> AllCharacterCardPools => _allCharacterCardPools ?? (_allCharacterCardPools = AllCharacters.Select((CharacterModel c) => c.CardPool));
 
+	/// <summary>
+	/// Get all the characters in the game (ignores Unlocks/Epoch state).
+	/// </summary>
 	public static IEnumerable<CharacterModel> AllCharacters => new global::_003C_003Ez__ReadOnlyArray<CharacterModel>(new CharacterModel[5]
 	{
 		Character<Ironclad>(),
@@ -94,6 +129,9 @@ public static class ModelDb
 		Character<Defect>()
 	});
 
+	/// <summary>
+	/// Get all the events in the game that don't belong to a specific act.
+	/// </summary>
 	public static IEnumerable<EventModel> AllSharedEvents => _allSharedEvents ?? (_allSharedEvents = new global::_003C_003Ez__ReadOnlyArray<EventModel>(new EventModel[18]
 	{
 		Event<BrainLeech>(),
@@ -116,30 +154,64 @@ public static class ModelDb
 		Event<WelcomeToWongos>()
 	}));
 
+	/// <summary>
+	/// Get all the ancients in the game.
+	/// Ignores Unlocks/Epoch state.
+	/// </summary>
 	public static IEnumerable<AncientEventModel> AllAncients => Acts.SelectMany((ActModel a) => a.AllAncients).Concat(AllSharedAncients).Distinct();
 
+	/// <summary>
+	/// Get all the ancients in the game that don't belong to a specific act.
+	/// Notably, we only have 1 right now. That's Darv.
+	/// </summary>
 	public static IEnumerable<AncientEventModel> AllSharedAncients => new global::_003C_003Ez__ReadOnlySingleElementList<AncientEventModel>(AncientEvent<Darv>());
 
+	/// <summary>
+	/// Get all the events in the game (ignores Unlocks/Epoch state).
+	/// </summary>
 	public static IEnumerable<EventModel> AllEvents => _allEvents ?? (_allEvents = Acts.SelectMany((ActModel a) => a.AllEvents).Concat(AllSharedEvents).Distinct());
 
+	/// <summary>
+	/// Returns a list of every possible Monster in the game.
+	/// </summary>
 	public static IEnumerable<MonsterModel> Monsters => Acts.SelectMany((ActModel act) => act.AllMonsters).Distinct();
 
+	/// <summary>
+	/// Get all the encounters in the game.
+	/// </summary>
 	public static IEnumerable<EncounterModel> AllEncounters => _allEncounters ?? (_allEncounters = Acts.SelectMany((ActModel a) => a.AllEncounters).Distinct());
 
+	/// <summary>
+	/// Get all the potions in the game.
+	/// Be careful using this, it includes potions that you shouldn't be able to randomly roll for rewards.
+	/// </summary>
 	public static IEnumerable<PotionModel> AllPotions => _allPotions ?? (_allPotions = from p in AllPotionPools.SelectMany((PotionPoolModel p) => p.AllPotions).Distinct()
 		orderby p.Id.Entry
 		select p);
 
+	/// <summary>
+	/// Get all the potion pools in the game.
+	/// </summary>
 	public static IEnumerable<PotionPoolModel> AllPotionPools => _allPotionPools ?? (_allPotionPools = AllCharacterPotionPools.Concat(AllSharedPotionPools).Distinct());
 
+	/// <summary>
+	/// Get all the potion pools in the game that belong to specific characters.
+	/// </summary>
 	public static IEnumerable<PotionPoolModel> AllCharacterPotionPools => _allCharacterPotionPools ?? (_allCharacterPotionPools = AllCharacters.Select((CharacterModel c) => c.PotionPool));
 
+	/// <summary>
+	/// Get all the relic pools in the game that belong to specific characters.
+	/// </summary>
 	public static IEnumerable<RelicPoolModel> AllCharacterRelicPools => _allCharacterRelicPools ?? (_allCharacterRelicPools = AllCharacters.Select((CharacterModel c) => c.RelicPool));
 
-	private static IEnumerable<PotionPoolModel> AllSharedPotionPools => _allSharedPotionPools ?? (_allSharedPotionPools = new global::_003C_003Ez__ReadOnlyArray<PotionPoolModel>(new PotionPoolModel[4]
+	/// <summary>
+	/// Get all the potion pools in the game that are shared between all characters.
+	/// </summary>
+	private static IEnumerable<PotionPoolModel> AllSharedPotionPools => _allSharedPotionPools ?? (_allSharedPotionPools = new global::_003C_003Ez__ReadOnlyArray<PotionPoolModel>(new PotionPoolModel[5]
 	{
 		PotionPool<DeprecatedPotionPool>(),
 		PotionPool<EventPotionPool>(),
+		PotionPool<MockPotionPool>(),
 		PotionPool<SharedPotionPool>(),
 		PotionPool<TokenPotionPool>()
 	}));
@@ -148,14 +220,27 @@ public static class ModelDb
 		where t.IsSubclassOf(typeof(PowerModel))
 		select (PowerModel)Get(t));
 
+	/// <summary>
+	/// Get all the relics in the game (ignores Unlocks/Epoch state).
+	/// Be careful using this, it includes relics that you shouldn't be able to randomly roll for rewards.
+	/// </summary>
 	public static IEnumerable<RelicModel> AllRelics => _allRelics ?? (_allRelics = from r in AllRelicPools.SelectMany((RelicPoolModel p) => p.AllRelics).Concat(AllCharacters.SelectMany((CharacterModel c) => c.StartingRelics)).Distinct()
 		orderby r.Id.Entry
 		select r);
 
+	/// <summary>
+	/// Get all the relic pools in the game.
+	/// </summary>
 	public static IEnumerable<RelicPoolModel> AllRelicPools => CharacterRelicPools.Concat(AllSharedRelicPools).Distinct();
 
+	/// <summary>
+	/// Get all the relic pools in the game that belong to specific characters.
+	/// </summary>
 	public static IEnumerable<RelicPoolModel> CharacterRelicPools => AllCharacters.Select((CharacterModel c) => c.RelicPool);
 
+	/// <summary>
+	/// Get all the relic pools in the game that are shared between all characters.
+	/// </summary>
 	private static IEnumerable<RelicPoolModel> AllSharedRelicPools => new global::_003C_003Ez__ReadOnlyArray<RelicPoolModel>(new RelicPoolModel[4]
 	{
 		RelicPool<DeprecatedRelicPool>(),
@@ -172,13 +257,78 @@ public static class ModelDb
 		Orb<PlasmaOrb>()
 	});
 
-	public static IEnumerable<ActModel> Acts => new global::_003C_003Ez__ReadOnlyArray<ActModel>(new ActModel[4]
+	/// <summary>
+	/// All acts in the game.
+	/// Note that callers depend on this list being sorted by act index, then by default/non-default.
+	/// If you need a different ordering, feel free to change this or split into another list somewhere.
+	/// </summary>
+	public static IEnumerable<ActModel> Acts
 	{
-		Act<Overgrowth>(),
-		Act<Hive>(),
-		Act<Glory>(),
-		Act<Underdocks>()
-	});
+		get
+		{
+			if (_acts == null)
+			{
+				int num = 4;
+				List<ActModel> list = new List<ActModel>(num);
+				CollectionsMarshal.SetCount(list, num);
+				Span<ActModel> span = CollectionsMarshal.AsSpan(list);
+				int num2 = 0;
+				span[num2] = Act<Overgrowth>();
+				num2++;
+				span[num2] = Act<Underdocks>();
+				num2++;
+				span[num2] = Act<Hive>();
+				num2++;
+				span[num2] = Act<Glory>();
+				_acts = list;
+			}
+			return _acts;
+		}
+	}
+
+	public static IReadOnlyList<IReadOnlyList<ActModel>> ActsByIndex
+	{
+		get
+		{
+			if (_actsByIndex != null)
+			{
+				return _actsByIndex;
+			}
+			_actsByIndex = new List<List<ActModel>>();
+			foreach (ActModel act in Acts)
+			{
+				if (act.Index >= 0)
+				{
+					for (int i = _actsByIndex.Count; i <= act.Index; i++)
+					{
+						_actsByIndex.Add(new List<ActModel>());
+					}
+					_actsByIndex[act.Index].Add(act);
+				}
+			}
+			return _actsByIndex;
+		}
+	}
+
+	public static IReadOnlyList<BadgeModel> BadgeModels
+	{
+		get
+		{
+			if (_badges == null)
+			{
+				_badges = new List<BadgeModel>();
+				Type[] allAbstractModelSubtypes = AllAbstractModelSubtypes;
+				foreach (Type type in allAbstractModelSubtypes)
+				{
+					if (type.IsSubclassOf(typeof(BadgeModel)))
+					{
+						_badges.Add((BadgeModel)Get(type));
+					}
+				}
+			}
+			return _badges;
+		}
+	}
 
 	public static IReadOnlyList<AchievementModel> Achievements
 	{
@@ -231,6 +381,11 @@ public static class ModelDb
 		Modifier<Insanity>()
 	});
 
+	/// <summary>
+	/// Initializes the ModelDb.
+	/// Note that the alternative is to initialize in a static initializer, but if we do this we don't control the time
+	/// at which it gets initialized, and it usually happens at a bad time during gameplay.
+	/// </summary>
 	public static void Init()
 	{
 		Type[] allAbstractModelSubtypes = AllAbstractModelSubtypes;
@@ -242,6 +397,10 @@ public static class ModelDb
 		}
 	}
 
+	/// <summary>
+	/// Injects a model into the ModelDb. Should only be used in tests and mods.
+	/// </summary>
+	/// <param name="type">The type to inject.</param>
 	public static void Inject([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type type)
 	{
 		if (!Contains(type))
@@ -252,12 +411,21 @@ public static class ModelDb
 		}
 	}
 
+	/// <summary>
+	/// Removes a model from the ModelDb. Should only be used in tests and mods.
+	/// </summary>
+	/// <param name="type">The type to remove.</param>
 	public static void Remove(Type type)
 	{
 		ModelId id = GetId(type);
 		_contentById.Remove(id);
 	}
 
+	/// <summary>
+	/// Assigns IDs to all canonical models in the model database.
+	/// This must happen after Init (i.e. the AbstractModel constructors); otherwise, there is a circular dependency
+	/// between the static constructor and the ModelIdSerializationCache.
+	/// </summary>
 	public static void InitIds()
 	{
 		foreach (KeyValuePair<ModelId, AbstractModel> item in _contentById)
@@ -266,6 +434,9 @@ public static class ModelDb
 		}
 	}
 
+	/// <summary>
+	/// Precomputes a bunch of model data to speed up operations later.
+	/// </summary>
 	public static void Preload()
 	{
 		_ = AllCards;
@@ -459,6 +630,11 @@ public static class ModelDb
 	}
 
 	public static T Singleton<T>() where T : SingletonModel
+	{
+		return Get<T>();
+	}
+
+	public static T Badge<T>() where T : BadgeModel
 	{
 		return Get<T>();
 	}

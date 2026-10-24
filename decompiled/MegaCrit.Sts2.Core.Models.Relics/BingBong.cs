@@ -25,10 +25,10 @@ public sealed class BingBong : RelicModel
 		}
 	}
 
-	public override async Task AfterCardChangedPiles(CardModel card, PileType oldPileType, AbstractModel? source)
+	public override async Task AfterCardChangedPiles(CardModel card, PileType oldPileType, AbstractModel? clonedBy)
 	{
 		CardPile? pile = card.Pile;
-		if (pile != null && pile.Type == PileType.Deck && card.Owner == base.Owner && source == null && !CardsToSkip.Remove(card))
+		if (pile != null && pile.Type == PileType.Deck && card.Owner == base.Owner && clonedBy == null && !CardsToSkip.Remove(card))
 		{
 			Flash();
 			CardModel cardModel = base.Owner.RunState.CloneCard(card);

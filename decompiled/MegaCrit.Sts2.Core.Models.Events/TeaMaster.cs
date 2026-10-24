@@ -31,7 +31,7 @@ public sealed class TeaMaster : EventModel
 		new StringVar("TeaOfDiscourtesyDescription", ModelDb.Relic<TeaOfDiscourtesy>().DynamicDescription.GetFormattedText())
 	});
 
-	public override bool IsAllowed(RunState runState)
+	public override bool IsAllowed(IRunState runState)
 	{
 		if (runState.CurrentActIndex < 2)
 		{

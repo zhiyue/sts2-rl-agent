@@ -95,6 +95,11 @@ public sealed class ArchaicTooth : RelicModel
 		_extraHoverTips = new List<IHoverTip>();
 	}
 
+	/// <summary>
+	/// Sets up transcendent starter card for given player.
+	/// </summary>
+	/// <param name="player">Player we are getting the trasncendent card for.</param>
+	/// <returns>Returns false if the player doesn't have the base starter card to transcend.</returns>
 	public bool SetupForPlayer(Player player)
 	{
 		AssertMutable();

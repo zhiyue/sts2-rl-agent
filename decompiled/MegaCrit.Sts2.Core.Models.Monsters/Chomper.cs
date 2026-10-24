@@ -4,12 +4,14 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Models.Monsters;
 
@@ -47,7 +49,7 @@ public sealed class Chomper : MonsterModel
 	public override async Task AfterAddedToRoom()
 	{
 		await base.AfterAddedToRoom();
-		await PowerCmd.Apply<ArtifactPower>(base.Creature, 2m, base.Creature, null);
+		await PowerCmd.Apply<ArtifactPower>(new ThrowingPlayerChoiceContext(), base.Creature, 2m, base.Creature, null);
 	}
 
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
@@ -74,9 +76,9 @@ public sealed class Chomper : MonsterModel
 	private async Task ScreechMove(IReadOnlyList<Creature> targets)
 	{
 		LocString line = MonsterModel.L10NMonsterLookup("CHOMPER.moves.SCREECH.title");
-		TalkCmd.Play(line, base.Creature);
+		TalkCmd.Play(line, base.Creature, VfxColor.Cyan);
 		SfxCmd.Play(CastSfx);
 		await CreatureCmd.TriggerAnim(base.Creature, "Cast", 1f);
-		await CardPileCmd.AddToCombatAndPreview<Dazed>(targets, PileType.Discard, 3, addedByPlayer: false);
+		await CardPileCmd.AddToCombatAndPreview<Dazed>(targets, PileType.Discard, 3, null);
 	}
 }

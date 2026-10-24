@@ -18,7 +18,7 @@ public sealed class RipAndTear : CardModel
 	public override CardPoolModel VisualCardPool => ModelDb.CardPool<DefectCardPool>();
 
 	public RipAndTear()
-		: base(1, CardType.Attack, CardRarity.Uncommon, TargetType.RandomEnemy)
+		: base(1, CardType.Attack, CardRarity.Event, TargetType.RandomEnemy)
 	{
 	}
 

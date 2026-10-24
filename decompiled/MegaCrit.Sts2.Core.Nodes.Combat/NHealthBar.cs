@@ -15,87 +15,208 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Combat;
 
+/// <summary>
+/// Controls visual logic for the health bar! This includes the red part, the text, block icon, and handles Poison/Doom.
+/// This does NOT control the behavior/layout of Powers.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Combat/NHealthBar.cs")]
 public class NHealthBar : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'DebugToggleVisibility' method.
+		/// </summary>
 		public static readonly StringName DebugToggleVisibility = "DebugToggleVisibility";
 
+		/// <summary>
+		/// Cached name for the 'UpdateLayoutForCreatureBounds' method.
+		/// </summary>
 		public static readonly StringName UpdateLayoutForCreatureBounds = "UpdateLayoutForCreatureBounds";
 
+		/// <summary>
+		/// Cached name for the 'UpdateWidthRelativeToReferenceValue' method.
+		/// </summary>
 		public static readonly StringName UpdateWidthRelativeToReferenceValue = "UpdateWidthRelativeToReferenceValue";
 
+		/// <summary>
+		/// Cached name for the 'SetHpBarContainerSizeWithOffsets' method.
+		/// </summary>
 		public static readonly StringName SetHpBarContainerSizeWithOffsets = "SetHpBarContainerSizeWithOffsets";
 
+		/// <summary>
+		/// Cached name for the 'SetHpBarContainerSizeWithOffsetsImmediately' method.
+		/// </summary>
 		public static readonly StringName SetHpBarContainerSizeWithOffsetsImmediately = "SetHpBarContainerSizeWithOffsetsImmediately";
 
+		/// <summary>
+		/// Cached name for the 'RefreshValues' method.
+		/// </summary>
 		public static readonly StringName RefreshValues = "RefreshValues";
 
+		/// <summary>
+		/// Cached name for the 'RefreshMiddleground' method.
+		/// </summary>
 		public static readonly StringName RefreshMiddleground = "RefreshMiddleground";
 
+		/// <summary>
+		/// Cached name for the 'RefreshForeground' method.
+		/// </summary>
 		public static readonly StringName RefreshForeground = "RefreshForeground";
 
+		/// <summary>
+		/// Cached name for the 'RefreshBlockUi' method.
+		/// </summary>
 		public static readonly StringName RefreshBlockUi = "RefreshBlockUi";
 
+		/// <summary>
+		/// Cached name for the 'RefreshText' method.
+		/// </summary>
 		public static readonly StringName RefreshText = "RefreshText";
 
+		/// <summary>
+		/// Cached name for the 'IsPoisonLethal' method.
+		/// </summary>
 		public static readonly StringName IsPoisonLethal = "IsPoisonLethal";
 
+		/// <summary>
+		/// Cached name for the 'IsDoomLethal' method.
+		/// </summary>
 		public static readonly StringName IsDoomLethal = "IsDoomLethal";
 
+		/// <summary>
+		/// Cached name for the 'GetFgWidth' method.
+		/// </summary>
 		public static readonly StringName GetFgWidth = "GetFgWidth";
 
+		/// <summary>
+		/// Cached name for the 'FadeOutHpLabel' method.
+		/// </summary>
 		public static readonly StringName FadeOutHpLabel = "FadeOutHpLabel";
 
+		/// <summary>
+		/// Cached name for the 'FadeInHpLabel' method.
+		/// </summary>
 		public static readonly StringName FadeInHpLabel = "FadeInHpLabel";
 
+		/// <summary>
+		/// Cached name for the 'AnimateInBlock' method.
+		/// </summary>
 		public static readonly StringName AnimateInBlock = "AnimateInBlock";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'MaxFgWidth' property.
+		/// </summary>
 		public static readonly StringName MaxFgWidth = "MaxFgWidth";
 
+		/// <summary>
+		/// Cached name for the 'HpBarContainer' property.
+		/// </summary>
 		public static readonly StringName HpBarContainer = "HpBarContainer";
 
+		/// <summary>
+		/// Cached name for the '_hpForegroundContainer' field.
+		/// </summary>
 		public static readonly StringName _hpForegroundContainer = "_hpForegroundContainer";
 
+		/// <summary>
+		/// Cached name for the '_hpForeground' field.
+		/// </summary>
 		public static readonly StringName _hpForeground = "_hpForeground";
 
+		/// <summary>
+		/// Cached name for the '_poisonForeground' field.
+		/// </summary>
 		public static readonly StringName _poisonForeground = "_poisonForeground";
 
+		/// <summary>
+		/// Cached name for the '_doomForeground' field.
+		/// </summary>
 		public static readonly StringName _doomForeground = "_doomForeground";
 
+		/// <summary>
+		/// Cached name for the '_hpMiddleground' field.
+		/// </summary>
 		public static readonly StringName _hpMiddleground = "_hpMiddleground";
 
+		/// <summary>
+		/// Cached name for the '_hpLabel' field.
+		/// </summary>
 		public static readonly StringName _hpLabel = "_hpLabel";
 
+		/// <summary>
+		/// Cached name for the '_blockContainer' field.
+		/// </summary>
 		public static readonly StringName _blockContainer = "_blockContainer";
 
+		/// <summary>
+		/// Cached name for the '_blockLabel' field.
+		/// </summary>
 		public static readonly StringName _blockLabel = "_blockLabel";
 
+		/// <summary>
+		/// Cached name for the '_blockOutline' field.
+		/// </summary>
 		public static readonly StringName _blockOutline = "_blockOutline";
 
+		/// <summary>
+		/// Cached name for the '_infinityTex' field.
+		/// </summary>
 		public static readonly StringName _infinityTex = "_infinityTex";
 
+		/// <summary>
+		/// Cached name for the '_blockTween' field.
+		/// </summary>
 		public static readonly StringName _blockTween = "_blockTween";
 
+		/// <summary>
+		/// Cached name for the '_hpLabelFadeTween' field.
+		/// </summary>
 		public static readonly StringName _hpLabelFadeTween = "_hpLabelFadeTween";
 
+		/// <summary>
+		/// Cached name for the '_middlegroundTween' field.
+		/// </summary>
 		public static readonly StringName _middlegroundTween = "_middlegroundTween";
 
+		/// <summary>
+		/// Cached name for the '_originalBlockPosition' field.
+		/// </summary>
 		public static readonly StringName _originalBlockPosition = "_originalBlockPosition";
 
+		/// <summary>
+		/// Cached name for the '_currentHpOnLastRefresh' field.
+		/// </summary>
 		public static readonly StringName _currentHpOnLastRefresh = "_currentHpOnLastRefresh";
 
+		/// <summary>
+		/// Cached name for the '_maxHpOnLastRefresh' field.
+		/// </summary>
 		public static readonly StringName _maxHpOnLastRefresh = "_maxHpOnLastRefresh";
 
+		/// <summary>
+		/// Cached name for the '_expectedMaxFgWidth' field.
+		/// </summary>
 		public static readonly StringName _expectedMaxFgWidth = "_expectedMaxFgWidth";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -149,6 +270,8 @@ public class NHealthBar : Control
 	private static readonly Color _defaultFontOutlineColor = new Color("900000");
 
 	private static readonly Color _blockOutlineColor = new Color("1B3045");
+
+	private static readonly Color _invincibleOutlineColor = new Color("4C4370");
 
 	private static readonly Color _redForegroundColor = new Color("F1373E");
 
@@ -215,6 +338,11 @@ public class NHealthBar : Control
 		_originalBlockPosition = _blockContainer.Position;
 	}
 
+	/// <summary>
+	/// Linearly interpolates the width of the HP bar based on the reference values.
+	/// </summary>
+	/// <param name="refMaxHp">A reference max HP.</param>
+	/// <param name="refWidth">The width of the HP bar when the max HP is equal to refMaxHp.</param>
 	public void UpdateWidthRelativeToReferenceValue(float refMaxHp, float refWidth)
 	{
 		Vector2 size = HpBarContainer.Size;
@@ -222,6 +350,10 @@ public class NHealthBar : Control
 		SetHpBarContainerSizeWithOffsetsImmediately(size);
 	}
 
+	/// <summary>
+	/// Sets the container size, deferring it to avoid issues.
+	/// TODO: What issues? I'm not sure, it's from an old commit
+	/// </summary>
 	private void SetHpBarContainerSizeWithOffsets(Vector2 size)
 	{
 		Callable.From(delegate
@@ -242,6 +374,10 @@ public class NHealthBar : Control
 		}
 	}
 
+	/// <summary>
+	/// Forces the health bar to look right and start/stop animations.
+	/// Called often, even if the health bar isn't affected.
+	/// </summary>
 	public void RefreshValues()
 	{
 		RefreshBlockUi();
@@ -268,7 +404,7 @@ public class NHealthBar : Control
 		{
 			_currentHpOnLastRefresh = currentHp;
 			_maxHpOnLastRefresh = maxHp;
-			float num = (_creature.HasPower<PoisonPower>() ? _poisonForeground.OffsetRight : _hpForeground.OffsetRight);
+			float num = (_poisonForeground.Visible ? _poisonForeground.OffsetRight : _hpForeground.OffsetRight);
 			bool flag = num >= _hpMiddleground.OffsetRight;
 			_hpMiddleground.OffsetRight += 1f;
 			_middlegroundTween?.Kill();
@@ -290,9 +426,11 @@ public class NHealthBar : Control
 		_hpForeground.Visible = true;
 		float offsetRight = GetFgWidth(_creature.CurrentHp) - MaxFgWidth;
 		_hpForeground.OffsetRight = offsetRight;
-		if (_creature.ShowsInfiniteHp)
+		if (_creature.HpDisplay.IsInfinite())
 		{
 			_hpForeground.SelfModulate = _invincibleForegroundColor;
+			_poisonForeground.Visible = false;
+			_doomForeground.Visible = false;
 			return;
 		}
 		int powerAmount = _creature.GetPowerAmount<DoomPower>();
@@ -365,6 +503,10 @@ public class NHealthBar : Control
 		}
 	}
 
+	/// <summary>
+	/// Determines whether the Block icon should be visible + the color of the health bar if you have Block.
+	/// Note that the text on the health bar is handled elsewhere -&gt; RefreshText();
+	/// </summary>
 	private void RefreshBlockUi()
 	{
 		if (_creature.Block <= 0)
@@ -396,28 +538,37 @@ public class NHealthBar : Control
 		}
 	}
 
+	/// <summary>
+	/// The text that displays HP. e.g. 72/72
+	/// This logic controls this text's color and its outline as it's
+	/// affected by having Block, being in lethal due to Poison/Doom, and Invincibility.
+	/// </summary>
 	private void RefreshText()
 	{
 		if (_creature.CurrentHp <= 0)
 		{
-			_hpLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, _defaultFontColor);
-			_hpLabel.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, _defaultFontOutlineColor);
+			_hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, _defaultFontColor);
+			_hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, _defaultFontOutlineColor);
 			_hpLabel.SetTextAutoSize(_healthBarDead.GetRawText());
 			return;
 		}
-		if (_creature.ShowsInfiniteHp)
+		_doomForeground.Modulate = (_creature.HpDisplay.IsInfinite() ? Colors.Transparent : Colors.White);
+		_infinityTex.Visible = _creature.HpDisplay == HpDisplay.InfiniteWithoutNumbers;
+		_hpLabel.Visible = _creature.HpDisplay.ShowsNumbers();
+		if (!_creature.HpDisplay.ShowsNumbers())
 		{
-			_infinityTex.Visible = _creature.IsAlive;
-			_doomForeground.Modulate = Colors.Transparent;
-			_hpLabel.Visible = !_infinityTex.Visible;
 			return;
 		}
-		_hpLabel.Visible = true;
 		int poisonDamage = _creature.GetPower<PoisonPower>()?.CalculateTotalDamageNextTurn() ?? 0;
 		int powerAmount = _creature.GetPowerAmount<DoomPower>();
 		Color color;
 		Color color2;
-		if (IsPoisonLethal(poisonDamage))
+		if (_creature.HpDisplay == HpDisplay.InfiniteWithNumbers)
+		{
+			color = _defaultFontColor;
+			color2 = _invincibleOutlineColor;
+		}
+		else if (IsPoisonLethal(poisonDamage))
 		{
 			color = new Color("76FF40");
 			color2 = new Color("074700");
@@ -436,16 +587,16 @@ public class NHealthBar : Control
 				{
 					color = _defaultFontColor;
 					color2 = _defaultFontOutlineColor;
-					goto IL_0151;
+					goto IL_0189;
 				}
 			}
 			color = _defaultFontColor;
 			color2 = _blockOutlineColor;
 		}
-		goto IL_0151;
-		IL_0151:
-		_hpLabel.AddThemeColorOverride(ThemeConstants.Label.fontColor, color);
-		_hpLabel.AddThemeColorOverride(ThemeConstants.Label.fontOutlineColor, color2);
+		goto IL_0189;
+		IL_0189:
+		_hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontColor, color);
+		_hpLabel.AddThemeColorOverride(ThemeConstants.Label.FontOutlineColor, color2);
 		_hpLabel.SetTextAutoSize($"{_creature.CurrentHp}/{_creature.MaxHp}");
 	}
 
@@ -458,6 +609,10 @@ public class NHealthBar : Control
 		return poisonDamage >= _creature.CurrentHp;
 	}
 
+	/// <summary>
+	/// Checks if Doom is lethal when it's to trigger next. Poison damage is also incorporated as the
+	/// creature's HP may drop at the start of their turn and their remaining HP may enter Doom range.
+	/// </summary>
 	private bool IsDoomLethal(int doomAmount, int poisonDamage)
 	{
 		if (doomAmount <= 0 || !_creature.HasPower<DoomPower>())
@@ -467,6 +622,12 @@ public class NHealthBar : Control
 		return doomAmount >= _creature.CurrentHp - poisonDamage;
 	}
 
+	/// <summary>
+	/// Calculates the width of the foreground given an "amount" which is a ratio of this and the MaxHP.
+	/// Example: If amount is currentHp. Then if you have 12 currentHP and 50 maxHp, this would return
+	/// 0.24 (12/50) multiplied by the width of the foreground bar's total length. If the bar is 240px,
+	/// then we would return 240 x 0.24 as a float.
+	/// </summary>
 	private float GetFgWidth(int amount)
 	{
 		return GetFgWidth(amount, MaxFgWidth);
@@ -513,11 +674,19 @@ public class NHealthBar : Control
 		}
 	}
 
+	/// <summary>
+	/// See <see cref="M:MegaCrit.Sts2.Core.Nodes.Combat.NCreature.TrackBlockStatus(MegaCrit.Sts2.Core.Entities.Creatures.Creature)" /> for details.
+	/// </summary>
 	public void TrackBlockStatus(Creature creature)
 	{
 		_blockTrackingCreature = creature;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -581,6 +750,7 @@ public class NHealthBar : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -691,6 +861,7 @@ public class NHealthBar : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -765,6 +936,7 @@ public class NHealthBar : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -861,6 +1033,7 @@ public class NHealthBar : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -962,6 +1135,11 @@ public class NHealthBar : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -988,6 +1166,7 @@ public class NHealthBar : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -1012,6 +1191,7 @@ public class NHealthBar : Control
 		info.AddProperty(PropertyName._expectedMaxFgWidth, Variant.From(in _expectedMaxFgWidth));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

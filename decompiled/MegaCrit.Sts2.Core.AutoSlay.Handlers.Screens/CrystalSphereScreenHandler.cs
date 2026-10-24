@@ -14,6 +14,12 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles the Crystal Sphere minigame event screen.
+/// Uses divinations by clicking cells, then clicks proceed.
+/// Note: When divinations run out, a rewards screen opens automatically.
+/// The drain loop will handle that, then this handler runs again to click proceed.
+/// </summary>
 public class CrystalSphereScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NCrystalSphereScreen);

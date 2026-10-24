@@ -23,7 +23,7 @@ public sealed class FragrantMushroom : RelicModel
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
 		new HpLossVar(15m),
-		new CardsVar(3)
+		new CardsVar(2)
 	});
 
 	public override async Task AfterObtained()

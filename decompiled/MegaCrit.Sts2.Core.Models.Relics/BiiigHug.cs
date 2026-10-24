@@ -32,7 +32,7 @@ public sealed class BiiigHug : RelicModel
 		if (shuffler == base.Owner)
 		{
 			CardModel soot = shuffler.Creature.CombatState.CreateCard<Soot>(base.Owner);
-			await CardPileCmd.AddGeneratedCardToCombat(soot, PileType.Draw, addedByPlayer: true, CardPilePosition.Random);
+			await CardPileCmd.AddGeneratedCardToCombat(soot, PileType.Draw, base.Owner, CardPilePosition.Random);
 			Flash();
 			CardCmd.Preview(soot, 0.75f);
 			await Cmd.Wait(1f);

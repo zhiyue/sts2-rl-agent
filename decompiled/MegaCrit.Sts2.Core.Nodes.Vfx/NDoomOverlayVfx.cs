@@ -9,27 +9,57 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
+/// <summary>
+/// A simple vfx which renders a colorRect to tint the entire screen using an additive blend.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Vfx/NDoomOverlayVfx.cs")]
 public class NDoomOverlayVfx : BackBufferCopy
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : BackBufferCopy.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'GetOrCreate' method.
+		/// </summary>
 		public static readonly StringName GetOrCreate = "GetOrCreate";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'PlayVfx' method.
+		/// </summary>
 		public static readonly StringName PlayVfx = "PlayVfx";
 
+		/// <summary>
+		/// Cached name for the 'OnTweenFinished' method.
+		/// </summary>
 		public static readonly StringName OnTweenFinished = "OnTweenFinished";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : BackBufferCopy.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : BackBufferCopy.SignalName
 	{
 	}
@@ -99,6 +129,11 @@ public class NDoomOverlayVfx : BackBufferCopy
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -111,6 +146,7 @@ public class NDoomOverlayVfx : BackBufferCopy
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -158,6 +194,7 @@ public class NDoomOverlayVfx : BackBufferCopy
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -184,6 +221,7 @@ public class NDoomOverlayVfx : BackBufferCopy
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -195,6 +233,7 @@ public class NDoomOverlayVfx : BackBufferCopy
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -206,6 +245,11 @@ public class NDoomOverlayVfx : BackBufferCopy
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -214,6 +258,7 @@ public class NDoomOverlayVfx : BackBufferCopy
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -221,6 +266,7 @@ public class NDoomOverlayVfx : BackBufferCopy
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

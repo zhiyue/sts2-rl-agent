@@ -15,7 +15,7 @@ public sealed class SoulsPower : EnchantmentModel
 		{
 			return false;
 		}
-		if (!card.Keywords.Contains(CardKeyword.Exhaust))
+		if (!card.GetKeywordsWithSources(KeywordSources.Local).Contains(CardKeyword.Exhaust))
 		{
 			return false;
 		}

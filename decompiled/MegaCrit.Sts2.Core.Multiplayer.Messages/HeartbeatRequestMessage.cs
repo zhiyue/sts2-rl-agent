@@ -12,6 +12,8 @@ public record struct HeartbeatRequestMessage : INetMessage, IPacketSerializable
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
 
+	public bool ShouldBuffer => false;
+
 	public int counter;
 
 	public void Serialize(PacketWriter writer)

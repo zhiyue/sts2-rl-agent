@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.Factories;
@@ -12,7 +11,6 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Random;
-using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Runs.History;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.TestSupport;
@@ -53,14 +51,13 @@ public class PotionReward : Reward
 		Potion = potion;
 	}
 
-	public override Task Populate()
+	public override void Populate()
 	{
 		Rng rng = _rngOverride ?? base.Player.PlayerRng.Rewards;
 		if (Potion == null)
 		{
 			PotionModel potionModel = (Potion = PotionFactory.CreateRandomPotionOutOfCombat(base.Player, rng).ToMutable());
 		}
-		return Task.CompletedTask;
 	}
 
 	public override Control? CreateIcon()
@@ -81,8 +78,7 @@ public class PotionReward : Reward
 		PotionProcureResult potionProcureResult = await PotionCmd.TryToProcure(Potion, base.Player);
 		if (potionProcureResult.success)
 		{
-			Log.Info($"Obtained {potionProcureResult.potion.Id} from potion reward");
-			RunManager.Instance.RewardSynchronizer.SyncLocalObtainedPotion(Potion);
+			Log.Info($"Player {base.Player.NetId} obtained {potionProcureResult.potion.Id} from potion reward");
 			ClaimedPotion = Potion;
 			_wasTaken = true;
 			return true;
@@ -100,8 +96,7 @@ public class PotionReward : Reward
 	{
 		if (!_wasTaken)
 		{
-			base.Player.RunState.CurrentMapPointHistoryEntry.GetEntry(LocalContext.NetId.Value).PotionChoices.Add(new ModelChoiceHistoryEntry(Potion.Id, wasPicked: false));
-			RunManager.Instance.RewardSynchronizer.SyncLocalSkippedPotion(Potion);
+			base.Player.RunState.CurrentMapPointHistoryEntry.GetEntry(base.Player.NetId).PotionChoices.Add(new ModelChoiceHistoryEntry(Potion.Id, wasPicked: false));
 		}
 	}
 

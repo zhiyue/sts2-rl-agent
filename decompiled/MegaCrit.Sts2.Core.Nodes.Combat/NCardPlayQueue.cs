@@ -22,6 +22,9 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Nodes.Combat;
 
+/// <summary>
+/// Takes control of card nodes that are about to be played and arranges them in the order of play.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Combat/NCardPlayQueue.cs")]
 public class NCardPlayQueue : Control
 {
@@ -34,29 +37,62 @@ public class NCardPlayQueue : Control
 		public Tween? currentTween;
 	}
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'RemoveCardFromQueueForCancellation' method.
+		/// </summary>
 		public static readonly StringName RemoveCardFromQueueForCancellation = "RemoveCardFromQueueForCancellation";
 
+		/// <summary>
+		/// Cached name for the 'RemoveCardFromQueue' method.
+		/// </summary>
 		public static readonly StringName RemoveCardFromQueue = "RemoveCardFromQueue";
 
+		/// <summary>
+		/// Cached name for the 'TweenAllToQueuePosition' method.
+		/// </summary>
 		public static readonly StringName TweenAllToQueuePosition = "TweenAllToQueuePosition";
 
+		/// <summary>
+		/// Cached name for the 'AnimOut' method.
+		/// </summary>
 		public static readonly StringName AnimOut = "AnimOut";
 
+		/// <summary>
+		/// Cached name for the 'GetScaleForQueueIndex' method.
+		/// </summary>
 		public static readonly StringName GetScaleForQueueIndex = "GetScaleForQueueIndex";
 
+		/// <summary>
+		/// Cached name for the 'GetPositionForQueueIndex' method.
+		/// </summary>
 		public static readonly StringName GetPositionForQueueIndex = "GetPositionForQueueIndex";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -76,6 +112,13 @@ public class NCardPlayQueue : Control
 		_playQueue.Clear();
 	}
 
+	/// <summary>
+	/// Called after a card is played by the local player.
+	/// If the card is not yet in the play pile, it tweens the card into its queue position.
+	/// </summary>
+	/// <param name="action">The play card action that caused the card to be played.</param>
+	/// <param name="holder">The card holder that was played.</param>
+	/// <param name="card">The card that was played.</param>
 	public void OnLocalCardPlayed(PlayCardAction action, NCardHolder? holder, CardModel card)
 	{
 		NCard nCard = holder?.CardNode ?? NCard.Create(card);
@@ -95,7 +138,7 @@ public class NCardPlayQueue : Control
 			{
 				this.AddChildSafely(nCard);
 			}
-			MoveChild(nCard, 0);
+			this.MoveChildSafely(nCard, 0);
 			if (holder != null && holder.IsValid())
 			{
 				NPlayerHand.Instance.RemoveCardHolder(holder);
@@ -105,6 +148,11 @@ public class NCardPlayQueue : Control
 		}
 	}
 
+	/// <summary>
+	/// Called when any action is enqueued onto the action queue.
+	/// Handles cases in which a card is played by a remote player and we want to display the card in the queue.
+	/// </summary>
+	/// <param name="action">The action that was enqueued.</param>
 	private void OnActionEnqueued(GameAction action)
 	{
 		if (!(action is PlayCardAction { NetCombatCard: var netCombatCard } playCardAction))
@@ -136,7 +184,7 @@ public class NCardPlayQueue : Control
 		nCard.GlobalPosition = globalPosition;
 		nCard.Scale = Vector2.One * 0.25f;
 		this.AddChildSafely(nCard);
-		MoveChild(nCard, 0);
+		this.MoveChildSafely(nCard, 0);
 		QueueItem item = new QueueItem
 		{
 			card = nCard,
@@ -147,6 +195,12 @@ public class NCardPlayQueue : Control
 		TweenCardToQueuePosition(item, _playQueue.Count - 1);
 	}
 
+	/// <summary>
+	/// After remote player choice is complete, this re-adds the card back into the queue if necessary.
+	/// Note that this is not called for local player choice - that just sits in the center of the screen.
+	/// </summary>
+	/// <param name="card">The card that finished player choice.</param>
+	/// <param name="action">The action that ran the player choice.</param>
 	public void ReAddCardAfterPlayerChoice(NCard card, GameAction action)
 	{
 		if (action.State == GameActionState.Executing)
@@ -161,12 +215,18 @@ public class NCardPlayQueue : Control
 			action = action
 		};
 		card.Reparent(this);
-		MoveChild(card, 0);
+		this.MoveChildSafely(card, 0);
 		_playQueue.Add(item);
 		TweenCardToQueuePosition(item, _playQueue.Count - 1);
 		action.BeforeResumedAfterPlayerChoice += BeforeRemoteCardPlayResumedAfterPlayerChoice;
 	}
 
+	/// <summary>
+	/// This is a bit of a hack. When a card resumes execution after player choice, there's nothing to tell the card
+	/// that it needs to animate back to the play pile. We do it here, even though we're not really responsible for
+	/// the play pile.
+	/// </summary>
+	/// <param name="action">Action that finished player choice.</param>
 	private void BeforeRemoteCardPlayResumedAfterPlayerChoice(GameAction action)
 	{
 		action.BeforeResumedAfterPlayerChoice -= BeforeRemoteCardPlayResumedAfterPlayerChoice;
@@ -180,6 +240,12 @@ public class NCardPlayQueue : Control
 		}
 	}
 
+	/// <summary>
+	/// Called when a card play is canceled.
+	/// When a card play is canceled (e.g. because it's now targeting something invalid), this removes the card from the
+	/// queue. If the card was a local card, then it is returned to the hand.
+	/// </summary>
+	/// <param name="action">The play card action that was canceled.</param>
 	public void RemoveCardFromQueueForCancellation(PlayCardAction action)
 	{
 		int num = _playQueue.FindIndex((QueueItem i) => i.action == action);
@@ -189,6 +255,15 @@ public class NCardPlayQueue : Control
 		}
 	}
 
+	/// <summary>
+	/// Called when a card play is canceled.
+	/// When a card play is canceled (e.g. because it's now targeting something invalid), this removes the card from the
+	/// queue. If the card was a local card, then it is returned to the hand.
+	/// </summary>
+	/// <param name="card">The card node that was cancelled.</param>
+	/// <param name="forceReturnToHand">In rare circumstances, we want to force the card to return to the hand even
+	/// though it's not in the hand pile. If true is passed, the card holder will be added to the player hand instead of
+	/// fading away (e.g. as if autoplayed). Only use this if you know what you're doing.</param>
 	public void RemoveCardFromQueueForCancellation(NCard card, bool forceReturnToHand = false)
 	{
 		int num = _playQueue.FindIndex((QueueItem i) => i.card == card);
@@ -220,6 +295,14 @@ public class NCardPlayQueue : Control
 		}
 	}
 
+	/// <summary>
+	/// Called just before a card begins execution.
+	/// For the play pile to properly take control of cards that are in the queue, the queue must reference the exact
+	/// card that is getting played. In most instances, this is true when the action is enqueued. However, if the card was
+	/// dynamically created in combat but not yet created on our peer at enqueue time, then it was created with a
+	/// placeholder card. By this time, it should be available.
+	/// </summary>
+	/// <param name="playCardAction">The action that is about to be executed.</param>
 	public void UpdateCardBeforeExecution(PlayCardAction playCardAction)
 	{
 		int num = _playQueue.FindIndex((QueueItem i) => i.action == playCardAction);
@@ -240,6 +323,13 @@ public class NCardPlayQueue : Control
 		}
 	}
 
+	/// <summary>
+	/// Called when a card begins execution.
+	/// The play pile (specifically CardPileCmd.Add) takes control of the NCard when it begins executing. This method
+	/// relinquishes control of the NCard, but does nothing with the node afterward - it is left where it is, and we
+	/// expect CardPileCmd.Add to tween it to the play pile position.
+	/// </summary>
+	/// <param name="card">The card that was canceled.</param>
 	public void RemoveCardFromQueueForExecution(CardModel card)
 	{
 		int num = _playQueue.FindIndex((QueueItem i) => i.card.Model == card);
@@ -250,6 +340,9 @@ public class NCardPlayQueue : Control
 		RemoveCardFromQueue(num);
 	}
 
+	/// <summary>
+	/// Updates a card's visuals (i.e. updates target, updates text).
+	/// </summary>
 	private void UpdateCardVisuals(QueueItem item)
 	{
 		if (item.action is PlayCardAction playCardAction)
@@ -259,6 +352,10 @@ public class NCardPlayQueue : Control
 		item.card.UpdateVisuals(item.card.Model.Pile?.Type ?? PileType.None, CardPreviewMode.Normal);
 	}
 
+	/// <summary>
+	/// Removes a specific node from the queue and tweens other cards to their new position.
+	/// The node is not freed.
+	/// </summary>
 	private void RemoveCardFromQueue(NCard card)
 	{
 		int num = _playQueue.FindIndex((QueueItem i) => i.card == card);
@@ -268,6 +365,10 @@ public class NCardPlayQueue : Control
 		}
 	}
 
+	/// <summary>
+	/// Removes a specific card index from the queue and tweens other cards to their new position.
+	/// The node is not freed.
+	/// </summary>
 	private void RemoveCardFromQueue(int index)
 	{
 		QueueItem queueItem = _playQueue[index];
@@ -276,6 +377,9 @@ public class NCardPlayQueue : Control
 		TweenAllToQueuePosition();
 	}
 
+	/// <summary>
+	/// Tweens all cards to their position/scale in the queue.
+	/// </summary>
 	private void TweenAllToQueuePosition()
 	{
 		for (int i = 0; i < _playQueue.Count; i++)
@@ -284,11 +388,24 @@ public class NCardPlayQueue : Control
 		}
 	}
 
+	/// <summary>
+	/// Returns the NCard representing the card if it is in the queue.
+	/// Remember that:
+	///  - Cards that are being dragged are in the NPlayerHand
+	///  - Cards that are being executed are in NCombatUi.PlayContainer
+	/// This only returns cards that are enqueued, but not yet executing.
+	/// </summary>
+	/// <param name="card">The card whose node we will return.</param>
+	/// <returns>The node for the card, if it is in the play queue.</returns>
 	public NCard? GetCardNode(CardModel card)
 	{
 		return _playQueue.FirstOrDefault((QueueItem i) => i.card.Model == card)?.card;
 	}
 
+	/// <summary>
+	/// Dequeue and hide all cards that are in the queue.
+	/// This is called when combat ends so that cards don't just hang out.
+	/// </summary>
 	public void AnimOut()
 	{
 		foreach (QueueItem item in _playQueue)
@@ -343,6 +460,11 @@ public class NCardPlayQueue : Control
 		return PileType.Play.GetTargetPosition(card) + Vector2.Left * 300f * num;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -372,6 +494,7 @@ public class NCardPlayQueue : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -424,6 +547,7 @@ public class NCardPlayQueue : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -462,12 +586,14 @@ public class NCardPlayQueue : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

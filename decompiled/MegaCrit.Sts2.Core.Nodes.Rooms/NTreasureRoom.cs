@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -7,8 +8,10 @@ using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Ftue;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
@@ -22,55 +25,137 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Rooms;
 
+/// <summary>
+/// Manages the UI flow for a treasure room.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Rooms/NTreasureRoom.cs")]
 public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_EnterTree' method.
+		/// </summary>
 		public new static readonly StringName _EnterTree = "_EnterTree";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'OnProceedButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnProceedButtonPressed = "OnProceedButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'RefreshVotes' method.
+		/// </summary>
+		public static readonly StringName RefreshVotes = "RefreshVotes";
+
+		/// <summary>
+		/// Cached name for the 'OnProceedButtonReleased' method.
+		/// </summary>
 		public static readonly StringName OnProceedButtonReleased = "OnProceedButtonReleased";
 
+		/// <summary>
+		/// Cached name for the 'OnChestButtonReleased' method.
+		/// </summary>
 		public static readonly StringName OnChestButtonReleased = "OnChestButtonReleased";
 
+		/// <summary>
+		/// Cached name for the 'OnMouseEntered' method.
+		/// </summary>
 		public static readonly StringName OnMouseEntered = "OnMouseEntered";
 
+		/// <summary>
+		/// Cached name for the 'OnMouseExited' method.
+		/// </summary>
 		public static readonly StringName OnMouseExited = "OnMouseExited";
 
+		/// <summary>
+		/// Cached name for the 'UpdateChestSkin' method.
+		/// </summary>
 		public static readonly StringName UpdateChestSkin = "UpdateChestSkin";
 
+		/// <summary>
+		/// Cached name for the 'OnActiveScreenChanged' method.
+		/// </summary>
 		public static readonly StringName OnActiveScreenChanged = "OnActiveScreenChanged";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'ProceedButton' property.
+		/// </summary>
 		public static readonly StringName ProceedButton = "ProceedButton";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_banner' field.
+		/// </summary>
 		public static readonly StringName _banner = "_banner";
 
+		/// <summary>
+		/// Cached name for the '_chestButton' field.
+		/// </summary>
 		public static readonly StringName _chestButton = "_chestButton";
 
+		/// <summary>
+		/// Cached name for the '_chestNode' field.
+		/// </summary>
 		public static readonly StringName _chestNode = "_chestNode";
 
+		/// <summary>
+		/// Cached name for the '_proceedButton' field.
+		/// </summary>
 		public static readonly StringName _proceedButton = "_proceedButton";
 
+		/// <summary>
+		/// Cached name for the '_goldParticles' field.
+		/// </summary>
 		public static readonly StringName _goldParticles = "_goldParticles";
 
+		/// <summary>
+		/// Cached name for the '_relicCollection' field.
+		/// </summary>
 		public static readonly StringName _relicCollection = "_relicCollection";
 
+		/// <summary>
+		/// Cached name for the '_skipVoteContainer' field.
+		/// </summary>
+		public static readonly StringName _skipVoteContainer = "_skipVoteContainer";
+
+		/// <summary>
+		/// Cached name for the '_isRelicCollectionOpen' field.
+		/// </summary>
 		public static readonly StringName _isRelicCollectionOpen = "_isRelicCollectionOpen";
 
-		public static readonly StringName _hasRelicBeenClaimed = "_hasRelicBeenClaimed";
+		/// <summary>
+		/// Cached name for the '_hasChestBeenOpened' field.
+		/// </summary>
+		public static readonly StringName _hasChestBeenOpened = "_hasChestBeenOpened";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -89,19 +174,23 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 
 	private NProceedButton _proceedButton;
 
-	private MegaSkin _regularChestSkin;
+	private MegaSkin? _regularChestSkin;
 
-	private MegaSkin _outlineChestSkin;
+	private MegaSkin? _outlineChestSkin;
 
 	private GpuParticles2D _goldParticles;
 
 	private NTreasureRoomRelicCollection _relicCollection;
 
+	private NMultiplayerVoteContainer _skipVoteContainer;
+
 	private static readonly string _scenePath = SceneHelper.GetScenePath("rooms/treasure_room");
+
+	private CancellationTokenSource _cts = new CancellationTokenSource();
 
 	private bool _isRelicCollectionOpen;
 
-	private bool _hasRelicBeenClaimed;
+	private bool _hasChestBeenOpened;
 
 	public NProceedButton ProceedButton => _proceedButton;
 
@@ -136,33 +225,38 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		_banner = GetNode<NCommonBanner>("%Banner");
 		if (_runState.Players.Count == 1)
 		{
-			_banner.label.SetTextAutoSize(new LocString("gameplay_ui", "TREASURE_BANNER").GetFormattedText());
+			_banner.label.SetTextAutoSize(new LocString("gameplay_ui", "TREASURE_BANNER").GetRawText());
 		}
 		else
 		{
-			_banner.label.SetTextAutoSize(new LocString("gameplay_ui", "CHOOSE_SHARED_RELIC_HEADER").GetFormattedText());
+			_banner.label.SetTextAutoSize(new LocString("gameplay_ui", "CHOOSE_SHARED_RELIC_HEADER").GetRawText());
 		}
 		_proceedButton = GetNode<NProceedButton>("%ProceedButton");
 		_chestNode = GetNode<Node2D>("%ChestVisual");
 		_chestAnimController = new MegaSprite(_chestNode);
 		_goldParticles = GetNode<GpuParticles2D>("%GoldExplosion");
 		_relicCollection = GetNode<NTreasureRoomRelicCollection>("%RelicCollection");
+		_skipVoteContainer = GetNode<NMultiplayerVoteContainer>("%SkipMultiplayerVoteContainer");
 		_relicCollection.Initialize(_runState);
 		_relicCollection.Visible = false;
 		_chestAnimController.SetSkeletonDataRes(_runState.Act.ChestSpineResource);
 		MegaSkeleton skeleton = _chestAnimController.GetSkeleton();
-		MegaSkeletonDataResource data = skeleton.GetData();
-		_regularChestSkin = data.FindSkin(_runState.Act.ChestSpineSkinNameNormal);
-		_outlineChestSkin = data.FindSkin(_runState.Act.ChestSpineSkinNameStroke);
-		skeleton.SetSlotsToSetupPose();
-		_chestAnimController.GetAnimationState().Apply(skeleton);
-		MegaAnimationState animationState = _chestAnimController.GetAnimationState();
-		animationState.SetAnimation("animation", loop: false);
-		_chestAnimController.GetAnimationState().AddAnimation("shine_fade", 0f, loop: false);
+		if (skeleton != null)
+		{
+			MegaSkeletonDataResource data = skeleton.GetData();
+			_regularChestSkin = data.FindSkin(_runState.Act.ChestSpineSkinNameNormal);
+			_outlineChestSkin = data.FindSkin(_runState.Act.ChestSpineSkinNameStroke);
+			skeleton.SetSlotsToSetupPose();
+			_chestAnimController.GetAnimationState().Apply(skeleton);
+			MegaAnimationState animationState = _chestAnimController.GetAnimationState();
+			animationState.SetAnimation("animation", loop: false);
+			_chestAnimController.GetAnimationState().AddAnimation("shine_fade", 0f, loop: false);
+			animationState.SetTimeScale(0f);
+			UpdateChestSkin(showOutline: false);
+		}
 		_proceedButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OnProceedButtonPressed));
 		_proceedButton.UpdateText(NProceedButton.ProceedLoc);
-		animationState.SetTimeScale(0f);
-		UpdateChestSkin(showOutline: false);
+		_skipVoteContainer.Initialize(IsPlayerVotingForSkip, _runState.Players);
 		_chestButton = GetNode<NButton>("%Chest");
 		_chestButton.Connect(Control.SignalName.MouseEntered, Callable.From(OnMouseEntered));
 		_chestButton.Connect(Control.SignalName.MouseExited, Callable.From(OnMouseExited));
@@ -171,17 +265,38 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 
 	public override void _EnterTree()
 	{
+		_cts = new CancellationTokenSource();
 		ActiveScreenContext.Instance.Updated += OnActiveScreenChanged;
+		RunManager.Instance.TreasureRoomRelicSynchronizer.VotesChanged += RefreshVotes;
 	}
 
 	public override void _ExitTree()
 	{
+		_cts.Cancel();
 		ActiveScreenContext.Instance.Updated -= OnActiveScreenChanged;
+		RunManager.Instance.TreasureRoomRelicSynchronizer.VotesChanged -= RefreshVotes;
 	}
 
 	private void OnProceedButtonPressed(NButton _)
 	{
-		TaskHelper.RunSafely(RunManager.Instance.ProceedFromTerminalRewardsScreen());
+		if (_proceedButton.IsSkip)
+		{
+			RunManager.Instance.TreasureRoomRelicSynchronizer.SkipRelicLocally();
+			if (_runState.Players.Count == 1)
+			{
+				NMapScreen.Instance.SetTravelEnabled(enabled: true);
+				TaskHelper.RunSafely(RunManager.Instance.ProceedFromTerminalRewardsScreen());
+			}
+		}
+		else
+		{
+			TaskHelper.RunSafely(RunManager.Instance.ProceedFromTerminalRewardsScreen());
+		}
+	}
+
+	private void RefreshVotes()
+	{
+		_skipVoteContainer.RefreshPlayerVotes();
 	}
 
 	private void OnProceedButtonReleased(NButton _)
@@ -223,15 +338,35 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		_relicCollection.InitializeRelics();
 		_relicCollection.AnimIn(_chestNode);
 		_isRelicCollectionOpen = true;
-		ActiveScreenContext.Instance.Update();
+		DefaultFocusedControl?.TryGrabFocus();
 		TaskHelper.RunSafely(RelicFtueCheck());
+		CancellationTokenSource cancelSource = new CancellationTokenSource();
+		if (_runState.Players.Count == 1)
+		{
+			_proceedButton.UpdateText(NProceedButton.SkipLoc);
+			TaskHelper.RunSafely(EnableSkipAfterDelay(2.5f, cancelSource.Token));
+		}
+		_hasChestBeenOpened = true;
+		await _relicCollection.RelicPickingBegan();
+		await cancelSource.CancelAsync();
+		_proceedButton.Disable();
 		await _relicCollection.RelicPickingFinished();
 		_isRelicCollectionOpen = false;
+		_skipVoteContainer.RefreshPlayerVotes();
+		_proceedButton.UpdateText(NProceedButton.ProceedLoc);
+		_proceedButton.Enable();
 		_banner.AnimateOut();
 		NMapScreen.Instance.SetTravelEnabled(enabled: true);
-		_proceedButton.Enable();
-		_hasRelicBeenClaimed = true;
 		_relicCollection.AnimOut(_chestNode);
+	}
+
+	private async Task EnableSkipAfterDelay(float delay, CancellationToken token)
+	{
+		await Cmd.Wait(delay, token);
+		if (!token.IsCancellationRequested)
+		{
+			_proceedButton.Enable();
+		}
 	}
 
 	private async Task RelicFtueCheck()
@@ -239,7 +374,7 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		if (!SaveManager.Instance.SeenFtue("obtain_relic_ftue"))
 		{
 			_relicCollection.SetSelectionEnabled(isEnabled: false);
-			await Cmd.Wait(1f);
+			await Cmd.Wait(1f, _cts.Token);
 			Control relicReward = ((!_relicCollection.SingleplayerRelicHolder.Visible) ? ((Control)_relicCollection) : ((Control)_relicCollection.SingleplayerRelicHolder));
 			_relicCollection.SetSelectionEnabled(isEnabled: true);
 			NModalContainer.Instance.Add(NRelicRewardFtue.Create(relicReward));
@@ -250,15 +385,18 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 	private void UpdateChestSkin(bool showOutline)
 	{
 		MegaSkeleton skeleton = _chestAnimController.GetSkeleton();
-		skeleton.SetSkin(showOutline ? _outlineChestSkin : _regularChestSkin);
-		skeleton.SetSlotsToSetupPose();
-		_chestAnimController.GetAnimationState().Apply(skeleton);
+		if (skeleton != null)
+		{
+			skeleton.SetSkin(showOutline ? _outlineChestSkin : _regularChestSkin);
+			skeleton.SetSlotsToSetupPose();
+			_chestAnimController.GetAnimationState().Apply(skeleton);
+		}
 	}
 
 	private void OnActiveScreenChanged()
 	{
 		this.UpdateControllerNavEnabled();
-		if (ActiveScreenContext.Instance.IsCurrent(this) && _hasRelicBeenClaimed)
+		if (ActiveScreenContext.Instance.IsCurrent(this) && _hasChestBeenOpened)
 		{
 			_proceedButton.Enable();
 		}
@@ -268,10 +406,30 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		}
 	}
 
+	private bool IsPlayerVotingForSkip(Player player)
+	{
+		if (RunManager.Instance.TreasureRoomRelicSynchronizer.CurrentRelics == null)
+		{
+			return false;
+		}
+		TreasureRoomRelicSynchronizer.PlayerVote playerVote = RunManager.Instance.TreasureRoomRelicSynchronizer.GetPlayerVote(player);
+		if (playerVote != null && playerVote.voteReceived)
+		{
+			int? index = playerVote.index;
+			return !index.HasValue;
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(10);
+		List<MethodInfo> list = new List<MethodInfo>(11);
 		list.Add(new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._EnterTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
@@ -279,6 +437,7 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		{
 			new PropertyInfo(Variant.Type.Object, "_", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
 		}, null));
+		list.Add(new MethodInfo(MethodName.RefreshVotes, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.OnProceedButtonReleased, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Object, "_", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Control"), exported: false)
@@ -297,6 +456,7 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -321,6 +481,12 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		if (method == MethodName.OnProceedButtonPressed && args.Count == 1)
 		{
 			OnProceedButtonPressed(VariantUtils.ConvertTo<NButton>(in args[0]));
+			ret = default(godot_variant);
+			return true;
+		}
+		if (method == MethodName.RefreshVotes && args.Count == 0)
+		{
+			RefreshVotes();
 			ret = default(godot_variant);
 			return true;
 		}
@@ -363,6 +529,7 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -379,6 +546,10 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 			return true;
 		}
 		if (method == MethodName.OnProceedButtonPressed)
+		{
+			return true;
+		}
+		if (method == MethodName.RefreshVotes)
 		{
 			return true;
 		}
@@ -409,6 +580,7 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -442,19 +614,25 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 			_relicCollection = VariantUtils.ConvertTo<NTreasureRoomRelicCollection>(in value);
 			return true;
 		}
+		if (name == PropertyName._skipVoteContainer)
+		{
+			_skipVoteContainer = VariantUtils.ConvertTo<NMultiplayerVoteContainer>(in value);
+			return true;
+		}
 		if (name == PropertyName._isRelicCollectionOpen)
 		{
 			_isRelicCollectionOpen = VariantUtils.ConvertTo<bool>(in value);
 			return true;
 		}
-		if (name == PropertyName._hasRelicBeenClaimed)
+		if (name == PropertyName._hasChestBeenOpened)
 		{
-			_hasRelicBeenClaimed = VariantUtils.ConvertTo<bool>(in value);
+			_hasChestBeenOpened = VariantUtils.ConvertTo<bool>(in value);
 			return true;
 		}
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -498,19 +676,29 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 			value = VariantUtils.CreateFrom(in _relicCollection);
 			return true;
 		}
+		if (name == PropertyName._skipVoteContainer)
+		{
+			value = VariantUtils.CreateFrom(in _skipVoteContainer);
+			return true;
+		}
 		if (name == PropertyName._isRelicCollectionOpen)
 		{
 			value = VariantUtils.CreateFrom(in _isRelicCollectionOpen);
 			return true;
 		}
-		if (name == PropertyName._hasRelicBeenClaimed)
+		if (name == PropertyName._hasChestBeenOpened)
 		{
-			value = VariantUtils.CreateFrom(in _hasRelicBeenClaimed);
+			value = VariantUtils.CreateFrom(in _hasChestBeenOpened);
 			return true;
 		}
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -522,12 +710,14 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.ProceedButton, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._goldParticles, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._relicCollection, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName._skipVoteContainer, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._isRelicCollectionOpen, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
-		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._hasRelicBeenClaimed, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
+		list.Add(new PropertyInfo(Variant.Type.Bool, PropertyName._hasChestBeenOpened, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		list.Add(new PropertyInfo(Variant.Type.Object, PropertyName.DefaultFocusedControl, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false));
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -538,10 +728,12 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		info.AddProperty(PropertyName._proceedButton, Variant.From(in _proceedButton));
 		info.AddProperty(PropertyName._goldParticles, Variant.From(in _goldParticles));
 		info.AddProperty(PropertyName._relicCollection, Variant.From(in _relicCollection));
+		info.AddProperty(PropertyName._skipVoteContainer, Variant.From(in _skipVoteContainer));
 		info.AddProperty(PropertyName._isRelicCollectionOpen, Variant.From(in _isRelicCollectionOpen));
-		info.AddProperty(PropertyName._hasRelicBeenClaimed, Variant.From(in _hasRelicBeenClaimed));
+		info.AddProperty(PropertyName._hasChestBeenOpened, Variant.From(in _hasChestBeenOpened));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -570,13 +762,17 @@ public class NTreasureRoom : Control, IScreenContext, IRoomWithProceedButton
 		{
 			_relicCollection = value6.As<NTreasureRoomRelicCollection>();
 		}
-		if (info.TryGetProperty(PropertyName._isRelicCollectionOpen, out var value7))
+		if (info.TryGetProperty(PropertyName._skipVoteContainer, out var value7))
 		{
-			_isRelicCollectionOpen = value7.As<bool>();
+			_skipVoteContainer = value7.As<NMultiplayerVoteContainer>();
 		}
-		if (info.TryGetProperty(PropertyName._hasRelicBeenClaimed, out var value8))
+		if (info.TryGetProperty(PropertyName._isRelicCollectionOpen, out var value8))
 		{
-			_hasRelicBeenClaimed = value8.As<bool>();
+			_isRelicCollectionOpen = value8.As<bool>();
+		}
+		if (info.TryGetProperty(PropertyName._hasChestBeenOpened, out var value9))
+		{
+			_hasChestBeenOpened = value9.As<bool>();
 		}
 	}
 }

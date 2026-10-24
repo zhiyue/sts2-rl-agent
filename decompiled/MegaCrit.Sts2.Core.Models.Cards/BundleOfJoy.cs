@@ -16,7 +16,7 @@ public sealed class BundleOfJoy : CardModel
 	public override IEnumerable<CardKeyword> CanonicalKeywords => new global::_003C_003Ez__ReadOnlySingleElementList<CardKeyword>(CardKeyword.Exhaust);
 
 	public BundleOfJoy()
-		: base(2, CardType.Skill, CardRarity.Rare, TargetType.Self)
+		: base(1, CardType.Skill, CardRarity.Rare, TargetType.Self)
 	{
 	}
 
@@ -25,7 +25,7 @@ public sealed class BundleOfJoy : CardModel
 		IEnumerable<CardModel> distinctForCombat = CardFactory.GetDistinctForCombat(base.Owner, ModelDb.CardPool<ColorlessCardPool>().GetUnlockedCards(base.Owner.UnlockState, base.RunState.CardMultiplayerConstraint), base.DynamicVars.Cards.IntValue, base.Owner.RunState.Rng.CombatCardGeneration);
 		foreach (CardModel item in distinctForCombat)
 		{
-			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, addedByPlayer: true);
+			await CardPileCmd.AddGeneratedCardToCombat(item, PileType.Hand, base.Owner);
 		}
 	}
 

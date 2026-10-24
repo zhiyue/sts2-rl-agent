@@ -29,6 +29,6 @@ public sealed class StrengthPotion : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		NCombatRoom.Instance?.PlaySplashVfx(target, new Color("fd2155"));
-		await PowerCmd.Apply<StrengthPower>(target, base.DynamicVars.Strength.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(choiceContext, target, base.DynamicVars.Strength.BaseValue, base.Owner.Creature, null);
 	}
 }

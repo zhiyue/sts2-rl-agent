@@ -21,59 +21,138 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 
+/// <summary>
+/// CardSelectionScreen specifically for upgrading cards in your deck.
+/// Managing logic for the extra confirmation screen.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/CardSelection/NDeckUpgradeSelectScreen.cs")]
 public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NCardGridSelectionScreen.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'CloseSelection' method.
+		/// </summary>
 		public static readonly StringName CloseSelection = "CloseSelection";
 
+		/// <summary>
+		/// Cached name for the 'CancelSelection' method.
+		/// </summary>
 		public static readonly StringName CancelSelection = "CancelSelection";
 
+		/// <summary>
+		/// Cached name for the 'ConfirmSelection' method.
+		/// </summary>
 		public static readonly StringName ConfirmSelection = "ConfirmSelection";
 
+		/// <summary>
+		/// Cached name for the 'CheckIfSelectionComplete' method.
+		/// </summary>
 		public static readonly StringName CheckIfSelectionComplete = "CheckIfSelectionComplete";
 
+		/// <summary>
+		/// Cached name for the 'ToggleShowUpgrades' method.
+		/// </summary>
 		public static readonly StringName ToggleShowUpgrades = "ToggleShowUpgrades";
 
+		/// <summary>
+		/// Cached name for the 'OnControllerStateUpdated' method.
+		/// </summary>
 		public static readonly StringName OnControllerStateUpdated = "OnControllerStateUpdated";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NCardGridSelectionScreen.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'UseSingleSelection' property.
+		/// </summary>
 		public static readonly StringName UseSingleSelection = "UseSingleSelection";
 
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the 'FocusedControlFromTopBar' property.
+		/// </summary>
 		public new static readonly StringName FocusedControlFromTopBar = "FocusedControlFromTopBar";
 
+		/// <summary>
+		/// Cached name for the '_upgradeSinglePreviewContainer' field.
+		/// </summary>
 		public static readonly StringName _upgradeSinglePreviewContainer = "_upgradeSinglePreviewContainer";
 
+		/// <summary>
+		/// Cached name for the '_singlePreview' field.
+		/// </summary>
 		public static readonly StringName _singlePreview = "_singlePreview";
 
+		/// <summary>
+		/// Cached name for the '_singlePreviewCancelButton' field.
+		/// </summary>
 		public static readonly StringName _singlePreviewCancelButton = "_singlePreviewCancelButton";
 
+		/// <summary>
+		/// Cached name for the '_singlePreviewConfirmButton' field.
+		/// </summary>
 		public static readonly StringName _singlePreviewConfirmButton = "_singlePreviewConfirmButton";
 
+		/// <summary>
+		/// Cached name for the '_viewUpgrades' field.
+		/// </summary>
 		public static readonly StringName _viewUpgrades = "_viewUpgrades";
 
+		/// <summary>
+		/// Cached name for the '_bottomTextContainer' field.
+		/// </summary>
 		public static readonly StringName _bottomTextContainer = "_bottomTextContainer";
 
+		/// <summary>
+		/// Cached name for the '_infoLabel' field.
+		/// </summary>
 		public static readonly StringName _infoLabel = "_infoLabel";
 
+		/// <summary>
+		/// Cached name for the '_upgradeMultiPreviewContainer' field.
+		/// </summary>
 		public static readonly StringName _upgradeMultiPreviewContainer = "_upgradeMultiPreviewContainer";
 
+		/// <summary>
+		/// Cached name for the '_multiPreview' field.
+		/// </summary>
 		public static readonly StringName _multiPreview = "_multiPreview";
 
+		/// <summary>
+		/// Cached name for the '_multiPreviewCancelButton' field.
+		/// </summary>
 		public static readonly StringName _multiPreviewCancelButton = "_multiPreviewCancelButton";
 
+		/// <summary>
+		/// Cached name for the '_multiPreviewConfirmButton' field.
+		/// </summary>
 		public static readonly StringName _multiPreviewConfirmButton = "_multiPreviewConfirmButton";
 
+		/// <summary>
+		/// Cached name for the '_closeButton' field.
+		/// </summary>
 		public static readonly StringName _closeButton = "_closeButton";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NCardGridSelectionScreen.SignalName
 	{
 	}
@@ -205,6 +284,7 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 			if (UseSingleSelection)
 			{
 				GetViewport().GuiReleaseFocus();
+				_grid.FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Disabled;
 				_upgradeSinglePreviewContainer.Visible = true;
 				_upgradeSinglePreviewContainer.MouseFilter = MouseFilterEnum.Stop;
 				_singlePreview.Card = card;
@@ -220,6 +300,7 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 					return;
 				}
 				GetViewport().GuiReleaseFocus();
+				_grid.FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Disabled;
 				_upgradeMultiPreviewContainer.Visible = true;
 				_upgradeMultiPreviewContainer.MouseFilter = MouseFilterEnum.Stop;
 				_multiPreviewCancelButton.Enable();
@@ -275,6 +356,7 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 			_multiPreviewCancelButton.Disable();
 			_multiPreviewConfirmButton.Disable();
 		}
+		_grid.FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Inherited;
 		_grid.SetCanScroll(canScroll: true);
 		if (_prefs.Cancelable)
 		{
@@ -322,6 +404,11 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -348,6 +435,7 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -396,6 +484,7 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -430,6 +519,7 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -496,6 +586,7 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -580,6 +671,11 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -602,6 +698,7 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -620,6 +717,7 @@ public sealed class NDeckUpgradeSelectScreen : NCardGridSelectionScreen
 		info.AddProperty(PropertyName._closeButton, Variant.From(in _closeButton));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -1,11 +1,13 @@
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 
 namespace MegaCrit.Sts2.Core.Commands;
 
+/// <summary>
+/// Creates a thought bubble
+/// </summary>
 public static class ThinkCmd
 {
 	private const double _defaultTimePerCharacter = 0.08;
@@ -26,7 +28,7 @@ public static class ThinkCmd
 		NThoughtBubbleVfx nThoughtBubbleVfx = NThoughtBubbleVfx.Create(formattedText, speaker, secondsToDisplay);
 		if (nThoughtBubbleVfx != null)
 		{
-			NCombatRoom.Instance.CombatVfxContainer.AddChildSafely(nThoughtBubbleVfx);
+			speaker.GetVfxContainer()?.AddChildSafely(nThoughtBubbleVfx);
 		}
 	}
 }

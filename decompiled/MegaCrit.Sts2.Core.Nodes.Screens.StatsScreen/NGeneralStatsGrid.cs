@@ -18,46 +18,106 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.StatsScreen;
 [ScriptPath("res://src/Core/Nodes/Screens/StatsScreen/NGeneralStatsGrid.cs")]
 public class NGeneralStatsGrid : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'CreateSection' method.
+		/// </summary>
 		public static readonly StringName CreateSection = "CreateSection";
 
+		/// <summary>
+		/// Cached name for the 'LoadStats' method.
+		/// </summary>
 		public static readonly StringName LoadStats = "LoadStats";
 
+		/// <summary>
+		/// Cached name for the 'SetupHoverTips' method.
+		/// </summary>
 		public static readonly StringName SetupHoverTips = "SetupHoverTips";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_gridContainer' field.
+		/// </summary>
 		public static readonly StringName _gridContainer = "_gridContainer";
 
+		/// <summary>
+		/// Cached name for the '_achievementsEntry' field.
+		/// </summary>
 		public static readonly StringName _achievementsEntry = "_achievementsEntry";
 
+		/// <summary>
+		/// Cached name for the '_playtimeEntry' field.
+		/// </summary>
 		public static readonly StringName _playtimeEntry = "_playtimeEntry";
 
+		/// <summary>
+		/// Cached name for the '_cardsEntry' field.
+		/// </summary>
 		public static readonly StringName _cardsEntry = "_cardsEntry";
 
+		/// <summary>
+		/// Cached name for the '_winLossEntry' field.
+		/// </summary>
 		public static readonly StringName _winLossEntry = "_winLossEntry";
 
+		/// <summary>
+		/// Cached name for the '_monsterEntry' field.
+		/// </summary>
 		public static readonly StringName _monsterEntry = "_monsterEntry";
 
+		/// <summary>
+		/// Cached name for the '_relicEntry' field.
+		/// </summary>
 		public static readonly StringName _relicEntry = "_relicEntry";
 
+		/// <summary>
+		/// Cached name for the '_potionEntry' field.
+		/// </summary>
 		public static readonly StringName _potionEntry = "_potionEntry";
 
+		/// <summary>
+		/// Cached name for the '_eventsEntry' field.
+		/// </summary>
 		public static readonly StringName _eventsEntry = "_eventsEntry";
 
+		/// <summary>
+		/// Cached name for the '_streakEntry' field.
+		/// </summary>
 		public static readonly StringName _streakEntry = "_streakEntry";
 
+		/// <summary>
+		/// Cached name for the '_characterStatContainer' field.
+		/// </summary>
 		public static readonly StringName _characterStatContainer = "_characterStatContainer";
 
+		/// <summary>
+		/// Cached name for the '_screenTween' field.
+		/// </summary>
 		public static readonly StringName _screenTween = "_screenTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -148,6 +208,9 @@ public class NGeneralStatsGrid : Control
 		SetupHoverTips();
 	}
 
+	/// <summary>
+	/// Helper function to create a Section in the StatsScreen.
+	/// </summary>
 	private NStatEntry CreateSection(string imgUrl)
 	{
 		NStatEntry nStatEntry = NStatEntry.Create(imgUrl);
@@ -208,6 +271,9 @@ public class NGeneralStatsGrid : Control
 		locString = new LocString("stats_screen", "ENTRY_MONSTER.bottom");
 		locString.Add("Amount", StringHelper.RatioFormat(instance.Progress.EnemyStats.Count, ModelDb.Monsters.Count()));
 		_monsterEntry.SetBottomText(locString.GetFormattedText() ?? "");
+		HashSet<ModelId> hashSet = ModelDb.AllEvents.Select((EventModel e) => e.Id).ToHashSet();
+		int numerator3 = progressSave.DiscoveredEvents.Intersect(hashSet).Count();
+		int num = progressSave.DiscoveredEvents.Except(hashSet).Count();
 		locString = new LocString("stats_screen", "ENTRY_RELIC.top");
 		locString.Add("Amount", StringHelper.RatioFormat(instance.GetTotalUnlockedRelics(), SaveManager.GetUnlockableRelicCount()));
 		_relicEntry.SetTopText(locString.GetFormattedText() ?? "");
@@ -224,12 +290,12 @@ public class NGeneralStatsGrid : Control
 		locString.Add("Amount", "N/A");
 		_eventsEntry.SetTopText(locString.GetFormattedText());
 		locString = new LocString("stats_screen", "ENTRY_EVENTS.bottom");
-		locString.Add("Amount", StringHelper.RatioFormat(progressSave.DiscoveredEvents.Count, ModelDb.AllEvents.Count()));
+		locString.Add("Amount", StringHelper.RatioFormat(numerator3, hashSet.Count));
 		_eventsEntry.SetBottomText(locString.GetFormattedText());
 		locString = new LocString("stats_screen", "ENTRY_STREAK.top");
 		locString.Add("Amount", progressSave.BestWinStreak);
 		_streakEntry.SetTopText(locString.GetFormattedText());
-		if (aggregateAscensionProgress > 99999999)
+		if (aggregateAscensionProgress > 999999999)
 		{
 			locString = new LocString("stats_screen", "ENTRY_STREAK.bottom");
 			locString.Add("Amount", 5m);
@@ -263,6 +329,11 @@ public class NGeneralStatsGrid : Control
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -277,6 +348,7 @@ public class NGeneralStatsGrid : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -306,6 +378,7 @@ public class NGeneralStatsGrid : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -328,6 +401,7 @@ public class NGeneralStatsGrid : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -394,6 +468,7 @@ public class NGeneralStatsGrid : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -465,6 +540,11 @@ public class NGeneralStatsGrid : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -485,6 +565,7 @@ public class NGeneralStatsGrid : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -503,6 +584,7 @@ public class NGeneralStatsGrid : Control
 		info.AddProperty(PropertyName._screenTween, Variant.From(in _screenTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

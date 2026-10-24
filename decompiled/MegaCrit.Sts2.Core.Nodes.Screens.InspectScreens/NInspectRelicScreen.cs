@@ -26,71 +26,167 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens;
 
+/// <summary>
+/// Allows the player to view a single relic. This allows players to see the higher resolution asset and flavor text.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/InspectScreens/NInspectRelicScreen.cs")]
 public class NInspectRelicScreen : Control, IScreenContext
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'OnRightButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnRightButtonPressed = "OnRightButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnLeftButtonPressed' method.
+		/// </summary>
 		public static readonly StringName OnLeftButtonPressed = "OnLeftButtonPressed";
 
+		/// <summary>
+		/// Cached name for the 'SetRelic' method.
+		/// </summary>
 		public static readonly StringName SetRelic = "SetRelic";
 
+		/// <summary>
+		/// Cached name for the 'UpdateRelicDisplay' method.
+		/// </summary>
 		public static readonly StringName UpdateRelicDisplay = "UpdateRelicDisplay";
 
+		/// <summary>
+		/// Cached name for the 'SetRarityVisuals' method.
+		/// </summary>
 		public static readonly StringName SetRarityVisuals = "SetRarityVisuals";
 
+		/// <summary>
+		/// Cached name for the 'Close' method.
+		/// </summary>
 		public static readonly StringName Close = "Close";
 
+		/// <summary>
+		/// Cached name for the 'OnBackstopPressed' method.
+		/// </summary>
 		public static readonly StringName OnBackstopPressed = "OnBackstopPressed";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_popup' field.
+		/// </summary>
 		public static readonly StringName _popup = "_popup";
 
+		/// <summary>
+		/// Cached name for the '_backstop' field.
+		/// </summary>
 		public static readonly StringName _backstop = "_backstop";
 
+		/// <summary>
+		/// Cached name for the '_nameLabel' field.
+		/// </summary>
 		public static readonly StringName _nameLabel = "_nameLabel";
 
+		/// <summary>
+		/// Cached name for the '_rarityLabel' field.
+		/// </summary>
 		public static readonly StringName _rarityLabel = "_rarityLabel";
 
+		/// <summary>
+		/// Cached name for the '_description' field.
+		/// </summary>
 		public static readonly StringName _description = "_description";
 
+		/// <summary>
+		/// Cached name for the '_flavor' field.
+		/// </summary>
 		public static readonly StringName _flavor = "_flavor";
 
+		/// <summary>
+		/// Cached name for the '_relicImage' field.
+		/// </summary>
 		public static readonly StringName _relicImage = "_relicImage";
 
+		/// <summary>
+		/// Cached name for the '_frameHsv' field.
+		/// </summary>
 		public static readonly StringName _frameHsv = "_frameHsv";
 
+		/// <summary>
+		/// Cached name for the '_leftButton' field.
+		/// </summary>
 		public static readonly StringName _leftButton = "_leftButton";
 
+		/// <summary>
+		/// Cached name for the '_rightButton' field.
+		/// </summary>
 		public static readonly StringName _rightButton = "_rightButton";
 
+		/// <summary>
+		/// Cached name for the '_hoverTipRect' field.
+		/// </summary>
 		public static readonly StringName _hoverTipRect = "_hoverTipRect";
 
+		/// <summary>
+		/// Cached name for the '_screenTween' field.
+		/// </summary>
 		public static readonly StringName _screenTween = "_screenTween";
 
+		/// <summary>
+		/// Cached name for the '_popupTween' field.
+		/// </summary>
 		public static readonly StringName _popupTween = "_popupTween";
 
+		/// <summary>
+		/// Cached name for the '_popupPosition' field.
+		/// </summary>
 		public static readonly StringName _popupPosition = "_popupPosition";
 
+		/// <summary>
+		/// Cached name for the '_leftButtonX' field.
+		/// </summary>
 		public static readonly StringName _leftButtonX = "_leftButtonX";
 
+		/// <summary>
+		/// Cached name for the '_rightButtonX' field.
+		/// </summary>
 		public static readonly StringName _rightButtonX = "_rightButtonX";
 
+		/// <summary>
+		/// Cached name for the '_index' field.
+		/// </summary>
 		public static readonly StringName _index = "_index";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -156,6 +252,11 @@ public class NInspectRelicScreen : Control, IScreenContext
 		return PreloadManager.Cache.GetScene(_scenePath).Instantiate<NInspectRelicScreen>(PackedScene.GenEditState.Disabled);
 	}
 
+	/// <summary>
+	/// Opens the Relic Inspection Screen.
+	/// </summary>
+	/// <param name="relics">The collection of relics this relic is a part of (used for left/right arrows)</param>
+	/// <param name="relic">The relic the user clicked on to open this screen (index is automatically identified)</param>
 	public void Open(IReadOnlyList<RelicModel> relics, RelicModel relic)
 	{
 		Log.Info($"Inspecting Relic: {relic.Title}");
@@ -271,6 +372,10 @@ public class NInspectRelicScreen : Control, IScreenContext
 		UpdateRelicDisplay();
 	}
 
+	/// <summary>
+	/// Call to update the screen to match the relic we're viewing.
+	/// Called on screen open and when paging left/right.
+	/// </summary>
 	private void UpdateRelicDisplay()
 	{
 		RelicModel relicModel = _relics[_index];
@@ -308,8 +413,7 @@ public class NInspectRelicScreen : Control, IScreenContext
 		NHoverTipSet.Clear();
 		if (SaveManager.Instance.IsRelicSeen(relicModel))
 		{
-			NHoverTipSet nHoverTipSet = NHoverTipSet.CreateAndShow(this, relicModel.HoverTipsExcludingRelic);
-			nHoverTipSet.SetAlignment(_hoverTipRect, HoverTip.GetHoverTipAlignment(this));
+			NHoverTipSet.CreateAndShow(this, relicModel.HoverTipsExcludingRelic)?.SetAlignment(_hoverTipRect, HoverTip.GetHoverTipAlignment(this));
 		}
 	}
 
@@ -385,6 +489,11 @@ public class NInspectRelicScreen : Control, IScreenContext
 		Close();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -420,6 +529,7 @@ public class NInspectRelicScreen : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -497,6 +607,7 @@ public class NInspectRelicScreen : Control, IScreenContext
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -543,6 +654,7 @@ public class NInspectRelicScreen : Control, IScreenContext
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -634,6 +746,7 @@ public class NInspectRelicScreen : Control, IScreenContext
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -730,6 +843,11 @@ public class NInspectRelicScreen : Control, IScreenContext
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -755,6 +873,7 @@ public class NInspectRelicScreen : Control, IScreenContext
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -778,6 +897,7 @@ public class NInspectRelicScreen : Control, IScreenContext
 		info.AddProperty(PropertyName._index, Variant.From(in _index));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -15,7 +15,7 @@ public sealed class Reflect : CardModel
 
 	public override bool GainsBlock => true;
 
-	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new BlockVar(17m, ValueProp.Move));
+	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new BlockVar(15m, ValueProp.Move));
 
 	public Reflect()
 		: base(1, CardType.Skill, CardRarity.Uncommon, TargetType.Self)
@@ -26,11 +26,11 @@ public sealed class Reflect : CardModel
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<ReflectPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+		await PowerCmd.Apply<ReflectPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars.Block.UpgradeValueBy(4m);
+		base.DynamicVars.Block.UpgradeValueBy(5m);
 	}
 }

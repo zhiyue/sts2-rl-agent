@@ -7,54 +7,119 @@ using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Timeline;
 using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
+/// <summary>
+/// Represents a single column in the Timeline.
+/// Node which has a list of NEpochSlots, an Era icon, its name, and year.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/Timeline/NEraColumn.cs")]
 public class NEraColumn : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'SpawnIcon' method.
+		/// </summary>
 		public static readonly StringName SpawnIcon = "SpawnIcon";
 
+		/// <summary>
+		/// Cached name for the 'SetPredictedPosition' method.
+		/// </summary>
 		public static readonly StringName SetPredictedPosition = "SetPredictedPosition";
 
+		/// <summary>
+		/// Cached name for the 'RectChange' method.
+		/// </summary>
 		public static readonly StringName RectChange = "RectChange";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 
+		/// <summary>
+		/// Cached name for the '_name' field.
+		/// </summary>
 		public static readonly StringName _name = "_name";
 
+		/// <summary>
+		/// Cached name for the '_year' field.
+		/// </summary>
 		public static readonly StringName _year = "_year";
 
+		/// <summary>
+		/// Cached name for the '_iconTween' field.
+		/// </summary>
 		public static readonly StringName _iconTween = "_iconTween";
 
+		/// <summary>
+		/// Cached name for the '_labelTween' field.
+		/// </summary>
 		public static readonly StringName _labelTween = "_labelTween";
 
+		/// <summary>
+		/// Cached name for the '_labelSpawned' field.
+		/// </summary>
 		public static readonly StringName _labelSpawned = "_labelSpawned";
 
+		/// <summary>
+		/// Cached name for the 'era' field.
+		/// </summary>
 		public static readonly StringName era = "era";
 
+		/// <summary>
+		/// Cached name for the '_prevLocalPos' field.
+		/// </summary>
 		public static readonly StringName _prevLocalPos = "_prevLocalPos";
 
+		/// <summary>
+		/// Cached name for the '_prevGlobalPos' field.
+		/// </summary>
 		public static readonly StringName _prevGlobalPos = "_prevGlobalPos";
 
+		/// <summary>
+		/// Cached name for the '_predictedPosition' field.
+		/// </summary>
 		public static readonly StringName _predictedPosition = "_predictedPosition";
 
+		/// <summary>
+		/// Cached name for the '_targetPosition' field.
+		/// </summary>
 		public static readonly StringName _targetPosition = "_targetPosition";
 
+		/// <summary>
+		/// Cached name for the '_isAnimated' field.
+		/// </summary>
 		public static readonly StringName _isAnimated = "_isAnimated";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -107,6 +172,9 @@ public class NEraColumn : Control
 		base.ItemRectChanged += RectChange;
 	}
 
+	/// <summary>
+	/// Creates this Era Column and also the first slot for it
+	/// </summary>
 	public void Init(EpochSlotData epochSlot)
 	{
 		(Texture2D, string) eraIcon = NTimelineScreen.GetEraIcon(epochSlot.Era);
@@ -121,7 +189,7 @@ public class NEraColumn : Control
 		NEpochSlot nEpochSlot = NEpochSlot.Create(epochSlotData);
 		this.AddChildSafely(nEpochSlot);
 		nEpochSlot.Name = $"Slot{epochSlotData.EraPosition}";
-		MoveChild(nEpochSlot, 0);
+		this.MoveChildSafely(nEpochSlot, 0);
 	}
 
 	public void SpawnIcon()
@@ -132,6 +200,9 @@ public class NEraColumn : Control
 			.SetTrans(Tween.TransitionType.Back);
 	}
 
+	/// <summary>
+	/// Epoch slot pop-up effect!
+	/// </summary>
 	public async Task SpawnSlots(bool isAnimated)
 	{
 		foreach (Node child in GetChildren())
@@ -165,7 +236,7 @@ public class NEraColumn : Control
 			_labelTween.TweenProperty(_year, "position:y", 20f, 1.0).SetDelay(0.5).From(0f)
 				.SetEase(Tween.EaseType.Out)
 				.SetTrans(Tween.TransitionType.Cubic);
-			await ToSignal(_labelTween, Tween.SignalName.Finished);
+			await _labelTween.AwaitFinished(this);
 			await Task.Delay(500);
 		}
 	}
@@ -175,7 +246,7 @@ public class NEraColumn : Control
 		_isAnimated = true;
 		_prevLocalPos = base.Position;
 		_prevGlobalPos = base.GlobalPosition;
-		await GetTree().ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame();
 		_isAnimated = false;
 		_targetPosition = _predictedPosition;
 		base.GlobalPosition = _prevGlobalPos;
@@ -183,6 +254,11 @@ public class NEraColumn : Control
 		tween.TweenProperty(this, "position", _targetPosition, 2.0).SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Cubic);
 	}
 
+	/// <summary>
+	/// Cache the position of where we predict the Position this column will be.
+	/// There's no way to forcefully refresh the layout in Godot so PredictHBoxLayout()
+	/// was created and that passes in the expected position.
+	/// </summary>
 	public void SetPredictedPosition(Vector2 setPredictedPosition)
 	{
 		if (_isAnimated)
@@ -191,6 +267,11 @@ public class NEraColumn : Control
 		}
 	}
 
+	/// <summary>
+	/// Behold the hack. Every time this Node's size is updated we force the position to be where it should.
+	/// Note that this is called several times per frame as many children are added to the list of columns
+	/// so the _isAnimated bool is actually disabled next frame.
+	/// </summary>
 	private void RectChange()
 	{
 		if (_isAnimated)
@@ -204,6 +285,11 @@ public class NEraColumn : Control
 		base.ItemRectChanged -= RectChange;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -219,6 +305,7 @@ public class NEraColumn : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -255,6 +342,7 @@ public class NEraColumn : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -281,6 +369,7 @@ public class NEraColumn : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -347,6 +436,7 @@ public class NEraColumn : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -413,6 +503,11 @@ public class NEraColumn : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -432,6 +527,7 @@ public class NEraColumn : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -450,6 +546,7 @@ public class NEraColumn : Control
 		info.AddProperty(PropertyName._isAnimated, Variant.From(in _isAnimated));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

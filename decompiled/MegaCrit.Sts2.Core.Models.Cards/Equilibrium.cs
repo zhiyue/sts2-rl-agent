@@ -32,7 +32,7 @@ public sealed class Equilibrium : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<RetainHandPower>(base.Owner.Creature, base.DynamicVars["Equilibrium"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<RetainHandPower>(choiceContext, base.Owner.Creature, base.DynamicVars["Equilibrium"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

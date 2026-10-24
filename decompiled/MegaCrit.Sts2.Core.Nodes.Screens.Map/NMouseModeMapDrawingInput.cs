@@ -9,17 +9,32 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.Map;
 [ScriptPath("res://src/Core/Nodes/Screens/Map/NMouseModeMapDrawingInput.cs")]
 public class NMouseModeMapDrawingInput : NMapDrawingInput
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NMapDrawingInput.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Input' method.
+		/// </summary>
 		public new static readonly StringName _Input = "_Input";
 
+		/// <summary>
+		/// Cached name for the 'ProcessMouseDrawingEvent' method.
+		/// </summary>
 		public static readonly StringName ProcessMouseDrawingEvent = "ProcessMouseDrawingEvent";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NMapDrawingInput.PropertyName
 	{
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NMapDrawingInput.SignalName
 	{
 	}
@@ -36,6 +51,9 @@ public class NMouseModeMapDrawingInput : NMapDrawingInput
 		}
 	}
 
+	/// <summary>
+	/// Detects mouse click up/down and does drawing
+	/// </summary>
 	private void ProcessMouseDrawingEvent(InputEvent inputEvent)
 	{
 		if (!(inputEvent is InputEventMouseButton inputEventMouseButton))
@@ -64,6 +82,11 @@ public class NMouseModeMapDrawingInput : NMapDrawingInput
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -79,6 +102,7 @@ public class NMouseModeMapDrawingInput : NMapDrawingInput
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -97,6 +121,7 @@ public class NMouseModeMapDrawingInput : NMapDrawingInput
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -111,12 +136,14 @@ public class NMouseModeMapDrawingInput : NMapDrawingInput
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
 		base.SaveGodotObjectData(info);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

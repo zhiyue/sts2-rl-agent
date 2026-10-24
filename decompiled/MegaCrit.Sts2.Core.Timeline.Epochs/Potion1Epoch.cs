@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Open
+/// </summary>
 public class Potion1Epoch : EpochModel
 {
 	public override string Id => "POTION1_EPOCH";

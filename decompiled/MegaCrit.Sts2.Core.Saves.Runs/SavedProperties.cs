@@ -55,11 +55,27 @@ public class SavedProperties : IPacketSerializable
 	[JsonPropertyName("card_arrays")]
 	public List<SavedProperty<SerializableCard[]>>? cardArrays;
 
+	/// <summary>
+	/// For JSON deserialization.
+	/// </summary>
+	public SavedProperties()
+	{
+	}
+
+	/// <summary>
+	/// For manual instantiation at the start of a run or in tests.
+	/// </summary>
+	/// <param name="model">Abstract model to grab saved properties from.</param>
 	public static SavedProperties? From(AbstractModel model)
 	{
 		return FromInternal(model, model.Id);
 	}
 
+	/// <summary>
+	/// This should only be called internally or from tests.
+	/// </summary>
+	/// <param name="model">The object to serialize properties from.</param>
+	/// <param name="id">Id of the AbstractModel passed, or null if it is not an abstract model.</param>
 	public static SavedProperties? FromInternal(object model, ModelId? id)
 	{
 		SavedProperties savedProperties = new SavedProperties();
@@ -94,7 +110,7 @@ public class SavedProperties : IPacketSerializable
 										{
 											if (!(value is List<SerializableCard> list))
 											{
-												throw new JsonException($"Property {name} on {id} is not a valid type for [SavedProperty] (type {value?.GetType()}).");
+												throw new JsonException($"Property {name} on {id} is not a valid type for [SavedProperty] (type {value.GetType()}).");
 											}
 											SavedProperties savedProperties2 = savedProperties;
 											if (savedProperties2.cardArrays == null)
@@ -259,6 +275,10 @@ public class SavedProperties : IPacketSerializable
 		FillInternal(model);
 	}
 
+	/// <summary>
+	/// Only for use internally or in tests!
+	/// </summary>
+	/// <param name="model">Object to dump properties into.</param>
 	[UnconditionalSuppressMessage("AOT", "IL3050", Justification = "We only create array types that are referenced by SavedProperties that already exist in code.")]
 	public void FillInternal(object model)
 	{

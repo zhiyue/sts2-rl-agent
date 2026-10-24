@@ -112,6 +112,13 @@ public static class HandPosHelper
 
 	private static readonly Vector2 _baseScale = Vector2.One * 0.8f;
 
+	/// <summary>
+	/// Returns the position of a card when given the total number of cards in
+	/// the hand (handSize) and the index of the card you want the position of.
+	/// </summary>
+	/// <param name="handSize"></param>
+	/// <param name="cardIndex"></param>
+	/// <returns></returns>
 	public static Vector2 GetPosition(int handSize, int cardIndex)
 	{
 		if (handSize - 1 >= _cardPositionData.Length)
@@ -125,6 +132,13 @@ public static class HandPosHelper
 		return _cardPositionData[handSize - 1][cardIndex];
 	}
 
+	/// <summary>
+	/// Returns the angle of a card when given the total number of cards in
+	/// the hand (handSize) and the index of the card you want the position of.
+	/// </summary>
+	/// <param name="handSize"></param>
+	/// <param name="cardIndex"></param>
+	/// <returns></returns>
 	public static float GetAngle(int handSize, int cardIndex)
 	{
 		if (handSize - 1 >= _cardPositionData.Length)
@@ -138,6 +152,11 @@ public static class HandPosHelper
 		return _cardAngleData[handSize - 1][cardIndex];
 	}
 
+	/// <summary>
+	/// Returns the expected Scale of a card should be based on how many cards are in your hand.
+	/// </summary>
+	/// <param name="handSize"></param>
+	/// <returns></returns>
 	public static Vector2 GetScale(int handSize)
 	{
 		return _baseScale * handSize switch

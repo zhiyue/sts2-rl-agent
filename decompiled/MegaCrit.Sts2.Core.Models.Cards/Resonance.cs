@@ -27,10 +27,10 @@ public sealed class Resonance : CardModel
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		int intValue = base.DynamicVars["StrengthPower"].IntValue;
-		await PowerCmd.Apply<StrengthPower>(base.Owner.Creature, intValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<StrengthPower>(choiceContext, base.Owner.Creature, intValue, base.Owner.Creature, this);
 		foreach (Creature hittableEnemy in base.CombatState.HittableEnemies)
 		{
-			await PowerCmd.Apply<StrengthPower>(hittableEnemy, -1m, base.Owner.Creature, this);
+			await PowerCmd.Apply<StrengthPower>(choiceContext, hittableEnemy, -1m, base.Owner.Creature, this);
 		}
 	}
 

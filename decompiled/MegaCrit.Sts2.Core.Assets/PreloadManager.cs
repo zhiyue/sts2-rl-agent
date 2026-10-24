@@ -17,17 +17,33 @@ using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Assets;
 
+/// <summary>
+/// This class manages the caching and preloading of assets for the game.
+/// </summary>
 public static class PreloadManager
 {
 	public static AssetCache Cache { get; } = new AssetCache();
 
+	/// <summary>
+	/// Set this to false to disable preloading of assets. This can speed up iteration times.
+	/// Assets will still be unloaded when we think they are out of use.
+	/// </summary>
 	public static bool Enabled { get; set; } = true;
 
+	/// <summary>
+	/// This method loads only the logo animation. The logo animation will be unloaded as soon as LoadMainMenuAssets
+	/// is called, which is what we want.
+	/// The assets are loaded synchronously.
+	/// </summary>
 	public static async Task LoadLogoAnimation()
 	{
 		await (await LoadAssetSets("IntroLogo", AssetSets.IntroLogoAssets)).WaitForCompletion();
 	}
 
+	/// <summary>
+	/// Loads only the essential assets needed to display the main menu.
+	/// Call this while the logo animation is playing for faster main menu display.
+	/// </summary>
 	public static async Task LoadMainMenuEssentials()
 	{
 		if (!TestMode.IsOn)
@@ -36,12 +52,20 @@ public static class PreloadManager
 		}
 	}
 
+	/// <summary>
+	/// Loads all common and main menu assets including compendium screens, character select, etc.
+	/// Call this in background after main menu is displayed.
+	/// </summary>
 	public static async Task LoadCommonAndMainMenuAssets()
 	{
 		Cache.UnloadMissedCacheAssets();
 		await LoadAssetSets("Common", AssetSets.CommonAssets, AssetSets.MainMenuSet);
 	}
 
+	/// <summary>
+	/// This method is only used when starting the game, it loads the main menu assets. Otherwise, we use the
+	/// LoadCommonAndMainMenuAssets method.
+	/// </summary>
 	public static async Task LoadMainMenuAssets()
 	{
 		if (!TestMode.IsOn)
@@ -109,6 +133,7 @@ public static class PreloadManager
 		{
 			return;
 		}
+		Cache.UnloadMissedCacheAssets();
 		HashSet<string> hashSet = new HashSet<string>();
 		foreach (string additionalAsset in additionalAssets)
 		{
@@ -119,6 +144,12 @@ public static class PreloadManager
 		GC.Collect();
 	}
 
+	/// <summary>
+	/// This method is the magic for preloading assets. It unloads assets that are no longer needed and loads assets
+	/// that are needed.
+	/// It does this through a basic set subtraction algorithm to determine what assets are not needed and can be
+	/// unloaded and what assets are needed and not yet loaded (this avoids loading assets that already exist in memory).
+	/// </summary>
 	private static async Task<AssetLoadingSession> LoadAssetSets(string name, params IEnumerable<string>[] assetSets)
 	{
 		HashSet<string> hashSet = new HashSet<string>();
@@ -155,7 +186,7 @@ public static class PreloadManager
 		{
 			source2 = source2.Where((CardModel card) => card.MultiplayerConstraint != CardMultiplayerConstraint.MultiplayerOnly);
 		}
-		return new IEnumerable<string>[8]
+		return new IEnumerable<string>[10]
 		{
 			source2.SelectMany((CardModel card) => card.RunAssetPaths),
 			source.SelectMany((CharacterModel c) => c.CardPool.AllCards.SelectMany((CardModel card) => card.RunAssetPaths)),
@@ -164,7 +195,12 @@ public static class PreloadManager
 			NMapRoom.AssetPaths,
 			NChooseACardSelectionScreen.AssetPaths,
 			NGameOverScreen.AssetPaths,
-			NRelicInventoryHolder.AssetPaths
+			NRelicInventoryHolder.AssetPaths,
+			from e in ModelDb.DebugEnchantments
+				select e.IconPath into p
+				where p != EnchantmentModel.MissingIconPath
+				select p,
+			ModelDb.AllCardPools.Select((CardPoolModel p) => p.EnergyIconPath)
 		}.SelectMany((IEnumerable<string> s) => s);
 	}
 

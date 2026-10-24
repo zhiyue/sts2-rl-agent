@@ -10,7 +10,7 @@ namespace MegaCrit.Sts2.Core.Models.Cards;
 
 public sealed class Alignment : CardModel
 {
-	public override int CanonicalStarCost => 2;
+	public override int CanonicalStarCost => 3;
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new EnergyVar(2));
 

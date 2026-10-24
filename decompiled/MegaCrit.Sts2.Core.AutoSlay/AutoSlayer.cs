@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.AutoSlay.Helpers;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Localization.Fonts;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Events;
@@ -29,9 +30,13 @@ using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Settings;
 using MegaCrit.Sts2.Core.Timeline;
 using MegaCrit.Sts2.Core.Timeline.Epochs;
+using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.AutoSlay;
 
+/// <summary>
+/// Main orchestrator for AutoSlay. Runs the game automatically for smoke testing.
+/// </summary>
 public class AutoSlayer
 {
 	private readonly Dictionary<RoomType, IRoomHandler> _roomHandlers;
@@ -50,8 +55,10 @@ public class AutoSlayer
 
 	private static int _exitCode;
 
+	/// <summary>Static flag indicating if AutoSlay is currently running.</summary>
 	public static bool IsActive { get; private set; }
 
+	/// <summary>Gets the current watchdog instance (for WaitHelper integration).</summary>
 	public static Watchdog? CurrentWatchdog { get; private set; }
 
 	static AutoSlayer()
@@ -90,6 +97,7 @@ public class AutoSlayer
 		};
 	}
 
+	/// <summary>Starts an AutoSlay run with the given seed.</summary>
 	public void Start(string seed, string? logFile = null)
 	{
 		if (logFile != null)
@@ -104,14 +112,15 @@ public class AutoSlayer
 		TaskHelper.RunSafely(task);
 	}
 
+	/// <summary>Stops the current AutoSlay run.</summary>
 	public void Stop()
 	{
 		IsActive = false;
 		_cts?.Cancel();
-		_cts?.Dispose();
 		_cts = null;
 	}
 
+	/// <summary>Gets the current overlay screen cast to the expected type.</summary>
 	public static T GetCurrentScreen<T>() where T : Node
 	{
 		return (T)NOverlayStack.Instance.Peek();
@@ -138,6 +147,7 @@ public class AutoSlayer
 			_watchdog = null;
 			_cardSelectorScope?.Dispose();
 			_cardSelectorScope = null;
+			MemoryProfiler.Reset();
 			AutoSlayLog.CloseLogFile();
 			QuitGame(_exitCode);
 		}
@@ -161,6 +171,7 @@ public class AutoSlayer
 		await PlayMainMenuAsync(ct);
 		await WaitHelper.Until(() => RunManager.Instance.DebugOnlyGetState() != null, ct, AutoSlayConfig.runStateTimeout, "Run state not initialized");
 		RunState runState = RunManager.Instance.DebugOnlyGetState();
+		MemoryProfiler.SetBaseline();
 		await WaitHelper.Until(() => runState.CurrentRoom != null && runState.CurrentRoom.RoomType != RoomType.Unassigned, ct, AutoSlayConfig.nodeWaitTimeout, "Room type not assigned");
 		while (runState.TotalFloor < 49)
 		{
@@ -168,6 +179,7 @@ public class AutoSlayer
 			RoomType roomType = runState.CurrentRoom.RoomType;
 			_watchdog.Reset($"Entering {roomType} room (Act {runState.CurrentActIndex + 1}, Floor {runState.ActFloor})");
 			AutoSlayLog.EnterRoom(roomType, runState.CurrentActIndex, runState.ActFloor);
+			MemoryProfiler.LogSnapshot($"pre-room:{roomType}:Act{runState.CurrentActIndex + 1}:F{runState.ActFloor}");
 			await HandleRoomAsync(roomType, ct);
 			if ((uint)(roomType - 1) > 2u)
 			{
@@ -186,7 +198,9 @@ public class AutoSlayer
 			{
 				await ClickEventProceedIfNeeded(ct);
 			}
-			if (roomType == RoomType.Boss)
+			MemoryProfiler.LogSnapshot($"post-room:{roomType}:Act{runState.CurrentActIndex + 1}:F{runState.ActFloor}");
+			bool flag = roomType == RoomType.Boss && runState.Map.SecondBossMapPoint != null && runState.CurrentMapCoord == runState.Map.BossMapPoint.coord;
+			if (roomType == RoomType.Boss && !flag)
 			{
 				_watchdog.Reset("Waiting for act transition after boss");
 				RoomType postBossRoomType = RoomType.Boss;
@@ -214,6 +228,7 @@ public class AutoSlayer
 					return;
 				}
 				await WaitHelper.Until(() => runState.VisitedMapCoords.Count == 0, ct, TimeSpan.FromSeconds(5L), "Act transition did not complete (VisitedMapCoords not cleared)");
+				MemoryProfiler.LogSnapshot($"act-transition:Act{runState.CurrentActIndex + 1}");
 			}
 			_watchdog.Reset("Navigating map");
 			await _mapHandler.HandleAsync(_random, ct);
@@ -426,6 +441,9 @@ public class AutoSlayer
 	private static void QuitGame(int exitCode)
 	{
 		AutoSlayLog.Action($"Quitting game with exit code {exitCode}");
+		MegaLabel.DisposeCachedParagraph();
+		MegaRichTextLabel.DisposeCachedParagraph();
+		FontManager.ClearCache();
 		NGame.Instance?.GetTree().Quit(exitCode);
 	}
 }

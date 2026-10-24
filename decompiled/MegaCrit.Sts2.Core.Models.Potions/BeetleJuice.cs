@@ -32,6 +32,6 @@ public sealed class BeetleJuice : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		NCombatRoom.Instance?.PlaySplashVfx(target, new Color("65cf81"));
-		await PowerCmd.Apply<ShrinkPower>(target, base.DynamicVars.Repeat.BaseValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<ShrinkPower>(choiceContext, target, base.DynamicVars.Repeat.BaseValue, base.Owner.Creature, null);
 	}
 }

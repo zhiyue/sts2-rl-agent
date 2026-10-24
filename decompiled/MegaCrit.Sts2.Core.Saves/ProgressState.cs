@@ -11,9 +11,14 @@ using MegaCrit.Sts2.Core.Timeline;
 
 namespace MegaCrit.Sts2.Core.Saves;
 
+/// <summary>
+/// Domain type for player progress. Separates runtime representation from the JSON wire format
+/// (<see cref="T:MegaCrit.Sts2.Core.Saves.SerializableProgress" />). Uses dictionaries for stat lookups and hashsets for deduplication
+/// of discovered content.
+/// </summary>
 public class ProgressState
 {
-	private static readonly Dictionary<string, Achievement> AchievementsByName = BuildAchievementLookup();
+	private static readonly Dictionary<string, Achievement> _achievementsByName = BuildAchievementLookup();
 
 	private readonly Dictionary<ModelId, CharacterStats> _characterStats = new Dictionary<ModelId, CharacterStats>();
 
@@ -38,6 +43,30 @@ public class ProgressState
 	private readonly List<SerializableEpoch> _epochs = new List<SerializableEpoch>();
 
 	private readonly Dictionary<Achievement, long> _unlockedAchievements = new Dictionary<Achievement, long>();
+
+	private readonly Dictionary<ModelId, CharacterStats> _unknownCharacterStats = new Dictionary<ModelId, CharacterStats>();
+
+	private readonly Dictionary<ModelId, CardStats> _unknownCardStats = new Dictionary<ModelId, CardStats>();
+
+	private readonly Dictionary<ModelId, EncounterStats> _unknownEncounterStats = new Dictionary<ModelId, EncounterStats>();
+
+	private readonly Dictionary<ModelId, EnemyStats> _unknownEnemyStats = new Dictionary<ModelId, EnemyStats>();
+
+	private readonly Dictionary<ModelId, AncientStats> _unknownAncientStats = new Dictionary<ModelId, AncientStats>();
+
+	private readonly HashSet<ModelId> _unknownDiscoveredCards = new HashSet<ModelId>();
+
+	private readonly HashSet<ModelId> _unknownDiscoveredRelics = new HashSet<ModelId>();
+
+	private readonly HashSet<ModelId> _unknownDiscoveredPotions = new HashSet<ModelId>();
+
+	private readonly HashSet<ModelId> _unknownDiscoveredEvents = new HashSet<ModelId>();
+
+	private readonly HashSet<ModelId> _unknownDiscoveredActs = new HashSet<ModelId>();
+
+	private readonly List<SerializableEpoch> _unknownEpochs = new List<SerializableEpoch>();
+
+	private readonly List<SerializableUnlockedAchievement> _unknownUnlockedAchievements = new List<SerializableUnlockedAchievement>();
 
 	private readonly HashSet<string> _ftueCompleted = new HashSet<string>();
 
@@ -121,6 +150,9 @@ public class ProgressState
 
 	public int NumberOfRuns => Wins + Losses;
 
+	/// <summary>
+	/// Creates an empty ProgressState. Used for new save files and test setup.
+	/// </summary>
 	public static ProgressState CreateDefault()
 	{
 		return FromSerializable(new SerializableProgress(), new DeserializationContext());
@@ -145,20 +177,20 @@ public class ProgressState
 			TestSubjectKills = ClampNonNegativeInt(save.TestSubjectKills, "TestSubjectKills", ctx),
 			PendingCharacterUnlock = ValidateModelId<CharacterModel>(save.PendingCharacterUnlock, "PendingCharacterUnlock", ctx)
 		};
-		ParseCharacterStats(save.CharStats, progressState._characterStats, ctx);
-		ParseCardStats(save.CardStats, progressState._cardStats, ctx);
-		ParseEncounterStats(save.EncounterStats, progressState._encounterStats, ctx);
-		ParseEnemyStats(save.EnemyStats, progressState._enemyStats, ctx);
-		ParseAncientStats(save.AncientStats, progressState._ancientStats, ctx);
-		ParseDiscoveredSet<CardModel>(save.DiscoveredCards, progressState._discoveredCards, "DiscoveredCards", ctx);
-		ParseDiscoveredSet<RelicModel>(save.DiscoveredRelics, progressState._discoveredRelics, "DiscoveredRelics", ctx);
-		ParseDiscoveredSet<PotionModel>(save.DiscoveredPotions, progressState._discoveredPotions, "DiscoveredPotions", ctx);
-		ParseDiscoveredSet<EventModel>(save.DiscoveredEvents, progressState._discoveredEvents, "DiscoveredEvents", ctx);
-		ParseDiscoveredSet<ActModel>(save.DiscoveredActs, progressState._discoveredActs, "DiscoveredActs", ctx);
-		ParseEpochs(save.Epochs, progressState._epochs, ctx);
+		ParseCharacterStats(save.CharStats, progressState._characterStats, progressState._unknownCharacterStats, ctx);
+		ParseCardStats(save.CardStats, progressState._cardStats, progressState._unknownCardStats, ctx);
+		ParseEncounterStats(save.EncounterStats, progressState._encounterStats, progressState._unknownEncounterStats, ctx);
+		ParseEnemyStats(save.EnemyStats, progressState._enemyStats, progressState._unknownEnemyStats, ctx);
+		ParseAncientStats(save.AncientStats, progressState._ancientStats, progressState._unknownAncientStats, ctx);
+		ParseDiscoveredSet<CardModel>(save.DiscoveredCards, progressState._discoveredCards, progressState._unknownDiscoveredCards, "DiscoveredCards", ctx);
+		ParseDiscoveredSet<RelicModel>(save.DiscoveredRelics, progressState._discoveredRelics, progressState._unknownDiscoveredRelics, "DiscoveredRelics", ctx);
+		ParseDiscoveredSet<PotionModel>(save.DiscoveredPotions, progressState._discoveredPotions, progressState._unknownDiscoveredPotions, "DiscoveredPotions", ctx);
+		ParseDiscoveredSet<EventModel>(save.DiscoveredEvents, progressState._discoveredEvents, progressState._unknownDiscoveredEvents, "DiscoveredEvents", ctx);
+		ParseDiscoveredSet<ActModel>(save.DiscoveredActs, progressState._discoveredActs, progressState._unknownDiscoveredActs, "DiscoveredActs", ctx);
+		ParseEpochs(save.Epochs, progressState._epochs, progressState._unknownEpochs, ctx);
 		FixMissingSlots(progressState._epochs, ctx);
 		ParseFtues(save.FtueCompleted, progressState._ftueCompleted, ctx);
-		ParseAchievements(save.UnlockedAchievements, progressState._unlockedAchievements, ctx);
+		ParseAchievements(save.UnlockedAchievements, progressState._unlockedAchievements, progressState._unknownUnlockedAchievements, ctx);
 		progressState.FilterAndSortEpochs();
 		return progressState;
 	}
@@ -180,23 +212,23 @@ public class ProgressState
 			MaxMultiplayerAscension = MaxMultiplayerAscension,
 			TestSubjectKills = TestSubjectKills,
 			PendingCharacterUnlock = PendingCharacterUnlock,
-			CharStats = _characterStats.Values.ToList(),
-			CardStats = _cardStats.Values.ToList(),
-			EncounterStats = _encounterStats.Values.ToList(),
-			EnemyStats = _enemyStats.Values.ToList(),
-			AncientStats = _ancientStats.Values.ToList(),
-			DiscoveredCards = _discoveredCards.ToList(),
-			DiscoveredRelics = _discoveredRelics.ToList(),
-			DiscoveredPotions = _discoveredPotions.ToList(),
-			DiscoveredEvents = _discoveredEvents.ToList(),
-			DiscoveredActs = _discoveredActs.ToList(),
-			Epochs = _epochs.ToList(),
+			CharStats = _characterStats.Values.Concat(_unknownCharacterStats.Values).ToList(),
+			CardStats = _cardStats.Values.Concat(_unknownCardStats.Values).ToList(),
+			EncounterStats = _encounterStats.Values.Concat(_unknownEncounterStats.Values).ToList(),
+			EnemyStats = _enemyStats.Values.Concat(_unknownEnemyStats.Values).ToList(),
+			AncientStats = _ancientStats.Values.Concat(_unknownAncientStats.Values).ToList(),
+			DiscoveredCards = _discoveredCards.Concat(_unknownDiscoveredCards).ToList(),
+			DiscoveredRelics = _discoveredRelics.Concat(_unknownDiscoveredRelics).ToList(),
+			DiscoveredPotions = _discoveredPotions.Concat(_unknownDiscoveredPotions).ToList(),
+			DiscoveredEvents = _discoveredEvents.Concat(_unknownDiscoveredEvents).ToList(),
+			DiscoveredActs = _discoveredActs.Concat(_unknownDiscoveredActs).ToList(),
+			Epochs = _epochs.Concat(_unknownEpochs).ToList(),
 			FtueCompleted = _ftueCompleted.ToList(),
 			UnlockedAchievements = _unlockedAchievements.Select((KeyValuePair<Achievement, long> kvp) => new SerializableUnlockedAchievement
 			{
 				Achievement = JsonNamingPolicy.SnakeCaseLower.ConvertName(kvp.Key.ToString()),
 				UnlockTime = kvp.Value
-			}).ToList()
+			}).Concat(_unknownUnlockedAchievements).ToList()
 		};
 	}
 
@@ -273,6 +305,9 @@ public class ProgressState
 		return _unlockedAchievements.ContainsKey(achievement);
 	}
 
+	/// <summary>
+	/// Sets an epoch to Obtained if its slot exists, or creates a new ObtainedNoSlot entry.
+	/// </summary>
 	public void ObtainEpoch(string epochId)
 	{
 		SerializableEpoch serializableEpoch = _epochs.FirstOrDefault((SerializableEpoch e) => e.Id == epochId);
@@ -285,6 +320,11 @@ public class ProgressState
 		FilterAndSortEpochs();
 	}
 
+	/// <summary>
+	/// Sets or creates an epoch at any desired state. Used by timeline expansions.
+	/// Bypasses <see cref="M:MegaCrit.Sts2.Core.Saves.SerializableEpoch.SetObtained(MegaCrit.Sts2.Core.Saves.EpochState)" />'s one-way guard so the
+	/// state can be moved in any direction (e.g. NotObtained to Revealed).
+	/// </summary>
 	public void ObtainEpochOverride(string epochId, EpochState state)
 	{
 		SerializableEpoch serializableEpoch = _epochs.FirstOrDefault((SerializableEpoch e) => e.Id == epochId);
@@ -303,6 +343,11 @@ public class ProgressState
 		}
 	}
 
+	/// <summary>
+	/// Opens a timeline slot for an epoch. If no entry exists, creates a NotObtained entry.
+	/// If the epoch was earned before its slot existed (ObtainedNoSlot), promotes it to Obtained.
+	/// Does NOT modify ObtainDate (the date was set when the epoch was earned, not when the slot opened).
+	/// </summary>
 	public void UnlockSlot(string epochId)
 	{
 		SerializableEpoch serializableEpoch = _epochs.FirstOrDefault((SerializableEpoch e) => e.Id == epochId);
@@ -321,6 +366,10 @@ public class ProgressState
 		Log.Error($"Slot unlocked for {epochId} but it's in an invalid state: {serializableEpoch.State}");
 	}
 
+	/// <summary>
+	/// Sets an obtained epoch to Revealed state. Pure data mutation only.
+	/// The metric upload stays on <see cref="M:MegaCrit.Sts2.Core.Saves.SaveManager.RevealEpoch(System.String,System.Boolean)" />.
+	/// </summary>
 	public void RevealEpoch(string epochId)
 	{
 		SerializableEpoch serializableEpoch = _epochs.FirstOrDefault((SerializableEpoch e) => e.Id == epochId);
@@ -331,6 +380,9 @@ public class ProgressState
 		serializableEpoch.State = EpochState.Revealed;
 	}
 
+	/// <summary>
+	/// Clears all epochs. Used by the debug Reset Progress button.
+	/// </summary>
 	public void ResetEpochs()
 	{
 		_epochs.Clear();
@@ -421,7 +473,7 @@ public class ProgressState
 		return serializableEpoch.State >= EpochState.Revealed;
 	}
 
-	private static void ParseCharacterStats(List<CharacterStats> source, Dictionary<ModelId, CharacterStats> target, DeserializationContext ctx)
+	private static void ParseCharacterStats(List<CharacterStats> source, Dictionary<ModelId, CharacterStats> target, Dictionary<ModelId, CharacterStats> unknown, DeserializationContext ctx)
 	{
 		ctx.PushPath("CharStats");
 		for (int i = 0; i < source.Count; i++)
@@ -433,30 +485,33 @@ public class ProgressState
 			{
 				ctx.Warn("Null or none character ID, skipping");
 				ctx.PopPath();
-				continue;
 			}
-			if (ModelDb.GetByIdOrNull<CharacterModel>(id) == null)
+			else if (ModelDb.GetByIdOrNull<CharacterModel>(id) == null)
 			{
-				ctx.Warn($"Unknown character ID: {id}, skipping");
-				ctx.PopPath();
-				continue;
-			}
-			ClampCharacterStatsFields(characterStats, ctx);
-			if (!target.TryAdd(id, characterStats))
-			{
-				ctx.Warn($"Duplicate character stats for {id}, merging");
-				MergeCharacterStats(target[id], characterStats);
+				ctx.Warn($"Unknown character ID: {id}");
+				AddCharacterStats(characterStats, unknown, ctx);
 				ctx.PopPath();
 			}
 			else
 			{
+				AddCharacterStats(characterStats, target, ctx);
+				ClampCharacterStatsFields(characterStats, ctx);
 				ctx.PopPath();
 			}
 		}
 		ctx.PopPath();
 	}
 
-	private static void ParseCardStats(List<CardStats> source, Dictionary<ModelId, CardStats> target, DeserializationContext ctx)
+	private static void AddCharacterStats(CharacterStats entry, Dictionary<ModelId, CharacterStats> target, DeserializationContext ctx)
+	{
+		if (!target.TryAdd(entry.Id, entry))
+		{
+			ctx.Warn($"Duplicate character stats for {entry.Id}, merging");
+			MergeCharacterStats(target[entry.Id], entry);
+		}
+	}
+
+	private static void ParseCardStats(List<CardStats> source, Dictionary<ModelId, CardStats> target, Dictionary<ModelId, CardStats> unknown, DeserializationContext ctx)
 	{
 		ctx.PushPath("CardStats");
 		for (int i = 0; i < source.Count; i++)
@@ -468,30 +523,33 @@ public class ProgressState
 			{
 				ctx.Warn("Null or none card ID, skipping");
 				ctx.PopPath();
-				continue;
 			}
-			if (ModelDb.GetByIdOrNull<CardModel>(id) == null)
+			else if (ModelDb.GetByIdOrNull<CardModel>(id) == null)
 			{
-				ctx.Warn($"Unknown card ID: {id}, skipping");
-				ctx.PopPath();
-				continue;
-			}
-			ClampCardStatsFields(cardStats, ctx);
-			if (!target.TryAdd(id, cardStats))
-			{
-				ctx.Warn($"Duplicate card stats for {id}, merging");
-				MergeCardStats(target[id], cardStats);
+				ctx.Warn($"Unknown card ID: {id}");
+				AddCardStats(cardStats, unknown, ctx);
 				ctx.PopPath();
 			}
 			else
 			{
+				AddCardStats(cardStats, target, ctx);
+				ClampCardStatsFields(cardStats, ctx);
 				ctx.PopPath();
 			}
 		}
 		ctx.PopPath();
 	}
 
-	private static void ParseEncounterStats(List<EncounterStats> source, Dictionary<ModelId, EncounterStats> target, DeserializationContext ctx)
+	private static void AddCardStats(CardStats entry, Dictionary<ModelId, CardStats> target, DeserializationContext ctx)
+	{
+		if (!target.TryAdd(entry.Id, entry))
+		{
+			ctx.Warn($"Duplicate card stats for {entry.Id}, merging");
+			MergeCardStats(target[entry.Id], entry);
+		}
+	}
+
+	private static void ParseEncounterStats(List<EncounterStats> source, Dictionary<ModelId, EncounterStats> target, Dictionary<ModelId, EncounterStats> unknown, DeserializationContext ctx)
 	{
 		ctx.PushPath("EncounterStats");
 		for (int i = 0; i < source.Count; i++)
@@ -502,30 +560,33 @@ public class ProgressState
 			{
 				ctx.Warn("Null or none encounter ID, skipping");
 				ctx.PopPath();
-				continue;
 			}
-			if (ModelDb.GetByIdOrNull<EncounterModel>(encounterStats.Id) == null)
+			else if (ModelDb.GetByIdOrNull<EncounterModel>(encounterStats.Id) == null)
 			{
-				ctx.Warn($"Unknown encounter ID: {encounterStats.Id}, skipping");
-				ctx.PopPath();
-				continue;
-			}
-			ClampFightStatsFields(encounterStats.FightStats, ctx);
-			if (!target.TryAdd(encounterStats.Id, encounterStats))
-			{
-				ctx.Warn($"Duplicate encounter stats for {encounterStats.Id}, merging");
-				MergeFightStatsList(target[encounterStats.Id].FightStats, encounterStats.FightStats);
+				ctx.Warn($"Unknown encounter ID: {encounterStats.Id}");
+				AddEncounterStats(encounterStats, unknown, ctx);
 				ctx.PopPath();
 			}
 			else
 			{
+				AddEncounterStats(encounterStats, target, ctx);
+				ClampFightStatsFields(encounterStats.FightStats, ctx);
 				ctx.PopPath();
 			}
 		}
 		ctx.PopPath();
 	}
 
-	private static void ParseEnemyStats(List<EnemyStats> source, Dictionary<ModelId, EnemyStats> target, DeserializationContext ctx)
+	private static void AddEncounterStats(EncounterStats entry, Dictionary<ModelId, EncounterStats> target, DeserializationContext ctx)
+	{
+		if (!target.TryAdd(entry.Id, entry))
+		{
+			ctx.Warn($"Duplicate encounter stats for {entry.Id}, merging");
+			MergeFightStatsList(target[entry.Id].FightStats, entry.FightStats);
+		}
+	}
+
+	private static void ParseEnemyStats(List<EnemyStats> source, Dictionary<ModelId, EnemyStats> target, Dictionary<ModelId, EnemyStats> unknown, DeserializationContext ctx)
 	{
 		ctx.PushPath("EnemyStats");
 		for (int i = 0; i < source.Count; i++)
@@ -536,30 +597,33 @@ public class ProgressState
 			{
 				ctx.Warn("Null or none enemy ID, skipping");
 				ctx.PopPath();
-				continue;
 			}
-			if (ModelDb.GetByIdOrNull<MonsterModel>(enemyStats.Id) == null)
+			else if (ModelDb.GetByIdOrNull<MonsterModel>(enemyStats.Id) == null)
 			{
-				ctx.Warn($"Unknown enemy ID: {enemyStats.Id}, skipping");
-				ctx.PopPath();
-				continue;
-			}
-			ClampFightStatsFields(enemyStats.FightStats, ctx);
-			if (!target.TryAdd(enemyStats.Id, enemyStats))
-			{
-				ctx.Warn($"Duplicate enemy stats for {enemyStats.Id}, merging");
-				MergeFightStatsList(target[enemyStats.Id].FightStats, enemyStats.FightStats);
+				ctx.Warn($"Unknown enemy ID: {enemyStats.Id}");
+				AddEnemyStats(enemyStats, unknown, ctx);
 				ctx.PopPath();
 			}
 			else
 			{
+				AddEnemyStats(enemyStats, target, ctx);
+				ClampFightStatsFields(enemyStats.FightStats, ctx);
 				ctx.PopPath();
 			}
 		}
 		ctx.PopPath();
 	}
 
-	private static void ParseAncientStats(List<AncientStats> source, Dictionary<ModelId, AncientStats> target, DeserializationContext ctx)
+	private static void AddEnemyStats(EnemyStats entry, Dictionary<ModelId, EnemyStats> target, DeserializationContext ctx)
+	{
+		if (!target.TryAdd(entry.Id, entry))
+		{
+			ctx.Warn($"Duplicate enemy stats for {entry.Id}, merging");
+			MergeFightStatsList(target[entry.Id].FightStats, entry.FightStats);
+		}
+	}
+
+	private static void ParseAncientStats(List<AncientStats> source, Dictionary<ModelId, AncientStats> target, Dictionary<ModelId, AncientStats> unknown, DeserializationContext ctx)
 	{
 		ctx.PushPath("AncientStats");
 		for (int i = 0; i < source.Count; i++)
@@ -570,30 +634,33 @@ public class ProgressState
 			{
 				ctx.Warn("Null or none ancient ID, skipping");
 				ctx.PopPath();
-				continue;
 			}
-			if (ModelDb.GetByIdOrNull<EventModel>(ancientStats.Id) == null)
+			else if (ModelDb.GetByIdOrNull<EventModel>(ancientStats.Id) == null)
 			{
-				ctx.Warn($"Unknown ancient event ID: {ancientStats.Id}, skipping");
-				ctx.PopPath();
-				continue;
-			}
-			ClampAncientCharacterStatsFields(ancientStats.CharStats, ctx);
-			if (!target.TryAdd(ancientStats.Id, ancientStats))
-			{
-				ctx.Warn($"Duplicate ancient stats for {ancientStats.Id}, merging");
-				MergeAncientCharacterStatsList(target[ancientStats.Id].CharStats, ancientStats.CharStats);
+				ctx.Warn($"Unknown ancient event ID: {ancientStats.Id}");
+				AddAncientStats(ancientStats, unknown, ctx);
 				ctx.PopPath();
 			}
 			else
 			{
+				ClampAncientCharacterStatsFields(ancientStats.CharStats, ctx);
+				AddAncientStats(ancientStats, target, ctx);
 				ctx.PopPath();
 			}
 		}
 		ctx.PopPath();
 	}
 
-	private static void ParseDiscoveredSet<TModel>(List<ModelId> source, HashSet<ModelId> target, string fieldName, DeserializationContext ctx) where TModel : AbstractModel
+	private static void AddAncientStats(AncientStats entry, Dictionary<ModelId, AncientStats> target, DeserializationContext ctx)
+	{
+		if (!target.TryAdd(entry.Id, entry))
+		{
+			ctx.Warn($"Duplicate ancient stats for {entry.Id}, merging");
+			MergeAncientCharacterStatsList(target[entry.Id].CharStats, entry.CharStats);
+		}
+	}
+
+	private static void ParseDiscoveredSet<TModel>(List<ModelId> source, HashSet<ModelId> target, HashSet<ModelId> unknown, string fieldName, DeserializationContext ctx) where TModel : AbstractModel
 	{
 		ctx.PushPath(fieldName);
 		for (int i = 0; i < source.Count; i++)
@@ -605,7 +672,8 @@ public class ProgressState
 			}
 			else if (ModelDb.GetByIdOrNull<TModel>(modelId) == null)
 			{
-				ctx.Warn($"Unknown ID: {modelId}, skipping");
+				ctx.Warn($"Unknown {typeof(TModel).Name} ID: {modelId}");
+				unknown.Add(modelId);
 			}
 			else if (!target.Add(modelId))
 			{
@@ -615,7 +683,7 @@ public class ProgressState
 		ctx.PopPath();
 	}
 
-	private static void ParseEpochs(List<SerializableEpoch> source, List<SerializableEpoch> target, DeserializationContext ctx)
+	private static void ParseEpochs(List<SerializableEpoch> source, List<SerializableEpoch> target, List<SerializableEpoch> unknown, DeserializationContext ctx)
 	{
 		ctx.PushPath("Epochs");
 		HashSet<string> hashSet = new HashSet<string>();
@@ -625,7 +693,8 @@ public class ProgressState
 			ctx.PushPath($"[{i}]");
 			if (!EpochModel.IsValid(serializableEpoch.Id))
 			{
-				ctx.Warn("Unknown epoch ID: " + serializableEpoch.Id + ", skipping");
+				ctx.Warn("Unknown epoch ID: " + serializableEpoch.Id);
+				unknown.Add(serializableEpoch);
 				ctx.PopPath();
 			}
 			else if (!Enum.IsDefined(serializableEpoch.State))
@@ -652,6 +721,11 @@ public class ProgressState
 		ctx.PopPath();
 	}
 
+	/// <summary>
+	/// For each Revealed epoch, ensures all epochs it would expand via
+	/// <see cref="M:MegaCrit.Sts2.Core.Timeline.EpochModel.GetTimelineExpansion" /> have slot entries.
+	/// Promotes ObtainedNoSlot to Obtained and creates missing entries as NotObtained.
+	/// </summary>
 	private static void FixMissingSlots(List<SerializableEpoch> epochs, DeserializationContext ctx)
 	{
 		Dictionary<string, SerializableEpoch> dictionary = new Dictionary<string, SerializableEpoch>();
@@ -702,7 +776,7 @@ public class ProgressState
 		ctx.PopPath();
 	}
 
-	private static void ParseAchievements(List<SerializableUnlockedAchievement>? source, Dictionary<Achievement, long> target, DeserializationContext ctx)
+	private static void ParseAchievements(List<SerializableUnlockedAchievement>? source, Dictionary<Achievement, long> target, List<SerializableUnlockedAchievement> unknown, DeserializationContext ctx)
 	{
 		if (source == null)
 		{
@@ -712,9 +786,10 @@ public class ProgressState
 		for (int i = 0; i < source.Count; i++)
 		{
 			SerializableUnlockedAchievement serializableUnlockedAchievement = source[i];
-			if (!AchievementsByName.TryGetValue(serializableUnlockedAchievement.Achievement, out var value))
+			if (!_achievementsByName.TryGetValue(serializableUnlockedAchievement.Achievement, out var value))
 			{
-				ctx.Warn($"Unknown achievement \"{serializableUnlockedAchievement.Achievement}\" at index {i}, skipping");
+				ctx.Warn($"Unknown achievement \"{serializableUnlockedAchievement.Achievement}\" at index {i}");
+				unknown.Add(serializableUnlockedAchievement);
 			}
 			else if (!target.TryAdd(value, serializableUnlockedAchievement.UnlockTime))
 			{

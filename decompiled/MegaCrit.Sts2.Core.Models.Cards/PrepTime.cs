@@ -22,7 +22,7 @@ public sealed class PrepTime : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await PowerCmd.Apply<PrepTimePower>(base.Owner.Creature, base.DynamicVars["PrepTimePower"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<PrepTimePower>(choiceContext, base.Owner.Creature, base.DynamicVars["PrepTimePower"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

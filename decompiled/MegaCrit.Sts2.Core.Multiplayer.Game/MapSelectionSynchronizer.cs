@@ -20,7 +20,7 @@ public class MapSelectionSynchronizer
 
 	private readonly RunState _runState;
 
-	private RunLocation _acceptingVotesFromSource;
+	private MapLocation _acceptingVotesFromSource;
 
 	private readonly List<MapVote?> _votes = new List<MapVote?>();
 
@@ -28,6 +28,10 @@ public class MapSelectionSynchronizer
 
 	private readonly Rng _multiplayerMapPointSelection;
 
+	/// <summary>
+	/// Each time we generate a map, this counter goes up. It is used to keep track of multiplayer map votes and to
+	/// discard map votes that are for old maps.
+	/// </summary>
 	public int MapGenerationCount { get; private set; }
 
 	public event Action<Player, MapVote?, MapVote?>? PlayerVoteChanged;
@@ -41,11 +45,11 @@ public class MapSelectionSynchronizer
 		_netService = netService;
 		_actionQueueSynchronizer = actionQueueSynchronizer;
 		_runState = runState;
-		_multiplayerMapPointSelection = new Rng(_runState.Rng.Seed);
-		OnRunLocationChanged(_runState.CurrentLocation);
+		_multiplayerMapPointSelection = new Rng(_runState.Rng.Seed, "map_point_selection");
+		OnLocationChanged(_runState.MapLocation);
 	}
 
-	public void PlayerVotedForMapCoord(Player player, RunLocation source, MapVote? destination)
+	public void PlayerVotedForMapCoord(Player player, MapLocation source, MapVote? destination)
 	{
 		if (_acceptingVotesFromSource != source)
 		{
@@ -55,6 +59,7 @@ public class MapSelectionSynchronizer
 		if (destination?.mapGenerationCount < MapGenerationCount)
 		{
 			_logger.Warn($"Received map vote from player {player.NetId} for destination {destination}, but the map generation count is lower than our current: {MapGenerationCount}");
+			return;
 		}
 		int playerSlotIndex = _runState.GetPlayerSlotIndex(player);
 		MapVote? arg = _votes[playerSlotIndex];
@@ -93,7 +98,7 @@ public class MapSelectionSynchronizer
 		_actionQueueSynchronizer.RequestEnqueue(action);
 	}
 
-	public void OnRunLocationChanged(RunLocation location)
+	public void OnLocationChanged(MapLocation location)
 	{
 		_acceptingVotesFromSource = location;
 		_votes.Clear();

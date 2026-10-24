@@ -25,7 +25,7 @@ public sealed class Anger : CardModel
 			.WithHitFx("vfx/vfx_attack_slash")
 			.Execute(choiceContext);
 		CardModel card = CreateClone();
-		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, addedByPlayer: true), 2.2f);
+		CardCmd.PreviewCardPileAdd(await CardPileCmd.AddGeneratedCardToCombat(card, PileType.Discard, base.Owner), 2.2f);
 	}
 
 	protected override void OnUpgrade()

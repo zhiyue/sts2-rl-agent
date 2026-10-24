@@ -1,5 +1,9 @@
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
+/// <summary>
+/// Enum to simplify params for VFX colors.
+/// See NAdditiveOverlayVfx for example.
+/// </summary>
 public enum VfxColor
 {
 	Red,
@@ -9,5 +13,8 @@ public enum VfxColor
 	Black,
 	White,
 	Cyan,
-	Gold
+	Gold,
+	Orange,
+	Swamp,
+	DarkGray
 }

@@ -133,6 +133,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 
 	private static readonly JsonEncodedText PropName_totalWinRate = JsonEncodedText.Encode("totalWinRate");
 
+	private static readonly JsonEncodedText PropName_numReloads = JsonEncodedText.Encode("numReloads");
+
 	private static readonly JsonEncodedText PropName_runPlaytime = JsonEncodedText.Encode("runPlaytime");
 
 	private static readonly JsonEncodedText PropName_floorReached = JsonEncodedText.Encode("floorReached");
@@ -177,6 +179,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 
 	private static readonly JsonEncodedText PropName_runTimer = JsonEncodedText.Encode("runTimer");
 
+	private static readonly JsonEncodedText PropName_phobiaMode = JsonEncodedText.Encode("phobiaMode");
+
 	private static readonly JsonEncodedText PropName_cardIndices = JsonEncodedText.Encode("cardIndices");
 
 	private static readonly JsonEncodedText PropName_displayCount = JsonEncodedText.Encode("displayCount");
@@ -199,62 +203,149 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 
 	private static readonly JsonEncodedText PropName_totalEpochs = JsonEncodedText.Encode("totalEpochs");
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<bool> Boolean => _Boolean ?? (_Boolean = (JsonTypeInfo<bool>)base.Options.GetTypeInfo(typeof(bool)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<float> Single => _Single ?? (_Single = (JsonTypeInfo<float>)base.Options.GetTypeInfo(typeof(float)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<Vector2I> Vector2I => _Vector2I ?? (_Vector2I = (JsonTypeInfo<Vector2I>)base.Options.GetTypeInfo(typeof(Vector2I)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<AchievementMetric> AchievementMetric => _AchievementMetric ?? (_AchievementMetric = (JsonTypeInfo<AchievementMetric>)base.Options.GetTypeInfo(typeof(AchievementMetric)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<ModelId> ModelId => _ModelId ?? (_ModelId = (JsonTypeInfo<ModelId>)base.Options.GetTypeInfo(typeof(ModelId)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<ActWinMetric> ActWinMetric => _ActWinMetric ?? (_ActWinMetric = (JsonTypeInfo<ActWinMetric>)base.Options.GetTypeInfo(typeof(ActWinMetric)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<AncientMetric> AncientMetric => _AncientMetric ?? (_AncientMetric = (JsonTypeInfo<AncientMetric>)base.Options.GetTypeInfo(typeof(AncientMetric)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<CardChoiceMetric> CardChoiceMetric => _CardChoiceMetric ?? (_CardChoiceMetric = (JsonTypeInfo<CardChoiceMetric>)base.Options.GetTypeInfo(typeof(CardChoiceMetric)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<EncounterMetric> EncounterMetric => _EncounterMetric ?? (_EncounterMetric = (JsonTypeInfo<EncounterMetric>)base.Options.GetTypeInfo(typeof(EncounterMetric)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<EventChoiceMetric> EventChoiceMetric => _EventChoiceMetric ?? (_EventChoiceMetric = (JsonTypeInfo<EventChoiceMetric>)base.Options.GetTypeInfo(typeof(EventChoiceMetric)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<RunMetrics> RunMetrics => _RunMetrics ?? (_RunMetrics = (JsonTypeInfo<RunMetrics>)base.Options.GetTypeInfo(typeof(RunMetrics)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<SettingsDataMetric> SettingsDataMetric => _SettingsDataMetric ?? (_SettingsDataMetric = (JsonTypeInfo<SettingsDataMetric>)base.Options.GetTypeInfo(typeof(SettingsDataMetric)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<AspectRatioSetting> AspectRatioSetting => _AspectRatioSetting ?? (_AspectRatioSetting = (JsonTypeInfo<AspectRatioSetting>)base.Options.GetTypeInfo(typeof(AspectRatioSetting)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<FastModeType> FastModeType => _FastModeType ?? (_FastModeType = (JsonTypeInfo<FastModeType>)base.Options.GetTypeInfo(typeof(FastModeType)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<VSyncType> VSyncType => _VSyncType ?? (_VSyncType = (JsonTypeInfo<VSyncType>)base.Options.GetTypeInfo(typeof(VSyncType)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<EpochMetric> EpochMetric => _EpochMetric ?? (_EpochMetric = (JsonTypeInfo<EpochMetric>)base.Options.GetTypeInfo(typeof(EpochMetric)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<IEnumerable<ModelId>> IEnumerableModelId => _IEnumerableModelId ?? (_IEnumerableModelId = (JsonTypeInfo<IEnumerable<ModelId>>)base.Options.GetTypeInfo(typeof(IEnumerable<ModelId>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<List<ModelId>> ListModelId => _ListModelId ?? (_ListModelId = (JsonTypeInfo<List<ModelId>>)base.Options.GetTypeInfo(typeof(List<ModelId>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<List<ActWinMetric>> ListActWinMetric => _ListActWinMetric ?? (_ListActWinMetric = (JsonTypeInfo<List<ActWinMetric>>)base.Options.GetTypeInfo(typeof(List<ActWinMetric>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<List<AncientMetric>> ListAncientMetric => _ListAncientMetric ?? (_ListAncientMetric = (JsonTypeInfo<List<AncientMetric>>)base.Options.GetTypeInfo(typeof(List<AncientMetric>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<List<CardChoiceMetric>> ListCardChoiceMetric => _ListCardChoiceMetric ?? (_ListCardChoiceMetric = (JsonTypeInfo<List<CardChoiceMetric>>)base.Options.GetTypeInfo(typeof(List<CardChoiceMetric>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<List<EncounterMetric>> ListEncounterMetric => _ListEncounterMetric ?? (_ListEncounterMetric = (JsonTypeInfo<List<EncounterMetric>>)base.Options.GetTypeInfo(typeof(List<EncounterMetric>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<List<EventChoiceMetric>> ListEventChoiceMetric => _ListEventChoiceMetric ?? (_ListEventChoiceMetric = (JsonTypeInfo<List<EventChoiceMetric>>)base.Options.GetTypeInfo(typeof(List<EventChoiceMetric>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<List<string>> ListString => _ListString ?? (_ListString = (JsonTypeInfo<List<string>>)base.Options.GetTypeInfo(typeof(List<string>)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<int> Int32 => _Int32 ?? (_Int32 = (JsonTypeInfo<int>)base.Options.GetTypeInfo(typeof(int)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<long> Int64 => _Int64 ?? (_Int64 = (JsonTypeInfo<long>)base.Options.GetTypeInfo(typeof(long)));
 
+	/// <summary>
+	/// Defines the source generated JSON serialization contract metadata for a given type.
+	/// </summary>
 	public JsonTypeInfo<string> String => _String ?? (_String = (JsonTypeInfo<string>)base.Options.GetTypeInfo(typeof(string)));
 
+	/// <summary>
+	/// The default <see cref="T:System.Text.Json.Serialization.JsonSerializerContext" /> associated with a default <see cref="T:System.Text.Json.JsonSerializerOptions" /> instance.
+	/// </summary>
 	public static MetricsSerializerContext Default { get; } = new MetricsSerializerContext(new JsonSerializerOptions(s_defaultOptions));
 
+	/// <summary>
+	/// The source-generated options associated with this context.
+	/// </summary>
 	protected override JsonSerializerOptions? GeneratedSerializerOptions { get; } = s_defaultOptions;
 
 	private JsonTypeInfo<bool> Create_Boolean(JsonSerializerOptions options)
@@ -955,7 +1046,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 
 	private static JsonPropertyInfo[] EventChoiceMetricPropInit(JsonSerializerOptions options)
 	{
-		JsonPropertyInfo[] array = new JsonPropertyInfo[2];
+		JsonPropertyInfo[] array = new JsonPropertyInfo[3];
 		JsonPropertyInfoValues<string> jsonPropertyInfoValues = new JsonPropertyInfoValues<string>();
 		jsonPropertyInfoValues.IsProperty = false;
 		jsonPropertyInfoValues.IsPublic = true;
@@ -981,6 +1072,25 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues.IsVirtual = false;
 		jsonPropertyInfoValues.DeclaringType = typeof(EventChoiceMetric);
 		jsonPropertyInfoValues.Converter = null;
+		jsonPropertyInfoValues.Getter = (object obj) => ((EventChoiceMetric)obj).act;
+		jsonPropertyInfoValues.Setter = null;
+		jsonPropertyInfoValues.IgnoreCondition = null;
+		jsonPropertyInfoValues.HasJsonInclude = false;
+		jsonPropertyInfoValues.IsExtensionData = false;
+		jsonPropertyInfoValues.NumberHandling = null;
+		jsonPropertyInfoValues.PropertyName = "act";
+		jsonPropertyInfoValues.JsonPropertyName = null;
+		jsonPropertyInfoValues.AttributeProviderFactory = () => typeof(EventChoiceMetric).GetField("act", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		JsonPropertyInfoValues<string> propertyInfo2 = jsonPropertyInfoValues;
+		array[1] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo2);
+		array[1].IsGetNullable = false;
+		array[1].IsSetNullable = false;
+		jsonPropertyInfoValues = new JsonPropertyInfoValues<string>();
+		jsonPropertyInfoValues.IsProperty = false;
+		jsonPropertyInfoValues.IsPublic = true;
+		jsonPropertyInfoValues.IsVirtual = false;
+		jsonPropertyInfoValues.DeclaringType = typeof(EventChoiceMetric);
+		jsonPropertyInfoValues.Converter = null;
 		jsonPropertyInfoValues.Getter = (object obj) => ((EventChoiceMetric)obj).picked;
 		jsonPropertyInfoValues.Setter = null;
 		jsonPropertyInfoValues.IgnoreCondition = null;
@@ -990,10 +1100,10 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues.PropertyName = "picked";
 		jsonPropertyInfoValues.JsonPropertyName = null;
 		jsonPropertyInfoValues.AttributeProviderFactory = () => typeof(EventChoiceMetric).GetField("picked", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-		JsonPropertyInfoValues<string> propertyInfo2 = jsonPropertyInfoValues;
-		array[1] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo2);
-		array[1].IsGetNullable = false;
-		array[1].IsSetNullable = false;
+		JsonPropertyInfoValues<string> propertyInfo3 = jsonPropertyInfoValues;
+		array[2] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo3);
+		array[2].IsGetNullable = false;
+		array[2].IsSetNullable = false;
 		return array;
 	}
 
@@ -1001,6 +1111,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 	{
 		writer.WriteStartObject();
 		writer.WriteString(PropName_id, value.id);
+		writer.WriteString(PropName_act, value.act);
 		writer.WriteString(PropName_picked, value.picked);
 		writer.WriteEndObject();
 	}
@@ -1019,24 +1130,26 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 				Win = (bool)args[3],
 				NumPlayers = (int)args[4],
 				Team = (List<ModelId>)args[5],
-				Ascension = (int)args[6],
-				TotalPlaytime = (float)args[7],
-				TotalWinRate = (float)args[8],
-				RunPlaytime = (float)args[9],
-				FloorReached = (int)args[10],
-				KilledByEncounter = (ModelId)args[11],
-				CardChoices = (List<CardChoiceMetric>)args[12],
-				CampfireUpgrades = (List<string>)args[13],
-				EventChoices = (List<EventChoiceMetric>)args[14],
-				AncientChoices = (List<AncientMetric>)args[15],
-				RelicBuys = (List<string>)args[16],
-				PotionBuys = (List<string>)args[17],
-				ColorlessBuys = (List<string>)args[18],
-				PotionDiscards = (List<string>)args[19],
-				Encounters = (List<EncounterMetric>)args[20],
-				ActWins = (List<ActWinMetric>)args[21],
-				Deck = (IEnumerable<ModelId>)args[22],
-				Relics = (IEnumerable<ModelId>)args[23]
+				BuildType = (string)args[6],
+				Ascension = (int)args[7],
+				TotalPlaytime = (float)args[8],
+				TotalWinRate = (float)args[9],
+				NumReloads = (int)args[10],
+				RunPlaytime = (float)args[11],
+				FloorReached = (int)args[12],
+				KilledByEncounter = (ModelId)args[13],
+				CardChoices = (List<CardChoiceMetric>)args[14],
+				CampfireUpgrades = (List<string>)args[15],
+				EventChoices = (List<EventChoiceMetric>)args[16],
+				AncientChoices = (List<AncientMetric>)args[17],
+				RelicBuys = (List<string>)args[18],
+				PotionBuys = (List<string>)args[19],
+				ColorlessBuys = (List<string>)args[20],
+				PotionDiscards = (List<string>)args[21],
+				Encounters = (List<EncounterMetric>)args[22],
+				ActWins = (List<ActWinMetric>)args[23],
+				Deck = (IEnumerable<ModelId>)args[24],
+				Relics = (IEnumerable<ModelId>)args[25]
 			};
 			jsonObjectInfoValues.PropertyMetadataInitializer = (JsonSerializerContext _) => RunMetricsPropInit(options);
 			jsonObjectInfoValues.ConstructorParameterMetadataInitializer = RunMetricsCtorParamInit;
@@ -1052,7 +1165,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 
 	private static JsonPropertyInfo[] RunMetricsPropInit(JsonSerializerOptions options)
 	{
-		JsonPropertyInfo[] array = new JsonPropertyInfo[25];
+		JsonPropertyInfo[] array = new JsonPropertyInfo[26];
 		JsonPropertyInfoValues<string> jsonPropertyInfoValues = new JsonPropertyInfoValues<string>();
 		jsonPropertyInfoValues.IsProperty = true;
 		jsonPropertyInfoValues.IsPublic = true;
@@ -1194,7 +1307,10 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues.DeclaringType = typeof(RunMetrics);
 		jsonPropertyInfoValues.Converter = null;
 		jsonPropertyInfoValues.Getter = (object obj) => ((RunMetrics)obj).BuildType;
-		jsonPropertyInfoValues.Setter = null;
+		jsonPropertyInfoValues.Setter = delegate
+		{
+			throw new InvalidOperationException("Setting init-only properties is not supported in source generation mode.");
+		};
 		jsonPropertyInfoValues.IgnoreCondition = null;
 		jsonPropertyInfoValues.HasJsonInclude = false;
 		jsonPropertyInfoValues.IsExtensionData = false;
@@ -1204,7 +1320,9 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("BuildType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(string), Array.Empty<Type>(), null);
 		JsonPropertyInfoValues<string> propertyInfo7 = jsonPropertyInfoValues;
 		array[6] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo7);
+		array[6].IsRequired = true;
 		array[6].IsGetNullable = false;
+		array[6].IsSetNullable = false;
 		jsonPropertyInfoValues4 = new JsonPropertyInfoValues<int>();
 		jsonPropertyInfoValues4.IsProperty = true;
 		jsonPropertyInfoValues4.IsPublic = true;
@@ -1267,6 +1385,27 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		JsonPropertyInfoValues<float> propertyInfo10 = jsonPropertyInfoValues6;
 		array[9] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo10);
 		array[9].IsRequired = true;
+		jsonPropertyInfoValues4 = new JsonPropertyInfoValues<int>();
+		jsonPropertyInfoValues4.IsProperty = true;
+		jsonPropertyInfoValues4.IsPublic = true;
+		jsonPropertyInfoValues4.IsVirtual = false;
+		jsonPropertyInfoValues4.DeclaringType = typeof(RunMetrics);
+		jsonPropertyInfoValues4.Converter = null;
+		jsonPropertyInfoValues4.Getter = (object obj) => ((RunMetrics)obj).NumReloads;
+		jsonPropertyInfoValues4.Setter = delegate
+		{
+			throw new InvalidOperationException("Setting init-only properties is not supported in source generation mode.");
+		};
+		jsonPropertyInfoValues4.IgnoreCondition = null;
+		jsonPropertyInfoValues4.HasJsonInclude = false;
+		jsonPropertyInfoValues4.IsExtensionData = false;
+		jsonPropertyInfoValues4.NumberHandling = null;
+		jsonPropertyInfoValues4.PropertyName = "NumReloads";
+		jsonPropertyInfoValues4.JsonPropertyName = null;
+		jsonPropertyInfoValues4.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("NumReloads", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(int), Array.Empty<Type>(), null);
+		JsonPropertyInfoValues<int> propertyInfo11 = jsonPropertyInfoValues4;
+		array[10] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo11);
+		array[10].IsRequired = true;
 		jsonPropertyInfoValues6 = new JsonPropertyInfoValues<float>();
 		jsonPropertyInfoValues6.IsProperty = true;
 		jsonPropertyInfoValues6.IsPublic = true;
@@ -1285,9 +1424,9 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues6.PropertyName = "RunPlaytime";
 		jsonPropertyInfoValues6.JsonPropertyName = null;
 		jsonPropertyInfoValues6.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("RunPlaytime", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(float), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<float> propertyInfo11 = jsonPropertyInfoValues6;
-		array[10] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo11);
-		array[10].IsRequired = true;
+		JsonPropertyInfoValues<float> propertyInfo12 = jsonPropertyInfoValues6;
+		array[11] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo12);
+		array[11].IsRequired = true;
 		jsonPropertyInfoValues4 = new JsonPropertyInfoValues<int>();
 		jsonPropertyInfoValues4.IsProperty = true;
 		jsonPropertyInfoValues4.IsPublic = true;
@@ -1306,9 +1445,9 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues4.PropertyName = "FloorReached";
 		jsonPropertyInfoValues4.JsonPropertyName = null;
 		jsonPropertyInfoValues4.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("FloorReached", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(int), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<int> propertyInfo12 = jsonPropertyInfoValues4;
-		array[11] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo12);
-		array[11].IsRequired = true;
+		JsonPropertyInfoValues<int> propertyInfo13 = jsonPropertyInfoValues4;
+		array[12] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo13);
+		array[12].IsRequired = true;
 		jsonPropertyInfoValues2 = new JsonPropertyInfoValues<ModelId>();
 		jsonPropertyInfoValues2.IsProperty = true;
 		jsonPropertyInfoValues2.IsPublic = true;
@@ -1327,11 +1466,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues2.PropertyName = "KilledByEncounter";
 		jsonPropertyInfoValues2.JsonPropertyName = null;
 		jsonPropertyInfoValues2.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("KilledByEncounter", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(ModelId), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<ModelId> propertyInfo13 = jsonPropertyInfoValues2;
-		array[12] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo13);
-		array[12].IsRequired = true;
-		array[12].IsGetNullable = false;
-		array[12].IsSetNullable = false;
+		JsonPropertyInfoValues<ModelId> propertyInfo14 = jsonPropertyInfoValues2;
+		array[13] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo14);
+		array[13].IsRequired = true;
+		array[13].IsGetNullable = false;
+		array[13].IsSetNullable = false;
 		JsonPropertyInfoValues<List<CardChoiceMetric>> jsonPropertyInfoValues7 = new JsonPropertyInfoValues<List<CardChoiceMetric>>();
 		jsonPropertyInfoValues7.IsProperty = true;
 		jsonPropertyInfoValues7.IsPublic = true;
@@ -1350,11 +1489,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues7.PropertyName = "CardChoices";
 		jsonPropertyInfoValues7.JsonPropertyName = null;
 		jsonPropertyInfoValues7.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("CardChoices", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<CardChoiceMetric>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<CardChoiceMetric>> propertyInfo14 = jsonPropertyInfoValues7;
-		array[13] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo14);
-		array[13].IsRequired = true;
-		array[13].IsGetNullable = false;
-		array[13].IsSetNullable = false;
+		JsonPropertyInfoValues<List<CardChoiceMetric>> propertyInfo15 = jsonPropertyInfoValues7;
+		array[14] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo15);
+		array[14].IsRequired = true;
+		array[14].IsGetNullable = false;
+		array[14].IsSetNullable = false;
 		JsonPropertyInfoValues<List<string>> jsonPropertyInfoValues8 = new JsonPropertyInfoValues<List<string>>();
 		jsonPropertyInfoValues8.IsProperty = true;
 		jsonPropertyInfoValues8.IsPublic = true;
@@ -1373,11 +1512,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues8.PropertyName = "CampfireUpgrades";
 		jsonPropertyInfoValues8.JsonPropertyName = null;
 		jsonPropertyInfoValues8.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("CampfireUpgrades", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<string>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<string>> propertyInfo15 = jsonPropertyInfoValues8;
-		array[14] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo15);
-		array[14].IsRequired = true;
-		array[14].IsGetNullable = false;
-		array[14].IsSetNullable = false;
+		JsonPropertyInfoValues<List<string>> propertyInfo16 = jsonPropertyInfoValues8;
+		array[15] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo16);
+		array[15].IsRequired = true;
+		array[15].IsGetNullable = false;
+		array[15].IsSetNullable = false;
 		JsonPropertyInfoValues<List<EventChoiceMetric>> jsonPropertyInfoValues9 = new JsonPropertyInfoValues<List<EventChoiceMetric>>();
 		jsonPropertyInfoValues9.IsProperty = true;
 		jsonPropertyInfoValues9.IsPublic = true;
@@ -1396,11 +1535,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues9.PropertyName = "EventChoices";
 		jsonPropertyInfoValues9.JsonPropertyName = null;
 		jsonPropertyInfoValues9.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("EventChoices", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<EventChoiceMetric>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<EventChoiceMetric>> propertyInfo16 = jsonPropertyInfoValues9;
-		array[15] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo16);
-		array[15].IsRequired = true;
-		array[15].IsGetNullable = false;
-		array[15].IsSetNullable = false;
+		JsonPropertyInfoValues<List<EventChoiceMetric>> propertyInfo17 = jsonPropertyInfoValues9;
+		array[16] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo17);
+		array[16].IsRequired = true;
+		array[16].IsGetNullable = false;
+		array[16].IsSetNullable = false;
 		JsonPropertyInfoValues<List<AncientMetric>> jsonPropertyInfoValues10 = new JsonPropertyInfoValues<List<AncientMetric>>();
 		jsonPropertyInfoValues10.IsProperty = true;
 		jsonPropertyInfoValues10.IsPublic = true;
@@ -1419,11 +1558,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues10.PropertyName = "AncientChoices";
 		jsonPropertyInfoValues10.JsonPropertyName = null;
 		jsonPropertyInfoValues10.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("AncientChoices", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<AncientMetric>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<AncientMetric>> propertyInfo17 = jsonPropertyInfoValues10;
-		array[16] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo17);
-		array[16].IsRequired = true;
-		array[16].IsGetNullable = false;
-		array[16].IsSetNullable = false;
+		JsonPropertyInfoValues<List<AncientMetric>> propertyInfo18 = jsonPropertyInfoValues10;
+		array[17] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo18);
+		array[17].IsRequired = true;
+		array[17].IsGetNullable = false;
+		array[17].IsSetNullable = false;
 		jsonPropertyInfoValues8 = new JsonPropertyInfoValues<List<string>>();
 		jsonPropertyInfoValues8.IsProperty = true;
 		jsonPropertyInfoValues8.IsPublic = true;
@@ -1442,11 +1581,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues8.PropertyName = "RelicBuys";
 		jsonPropertyInfoValues8.JsonPropertyName = null;
 		jsonPropertyInfoValues8.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("RelicBuys", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<string>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<string>> propertyInfo18 = jsonPropertyInfoValues8;
-		array[17] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo18);
-		array[17].IsRequired = true;
-		array[17].IsGetNullable = false;
-		array[17].IsSetNullable = false;
+		JsonPropertyInfoValues<List<string>> propertyInfo19 = jsonPropertyInfoValues8;
+		array[18] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo19);
+		array[18].IsRequired = true;
+		array[18].IsGetNullable = false;
+		array[18].IsSetNullable = false;
 		jsonPropertyInfoValues8 = new JsonPropertyInfoValues<List<string>>();
 		jsonPropertyInfoValues8.IsProperty = true;
 		jsonPropertyInfoValues8.IsPublic = true;
@@ -1465,11 +1604,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues8.PropertyName = "PotionBuys";
 		jsonPropertyInfoValues8.JsonPropertyName = null;
 		jsonPropertyInfoValues8.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("PotionBuys", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<string>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<string>> propertyInfo19 = jsonPropertyInfoValues8;
-		array[18] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo19);
-		array[18].IsRequired = true;
-		array[18].IsGetNullable = false;
-		array[18].IsSetNullable = false;
+		JsonPropertyInfoValues<List<string>> propertyInfo20 = jsonPropertyInfoValues8;
+		array[19] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo20);
+		array[19].IsRequired = true;
+		array[19].IsGetNullable = false;
+		array[19].IsSetNullable = false;
 		jsonPropertyInfoValues8 = new JsonPropertyInfoValues<List<string>>();
 		jsonPropertyInfoValues8.IsProperty = true;
 		jsonPropertyInfoValues8.IsPublic = true;
@@ -1488,11 +1627,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues8.PropertyName = "ColorlessBuys";
 		jsonPropertyInfoValues8.JsonPropertyName = null;
 		jsonPropertyInfoValues8.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("ColorlessBuys", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<string>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<string>> propertyInfo20 = jsonPropertyInfoValues8;
-		array[19] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo20);
-		array[19].IsRequired = true;
-		array[19].IsGetNullable = false;
-		array[19].IsSetNullable = false;
+		JsonPropertyInfoValues<List<string>> propertyInfo21 = jsonPropertyInfoValues8;
+		array[20] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo21);
+		array[20].IsRequired = true;
+		array[20].IsGetNullable = false;
+		array[20].IsSetNullable = false;
 		jsonPropertyInfoValues8 = new JsonPropertyInfoValues<List<string>>();
 		jsonPropertyInfoValues8.IsProperty = true;
 		jsonPropertyInfoValues8.IsPublic = true;
@@ -1511,11 +1650,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues8.PropertyName = "PotionDiscards";
 		jsonPropertyInfoValues8.JsonPropertyName = null;
 		jsonPropertyInfoValues8.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("PotionDiscards", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<string>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<string>> propertyInfo21 = jsonPropertyInfoValues8;
-		array[20] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo21);
-		array[20].IsRequired = true;
-		array[20].IsGetNullable = false;
-		array[20].IsSetNullable = false;
+		JsonPropertyInfoValues<List<string>> propertyInfo22 = jsonPropertyInfoValues8;
+		array[21] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo22);
+		array[21].IsRequired = true;
+		array[21].IsGetNullable = false;
+		array[21].IsSetNullable = false;
 		JsonPropertyInfoValues<List<EncounterMetric>> jsonPropertyInfoValues11 = new JsonPropertyInfoValues<List<EncounterMetric>>();
 		jsonPropertyInfoValues11.IsProperty = true;
 		jsonPropertyInfoValues11.IsPublic = true;
@@ -1534,11 +1673,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues11.PropertyName = "Encounters";
 		jsonPropertyInfoValues11.JsonPropertyName = null;
 		jsonPropertyInfoValues11.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("Encounters", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<EncounterMetric>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<EncounterMetric>> propertyInfo22 = jsonPropertyInfoValues11;
-		array[21] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo22);
-		array[21].IsRequired = true;
-		array[21].IsGetNullable = false;
-		array[21].IsSetNullable = false;
+		JsonPropertyInfoValues<List<EncounterMetric>> propertyInfo23 = jsonPropertyInfoValues11;
+		array[22] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo23);
+		array[22].IsRequired = true;
+		array[22].IsGetNullable = false;
+		array[22].IsSetNullable = false;
 		JsonPropertyInfoValues<List<ActWinMetric>> jsonPropertyInfoValues12 = new JsonPropertyInfoValues<List<ActWinMetric>>();
 		jsonPropertyInfoValues12.IsProperty = true;
 		jsonPropertyInfoValues12.IsPublic = true;
@@ -1557,11 +1696,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues12.PropertyName = "ActWins";
 		jsonPropertyInfoValues12.JsonPropertyName = null;
 		jsonPropertyInfoValues12.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("ActWins", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(List<ActWinMetric>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<List<ActWinMetric>> propertyInfo23 = jsonPropertyInfoValues12;
-		array[22] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo23);
-		array[22].IsRequired = true;
-		array[22].IsGetNullable = false;
-		array[22].IsSetNullable = false;
+		JsonPropertyInfoValues<List<ActWinMetric>> propertyInfo24 = jsonPropertyInfoValues12;
+		array[23] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo24);
+		array[23].IsRequired = true;
+		array[23].IsGetNullable = false;
+		array[23].IsSetNullable = false;
 		JsonPropertyInfoValues<IEnumerable<ModelId>> jsonPropertyInfoValues13 = new JsonPropertyInfoValues<IEnumerable<ModelId>>();
 		jsonPropertyInfoValues13.IsProperty = true;
 		jsonPropertyInfoValues13.IsPublic = true;
@@ -1580,11 +1719,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues13.PropertyName = "Deck";
 		jsonPropertyInfoValues13.JsonPropertyName = null;
 		jsonPropertyInfoValues13.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("Deck", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(IEnumerable<ModelId>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<IEnumerable<ModelId>> propertyInfo24 = jsonPropertyInfoValues13;
-		array[23] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo24);
-		array[23].IsRequired = true;
-		array[23].IsGetNullable = false;
-		array[23].IsSetNullable = false;
+		JsonPropertyInfoValues<IEnumerable<ModelId>> propertyInfo25 = jsonPropertyInfoValues13;
+		array[24] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo25);
+		array[24].IsRequired = true;
+		array[24].IsGetNullable = false;
+		array[24].IsSetNullable = false;
 		jsonPropertyInfoValues13 = new JsonPropertyInfoValues<IEnumerable<ModelId>>();
 		jsonPropertyInfoValues13.IsProperty = true;
 		jsonPropertyInfoValues13.IsPublic = true;
@@ -1603,11 +1742,11 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues13.PropertyName = "Relics";
 		jsonPropertyInfoValues13.JsonPropertyName = null;
 		jsonPropertyInfoValues13.AttributeProviderFactory = () => typeof(RunMetrics).GetProperty("Relics", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(IEnumerable<ModelId>), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<IEnumerable<ModelId>> propertyInfo25 = jsonPropertyInfoValues13;
-		array[24] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo25);
-		array[24].IsRequired = true;
-		array[24].IsGetNullable = false;
-		array[24].IsSetNullable = false;
+		JsonPropertyInfoValues<IEnumerable<ModelId>> propertyInfo26 = jsonPropertyInfoValues13;
+		array[25] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo26);
+		array[25].IsRequired = true;
+		array[25].IsGetNullable = false;
+		array[25].IsSetNullable = false;
 		return array;
 	}
 
@@ -1631,6 +1770,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		writer.WriteNumber(PropName_ascension, value.Ascension);
 		writer.WriteNumber(PropName_totalPlaytime, value.TotalPlaytime);
 		writer.WriteNumber(PropName_totalWinRate, value.TotalWinRate);
+		writer.WriteNumber(PropName_numReloads, value.NumReloads);
 		writer.WriteNumber(PropName_runPlaytime, value.RunPlaytime);
 		writer.WriteNumber(PropName_floorReached, value.FloorReached);
 		writer.WritePropertyName(PropName_killedByEncounter);
@@ -1664,7 +1804,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 
 	private static JsonParameterInfoValues[] RunMetricsCtorParamInit()
 	{
-		return new JsonParameterInfoValues[24]
+		return new JsonParameterInfoValues[26]
 		{
 			new JsonParameterInfoValues
 			{
@@ -1716,9 +1856,17 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			},
 			new JsonParameterInfoValues
 			{
+				Name = "BuildType",
+				ParameterType = typeof(string),
+				Position = 6,
+				IsNullable = false,
+				IsMemberInitializer = true
+			},
+			new JsonParameterInfoValues
+			{
 				Name = "Ascension",
 				ParameterType = typeof(int),
-				Position = 6,
+				Position = 7,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1726,7 +1874,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "TotalPlaytime",
 				ParameterType = typeof(float),
-				Position = 7,
+				Position = 8,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1734,21 +1882,13 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "TotalWinRate",
 				ParameterType = typeof(float),
-				Position = 8,
-				IsNullable = false,
-				IsMemberInitializer = true
-			},
-			new JsonParameterInfoValues
-			{
-				Name = "RunPlaytime",
-				ParameterType = typeof(float),
 				Position = 9,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
 			new JsonParameterInfoValues
 			{
-				Name = "FloorReached",
+				Name = "NumReloads",
 				ParameterType = typeof(int),
 				Position = 10,
 				IsNullable = false,
@@ -1756,9 +1896,25 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			},
 			new JsonParameterInfoValues
 			{
+				Name = "RunPlaytime",
+				ParameterType = typeof(float),
+				Position = 11,
+				IsNullable = false,
+				IsMemberInitializer = true
+			},
+			new JsonParameterInfoValues
+			{
+				Name = "FloorReached",
+				ParameterType = typeof(int),
+				Position = 12,
+				IsNullable = false,
+				IsMemberInitializer = true
+			},
+			new JsonParameterInfoValues
+			{
 				Name = "KilledByEncounter",
 				ParameterType = typeof(ModelId),
-				Position = 11,
+				Position = 13,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1766,7 +1922,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "CardChoices",
 				ParameterType = typeof(List<CardChoiceMetric>),
-				Position = 12,
+				Position = 14,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1774,7 +1930,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "CampfireUpgrades",
 				ParameterType = typeof(List<string>),
-				Position = 13,
+				Position = 15,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1782,7 +1938,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "EventChoices",
 				ParameterType = typeof(List<EventChoiceMetric>),
-				Position = 14,
+				Position = 16,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1790,7 +1946,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "AncientChoices",
 				ParameterType = typeof(List<AncientMetric>),
-				Position = 15,
+				Position = 17,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1798,7 +1954,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "RelicBuys",
 				ParameterType = typeof(List<string>),
-				Position = 16,
+				Position = 18,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1806,7 +1962,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "PotionBuys",
 				ParameterType = typeof(List<string>),
-				Position = 17,
+				Position = 19,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1814,7 +1970,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "ColorlessBuys",
 				ParameterType = typeof(List<string>),
-				Position = 18,
+				Position = 20,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1822,7 +1978,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "PotionDiscards",
 				ParameterType = typeof(List<string>),
-				Position = 19,
+				Position = 21,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1830,7 +1986,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "Encounters",
 				ParameterType = typeof(List<EncounterMetric>),
-				Position = 20,
+				Position = 22,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1838,7 +1994,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "ActWins",
 				ParameterType = typeof(List<ActWinMetric>),
-				Position = 21,
+				Position = 23,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1846,7 +2002,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "Deck",
 				ParameterType = typeof(IEnumerable<ModelId>),
-				Position = 22,
+				Position = 24,
 				IsNullable = false,
 				IsMemberInitializer = true
 			},
@@ -1854,7 +2010,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 			{
 				Name = "Relics",
 				ParameterType = typeof(IEnumerable<ModelId>),
-				Position = 23,
+				Position = 25,
 				IsNullable = false,
 				IsMemberInitializer = true
 			}
@@ -1886,7 +2042,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 
 	private static JsonPropertyInfo[] SettingsDataMetricPropInit(JsonSerializerOptions options)
 	{
-		JsonPropertyInfo[] array = new JsonPropertyInfo[17];
+		JsonPropertyInfo[] array = new JsonPropertyInfo[18];
 		JsonPropertyInfoValues<string> jsonPropertyInfoValues = new JsonPropertyInfoValues<string>();
 		jsonPropertyInfoValues.IsProperty = true;
 		jsonPropertyInfoValues.IsPublic = true;
@@ -2063,6 +2219,26 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues4.IsVirtual = false;
 		jsonPropertyInfoValues4.DeclaringType = typeof(SettingsDataMetric);
 		jsonPropertyInfoValues4.Converter = null;
+		jsonPropertyInfoValues4.Getter = (object obj) => ((SettingsDataMetric)obj).PhobiaMode;
+		jsonPropertyInfoValues4.Setter = delegate(object obj, bool value)
+		{
+			Unsafe.Unbox<SettingsDataMetric>(obj).PhobiaMode = value;
+		};
+		jsonPropertyInfoValues4.IgnoreCondition = null;
+		jsonPropertyInfoValues4.HasJsonInclude = false;
+		jsonPropertyInfoValues4.IsExtensionData = false;
+		jsonPropertyInfoValues4.NumberHandling = null;
+		jsonPropertyInfoValues4.PropertyName = "PhobiaMode";
+		jsonPropertyInfoValues4.JsonPropertyName = "phobiaMode";
+		jsonPropertyInfoValues4.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("PhobiaMode", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(bool), Array.Empty<Type>(), null);
+		JsonPropertyInfoValues<bool> propertyInfo9 = jsonPropertyInfoValues4;
+		array[8] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo9);
+		jsonPropertyInfoValues4 = new JsonPropertyInfoValues<bool>();
+		jsonPropertyInfoValues4.IsProperty = true;
+		jsonPropertyInfoValues4.IsPublic = true;
+		jsonPropertyInfoValues4.IsVirtual = false;
+		jsonPropertyInfoValues4.DeclaringType = typeof(SettingsDataMetric);
+		jsonPropertyInfoValues4.Converter = null;
 		jsonPropertyInfoValues4.Getter = (object obj) => ((SettingsDataMetric)obj).ShowCardIndices;
 		jsonPropertyInfoValues4.Setter = delegate(object obj, bool value)
 		{
@@ -2075,8 +2251,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues4.PropertyName = "ShowCardIndices";
 		jsonPropertyInfoValues4.JsonPropertyName = "cardIndices";
 		jsonPropertyInfoValues4.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("ShowCardIndices", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(bool), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<bool> propertyInfo9 = jsonPropertyInfoValues4;
-		array[8] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo9);
+		JsonPropertyInfoValues<bool> propertyInfo10 = jsonPropertyInfoValues4;
+		array[9] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo10);
 		jsonPropertyInfoValues2 = new JsonPropertyInfoValues<int>();
 		jsonPropertyInfoValues2.IsProperty = true;
 		jsonPropertyInfoValues2.IsPublic = true;
@@ -2095,8 +2271,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues2.PropertyName = "DisplayCount";
 		jsonPropertyInfoValues2.JsonPropertyName = "displayCount";
 		jsonPropertyInfoValues2.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("DisplayCount", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(int), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<int> propertyInfo10 = jsonPropertyInfoValues2;
-		array[9] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo10);
+		JsonPropertyInfoValues<int> propertyInfo11 = jsonPropertyInfoValues2;
+		array[10] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo11);
 		JsonPropertyInfoValues<Vector2I> jsonPropertyInfoValues5 = new JsonPropertyInfoValues<Vector2I>();
 		jsonPropertyInfoValues5.IsProperty = true;
 		jsonPropertyInfoValues5.IsPublic = true;
@@ -2115,8 +2291,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues5.PropertyName = "DisplayResolution";
 		jsonPropertyInfoValues5.JsonPropertyName = "displayResolution";
 		jsonPropertyInfoValues5.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("DisplayResolution", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(Vector2I), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<Vector2I> propertyInfo11 = jsonPropertyInfoValues5;
-		array[10] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo11);
+		JsonPropertyInfoValues<Vector2I> propertyInfo12 = jsonPropertyInfoValues5;
+		array[11] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo12);
 		jsonPropertyInfoValues4 = new JsonPropertyInfoValues<bool>();
 		jsonPropertyInfoValues4.IsProperty = true;
 		jsonPropertyInfoValues4.IsPublic = true;
@@ -2135,8 +2311,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues4.PropertyName = "Fullscreen";
 		jsonPropertyInfoValues4.JsonPropertyName = "fullscreen";
 		jsonPropertyInfoValues4.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("Fullscreen", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(bool), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<bool> propertyInfo12 = jsonPropertyInfoValues4;
-		array[11] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo12);
+		JsonPropertyInfoValues<bool> propertyInfo13 = jsonPropertyInfoValues4;
+		array[12] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo13);
 		JsonPropertyInfoValues<AspectRatioSetting> jsonPropertyInfoValues6 = new JsonPropertyInfoValues<AspectRatioSetting>();
 		jsonPropertyInfoValues6.IsProperty = true;
 		jsonPropertyInfoValues6.IsPublic = true;
@@ -2155,8 +2331,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues6.PropertyName = "AspectRatio";
 		jsonPropertyInfoValues6.JsonPropertyName = "aspectRatio";
 		jsonPropertyInfoValues6.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("AspectRatio", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(AspectRatioSetting), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<AspectRatioSetting> propertyInfo13 = jsonPropertyInfoValues6;
-		array[12] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo13);
+		JsonPropertyInfoValues<AspectRatioSetting> propertyInfo14 = jsonPropertyInfoValues6;
+		array[13] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo14);
 		jsonPropertyInfoValues4 = new JsonPropertyInfoValues<bool>();
 		jsonPropertyInfoValues4.IsProperty = true;
 		jsonPropertyInfoValues4.IsPublic = true;
@@ -2175,8 +2351,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues4.PropertyName = "ResizeWindows";
 		jsonPropertyInfoValues4.JsonPropertyName = "resizeWindows";
 		jsonPropertyInfoValues4.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("ResizeWindows", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(bool), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<bool> propertyInfo14 = jsonPropertyInfoValues4;
-		array[13] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo14);
+		JsonPropertyInfoValues<bool> propertyInfo15 = jsonPropertyInfoValues4;
+		array[14] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo15);
 		JsonPropertyInfoValues<VSyncType> jsonPropertyInfoValues7 = new JsonPropertyInfoValues<VSyncType>();
 		jsonPropertyInfoValues7.IsProperty = true;
 		jsonPropertyInfoValues7.IsPublic = true;
@@ -2195,8 +2371,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues7.PropertyName = "VSync";
 		jsonPropertyInfoValues7.JsonPropertyName = "vSync";
 		jsonPropertyInfoValues7.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("VSync", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(VSyncType), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<VSyncType> propertyInfo15 = jsonPropertyInfoValues7;
-		array[14] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo15);
+		JsonPropertyInfoValues<VSyncType> propertyInfo16 = jsonPropertyInfoValues7;
+		array[15] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo16);
 		jsonPropertyInfoValues2 = new JsonPropertyInfoValues<int>();
 		jsonPropertyInfoValues2.IsProperty = true;
 		jsonPropertyInfoValues2.IsPublic = true;
@@ -2215,8 +2391,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues2.PropertyName = "FpsLimit";
 		jsonPropertyInfoValues2.JsonPropertyName = "fpsLimit";
 		jsonPropertyInfoValues2.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("FpsLimit", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(int), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<int> propertyInfo16 = jsonPropertyInfoValues2;
-		array[15] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo16);
+		JsonPropertyInfoValues<int> propertyInfo17 = jsonPropertyInfoValues2;
+		array[16] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo17);
 		jsonPropertyInfoValues2 = new JsonPropertyInfoValues<int>();
 		jsonPropertyInfoValues2.IsProperty = true;
 		jsonPropertyInfoValues2.IsPublic = true;
@@ -2235,8 +2411,8 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		jsonPropertyInfoValues2.PropertyName = "Msaa";
 		jsonPropertyInfoValues2.JsonPropertyName = "msaa";
 		jsonPropertyInfoValues2.AttributeProviderFactory = () => typeof(SettingsDataMetric).GetProperty("Msaa", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, typeof(int), Array.Empty<Type>(), null);
-		JsonPropertyInfoValues<int> propertyInfo17 = jsonPropertyInfoValues2;
-		array[16] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo17);
+		JsonPropertyInfoValues<int> propertyInfo18 = jsonPropertyInfoValues2;
+		array[17] = JsonMetadataServices.CreatePropertyInfo(options, propertyInfo18);
 		return array;
 	}
 
@@ -2267,6 +2443,9 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		JsonEncodedText propName_runTimer = PropName_runTimer;
 		settingsDataMetric = value;
 		writer.WriteBoolean(propName_runTimer, settingsDataMetric.ShowRunTimer);
+		JsonEncodedText propName_phobiaMode = PropName_phobiaMode;
+		settingsDataMetric = value;
+		writer.WriteBoolean(propName_phobiaMode, settingsDataMetric.PhobiaMode);
 		JsonEncodedText propName_cardIndices = PropName_cardIndices;
 		settingsDataMetric = value;
 		writer.WriteBoolean(propName_cardIndices, settingsDataMetric.ShowCardIndices);
@@ -2805,11 +2984,13 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		return jsonTypeInfo;
 	}
 
+	/// <inheritdoc />
 	public MetricsSerializerContext()
 		: base(null)
 	{
 	}
 
+	/// <inheritdoc />
 	public MetricsSerializerContext(JsonSerializerOptions options)
 		: base(options)
 	{
@@ -2857,6 +3038,7 @@ internal class MetricsSerializerContext : JsonSerializerContext, IJsonTypeInfoRe
 		return converter;
 	}
 
+	/// <inheritdoc />
 	public override JsonTypeInfo? GetTypeInfo(Type type)
 	{
 		base.Options.TryGetTypeInfo(type, out JsonTypeInfo typeInfo);

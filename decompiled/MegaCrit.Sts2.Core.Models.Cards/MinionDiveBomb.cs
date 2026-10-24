@@ -19,7 +19,7 @@ public sealed class MinionDiveBomb : CardModel
 	public override IEnumerable<CardKeyword> CanonicalKeywords => new global::_003C_003Ez__ReadOnlySingleElementList<CardKeyword>(CardKeyword.Exhaust);
 
 	public MinionDiveBomb()
-		: base(1, CardType.Attack, CardRarity.Token, TargetType.AnyEnemy)
+		: base(0, CardType.Attack, CardRarity.Token, TargetType.AnyEnemy)
 	{
 	}
 

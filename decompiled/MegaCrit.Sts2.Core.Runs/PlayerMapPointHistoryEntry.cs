@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -10,6 +11,9 @@ using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace MegaCrit.Sts2.Core.Runs;
 
+/// <summary>
+/// Tracks the current stats and changes experienced for a specific player at a single room.
+/// </summary>
 public class PlayerMapPointHistoryEntry : IPacketSerializable
 {
 	[JsonPropertyName("player_id")]
@@ -26,6 +30,9 @@ public class PlayerMapPointHistoryEntry : IPacketSerializable
 
 	[JsonPropertyName("gold_stolen")]
 	public int GoldStolen { get; set; }
+
+	[JsonPropertyName("stolen_loot")]
+	public int StolenLoot { get; set; }
 
 	[JsonPropertyName("current_gold")]
 	public int CurrentGold { get; set; }
@@ -124,6 +131,12 @@ public class PlayerMapPointHistoryEntry : IPacketSerializable
 	[JsonSerializeCondition(SerializationCondition.SaveIfNotCollectionEmptyOrNull)]
 	public List<ModelId> CompletedQuests { get; set; } = new List<ModelId>();
 
+	/// <summary>
+	/// True if a thief took gold or cards from this player this combat and did not give them back.
+	/// </summary>
+	[JsonIgnore]
+	public bool WasMugged => StolenLoot > 0;
+
 	public LocString? GetAncientPickedChoiceLoc()
 	{
 		return AncientChoices.FirstOrDefault((AncientChoiceHistoryEntry o) => o.WasChosen)?.Title;
@@ -136,6 +149,18 @@ public class PlayerMapPointHistoryEntry : IPacketSerializable
 			select o.Title).ToList();
 	}
 
+	/// <summary>Records that loot was stolen from this player (gold by amount, or 1 per card).</summary>
+	public void MarkLootStolen(int amount = 1)
+	{
+		StolenLoot += amount;
+	}
+
+	/// <summary>Records that previously stolen loot was returned to this player.</summary>
+	public void MarkLootReturned(int amount = 1)
+	{
+		StolenLoot = Math.Max(0, StolenLoot - amount);
+	}
+
 	public void Serialize(PacketWriter writer)
 	{
 		writer.WriteULong(PlayerId);
@@ -143,6 +168,7 @@ public class PlayerMapPointHistoryEntry : IPacketSerializable
 		writer.WriteInt(GoldSpent);
 		writer.WriteInt(GoldLost);
 		writer.WriteInt(GoldStolen);
+		writer.WriteInt(StolenLoot);
 		writer.WriteInt(CurrentGold);
 		writer.WriteInt(CurrentHp);
 		writer.WriteInt(MaxHp);
@@ -195,6 +221,7 @@ public class PlayerMapPointHistoryEntry : IPacketSerializable
 		GoldSpent = reader.ReadInt();
 		GoldLost = reader.ReadInt();
 		GoldStolen = reader.ReadInt();
+		StolenLoot = reader.ReadInt();
 		CurrentGold = reader.ReadInt();
 		CurrentHp = reader.ReadInt();
 		MaxHp = reader.ReadInt();
@@ -255,6 +282,7 @@ public class PlayerMapPointHistoryEntry : IPacketSerializable
 			GoldSpent = GoldSpent,
 			GoldLost = GoldLost,
 			GoldStolen = GoldStolen,
+			StolenLoot = StolenLoot,
 			CurrentGold = CurrentGold,
 			CurrentHp = CurrentHp,
 			MaxHp = MaxHp,

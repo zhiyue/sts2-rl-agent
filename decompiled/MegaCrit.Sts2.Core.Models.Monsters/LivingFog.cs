@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
@@ -9,6 +8,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -79,7 +79,7 @@ public sealed class LivingFog : MonsterModel
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/living_fog/living_fog_attack_blow")
 			.WithHitVfxNode((Creature _) => NGaseousImpactVfx.Create(CombatSide.Player, base.CombatState, new Color("#402f45")))
 			.Execute(null);
-		await PowerCmd.Apply<SmoggyPower>(targets, 1m, base.Creature, null);
+		await PowerCmd.Apply<SmoggyPower>(new ThrowingPlayerChoiceContext(), targets, 1m, base.Creature, null);
 	}
 
 	private async Task BloatMove(IReadOnlyList<Creature> targets)
@@ -88,14 +88,13 @@ public sealed class LivingFog : MonsterModel
 		await CreatureCmd.TriggerAnim(base.Creature, "SpawnBomb", 0.35f);
 		for (int i = 0; i < BloatAmount; i++)
 		{
-			string nextSlot = base.CombatState.Encounter.GetNextSlot(base.CombatState);
-			if (nextSlot != "")
+			string text = base.CombatState.Encounter?.GetNextSlot(base.CombatState);
+			if (!string.IsNullOrEmpty(text))
 			{
 				SfxCmd.Play("event:/sfx/enemy/enemy_attacks/living_fog/living_fog_minion_appear");
-				await CreatureCmd.Add<GasBomb>(base.CombatState, nextSlot);
+				await CreatureCmd.Add<GasBomb>(base.CombatState, text);
 			}
 		}
-		BloatAmount = Math.Min(BloatAmount + 1, 5);
 		await DamageCmd.Attack(BloatDamage).FromMonster(this).WithAttackerAnim("Attack", 0.1f)
 			.WithAttackerFx(null, "event:/sfx/enemy/enemy_attacks/living_fog/living_fog_attack_blow")
 			.WithHitVfxNode((Creature _) => NGaseousImpactVfx.Create(CombatSide.Player, base.CombatState, new Color("#402f45")))

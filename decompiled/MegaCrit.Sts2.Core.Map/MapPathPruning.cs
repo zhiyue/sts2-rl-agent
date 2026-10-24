@@ -8,8 +8,79 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.Map;
 
+/// <summary>
+/// Detects and removes duplicate path segments from act maps.
+/// Both StandardActMap and SpoilsActMap use this after point type assignment
+/// to eliminate redundant paths that share the same sequence of point types.
+/// </summary>
 public static class MapPathPruning
 {
+	/// <summary>
+	/// Prunes duplicate segments, then repairs any point types that fell below their target
+	/// count. Since repair can create new duplicates, loops until stable (up to 3 iterations).
+	/// </summary>
+	public static void PruneAndRepair(MapPoint?[,] grid, HashSet<MapPoint> startMapPoints, ActMap map, MapPointTypeCounts pointTypeCounts, Rng rng, Func<MapPointType, MapPoint, bool> isValidPointType)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			PruneDuplicateSegments(grid, startMapPoints, map.StartingMapPoint, rng);
+			if (!RepairPrunedPointTypes(map, pointTypeCounts, rng, isValidPointType))
+			{
+				break;
+			}
+		}
+	}
+
+	/// <summary>
+	/// After pruning removes nodes, some point types may fall below their target count.
+	/// This repairs the map by replacing monsters with the missing types.
+	/// </summary>
+	/// <param name="map">The map to repair.</param>
+	/// <param name="pointTypeCounts">Target counts for each point type.</param>
+	/// <param name="rng">Random number generator used for replacement selection.</param>
+	/// <param name="isValidPointType">Validates whether a type can be placed at a given point.</param>
+	/// <returns>true if any repairs were made (indicating re-pruning may be needed)</returns>
+	public static bool RepairPrunedPointTypes(ActMap map, MapPointTypeCounts pointTypeCounts, Rng rng, Func<MapPointType, MapPoint, bool> isValidPointType)
+	{
+		bool flag = false;
+		flag |= RepairPointType(map, MapPointType.Shop, pointTypeCounts.NumOfShops, rng, isValidPointType);
+		flag |= RepairPointType(map, MapPointType.Elite, pointTypeCounts.NumOfElites, rng, isValidPointType);
+		flag |= RepairPointType(map, MapPointType.RestSite, pointTypeCounts.NumOfRests, rng, isValidPointType);
+		return flag | RepairPointType(map, MapPointType.Unknown, pointTypeCounts.NumOfUnknowns, rng, isValidPointType);
+	}
+
+	private static bool RepairPointType(ActMap map, MapPointType type, int targetCount, Rng rng, Func<MapPointType, MapPoint, bool> isValidPointType)
+	{
+		int num = map.GetAllMapPoints().Count((MapPoint p) => p.PointType == type);
+		int num2 = targetCount - num;
+		if (num2 <= 0)
+		{
+			return false;
+		}
+		bool result = false;
+		List<MapPoint> list = (from p in map.GetAllMapPoints()
+			where p.PointType == MapPointType.Monster && p.CanBeModified
+			select p).ToList();
+		list.StableShuffle(rng);
+		foreach (MapPoint item in list)
+		{
+			if (num2 == 0)
+			{
+				break;
+			}
+			if (isValidPointType(type, item))
+			{
+				item.PointType = type;
+				num2--;
+				result = true;
+			}
+		}
+		return result;
+	}
+
+	/// <summary>
+	/// Runs the full prune loop (up to 50 iterations) to remove duplicate segments.
+	/// </summary>
 	public static void PruneDuplicateSegments(MapPoint?[,] grid, HashSet<MapPoint> startMapPoints, MapPoint startingMapPoint, Rng rng)
 	{
 		int num = 0;
@@ -28,7 +99,7 @@ public static class MapPathPruning
 	public static List<List<MapPoint[]>> FindMatchingSegments(MapPoint startingMapPoint)
 	{
 		List<List<MapPoint>> list = FindAllPaths(startingMapPoint);
-		Dictionary<string, List<MapPoint[]>> segments = new Dictionary<string, List<MapPoint[]>>();
+		SortedDictionary<string, List<MapPoint[]>> segments = new SortedDictionary<string, List<MapPoint[]>>(StringComparer.Ordinal);
 		foreach (List<MapPoint> item in list)
 		{
 			AddSegmentsToDictionary(item, segments);
@@ -175,7 +246,7 @@ public static class MapPathPruning
 		return false;
 	}
 
-	private static List<List<MapPoint[]>> GetDuplicateSegments(Dictionary<string, List<MapPoint[]>> segments)
+	private static List<List<MapPoint[]>> GetDuplicateSegments(IDictionary<string, List<MapPoint[]>> segments)
 	{
 		return segments.Values.Where((List<MapPoint[]> segmentList) => segmentList.Count > 1).ToList();
 	}

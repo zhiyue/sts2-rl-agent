@@ -15,7 +15,7 @@ public sealed class DaughterOfTheWind : RelicModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new BlockVar(1m, ValueProp.Unpowered));
 
-	public override async Task AfterCardPlayed(PlayerChoiceContext context, CardPlay cardPlay)
+	public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		if (cardPlay.Card.Type == CardType.Attack && cardPlay.Card.Owner == base.Owner)
 		{

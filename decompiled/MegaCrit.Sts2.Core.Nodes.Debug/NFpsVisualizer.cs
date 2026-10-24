@@ -15,32 +15,71 @@ public class NFpsVisualizer : TextureRect
 	[Signal]
 	public delegate void MouseReleasedEventHandler(InputEvent inputEvent);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : TextureRect.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'HandleMouseRelease' method.
+		/// </summary>
 		public static readonly StringName HandleMouseRelease = "HandleMouseRelease";
 
+		/// <summary>
+		/// Cached name for the '_GuiInput' method.
+		/// </summary>
 		public new static readonly StringName _GuiInput = "_GuiInput";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : TextureRect.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_happy' field.
+		/// </summary>
 		public static readonly StringName _happy = "_happy";
 
+		/// <summary>
+		/// Cached name for the '_content' field.
+		/// </summary>
 		public static readonly StringName _content = "_content";
 
+		/// <summary>
+		/// Cached name for the '_neutral' field.
+		/// </summary>
 		public static readonly StringName _neutral = "_neutral";
 
+		/// <summary>
+		/// Cached name for the '_sad' field.
+		/// </summary>
 		public static readonly StringName _sad = "_sad";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : TextureRect.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'MouseReleased' signal.
+		/// </summary>
 		public static readonly StringName MouseReleased = "MouseReleased";
 	}
 
@@ -60,6 +99,7 @@ public class NFpsVisualizer : TextureRect
 
 	private MouseReleasedEventHandler backing_MouseReleased;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Debug.NFpsVisualizer.MouseReleasedEventHandler" />
 	public event MouseReleasedEventHandler MouseReleased
 	{
 		add
@@ -107,6 +147,11 @@ public class NFpsVisualizer : TextureRect
 		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -127,6 +172,7 @@ public class NFpsVisualizer : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -157,6 +203,7 @@ public class NFpsVisualizer : TextureRect
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -179,6 +226,7 @@ public class NFpsVisualizer : TextureRect
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -210,6 +258,7 @@ public class NFpsVisualizer : TextureRect
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -241,6 +290,11 @@ public class NFpsVisualizer : TextureRect
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -253,6 +307,7 @@ public class NFpsVisualizer : TextureRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -265,6 +320,7 @@ public class NFpsVisualizer : TextureRect
 		info.AddSignalEventDelegate(SignalName.MouseReleased, backing_MouseReleased);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -295,6 +351,11 @@ public class NFpsVisualizer : TextureRect
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -311,6 +372,7 @@ public class NFpsVisualizer : TextureRect
 		EmitSignal(SignalName.MouseReleased, inputEvent);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -324,6 +386,7 @@ public class NFpsVisualizer : TextureRect
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

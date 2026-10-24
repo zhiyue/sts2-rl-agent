@@ -27,24 +27,51 @@ public class NDeckHistory : VBoxContainer
 	[Signal]
 	public delegate void UnhoveredEventHandler(NDeckHistoryEntry deckHistoryEntry);
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : VBoxContainer.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'ShowEntry' method.
+		/// </summary>
 		public static readonly StringName ShowEntry = "ShowEntry";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : VBoxContainer.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_headerLabel' field.
+		/// </summary>
 		public static readonly StringName _headerLabel = "_headerLabel";
 
+		/// <summary>
+		/// Cached name for the '_cardContainer' field.
+		/// </summary>
 		public static readonly StringName _cardContainer = "_cardContainer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : VBoxContainer.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'Hovered' signal.
+		/// </summary>
 		public static readonly StringName Hovered = "Hovered";
 
+		/// <summary>
+		/// Cached name for the 'Unhovered' signal.
+		/// </summary>
 		public static readonly StringName Unhovered = "Unhovered";
 	}
 
@@ -62,6 +89,7 @@ public class NDeckHistory : VBoxContainer
 
 	private UnhoveredEventHandler backing_Unhovered;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen.NDeckHistory.HoveredEventHandler" />
 	public event HoveredEventHandler Hovered
 	{
 		add
@@ -74,6 +102,7 @@ public class NDeckHistory : VBoxContainer
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen.NDeckHistory.UnhoveredEventHandler" />
 	public event UnhoveredEventHandler Unhovered
 	{
 		add
@@ -163,6 +192,11 @@ public class NDeckHistory : VBoxContainer
 		NGame.Instance.GetInspectCardScreen().Open(_allCards, _allCards.IndexOf(entry.Card));
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -175,6 +209,7 @@ public class NDeckHistory : VBoxContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -193,6 +228,7 @@ public class NDeckHistory : VBoxContainer
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -207,6 +243,7 @@ public class NDeckHistory : VBoxContainer
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -223,6 +260,7 @@ public class NDeckHistory : VBoxContainer
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -239,6 +277,11 @@ public class NDeckHistory : VBoxContainer
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -248,6 +291,7 @@ public class NDeckHistory : VBoxContainer
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -258,6 +302,7 @@ public class NDeckHistory : VBoxContainer
 		info.AddSignalEventDelegate(SignalName.Unhovered, backing_Unhovered);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -280,6 +325,11 @@ public class NDeckHistory : VBoxContainer
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -305,6 +355,7 @@ public class NDeckHistory : VBoxContainer
 		EmitSignal(SignalName.Unhovered, deckHistoryEntry);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -322,6 +373,7 @@ public class NDeckHistory : VBoxContainer
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

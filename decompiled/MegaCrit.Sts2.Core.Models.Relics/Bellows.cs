@@ -10,7 +10,7 @@ namespace MegaCrit.Sts2.Core.Models.Relics;
 
 public sealed class Bellows : RelicModel
 {
-	public override RelicRarity Rarity => RelicRarity.Uncommon;
+	public override RelicRarity Rarity => RelicRarity.Rare;
 
 	public override Task AfterPlayerTurnStart(PlayerChoiceContext choiceContext, Player player)
 	{
@@ -18,7 +18,7 @@ public sealed class Bellows : RelicModel
 		{
 			return Task.CompletedTask;
 		}
-		if (player.Creature.CombatState.RoundNumber > 1)
+		if (base.Owner.PlayerCombatState.TurnNumber > 1)
 		{
 			return Task.CompletedTask;
 		}

@@ -1,29 +1,29 @@
-using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rewards;
 
 namespace MegaCrit.Sts2.Core.Events.Custom.CrystalSphereEvent.CrystalSphereItems;
 
 public class CrystalSphereRelic : CrystalSphereItem
 {
-	private CrystalSphereMinigame _grid;
-
 	public override Vector2I Size => new Vector2I(4, 4);
 
 	public override bool IsGood => true;
 
 	protected override string TexturePath => ImageHelper.GetImagePath("events/crystal_sphere/crystal_sphere_relic.png");
 
-	public CrystalSphereRelic(CrystalSphereMinigame grid)
+	public override Reward? ToReward(Player owner, Rng rng)
 	{
-		_grid = grid;
+		return new RelicReward(owner).SetRng(rng);
 	}
 
-	public override async Task RevealItem(Player owner)
+	public override SerializableCrystalSphereItem ToSerializable()
 	{
-		await base.RevealItem(owner);
-		_grid.AddReward(new RelicReward(owner).SetRng(_grid.Rng));
+		return new SerializableCrystalSphereItem
+		{
+			type = CrystalSphereItemType.Relic
+		};
 	}
 }

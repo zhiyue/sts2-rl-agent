@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Monsters;
@@ -26,6 +27,6 @@ public sealed class WasteAway : CardModel, KnowledgeDemon.IChoosable
 
 	public async Task OnChosen()
 	{
-		await PowerCmd.Apply<WasteAwayPower>(base.Owner.Creature, base.DynamicVars["WasteAwayPower"].IntValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<WasteAwayPower>(new ThrowingPlayerChoiceContext(), base.Owner.Creature, base.DynamicVars["WasteAwayPower"].IntValue, base.Owner.Creature, this);
 	}
 }

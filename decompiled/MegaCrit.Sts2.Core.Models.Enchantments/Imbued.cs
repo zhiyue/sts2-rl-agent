@@ -17,9 +17,9 @@ public sealed class Imbued : EnchantmentModel
 		return cardType == CardType.Skill;
 	}
 
-	public override async Task AfterPlayerTurnStart(PlayerChoiceContext choiceContext, Player player)
+	public override async Task AfterAutoPrePlayPhaseEntered(PlayerChoiceContext choiceContext, Player player)
 	{
-		if (player == base.Card.Owner && base.Card.CombatState.RoundNumber == 1)
+		if (player == base.Card.Owner && player.PlayerCombatState.TurnNumber <= 1)
 		{
 			await CardCmd.AutoPlay(choiceContext, base.Card, null);
 		}

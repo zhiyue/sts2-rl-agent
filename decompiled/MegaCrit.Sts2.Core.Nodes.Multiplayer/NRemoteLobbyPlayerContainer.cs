@@ -16,26 +16,56 @@ namespace MegaCrit.Sts2.Core.Nodes.Multiplayer;
 [ScriptPath("res://src/Core/Nodes/Multiplayer/NRemoteLobbyPlayerContainer.cs")]
 public class NRemoteLobbyPlayerContainer : Control
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Control.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RefreshSoloLabelVisibility' method.
+		/// </summary>
 		public static readonly StringName RefreshSoloLabelVisibility = "RefreshSoloLabelVisibility";
 
+		/// <summary>
+		/// Cached name for the 'Cleanup' method.
+		/// </summary>
 		public static readonly StringName Cleanup = "Cleanup";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Control.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_inviteButton' field.
+		/// </summary>
 		public static readonly StringName _inviteButton = "_inviteButton";
 
+		/// <summary>
+		/// Cached name for the '_soloLabel' field.
+		/// </summary>
 		public static readonly StringName _soloLabel = "_soloLabel";
 
+		/// <summary>
+		/// Cached name for the '_container' field.
+		/// </summary>
 		public static readonly StringName _container = "_container";
 
+		/// <summary>
+		/// Cached name for the '_displayLocalPlayer' field.
+		/// </summary>
 		public static readonly StringName _displayLocalPlayer = "_displayLocalPlayer";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Control.SignalName
 	{
 	}
@@ -88,7 +118,7 @@ public class NRemoteLobbyPlayerContainer : Control
 		{
 			NRemoteLobbyPlayer nRemoteLobbyPlayer = NRemoteLobbyPlayer.Create(player, lobby.NetService.Platform, lobby.NetService.Type == NetGameType.Singleplayer);
 			_container.AddChildSafely(nRemoteLobbyPlayer);
-			_container.MoveChild(_inviteButton.GetParent(), _container.GetChildCount() - 1);
+			_container.MoveChildSafely(_inviteButton.GetParent(), _container.GetChildCount() - 1);
 			_nodes.Add(nRemoteLobbyPlayer);
 			RefreshSoloLabelVisibility();
 		}
@@ -137,6 +167,11 @@ public class NRemoteLobbyPlayerContainer : Control
 		_nodes.Clear();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -147,6 +182,7 @@ public class NRemoteLobbyPlayerContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -171,6 +207,7 @@ public class NRemoteLobbyPlayerContainer : Control
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -189,6 +226,7 @@ public class NRemoteLobbyPlayerContainer : Control
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -215,6 +253,7 @@ public class NRemoteLobbyPlayerContainer : Control
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -241,6 +280,11 @@ public class NRemoteLobbyPlayerContainer : Control
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -252,6 +296,7 @@ public class NRemoteLobbyPlayerContainer : Control
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -262,6 +307,7 @@ public class NRemoteLobbyPlayerContainer : Control
 		info.AddProperty(PropertyName._displayLocalPlayer, Variant.From(in _displayLocalPlayer));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

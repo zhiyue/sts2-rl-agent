@@ -10,28 +10,52 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
-using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
-using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.Vfx.Cards;
 using MegaCrit.Sts2.Core.TestSupport;
 
 namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 
+/// <summary>
+/// Manages full card transformations that take place in the center of the screen
+/// (ie transformations for cards in the deck/draw/discard)
+/// Centers the card and plays the transform animation. The actual transform animation
+/// logic lives in NCardTransformShineVfx
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Vfx/NCardTransformVfx.cs")]
 public class NCardTransformVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -68,13 +92,15 @@ public class NCardTransformVfx : Node2D
 
 	private async Task<bool> WaitAndInterruptIfNecessary(float seconds, NCard cardNode)
 	{
-		for (float timer = 0f; timer <= seconds; timer += (float)GetProcessDeltaTime())
+		float num = 0f;
+		while (num <= seconds)
 		{
 			if (!cardNode.IsInsideTree() || _endCard.Pile == null)
 			{
 				return false;
 			}
-			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			float num2 = num;
+			num = num2 + await this.AwaitProcessFrame();
 		}
 		return true;
 	}
@@ -87,12 +113,10 @@ public class NCardTransformVfx : Node2D
 	private async Task PlayAnimation()
 	{
 		SfxCmd.Play("event:/sfx/ui/cards/card_transform");
-		Material textureMat = GetNode<Sprite2D>("%RenderTexture").Material;
+		Control node = GetNode<Control>("%CardContainer");
 		NCard cardNode = NCard.Create(_startCard);
-		SubViewport node = GetNode<SubViewport>("SubViewport");
 		node.AddChildSafely(cardNode);
 		cardNode.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
-		cardNode.Position = new Vector2((float)node.Size.X * 0.5f, (float)node.Size.Y * 0.5f);
 		_tween = CreateTween();
 		_tween.TweenProperty(cardNode, "scale", Vector2.One * 1f, 0.25).From(Vector2.Zero).SetEase(Tween.EaseType.Out)
 			.SetTrans(Tween.TransitionType.Cubic);
@@ -101,29 +125,11 @@ public class NCardTransformVfx : Node2D
 			this.QueueFreeSafely();
 			return;
 		}
-		_tween = CreateTween().SetParallel();
-		_tween.TweenProperty(textureMat, "shader_parameter/brightness", 1f, 0.5);
-		_tween.TweenProperty(textureMat, "shader_parameter/boing:x", 2f, 0.4000000059604645);
-		if (!(await WaitAndInterruptIfNecessary(0.5f, cardNode)))
+		NCardTransformShineVfx nCardTransformShineVfx = NCardTransformShineVfx.Create(cardNode, _endCard, _relicsToFlash);
+		if (nCardTransformShineVfx != null)
 		{
-			this.QueueFreeSafely();
-			return;
+			await nCardTransformShineVfx.PlayAnimation();
 		}
-		cardNode.Model = _endCard;
-		cardNode.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
-		GetNode<CpuParticles2D>("%Particle").Emitting = true;
-		_tween = CreateTween().SetParallel();
-		_tween.TweenProperty(textureMat, "shader_parameter/brightness", 0f, 0.20000000298023224);
-		_tween.TweenProperty(textureMat, "shader_parameter/boing:x", -0.75f, 0.15000000596046448).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Quad);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		_tween = CreateTween().SetParallel();
-		_tween.TweenProperty(textureMat, "shader_parameter/boing:x", 0.3f, 0.20000000298023224).SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Quad);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		_tween = CreateTween().SetParallel();
-		_tween.TweenProperty(textureMat, "shader_parameter/boing:x", -0.2f, 0.25).SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Quad);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		_tween = CreateTween().SetParallel();
-		_tween.TweenProperty(textureMat, "shader_parameter/boing:x", 0, 0.30000001192092896).SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Back);
 		if (!(await WaitAndInterruptIfNecessary(0.3f, cardNode)))
 		{
 			this.QueueFreeSafely();
@@ -142,12 +148,15 @@ public class NCardTransformVfx : Node2D
 			this.QueueFreeSafely();
 			return;
 		}
-		Vector2 targetPosition = _endCard.Pile.Type.GetTargetPosition(cardNode);
+		if (_endCard.Pile == null)
+		{
+			this.QueueFreeSafely();
+			return;
+		}
 		cardNode.Reparent(this);
 		cardNode.Position = Vector2.Zero;
-		NCardFlyVfx nCardFlyVfx = NCardFlyVfx.Create(cardNode, targetPosition, isAddingToPile: false, _endCard.Owner.Character.TrailPath);
-		CardPile? pile = _endCard.Pile;
-		((pile == null || pile.Type != PileType.Deck) ? NCombatRoom.Instance?.CombatVfxContainer : NRun.Instance?.GlobalUi.TopBar.TrailContainer)?.AddChildSafely(nCardFlyVfx);
+		NCardFlyVfx nCardFlyVfx = NCardFlyVfx.Create(cardNode, _endCard.Pile.Type, isAddingToPile: false, _endCard.Owner.Character.TrailPath);
+		((_endCard.Pile.Type != PileType.Deck) ? NCombatRoom.Instance?.CombatVfxContainer : NRun.Instance?.GlobalUi.TopBar.TrailContainer)?.AddChildSafely(nCardFlyVfx);
 		if (nCardFlyVfx?.SwooshAwayCompletion != null)
 		{
 			await nCardFlyVfx.SwooshAwayCompletion.Task;
@@ -155,29 +164,11 @@ public class NCardTransformVfx : Node2D
 		this.QueueFreeSafely();
 	}
 
-	public static async Task PlayAnimOnCardInHand(NCard cardNode, CardModel endCard)
-	{
-		if (!TestMode.IsOn)
-		{
-			SfxCmd.Play("event:/sfx/ui/cards/card_transform");
-			Tween tween = cardNode.CreateTween();
-			tween.TweenProperty(cardNode, "scale", Vector2.One * 1.5f, 0.25).From(Vector2.One).SetEase(Tween.EaseType.Out)
-				.SetTrans(Tween.TransitionType.Cubic);
-			await cardNode.ToSignal(tween, Tween.SignalName.Finished);
-			NPlayerHand.Instance?.TryCancelCardPlay(cardNode.Model);
-			cardNode.Model = endCard;
-			cardNode.UpdateVisuals(endCard.Pile.Type, CardPreviewMode.Normal);
-			Tween tween2 = cardNode.CreateTween();
-			tween2.TweenProperty(cardNode, "scale", Vector2.One, 0.25).From(Vector2.One * 1.5f).SetEase(Tween.EaseType.In)
-				.SetTrans(Tween.TransitionType.Cubic);
-			if (NCombatRoom.Instance?.Ui.Hand.GetCardHolder(endCard) is NHandCardHolder nHandCardHolder)
-			{
-				nHandCardHolder.UpdateCard();
-			}
-			await cardNode.ToSignal(tween2, Tween.SignalName.Finished);
-		}
-	}
-
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -187,6 +178,7 @@ public class NCardTransformVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -205,6 +197,7 @@ public class NCardTransformVfx : Node2D
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -219,6 +212,7 @@ public class NCardTransformVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -230,6 +224,7 @@ public class NCardTransformVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -241,6 +236,11 @@ public class NCardTransformVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -249,6 +249,7 @@ public class NCardTransformVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -256,6 +257,7 @@ public class NCardTransformVfx : Node2D
 		info.AddProperty(PropertyName._tween, Variant.From(in _tween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

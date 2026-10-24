@@ -11,6 +11,9 @@ public struct AncientMetric
 
 	public readonly List<string> skipped;
 
+	/// <param name="entry">The map point history entry.</param>
+	/// <param name="playerEntry">The record of the player actions taken by the local player in the map point.</param>
+	/// <exception cref="T:System.InvalidOperationException"></exception>
 	public AncientMetric(MapPointHistoryEntry entry, PlayerMapPointHistoryEntry playerEntry)
 	{
 		AncientChoiceHistoryEntry ancientChoiceHistoryEntry = playerEntry.AncientChoices.FirstOrDefault((AncientChoiceHistoryEntry o) => o.WasChosen);

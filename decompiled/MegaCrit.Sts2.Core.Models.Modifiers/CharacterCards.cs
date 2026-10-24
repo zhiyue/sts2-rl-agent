@@ -47,6 +47,10 @@ public class CharacterCards : ModifierModel
 		{
 			return options;
 		}
+		if (!options.Flags.HasFlag(CardCreationFlags.IsCardReward))
+		{
+			return options;
+		}
 		return options.WithCustomPool(options.GetPossibleCards(player).Concat(ModelDb.GetById<CharacterModel>(CharacterModel).CardPool.GetUnlockedCards(player.UnlockState, player.RunState.CardMultiplayerConstraint)));
 	}
 

@@ -9,6 +9,9 @@ using MegaCrit.Sts2.Core.Random;
 
 namespace MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 
+/// <summary>
+/// Handles in-combat card selection screens (e.g., from Attack Potion).
+/// </summary>
 public class ChooseACardScreenHandler : IScreenHandler, IHandler
 {
 	public Type ScreenType => typeof(NChooseACardSelectionScreen);

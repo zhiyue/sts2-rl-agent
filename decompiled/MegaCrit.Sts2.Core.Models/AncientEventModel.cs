@@ -31,7 +31,7 @@ public abstract class AncientEventModel : EventModel
 
 	private string? _debugOption;
 
-	protected override string LocTable => "ancients";
+	public override string LocTable => "ancients";
 
 	public LocString Epithet => L10NLookup(base.Id.Entry + ".epithet");
 
@@ -48,10 +48,18 @@ public abstract class AncientEventModel : EventModel
 		}
 	}
 
+	/// <summary>
+	/// The characters for whom the "any character" dialogue options shouldn't be shown.
+	/// For example, <see cref="T:MegaCrit.Sts2.Core.Models.Events.Tezcatara" />'s "any character" dialogue is friendly, but they don't trust the
+	/// <see cref="T:MegaCrit.Sts2.Core.Models.Characters.Defect" />, so we blacklist them so we don't show these friendly dialogue options for them.
+	/// </summary>
 	public virtual IEnumerable<CharacterModel> AnyCharacterDialogueBlacklist => Array.Empty<CharacterModel>();
 
 	public override Color ButtonColor => new Color(0f, 0f, 0f, 0.35f);
 
+	/// <summary>
+	/// The color of the speech bubble in the Ancient events during Ancient Dialogue.
+	/// </summary>
 	public virtual Color DialogueColor { get; } = new Color("28454f");
 
 	private string? CustomDonePage
@@ -80,6 +88,10 @@ public abstract class AncientEventModel : EventModel
 		}
 	}
 
+	/// <summary>
+	/// The initial options generated when entering an instance of this Ancient event.
+	/// Will always be null in canonical events.
+	/// </summary>
 	private List<EventOption>? GeneratedOptions
 	{
 		get
@@ -109,12 +121,19 @@ public abstract class AncientEventModel : EventModel
 
 	public bool HasAmbientBgm => AmbientBgm != "";
 
+	/// <summary>
+	/// The icon used for this Ancient in the Run History screen.
+	/// Also used in other spots, like <see cref="T:MegaCrit.Sts2.Core.Nodes.Events.NAncientDialogueLine" />.
+	/// </summary>
 	public Texture2D RunHistoryIcon => PreloadManager.Cache.GetCompressedTexture2D(ImageHelper.GetRoomIconPath(MapPointType.Ancient, RoomType.Event, base.Id));
 
 	public Texture2D RunHistoryIconOutline => PreloadManager.Cache.GetCompressedTexture2D(RunHistoryIconOutlinePath);
 
 	private string RunHistoryIconOutlinePath => ImageHelper.GetImagePath("ui/run_history/" + base.Id.Entry.ToLowerInvariant() + "_outline.png");
 
+	/// <summary>
+	/// The amount of health the player healed upon entering this ancient.
+	/// </summary>
 	public int HealedAmount { get; private set; }
 
 	public abstract IEnumerable<EventOption> AllPossibleOptions { get; }
@@ -133,31 +152,42 @@ public abstract class AncientEventModel : EventModel
 		}
 	}
 
+	/// <summary>
+	/// Define the dialogue structure for this ancient. Each subclass must implement this
+	/// to specify dialogues for all categories (first meeting, repeating, etc.).
+	/// </summary>
 	protected abstract AncientDialogueSet DefineDialogues();
 
+	/// <summary>
+	/// Convenience method to get a character's dictionary key from its type.
+	/// Usage: CharKey&lt;Ironclad&gt;() returns "IRONCLAD".
+	/// </summary>
 	protected static string CharKey<T>() where T : CharacterModel
 	{
 		return ModelDb.Character<T>().Id.Entry;
 	}
 
-	protected override async Task BeforeEventStarted()
+	protected override async Task BeforeEventStarted(bool isPreFinished)
 	{
-		if (this is Neow)
+		if (!isPreFinished)
 		{
-			base.Owner.Creature.SetCurrentHpInternal(0m);
+			if (this is Neow)
+			{
+				base.Owner.Creature.SetCurrentHpInternal(0m);
+			}
+			int oldHp = base.Owner.Creature.CurrentHp;
+			decimal amount = base.Owner.Creature.MaxHp - base.Owner.Creature.CurrentHp;
+			if (RunManager.Instance.HasAscension(AscensionLevel.WearyTraveler))
+			{
+				amount *= 0.8m;
+			}
+			await CreatureCmd.Heal(base.Owner.Creature, amount, playAnim: false);
+			if (NRun.Instance != null && this is Neow)
+			{
+				TaskHelper.RunSafely(NRun.Instance.GlobalUi.TopBar.Hp.LerpAtNeow());
+			}
+			HealedAmount = base.Owner.Creature.CurrentHp - oldHp;
 		}
-		int oldHp = base.Owner.Creature.CurrentHp;
-		decimal amount = base.Owner.Creature.MaxHp - base.Owner.Creature.CurrentHp;
-		if (RunManager.Instance.HasAscension(AscensionLevel.WearyTraveler))
-		{
-			amount *= 0.8m;
-		}
-		await CreatureCmd.Heal(base.Owner.Creature, amount, playAnim: false);
-		if (NRun.Instance != null && this is Neow)
-		{
-			TaskHelper.RunSafely(NRun.Instance.GlobalUi.TopBar.Hp.LerpAtNeow());
-		}
-		HealedAmount = base.Owner.Creature.CurrentHp - oldHp;
 	}
 
 	protected sealed override IReadOnlyList<EventOption> GenerateInitialOptionsWrapper()
@@ -227,11 +257,25 @@ public abstract class AncientEventModel : EventModel
 		}
 	}
 
+	/// <summary>
+	/// Generate an event option from a relic.
+	/// This overload also generates an onChosen callback that makes the player obtain the specified relic and then
+	/// finishes the event.
+	/// </summary>
+	/// <param name="pageName">Name of the page that this option is in, for metrics/gameinfo and loc. INITIAL by default.</param>
+	/// <param name="customDonePage">custom page path that this choice goes to next</param>
+	/// <typeparam name="T">Relic whose title, description, and HoverTips should be used for the event option.</typeparam>
 	protected EventOption RelicOption<T>(string pageName = "INITIAL", string? customDonePage = null) where T : RelicModel
 	{
 		return RelicOption(ModelDb.Relic<T>().ToMutable(), pageName);
 	}
 
+	/// <summary>
+	/// Generate an event option from a relic.
+	/// This overload also generates an onChosen callback that makes the player obtain the specified relic and then
+	/// finishes the event.
+	/// See <see cref="M:MegaCrit.Sts2.Core.Models.AncientEventModel.RelicOption``1(System.String,System.String)" /> for more details.
+	/// </summary>
 	protected EventOption RelicOption(RelicModel relic, string pageName = "INITIAL", string? customDonePage = null)
 	{
 		return RelicOption(relic, OnChosen, pageName);

@@ -19,51 +19,124 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 
+/// <summary>
+/// A generic select from the cards in the player's deck. Managing logic for the extra confirmation screen.
+/// Typically we use this screen when we are modifying the composition of a deck rather than a specific card.
+/// This is included but not limited to:
+/// - transforming cards
+/// - removing cards
+/// - cloning cards (Dolly's Mirror)
+/// Does not include actions that modify specific cards such as,
+/// upgrading (see NDeckSelectScreen) or applying enchantments (see NDeckEnchantSelectScreen) to cards, as those have special UI
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Screens/CardSelection/NDeckCardSelectScreen.cs")]
 public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NCardGridSelectionScreen.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'RefreshConfirmButtonVisibility' method.
+		/// </summary>
 		public static readonly StringName RefreshConfirmButtonVisibility = "RefreshConfirmButtonVisibility";
 
+		/// <summary>
+		/// Cached name for the 'PreviewSelection' method.
+		/// </summary>
 		public static readonly StringName PreviewSelection = "PreviewSelection";
 
+		/// <summary>
+		/// Cached name for the 'CloseSelection' method.
+		/// </summary>
 		public static readonly StringName CloseSelection = "CloseSelection";
 
+		/// <summary>
+		/// Cached name for the 'CancelSelection' method.
+		/// </summary>
 		public static readonly StringName CancelSelection = "CancelSelection";
 
+		/// <summary>
+		/// Cached name for the 'ConfirmSelection' method.
+		/// </summary>
 		public static readonly StringName ConfirmSelection = "ConfirmSelection";
 
+		/// <summary>
+		/// Cached name for the 'CheckIfSelectionComplete' method.
+		/// </summary>
 		public static readonly StringName CheckIfSelectionComplete = "CheckIfSelectionComplete";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayShown' method.
+		/// </summary>
 		public new static readonly StringName AfterOverlayShown = "AfterOverlayShown";
 
+		/// <summary>
+		/// Cached name for the 'AfterOverlayHidden' method.
+		/// </summary>
 		public new static readonly StringName AfterOverlayHidden = "AfterOverlayHidden";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NCardGridSelectionScreen.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'DefaultFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName DefaultFocusedControl = "DefaultFocusedControl";
 
+		/// <summary>
+		/// Cached name for the 'FocusedControlFromTopBar' property.
+		/// </summary>
 		public new static readonly StringName FocusedControlFromTopBar = "FocusedControlFromTopBar";
 
+		/// <summary>
+		/// Cached name for the '_previewContainer' field.
+		/// </summary>
 		public static readonly StringName _previewContainer = "_previewContainer";
 
+		/// <summary>
+		/// Cached name for the '_previewCards' field.
+		/// </summary>
 		public static readonly StringName _previewCards = "_previewCards";
 
+		/// <summary>
+		/// Cached name for the '_previewCancelButton' field.
+		/// </summary>
 		public static readonly StringName _previewCancelButton = "_previewCancelButton";
 
+		/// <summary>
+		/// Cached name for the '_previewConfirmButton' field.
+		/// </summary>
 		public static readonly StringName _previewConfirmButton = "_previewConfirmButton";
 
+		/// <summary>
+		/// Cached name for the '_closeButton' field.
+		/// </summary>
 		public static readonly StringName _closeButton = "_closeButton";
 
+		/// <summary>
+		/// Cached name for the '_confirmButton' field.
+		/// </summary>
 		public static readonly StringName _confirmButton = "_confirmButton";
 
+		/// <summary>
+		/// Cached name for the '_infoLabel' field.
+		/// </summary>
 		public static readonly StringName _infoLabel = "_infoLabel";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NCardGridSelectionScreen.SignalName
 	{
 	}
@@ -192,6 +265,7 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 
 	private void PreviewSelection()
 	{
+		_grid.FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Disabled;
 		GetViewport().GuiReleaseFocus();
 		_previewContainer.Visible = true;
 		_previewContainer.MouseFilter = MouseFilterEnum.Stop;
@@ -234,6 +308,7 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 		_previewContainer.Visible = false;
 		_previewCancelButton.Disable();
 		_previewConfirmButton.Disable();
+		_grid.FocusBehaviorRecursive = FocusBehaviorRecursiveEnum.Inherited;
 		_grid.SetCanScroll(canScroll: true);
 		_previewContainer.MouseFilter = MouseFilterEnum.Ignore;
 		for (int i = 0; i < _previewCards.GetChildCount(); i++)
@@ -275,6 +350,11 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 		_closeButton.Disable();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -304,6 +384,7 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -370,6 +451,7 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -412,6 +494,7 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -453,6 +536,7 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -507,6 +591,11 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -523,6 +612,7 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -536,6 +626,7 @@ public sealed class NDeckCardSelectScreen : NCardGridSelectionScreen
 		info.AddProperty(PropertyName._infoLabel, Variant.From(in _infoLabel));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

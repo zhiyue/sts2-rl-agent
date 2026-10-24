@@ -7,6 +7,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Civilization
+/// </summary>
 public class Relic3Epoch : EpochModel
 {
 	public override string Id => "RELIC3_EPOCH";

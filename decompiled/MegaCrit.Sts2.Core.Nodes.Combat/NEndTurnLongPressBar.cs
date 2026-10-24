@@ -5,42 +5,94 @@ using Godot;
 using Godot.Bridge;
 using Godot.NativeInterop;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace MegaCrit.Sts2.Core.Nodes.Combat;
 
+/// <summary>
+/// This bar represents the player's progress when clicking or pushing down the End Turn input.
+/// When the bar is filled, the turn is ended. This is an option players can enable so they don't
+/// accidentally press the End Turn button (useful for touch-devices and people who are simply
+/// playing super fast all the time).
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/Combat/NEndTurnLongPressBar.cs")]
 public class NEndTurnLongPressBar : ColorRect
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : ColorRect.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'Init' method.
+		/// </summary>
 		public static readonly StringName Init = "Init";
 
+		/// <summary>
+		/// Cached name for the 'StartPress' method.
+		/// </summary>
 		public static readonly StringName StartPress = "StartPress";
 
+		/// <summary>
+		/// Cached name for the 'CancelPress' method.
+		/// </summary>
 		public static readonly StringName CancelPress = "CancelPress";
 
+		/// <summary>
+		/// Cached name for the '_Process' method.
+		/// </summary>
 		public new static readonly StringName _Process = "_Process";
 
+		/// <summary>
+		/// Cached name for the 'RecalculateBar' method.
+		/// </summary>
 		public static readonly StringName RecalculateBar = "RecalculateBar";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : ColorRect.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_outline' field.
+		/// </summary>
 		public static readonly StringName _outline = "_outline";
 
+		/// <summary>
+		/// Cached name for the '_pressTimer' field.
+		/// </summary>
 		public static readonly StringName _pressTimer = "_pressTimer";
 
+		/// <summary>
+		/// Cached name for the '_isPressed' field.
+		/// </summary>
 		public static readonly StringName _isPressed = "_isPressed";
 
+		/// <summary>
+		/// Cached name for the '_endTurnButton' field.
+		/// </summary>
 		public static readonly StringName _endTurnButton = "_endTurnButton";
 
+		/// <summary>
+		/// Cached name for the '_tween' field.
+		/// </summary>
 		public static readonly StringName _tween = "_tween";
 
+		/// <summary>
+		/// Cached name for the '_enabled' field.
+		/// </summary>
 		public static readonly StringName _enabled = "_enabled";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : ColorRect.SignalName
 	{
 	}
@@ -130,17 +182,27 @@ public class NEndTurnLongPressBar : ColorRect
 		base.Modulate = modulate;
 	}
 
+	/// <summary>
+	/// Called when the bar is completely filled.
+	/// </summary>
 	private async Task PlayAnim()
 	{
 		_tween?.Kill();
 		_tween = CreateTween();
 		_tween.TweenProperty(this, "modulate:a", 0f, 0.25);
-		await ToSignal(_tween, Tween.SignalName.Finished);
-		base.Color = new Color(1f, 0.85f, 0.36f);
-		_isPressed = false;
-		_enabled = true;
+		if (await _tween.AwaitFinished(this))
+		{
+			base.Color = new Color(1f, 0.85f, 0.36f);
+			_isPressed = false;
+			_enabled = true;
+		}
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
@@ -160,6 +222,7 @@ public class NEndTurnLongPressBar : ColorRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -202,6 +265,7 @@ public class NEndTurnLongPressBar : ColorRect
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -232,6 +296,7 @@ public class NEndTurnLongPressBar : ColorRect
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -268,6 +333,7 @@ public class NEndTurnLongPressBar : ColorRect
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -304,6 +370,11 @@ public class NEndTurnLongPressBar : ColorRect
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -317,6 +388,7 @@ public class NEndTurnLongPressBar : ColorRect
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -329,6 +401,7 @@ public class NEndTurnLongPressBar : ColorRect
 		info.AddProperty(PropertyName._enabled, Variant.From(in _enabled));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

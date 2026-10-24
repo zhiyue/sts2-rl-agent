@@ -15,6 +15,8 @@ public sealed class HuddleUp : CardModel
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new CardsVar(2));
 
+	public override IEnumerable<CardKeyword> CanonicalKeywords => new global::_003C_003Ez__ReadOnlySingleElementList<CardKeyword>(CardKeyword.Exhaust);
+
 	public HuddleUp()
 		: base(1, CardType.Skill, CardRarity.Uncommon, TargetType.AllAllies)
 	{

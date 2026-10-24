@@ -5,6 +5,10 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Sync;
 
+/// <summary>
+/// Sent by the host to all clients when votes are received by all players during a shared event. This message specifies
+/// the option that all players should execute.
+/// </summary>
 public struct SharedEventOptionChosenMessage : INetMessage, IPacketSerializable, IRunLocationTargetedMessage
 {
 	public uint optionIndex;
@@ -18,6 +22,8 @@ public struct SharedEventOptionChosenMessage : INetMessage, IPacketSerializable,
 	public NetTransferMode Mode => NetTransferMode.Reliable;
 
 	public LogLevel LogLevel => LogLevel.VeryDebug;
+
+	public bool ShouldBuffer => true;
 
 	public RunLocation Location => location;
 

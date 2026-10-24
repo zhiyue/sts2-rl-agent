@@ -4,6 +4,9 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Saves.MapDrawing;
 
+/// <summary>
+/// A serializable form of a single line that a player has drawn on the map.
+/// </summary>
 public class SerializableMapDrawingLine : IPacketSerializable
 {
 	private static readonly QuantizeParams _quantizeParamsX = new QuantizeParams(-3f, 3f, 13);

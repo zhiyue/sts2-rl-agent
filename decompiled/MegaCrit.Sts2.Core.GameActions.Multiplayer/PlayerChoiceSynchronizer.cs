@@ -10,6 +10,18 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.GameActions.Multiplayer;
 
+/// <summary>
+/// Synchronizes player choices that are gathered in the middle of a model's execution. Examples:
+/// * The card picked for discarding when playing Survivor
+/// * The card chosen to add to hand when playing Discovery
+/// * The card chosen to add to hand at the beginning of combat from Toolbox
+///
+/// The basic scheme here is:
+/// * All players (local and remote) generate an ID for the selection.
+/// * The owning player brings up the card selection UI on their side.
+/// * Once the owning player has made a choice, they send a message to all other players with the selection ID indicating
+///   what they chose.
+/// </summary>
 public class PlayerChoiceSynchronizer : IDisposable
 {
 	private struct ReceivedChoice
@@ -47,6 +59,13 @@ public class PlayerChoiceSynchronizer : IDisposable
 		_netService.UnregisterMessageHandler<PlayerChoiceMessage>(OnPlayerChoiceMessageReceived);
 	}
 
+	/// <summary>
+	/// Reserves a choice ID to be passed to SyncLocalChoice or WaitForLocalChoice.
+	/// If called during combat, this must be done in a deterministic context (i.e. before a GameAction is paused) so
+	/// that checksums match up after action execution. SyncLocalChoice and WaitForRemoteChoice can be called outside of
+	/// deterministic contexts (i.e. while a GameAction is paused and executing locally).
+	/// </summary>
+	/// <param name="player">The player for which the choice ID will be reserved.</param>
 	public uint ReserveChoiceId(Player player)
 	{
 		int playerSlotIndex = _players.GetPlayerSlotIndex(player);
@@ -60,6 +79,14 @@ public class PlayerChoiceSynchronizer : IDisposable
 		return num;
 	}
 
+	/// <summary>
+	/// Sync a locally-chosen player choice with other peers.
+	/// This should be called whenever a player choice is made by the local player. In tandem, WaitForRemoteChoice
+	/// should be awaited on all remote peers.
+	/// </summary>
+	/// <param name="player">The player that chose the player choice. Should always be the local player.</param>
+	/// <param name="choiceId">The ID of the choice, reserved through ReserveChoiceId.</param>
+	/// <param name="result">The result of the player choice.</param>
 	public void SyncLocalChoice(Player player, uint choiceId, PlayerChoiceResult result)
 	{
 		if (!ValidateChoiceId(player, choiceId))
@@ -76,6 +103,14 @@ public class PlayerChoiceSynchronizer : IDisposable
 		_netService.SendMessage(message);
 	}
 
+	/// <summary>
+	/// Waits for a choice to be received from a remote peer.
+	/// This should be called on all remote peers whenever we expect a player choice to be made.
+	/// On the machine of the player who is making a choice, SyncLocalChoice should be called.
+	/// </summary>
+	/// <param name="player">The player for whom we are awaiting a choice.</param>
+	/// <param name="choiceId">The choice ID to await, obtained through ReserveChoiceId.</param>
+	/// <returns>The result of the player choice that was made.</returns>
 	public async Task<PlayerChoiceResult> WaitForRemoteChoice(Player player, uint choiceId)
 	{
 		if (_netService.Type == NetGameType.Singleplayer)

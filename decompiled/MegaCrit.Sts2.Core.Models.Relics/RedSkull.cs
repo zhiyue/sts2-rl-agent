@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Powers;
@@ -72,13 +73,13 @@ public sealed class RedSkull : RelicModel
 		if (flag && StrengthApplied)
 		{
 			Flash();
-			await PowerCmd.Apply<StrengthPower>(creature, -baseValue, creature, null);
+			await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), creature, -baseValue, creature, null);
 			StrengthApplied = false;
 		}
 		else if (!flag && !StrengthApplied)
 		{
 			Flash();
-			await PowerCmd.Apply<StrengthPower>(creature, baseValue, creature, null);
+			await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), creature, baseValue, creature, null);
 			StrengthApplied = true;
 		}
 	}

@@ -19,7 +19,7 @@ public sealed class Glitterstream : CardModel
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
 		new BlockVar(11m, ValueProp.Move),
-		new BlockVar("BlockNextTurn", 4m, ValueProp.Move)
+		new BlockVar("BlockNextTurn", 5m, ValueProp.Move)
 	});
 
 	public Glitterstream()
@@ -34,7 +34,7 @@ public sealed class Glitterstream : CardModel
 		IEnumerable<AbstractModel> modifiers;
 		decimal blockNextTurnAmount = Hook.ModifyBlock(base.CombatState, base.Owner.Creature, blockVar.BaseValue, blockVar.Props, this, cardPlay, out modifiers);
 		await CreatureCmd.GainBlock(base.Owner.Creature, base.DynamicVars.Block, cardPlay);
-		await PowerCmd.Apply<BlockNextTurnPower>(base.Owner.Creature, blockNextTurnAmount, base.Owner.Creature, this);
+		await PowerCmd.Apply<BlockNextTurnPower>(choiceContext, base.Owner.Creature, blockNextTurnAmount, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Combat;
-using MegaCrit.Sts2.Core.Combat.History.Entries;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -19,7 +18,7 @@ public sealed class GoldAxe : CardModel
 	{
 		new CalculationBaseVar(0m),
 		new ExtraDamageVar(1m),
-		new CalculatedDamageVar(ValueProp.Move).WithMultiplier((CardModel card, Creature? _) => CombatManager.Instance.History.CardPlaysFinished.Count((CardPlayFinishedEntry e) => e.CardPlay.Card.Owner == card.Owner))
+		new CalculatedDamageVar(ValueProp.Move).WithMultiplier((CardModel _, Creature? _) => CombatManager.Instance.History.CardPlaysFinished.Count())
 	});
 
 	public GoldAxe()

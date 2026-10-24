@@ -52,7 +52,7 @@ public class LogConsoleCmd : AbstractConsoleCmd
 		for (int i = 0; i < values.Length; i++)
 		{
 			T value = values[i];
-			if (str.Equals(value.ToString(), StringComparison.CurrentCultureIgnoreCase))
+			if (str.Equals(value.ToString(), StringComparison.OrdinalIgnoreCase))
 			{
 				enumVal = value;
 				return true;

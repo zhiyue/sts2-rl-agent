@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Bridge;
@@ -20,22 +21,51 @@ namespace MegaCrit.Sts2.Core.Nodes.Vfx;
 [ScriptPath("res://src/Core/Nodes/Vfx/NHyperbeamImpactVfx.cs")]
 public class NHyperbeamImpactVfx : Node2D
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : Node2D.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the 'ApplyRotation' method.
+		/// </summary>
 		public static readonly StringName ApplyRotation = "ApplyRotation";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : Node2D.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_impactStartParticles' field.
+		/// </summary>
 		public static readonly StringName _impactStartParticles = "_impactStartParticles";
 
+		/// <summary>
+		/// Cached name for the '_impactEndParticles' field.
+		/// </summary>
 		public static readonly StringName _impactEndParticles = "_impactEndParticles";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : Node2D.SignalName
 	{
 	}
@@ -47,6 +77,13 @@ public class NHyperbeamImpactVfx : Node2D
 
 	[Export(PropertyHint.None, "")]
 	private Array<GpuParticles2D> _impactEndParticles = new Array<GpuParticles2D>();
+
+	private CancellationTokenSource? _cts;
+
+	public override void _ExitTree()
+	{
+		_cts?.Cancel();
+	}
 
 	public static NHyperbeamImpactVfx? Create(Creature owner, Creature target)
 	{
@@ -60,9 +97,9 @@ public class NHyperbeamImpactVfx : Node2D
 		{
 			Vector2 vfxSpawnPosition = nCreature.VfxSpawnPosition;
 			Player player = owner.Player;
-			if (player != null && player.Character is Defect defect)
+			if (player != null && player.Character is Defect)
 			{
-				vfxSpawnPosition += defect.EyelineOffset;
+				vfxSpawnPosition += Defect.EyelineOffset;
 			}
 			return Create(vfxSpawnPosition, nCreature2.VfxSpawnPosition);
 		}
@@ -95,12 +132,13 @@ public class NHyperbeamImpactVfx : Node2D
 
 	private async Task PlaySequence()
 	{
+		_cts = new CancellationTokenSource();
 		for (int i = 0; i < _impactStartParticles.Count; i++)
 		{
 			_impactStartParticles[i].Visible = true;
 			_impactStartParticles[i].Restart();
 		}
-		await Cmd.Wait(NHyperbeamVfx.hyperbeamLaserDuration);
+		await Cmd.Wait(NHyperbeamVfx.hyperbeamLaserDuration, _cts.Token);
 		for (int j = 0; j < _impactStartParticles.Count; j++)
 		{
 			_impactStartParticles[j].Visible = false;
@@ -109,14 +147,20 @@ public class NHyperbeamImpactVfx : Node2D
 		{
 			_impactEndParticles[k].Restart();
 		}
-		await Cmd.Wait(2f);
+		await Cmd.Wait(2f, _cts.Token);
 		this.QueueFreeSafely();
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotMethodList()
 	{
-		List<MethodInfo> list = new List<MethodInfo>(3);
+		List<MethodInfo> list = new List<MethodInfo>(4);
+		list.Add(new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null));
 		list.Add(new MethodInfo(MethodName.Create, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Node2D"), exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
 		{
 			new PropertyInfo(Variant.Type.Vector2, "hyperbeamSourcePosition", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
@@ -131,9 +175,16 @@ public class NHyperbeamImpactVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
+			ret = default(godot_variant);
+			return true;
+		}
 		if (method == MethodName.Create && args.Count == 2)
 		{
 			ret = VariantUtils.CreateFrom<NHyperbeamImpactVfx>(Create(VariantUtils.ConvertTo<Vector2>(in args[0]), VariantUtils.ConvertTo<Vector2>(in args[1])));
@@ -166,9 +217,14 @@ public class NHyperbeamImpactVfx : Node2D
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
+		if (method == MethodName._ExitTree)
+		{
+			return true;
+		}
 		if (method == MethodName.Create)
 		{
 			return true;
@@ -184,6 +240,7 @@ public class NHyperbeamImpactVfx : Node2D
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -200,6 +257,7 @@ public class NHyperbeamImpactVfx : Node2D
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -216,6 +274,11 @@ public class NHyperbeamImpactVfx : Node2D
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -225,6 +288,7 @@ public class NHyperbeamImpactVfx : Node2D
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -233,6 +297,7 @@ public class NHyperbeamImpactVfx : Node2D
 		info.AddProperty(PropertyName._impactEndParticles, Variant.CreateFrom(_impactEndParticles));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -7,14 +7,13 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
+using MegaCrit.Sts2.Core.Models.Powers;
 
 namespace MegaCrit.Sts2.Core.Models.Cards;
 
 public sealed class ExpectAFight : CardModel
 {
 	private const string _calculatedEnergyKey = "CalculatedEnergy";
-
-	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(base.EnergyHoverTip);
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[4]
 	{
@@ -23,6 +22,8 @@ public sealed class ExpectAFight : CardModel
 		new CalculationExtraVar(1m),
 		new CalculatedVar("CalculatedEnergy").WithMultiplier((CardModel card, Creature? _) => PileType.Hand.GetPile(card.Owner).Cards.Count((CardModel c) => c.Type == CardType.Attack))
 	});
+
+	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(base.EnergyHoverTip);
 
 	public ExpectAFight()
 		: base(2, CardType.Skill, CardRarity.Uncommon, TargetType.Self)
@@ -33,6 +34,7 @@ public sealed class ExpectAFight : CardModel
 	{
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
 		await PlayerCmd.GainEnergy(((CalculatedVar)base.DynamicVars["CalculatedEnergy"]).Calculate(cardPlay.Target), base.Owner);
+		await PowerCmd.Apply<NoEnergyGainPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -13,6 +14,7 @@ using MegaCrit.Sts2.Core.Models.Enchantments;
 using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.Models.Events;
 
@@ -31,10 +33,14 @@ public sealed class GraveOfTheForgotten : EventModel
 		new StringVar("Curse", ModelDb.Card<Decay>().Title)
 	});
 
+	public override bool IsAllowed(IRunState runState)
+	{
+		return runState.Players.All(HasEnchantableCards);
+	}
+
 	protected override IReadOnlyList<EventOption> GenerateInitialOptions()
 	{
-		EnchantmentModel soulsPower = ModelDb.Enchantment<SoulsPower>();
-		EventOption eventOption = ((!PileType.Deck.GetPile(base.Owner).Cards.Any((CardModel c) => soulsPower.CanEnchant(c))) ? new EventOption(this, null, "GRAVE_OF_THE_FORGOTTEN.pages.INITIAL.options.CONFRONT_LOCKED") : new EventOption(this, Confront, "GRAVE_OF_THE_FORGOTTEN.pages.INITIAL.options.CONFRONT", HoverTipFactory.FromEnchantment<SoulsPower>().Append(HoverTipFactory.FromCard<Decay>())));
+		EventOption eventOption = ((!HasEnchantableCards(base.Owner)) ? new EventOption(this, null, "GRAVE_OF_THE_FORGOTTEN.pages.INITIAL.options.CONFRONT_LOCKED") : new EventOption(this, Confront, "GRAVE_OF_THE_FORGOTTEN.pages.INITIAL.options.CONFRONT", HoverTipFactory.FromEnchantment<SoulsPower>().Concat(HoverTipFactory.FromCardWithCardHoverTips<Decay>())));
 		return new global::_003C_003Ez__ReadOnlyArray<EventOption>(new EventOption[2]
 		{
 			eventOption,
@@ -62,5 +68,11 @@ public sealed class GraveOfTheForgotten : EventModel
 	{
 		await RelicCmd.Obtain<ForgottenSoul>(base.Owner);
 		SetEventFinished(L10NLookup("GRAVE_OF_THE_FORGOTTEN.pages.ACCEPT.description"));
+	}
+
+	private bool HasEnchantableCards(Player player)
+	{
+		IReadOnlyList<CardModel> cards = PileType.Deck.GetPile(player).Cards;
+		return cards.Any((CardModel c) => ModelDb.Enchantment<SoulsPower>().CanEnchant(c));
 	}
 }

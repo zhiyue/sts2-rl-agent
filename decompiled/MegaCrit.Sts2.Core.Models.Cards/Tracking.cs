@@ -19,14 +19,14 @@ public sealed class Tracking : CardModel
 
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
-		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
+		await CreatureCmd.TriggerAnim(base.Owner.Creature, "PowerUp", base.Owner.Character.PowerUpAnimDelay);
 		if (base.Owner.Creature.HasPower<TrackingPower>())
 		{
-			await PowerCmd.Apply<TrackingPower>(base.Owner.Creature, 1m, base.Owner.Creature, this);
+			await PowerCmd.Apply<TrackingPower>(choiceContext, base.Owner.Creature, 1m, base.Owner.Creature, this);
 		}
 		else
 		{
-			await PowerCmd.Apply<TrackingPower>(base.Owner.Creature, 2m, base.Owner.Creature, this);
+			await PowerCmd.Apply<TrackingPower>(choiceContext, base.Owner.Creature, 2m, base.Owner.Creature, this);
 		}
 	}
 

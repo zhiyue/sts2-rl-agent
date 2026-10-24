@@ -10,7 +10,7 @@ public static class GodotTreeExtensions
 	{
 		if (child != null)
 		{
-			if (NGame.IsMainThread())
+			if (NGame.IsMainThread() && (parent.IsNodeReady() || !parent.IsInsideTree()))
 			{
 				parent.AddChild(child, forceReadableName: false, Node.InternalMode.Disabled);
 				return;
@@ -19,11 +19,56 @@ public static class GodotTreeExtensions
 		}
 	}
 
+	public static void AddSiblingSafely(this Node sibling, Node? child)
+	{
+		if (child == null)
+		{
+			return;
+		}
+		Node parent = sibling.GetParent();
+		if (parent != null)
+		{
+			if (NGame.IsMainThread() && (parent.IsNodeReady() || !parent.IsInsideTree()))
+			{
+				sibling.AddSibling(child);
+				return;
+			}
+			sibling.CallDeferred(Node.MethodName.AddSibling, child);
+		}
+	}
+
+	public static void MoveChildSafely(this Node parent, Node? child, int index)
+	{
+		if (child != null)
+		{
+			if (NGame.IsMainThread() && (parent.IsNodeReady() || !parent.IsInsideTree()))
+			{
+				parent.MoveChild(child, index);
+				return;
+			}
+			parent.CallDeferred(Node.MethodName.MoveChild, child, index);
+		}
+	}
+
+	public static void MoveToFrontSafely(this CanvasItem node)
+	{
+		Node parent = node.GetParent();
+		if (parent != null)
+		{
+			if (NGame.IsMainThread() && (parent.IsNodeReady() || !parent.IsInsideTree()))
+			{
+				node.MoveToFront();
+				return;
+			}
+			parent.CallDeferred(Node.MethodName.MoveChild, node, -1);
+		}
+	}
+
 	public static void RemoveChildSafely(this Node parent, Node? child)
 	{
 		if (child != null)
 		{
-			if (NGame.IsMainThread())
+			if (NGame.IsMainThread() && (parent.IsNodeReady() || !parent.IsInsideTree()))
 			{
 				parent.RemoveChild(child);
 				return;

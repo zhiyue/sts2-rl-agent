@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Ascension;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -34,7 +35,7 @@ public sealed class TurretOperator : MonsterModel
 	protected override MonsterMoveStateMachine GenerateMoveStateMachine()
 	{
 		List<MonsterState> list = new List<MonsterState>();
-		MoveState moveState = new MoveState("UNLOAD_MOVE_1", UnloadMove, new MultiAttackIntent(FireDamage, 5));
+		MoveState moveState = new MoveState("UNLOAD_MOVE", UnloadMove, new MultiAttackIntent(FireDamage, 5));
 		MoveState moveState2 = new MoveState("UNLOAD_MOVE_2", UnloadMove, new MultiAttackIntent(FireDamage, 5));
 		MoveState moveState3 = new MoveState("RELOAD_MOVE", ReloadMove, new BuffIntent());
 		moveState.FollowUpState = moveState2;
@@ -50,7 +51,7 @@ public sealed class TurretOperator : MonsterModel
 	{
 		SfxCmd.Play("event:/sfx/enemy/enemy_attacks/turret_operator/turret_operator_buff");
 		await CreatureCmd.TriggerAnim(base.Creature, "Crank", 0.4f);
-		await PowerCmd.Apply<StrengthPower>(base.Creature, 1m, base.Creature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), base.Creature, 1m, base.Creature, null);
 	}
 
 	private async Task UnloadMove(IReadOnlyList<Creature> targets)

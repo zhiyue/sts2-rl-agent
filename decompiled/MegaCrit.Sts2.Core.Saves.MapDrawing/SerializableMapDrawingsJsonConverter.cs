@@ -7,6 +7,13 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
 namespace MegaCrit.Sts2.Core.Saves.MapDrawing;
 
+/// <summary>
+/// Converts a SerializableMapDrawings instance into a base64-encoded string that can be saved into the JSON save file.
+/// When we serialize the map drawings to a multiplayer client, we serialize it directly as a binary blob. JSON can't
+/// do this and so this class exists as an adapter.
+/// The gains from gzipping the output haven't really been measured, so if we find that it's causing performance problems
+/// we can remove it.
+/// </summary>
 public class SerializableMapDrawingsJsonConverter : JsonConverter<SerializableMapDrawings>
 {
 	private static readonly PacketWriter _packetWriter = new PacketWriter();

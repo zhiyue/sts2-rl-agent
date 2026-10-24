@@ -20,7 +20,7 @@ public sealed class CoveredPower : PowerModel
 
 	public override PowerStackType StackType => PowerStackType.Single;
 
-	public override bool IsInstanced => true;
+	public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
 
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlySingleElementList<DynamicVar>(new StringVar("Applier"));
 
@@ -30,7 +30,7 @@ public sealed class CoveredPower : PowerModel
 		InterceptPower interceptPower = base.Applier.GetPower<InterceptPower>();
 		if (interceptPower == null)
 		{
-			interceptPower = await PowerCmd.Apply<InterceptPower>(base.Applier, 1m, base.Owner, null);
+			interceptPower = await PowerCmd.Apply<InterceptPower>(new ThrowingPlayerChoiceContext(), base.Applier, 1m, base.Owner, null);
 		}
 		interceptPower.AddCoveredCreature(base.Owner);
 	}
@@ -56,7 +56,7 @@ public sealed class CoveredPower : PowerModel
 		return 0m;
 	}
 
-	public override async Task AfterTurnEnd(PlayerChoiceContext choiceContext, CombatSide side)
+	public override async Task AfterSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side, IEnumerable<Creature> participants)
 	{
 		if (side == CombatSide.Enemy)
 		{

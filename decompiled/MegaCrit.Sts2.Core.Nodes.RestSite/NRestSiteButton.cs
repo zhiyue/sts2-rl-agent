@@ -17,51 +17,117 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace MegaCrit.Sts2.Core.Nodes.RestSite;
 
+/// <summary>
+/// Corresponding button node for the RestSiteOption entity.
+/// </summary>
 [ScriptPath("res://src/Core/Nodes/RestSite/NRestSiteButton.cs")]
 public class NRestSiteButton : NButton
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NButton.MethodName
 	{
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 
+		/// <summary>
+		/// Cached name for the 'Reload' method.
+		/// </summary>
 		public static readonly StringName Reload = "Reload";
 
+		/// <summary>
+		/// Cached name for the 'OnRelease' method.
+		/// </summary>
 		public new static readonly StringName OnRelease = "OnRelease";
 
+		/// <summary>
+		/// Cached name for the 'OnPress' method.
+		/// </summary>
 		public new static readonly StringName OnPress = "OnPress";
 
+		/// <summary>
+		/// Cached name for the 'OnFocus' method.
+		/// </summary>
 		public new static readonly StringName OnFocus = "OnFocus";
 
+		/// <summary>
+		/// Cached name for the 'OnUnfocus' method.
+		/// </summary>
 		public new static readonly StringName OnUnfocus = "OnUnfocus";
 
+		/// <summary>
+		/// Cached name for the 'RefreshTextState' method.
+		/// </summary>
 		public static readonly StringName RefreshTextState = "RefreshTextState";
 
+		/// <summary>
+		/// Cached name for the 'UpdateShaderParam' method.
+		/// </summary>
 		public static readonly StringName UpdateShaderParam = "UpdateShaderParam";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NButton.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the '_hsv' field.
+		/// </summary>
 		public static readonly StringName _hsv = "_hsv";
 
+		/// <summary>
+		/// Cached name for the '_visuals' field.
+		/// </summary>
 		public static readonly StringName _visuals = "_visuals";
 
+		/// <summary>
+		/// Cached name for the '_icon' field.
+		/// </summary>
 		public static readonly StringName _icon = "_icon";
 
+		/// <summary>
+		/// Cached name for the '_outline' field.
+		/// </summary>
 		public static readonly StringName _outline = "_outline";
 
+		/// <summary>
+		/// Cached name for the '_label' field.
+		/// </summary>
 		public static readonly StringName _label = "_label";
 
+		/// <summary>
+		/// Cached name for the '_labelPosition' field.
+		/// </summary>
 		public static readonly StringName _labelPosition = "_labelPosition";
 
+		/// <summary>
+		/// Cached name for the '_isUnclickable' field.
+		/// </summary>
 		public static readonly StringName _isUnclickable = "_isUnclickable";
 
+		/// <summary>
+		/// Cached name for the '_executingOption' field.
+		/// </summary>
 		public static readonly StringName _executingOption = "_executingOption";
 
+		/// <summary>
+		/// Cached name for the '_currentTween' field.
+		/// </summary>
 		public static readonly StringName _currentTween = "_currentTween";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NButton.SignalName
 	{
 	}
@@ -82,6 +148,10 @@ public class NRestSiteButton : NButton
 
 	private Vector2 _labelPosition;
 
+	/// <summary>
+	/// Special bool for this button as disabling this button means we can still hover/focus unlike
+	/// other buttons which are enabled/disabled which behave differently.
+	/// </summary>
 	private bool _isUnclickable;
 
 	private bool _executingOption;
@@ -138,8 +208,8 @@ public class NRestSiteButton : NButton
 
 	public override void _ExitTree()
 	{
+		base._ExitTree();
 		_cts.Cancel();
-		_cts.Dispose();
 		_currentTween?.Kill();
 	}
 
@@ -207,8 +277,8 @@ public class NRestSiteButton : NButton
 			}
 			if (!success && this.IsValid())
 			{
-				await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-				NRestSiteRoom.Instance?.EnableOptions();
+				await this.AwaitProcessFrame();
+				NRestSiteRoom.Instance.EnableOptions();
 			}
 		}
 	}
@@ -277,6 +347,11 @@ public class NRestSiteButton : NButton
 		_hsv.SetShaderParameter(_v, value);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -296,6 +371,7 @@ public class NRestSiteButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -356,6 +432,7 @@ public class NRestSiteButton : NButton
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -398,6 +475,7 @@ public class NRestSiteButton : NButton
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -449,6 +527,7 @@ public class NRestSiteButton : NButton
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -500,6 +579,11 @@ public class NRestSiteButton : NButton
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -516,6 +600,7 @@ public class NRestSiteButton : NButton
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -531,6 +616,7 @@ public class NRestSiteButton : NButton
 		info.AddProperty(PropertyName._currentTween, Variant.From(in _currentTween));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

@@ -37,13 +37,10 @@ public sealed class FranticEscape : CardModel
 	protected override async Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
 	{
 		Creature sandpitEnemy = GetSandpitEnemy();
-		if (sandpitEnemy != null)
+		SandpitPower sandpitPower = sandpitEnemy?.Powers.OfType<SandpitPower>().FirstOrDefault((SandpitPower s) => s.Target == base.Owner.Creature);
+		if (sandpitPower != null)
 		{
-			SandpitPower sandpitPower = sandpitEnemy.Powers.OfType<SandpitPower>().FirstOrDefault((SandpitPower s) => s.Target == base.Owner.Creature);
-			if (sandpitPower != null)
-			{
-				await PowerCmd.ModifyAmount(sandpitPower, 1m, sandpitEnemy, this);
-			}
+			await PowerCmd.ModifyAmount(choiceContext, sandpitPower, 1m, sandpitEnemy, this);
 		}
 		base.EnergyCost.AddThisCombat(1);
 	}

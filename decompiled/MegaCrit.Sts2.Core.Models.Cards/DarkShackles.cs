@@ -29,7 +29,7 @@ public sealed class DarkShackles : CardModel
 	{
 		ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
 		await CreatureCmd.TriggerAnim(base.Owner.Creature, "Cast", base.Owner.Character.CastAnimDelay);
-		await PowerCmd.Apply<DarkShacklesPower>(cardPlay.Target, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
+		await PowerCmd.Apply<DarkShacklesPower>(choiceContext, cardPlay.Target, base.DynamicVars["StrengthLoss"].BaseValue, base.Owner.Creature, this);
 	}
 
 	protected override void OnUpgrade()

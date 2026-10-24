@@ -33,6 +33,6 @@ public sealed class CelestialMight : CardModel
 
 	protected override void OnUpgrade()
 	{
-		base.DynamicVars.Damage.UpgradeValueBy(2m);
+		base.DynamicVars.Repeat.UpgradeValueBy(1m);
 	}
 }

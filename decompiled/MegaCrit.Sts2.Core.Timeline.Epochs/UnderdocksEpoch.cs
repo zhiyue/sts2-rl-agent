@@ -3,6 +3,9 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Timeline;
 
 namespace MegaCrit.Sts2.Core.Timeline.Epochs;
 
+/// <summary>
+/// Underdocks
+/// </summary>
 public class UnderdocksEpoch : EpochModel
 {
 	public override string Id => "UNDERDOCKS_EPOCH";

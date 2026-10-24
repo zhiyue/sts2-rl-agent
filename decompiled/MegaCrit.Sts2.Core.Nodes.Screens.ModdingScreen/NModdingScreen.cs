@@ -21,36 +21,81 @@ namespace MegaCrit.Sts2.Core.Nodes.Screens.ModdingScreen;
 [ScriptPath("res://src/Core/Nodes/Screens/ModdingScreen/NModdingScreen.cs")]
 public class NModdingScreen : NSubmenu
 {
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'Create' method.
+		/// </summary>
 		public static readonly StringName Create = "Create";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnGetModsPressed' method.
+		/// </summary>
 		public static readonly StringName OnGetModsPressed = "OnGetModsPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnMakeModsPressed' method.
+		/// </summary>
 		public static readonly StringName OnMakeModsPressed = "OnMakeModsPressed";
 
+		/// <summary>
+		/// Cached name for the 'OnRowSelected' method.
+		/// </summary>
 		public static readonly StringName OnRowSelected = "OnRowSelected";
 
+		/// <summary>
+		/// Cached name for the 'OnModEnabledOrDisabled' method.
+		/// </summary>
 		public static readonly StringName OnModEnabledOrDisabled = "OnModEnabledOrDisabled";
 
+		/// <summary>
+		/// Cached name for the '_ExitTree' method.
+		/// </summary>
 		public new static readonly StringName _ExitTree = "_ExitTree";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_modInfoContainer' field.
+		/// </summary>
 		public static readonly StringName _modInfoContainer = "_modInfoContainer";
 
+		/// <summary>
+		/// Cached name for the '_modRowContainer' field.
+		/// </summary>
 		public static readonly StringName _modRowContainer = "_modRowContainer";
 
+		/// <summary>
+		/// Cached name for the '_pendingChangesWarning' field.
+		/// </summary>
 		public static readonly StringName _pendingChangesWarning = "_pendingChangesWarning";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
 	}
@@ -87,9 +132,9 @@ public class NModdingScreen : NSubmenu
 		{
 			child.QueueFreeSafely();
 		}
-		foreach (Mod allMod in ModManager.AllMods)
+		foreach (Mod mod in ModManager.Mods)
 		{
-			OnNewModDetected(allMod);
+			OnNewModDetected(mod);
 		}
 		node.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OnGetModsPressed));
 		node2.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OnMakeModsPressed));
@@ -97,6 +142,8 @@ public class NModdingScreen : NSubmenu
 		node2.GetNode<MegaLabel>("Visuals/Label").SetTextAutoSize(new LocString("settings_ui", "MODDING_SCREEN.MAKE_MODS_BUTTON").GetFormattedText());
 		GetNode<MegaRichTextLabel>("%InstalledModsTitle").SetTextAutoSize(new LocString("settings_ui", "MODDING_SCREEN.INSTALLED_MODS_TITLE").GetFormattedText());
 		GetNode<MegaRichTextLabel>("%PendingChangesLabel").SetTextAutoSize(new LocString("settings_ui", "MODDING_SCREEN.PENDING_CHANGES_WARNING").GetFormattedText());
+		node2.Visible = false;
+		node.Visible = false;
 		_pendingChangesWarning.Visible = false;
 		ModManager.OnModDetected += OnNewModDetected;
 		ConnectSignals();
@@ -104,7 +151,7 @@ public class NModdingScreen : NSubmenu
 
 	public override void OnSubmenuOpened()
 	{
-		if (!ModManager.PlayerAgreedToModLoading && ModManager.AllMods.Count > 0)
+		if (!ModManager.PlayerAgreedToModLoading && ModManager.Mods.Count > 0)
 		{
 			NModalContainer.Instance.Add(NConfirmModLoadingPopup.Create());
 		}
@@ -133,6 +180,9 @@ public class NModdingScreen : NSubmenu
 		}
 	}
 
+	/// <summary>
+	/// Called both during initialization and when a new mod is installed during runtime.
+	/// </summary>
 	private void OnNewModDetected(Mod mod)
 	{
 		NModMenuRow child = NModMenuRow.Create(this, mod);
@@ -142,10 +192,10 @@ public class NModdingScreen : NSubmenu
 
 	public void OnModEnabledOrDisabled()
 	{
-		foreach (Mod allMod in ModManager.AllMods)
+		foreach (Mod mod in ModManager.Mods)
 		{
-			bool flag = SaveManager.Instance.SettingsSave.ModSettings?.IsModDisabled(allMod) ?? false;
-			if (allMod.wasLoaded == flag)
+			bool flag = SaveManager.Instance.SettingsSave.ModSettings?.IsModDisabled(mod) ?? false;
+			if ((mod.state == ModLoadState.Disabled && !flag) || (mod.state == ModLoadState.Loaded && flag))
 			{
 				_pendingChangesWarning.Visible = true;
 				return;
@@ -159,6 +209,11 @@ public class NModdingScreen : NSubmenu
 		ModManager.OnModDetected -= OnNewModDetected;
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -183,6 +238,7 @@ public class NModdingScreen : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -248,6 +304,7 @@ public class NModdingScreen : NSubmenu
 		return false;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -286,6 +343,7 @@ public class NModdingScreen : NSubmenu
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -307,6 +365,7 @@ public class NModdingScreen : NSubmenu
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -333,6 +392,11 @@ public class NModdingScreen : NSubmenu
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -344,6 +408,7 @@ public class NModdingScreen : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -353,6 +418,7 @@ public class NModdingScreen : NSubmenu
 		info.AddProperty(PropertyName._pendingChangesWarning, Variant.From(in _pendingChangesWarning));
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{

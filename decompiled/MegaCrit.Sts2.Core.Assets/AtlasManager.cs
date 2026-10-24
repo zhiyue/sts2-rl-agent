@@ -8,6 +8,10 @@ using MegaCrit.Sts2.Core.Logging;
 
 namespace MegaCrit.Sts2.Core.Assets;
 
+/// <summary>
+/// Manages texture atlases by parsing .tpsheet files and creating AtlasTextures on demand.
+/// Thread-safe via ConcurrentDictionary caching.
+/// </summary>
 public static class AtlasManager
 {
 	private class AtlasData
@@ -38,8 +42,16 @@ public static class AtlasManager
 
 	private static readonly Lock _loadLock = new Lock();
 
+	/// <summary>
+	/// Atlases needed before main menu scene loads.
+	/// Their .tres files are referenced by scene ext_resources and must be loaded
+	/// before Godot's scene deserializer encounters them.
+	/// </summary>
 	private static readonly string[] _essentialAtlases = new string[2] { "ui_atlas", "compressed" };
 
+	/// <summary>
+	/// Loads all known atlases. Call during initialization.
+	/// </summary>
 	public static void LoadAllAtlases()
 	{
 		string[] knownAtlases = _knownAtlases;
@@ -49,6 +61,10 @@ public static class AtlasManager
 		}
 	}
 
+	/// <summary>
+	/// Loads only atlases referenced by scene ext_resources.
+	/// Must be called before any scenes load.
+	/// </summary>
 	public static void LoadEssentialAtlases()
 	{
 		string[] essentialAtlases = _essentialAtlases;
@@ -58,6 +74,10 @@ public static class AtlasManager
 		}
 	}
 
+	/// <summary>
+	/// Loads a single atlas by parsing its .tpsheet file and loading PNG textures.
+	/// Thread-safe: uses lock to prevent duplicate loading work.
+	/// </summary>
 	public static void LoadAtlas(string atlasName)
 	{
 		if (_atlases.ContainsKey(atlasName))
@@ -122,6 +142,12 @@ public static class AtlasManager
 		Log.Info($"AtlasManager: Loaded {atlasName} with {dictionary2.Count} sprites");
 	}
 
+	/// <summary>
+	/// Gets an AtlasTexture for the specified sprite, creating and caching it if needed.
+	/// </summary>
+	/// <param name="atlasName">Atlas name (e.g., "relic_atlas")</param>
+	/// <param name="spriteName">Sprite name without extension (e.g., "anchor_small")</param>
+	/// <returns>The AtlasTexture, or null if not found</returns>
 	public static AtlasTexture? GetSprite(string atlasName, string spriteName)
 	{
 		if (!_atlases.TryGetValue(atlasName, out AtlasData value))
@@ -145,6 +171,9 @@ public static class AtlasManager
 		return _spriteCache.GetOrAdd(key2, (string _) => CreateAtlasTexture(spriteInfo));
 	}
 
+	/// <summary>
+	/// Checks if a sprite exists in the specified atlas.
+	/// </summary>
 	public static bool HasSprite(string atlasName, string spriteName)
 	{
 		if (!_atlases.TryGetValue(atlasName, out AtlasData value))
@@ -155,6 +184,9 @@ public static class AtlasManager
 		return value.SpriteMap.ContainsKey(key);
 	}
 
+	/// <summary>
+	/// Gets the number of sprites in a loaded atlas.
+	/// </summary>
 	public static int GetSpriteCount(string atlasName)
 	{
 		if (!_atlases.TryGetValue(atlasName, out AtlasData value))
@@ -164,11 +196,17 @@ public static class AtlasManager
 		return value.SpriteMap.Count;
 	}
 
+	/// <summary>
+	/// Checks if an atlas has been loaded.
+	/// </summary>
 	public static bool IsAtlasLoaded(string atlasName)
 	{
 		return _atlases.ContainsKey(atlasName);
 	}
 
+	/// <summary>
+	/// Clears all loaded atlases and cached sprites. Useful for testing.
+	/// </summary>
 	public static void Clear()
 	{
 		_atlases.Clear();

@@ -34,7 +34,22 @@ public sealed class BowlbugsNormal : EncounterModel
 
 	public override bool HasScene => true;
 
-	public override IEnumerable<MonsterModel> AllPossibleMonsters => _workerValidCounts.Keys;
+	public override IEnumerable<MonsterModel> AllPossibleMonsters
+	{
+		get
+		{
+			Dictionary<MonsterModel, int>.KeyCollection keys = _workerValidCounts.Keys;
+			int num = 0;
+			MonsterModel[] array = new MonsterModel[1 + keys.Count];
+			foreach (MonsterModel item in keys)
+			{
+				array[num] = item;
+				num++;
+			}
+			array[num] = ModelDb.Monster<BowlbugRock>();
+			return new global::_003C_003Ez__ReadOnlyArray<MonsterModel>(array);
+		}
+	}
 
 	protected override IReadOnlyList<(MonsterModel, string?)> GenerateMonsters()
 	{

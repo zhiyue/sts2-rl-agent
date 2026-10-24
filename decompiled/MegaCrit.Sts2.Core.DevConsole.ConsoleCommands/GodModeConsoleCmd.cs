@@ -4,12 +4,16 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 
+/// <summary>
+/// Console commands which gives the player godmode.
+/// </summary>
 public class GodModeConsoleCmd : AbstractConsoleCmd
 {
 	private bool _godModeActive;
@@ -69,8 +73,8 @@ public class GodModeConsoleCmd : AbstractConsoleCmd
 	private static async Task EnableGodMode(Player player)
 	{
 		Creature playerCreature = player.Creature;
-		await PowerCmd.Apply<StrengthPower>(playerCreature, 9999m, playerCreature, null);
-		await PowerCmd.Apply<BufferPower>(playerCreature, 9999m, playerCreature, null);
-		await PowerCmd.Apply<RegenPower>(playerCreature, 9999m, playerCreature, null);
+		await PowerCmd.Apply<StrengthPower>(new ThrowingPlayerChoiceContext(), playerCreature, 999999999m, playerCreature, null);
+		await PowerCmd.Apply<BufferPower>(new ThrowingPlayerChoiceContext(), playerCreature, 999999999m, playerCreature, null);
+		await PowerCmd.Apply<RegenPower>(new ThrowingPlayerChoiceContext(), playerCreature, 999999999m, playerCreature, null);
 	}
 }

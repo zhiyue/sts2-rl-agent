@@ -14,7 +14,7 @@ public sealed class Hemokinesis : CardModel
 	protected override IEnumerable<DynamicVar> CanonicalVars => new global::_003C_003Ez__ReadOnlyArray<DynamicVar>(new DynamicVar[2]
 	{
 		new HpLossVar(2m),
-		new DamageVar(14m, ValueProp.Move)
+		new DamageVar(15m, ValueProp.Move)
 	});
 
 	public Hemokinesis()

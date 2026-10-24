@@ -18,6 +18,10 @@ public sealed class IroncladPotionPool : PotionPoolModel
 		return Ironclad4Epoch.Potions;
 	}
 
+	/// <summary>
+	/// Only return the Potions if the associated Epoch is revealed.
+	/// NOTE: This needs to be updated if a character has more than 3 potions. See: Ironclad4Epoch.cs
+	/// </summary>
 	public override IEnumerable<PotionModel> GetUnlockedPotions(UnlockState unlockState)
 	{
 		if (!unlockState.IsEpochRevealed<Ironclad4Epoch>())

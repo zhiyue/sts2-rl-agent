@@ -30,7 +30,7 @@ public sealed class Adrenaline : CardModel
 	{
 		if (LocalContext.IsMe(base.Owner))
 		{
-			VfxCmd.PlayFullScreenInCombat("vfx/vfx_adrenaline");
+			VfxCmd.PlayFullScreenInCombat("vfx/vfx_adrenaline", base.Owner.Creature);
 		}
 		await PlayerCmd.GainEnergy(base.DynamicVars.Energy.IntValue, base.Owner);
 		await CardPileCmd.Draw(choiceContext, base.DynamicVars.Cards.BaseValue, base.Owner);

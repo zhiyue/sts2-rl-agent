@@ -28,6 +28,6 @@ public sealed class ShipInABottle : PotionModel
 	{
 		PotionModel.AssertValidForTargetedPotion(target);
 		await CreatureCmd.GainBlock(target, base.DynamicVars.Block, null);
-		await PowerCmd.Apply<BlockNextTurnPower>(target, base.DynamicVars.Block.IntValue, base.Owner.Creature, null);
+		await PowerCmd.Apply<BlockNextTurnPower>(choiceContext, target, base.DynamicVars.Block.IntValue, base.Owner.Creature, null);
 	}
 }

@@ -5,7 +5,13 @@ namespace MegaCrit.Sts2.Core.Entities.Cards;
 
 public static class CardRarityExtensions
 {
-	public static CardRarity GetNextHighestRarity(this CardRarity cardRarity)
+	/// <summary>
+	/// Gets the next highest rarity.
+	/// Basic -&gt; Common -&gt; Uncommon -&gt; Rare -&gt; Common.
+	/// Intended to be used in a loop with a blacklist. Be careful not to get into an infinite loop if the blacklist is
+	/// full.
+	/// </summary>
+	public static CardRarity GetNextHighestRarityWithWrapping(this CardRarity cardRarity)
 	{
 		return cardRarity switch
 		{
@@ -13,7 +19,7 @@ public static class CardRarityExtensions
 			CardRarity.Basic => CardRarity.Common, 
 			CardRarity.Common => CardRarity.Uncommon, 
 			CardRarity.Uncommon => CardRarity.Rare, 
-			CardRarity.Rare => CardRarity.None, 
+			CardRarity.Rare => CardRarity.Common, 
 			CardRarity.Status => CardRarity.None, 
 			CardRarity.Curse => CardRarity.None, 
 			CardRarity.Event => CardRarity.None, 

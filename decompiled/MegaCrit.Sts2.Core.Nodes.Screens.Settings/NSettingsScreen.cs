@@ -30,48 +30,111 @@ public class NSettingsScreen : NSubmenu
 	[Signal]
 	public delegate void SettingsOpenedEventHandler();
 
+	/// <summary>
+	/// Cached StringNames for the methods contained in this class, for fast lookup.
+	/// </summary>
 	public new class MethodName : NSubmenu.MethodName
 	{
+		/// <summary>
+		/// Cached name for the 'SetIsInRun' method.
+		/// </summary>
 		public static readonly StringName SetIsInRun = "SetIsInRun";
 
+		/// <summary>
+		/// Cached name for the '_Ready' method.
+		/// </summary>
 		public new static readonly StringName _Ready = "_Ready";
 
+		/// <summary>
+		/// Cached name for the 'OnSettingsTabChanged' method.
+		/// </summary>
 		public static readonly StringName OnSettingsTabChanged = "OnSettingsTabChanged";
 
+		/// <summary>
+		/// Cached name for the 'LocalizeLabels' method.
+		/// </summary>
 		public static readonly StringName LocalizeLabels = "LocalizeLabels";
 
+		/// <summary>
+		/// Cached name for the 'OpenModdingScreen' method.
+		/// </summary>
 		public static readonly StringName OpenModdingScreen = "OpenModdingScreen";
 
+		/// <summary>
+		/// Cached name for the 'OpenFeedbackScreen' method.
+		/// </summary>
 		public static readonly StringName OpenFeedbackScreen = "OpenFeedbackScreen";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuOpened' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuOpened = "OnSubmenuOpened";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuClosed' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuClosed = "OnSubmenuClosed";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuHidden' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuHidden = "OnSubmenuHidden";
 
+		/// <summary>
+		/// Cached name for the 'OnSubmenuShown' method.
+		/// </summary>
 		public new static readonly StringName OnSubmenuShown = "OnSubmenuShown";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the properties and fields contained in this class, for fast lookup.
+	/// </summary>
 	public new class PropertyName : NSubmenu.PropertyName
 	{
+		/// <summary>
+		/// Cached name for the 'InitialFocusedControl' property.
+		/// </summary>
 		public new static readonly StringName InitialFocusedControl = "InitialFocusedControl";
 
+		/// <summary>
+		/// Cached name for the '_settingsTabManager' field.
+		/// </summary>
 		public static readonly StringName _settingsTabManager = "_settingsTabManager";
 
+		/// <summary>
+		/// Cached name for the '_feedbackScreenButton' field.
+		/// </summary>
 		public static readonly StringName _feedbackScreenButton = "_feedbackScreenButton";
 
+		/// <summary>
+		/// Cached name for the '_moddingScreenButton' field.
+		/// </summary>
 		public static readonly StringName _moddingScreenButton = "_moddingScreenButton";
 
+		/// <summary>
+		/// Cached name for the '_toast' field.
+		/// </summary>
 		public static readonly StringName _toast = "_toast";
 
+		/// <summary>
+		/// Cached name for the '_isInRun' field.
+		/// </summary>
 		public static readonly StringName _isInRun = "_isInRun";
 	}
 
+	/// <summary>
+	/// Cached StringNames for the signals contained in this class, for fast lookup.
+	/// </summary>
 	public new class SignalName : NSubmenu.SignalName
 	{
+		/// <summary>
+		/// Cached name for the 'SettingsClosed' signal.
+		/// </summary>
 		public static readonly StringName SettingsClosed = "SettingsClosed";
 
+		/// <summary>
+		/// Cached name for the 'SettingsOpened' signal.
+		/// </summary>
 		public static readonly StringName SettingsOpened = "SettingsOpened";
 	}
 
@@ -97,6 +160,7 @@ public class NSettingsScreen : NSubmenu
 
 	protected override Control? InitialFocusedControl => _settingsTabManager.DefaultFocusedControl;
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.Settings.NSettingsScreen.SettingsClosedEventHandler" />
 	public event SettingsClosedEventHandler SettingsClosed
 	{
 		add
@@ -109,6 +173,7 @@ public class NSettingsScreen : NSubmenu
 		}
 	}
 
+	/// <inheritdoc cref="T:MegaCrit.Sts2.Core.Nodes.Screens.Settings.NSettingsScreen.SettingsOpenedEventHandler" />
 	public event SettingsOpenedEventHandler SettingsOpened
 	{
 		add
@@ -121,6 +186,9 @@ public class NSettingsScreen : NSubmenu
 		}
 	}
 
+	/// <summary>
+	/// Should be called before adding as child!
+	/// </summary>
 	public void SetIsInRun(bool isInRun)
 	{
 		_isInRun = isInRun;
@@ -138,7 +206,7 @@ public class NSettingsScreen : NSubmenu
 		_settingsTabManager.Connect(NSettingsTabManager.SignalName.TabChanged, Callable.From(OnSettingsTabChanged));
 		_moddingScreenButton.Connect(NClickableControl.SignalName.Released, Callable.From<NButton>(OpenModdingScreen));
 		_feedbackScreenButton.Connect(NClickableControl.SignalName.Released, Callable.From((Action<NButton>)OpenFeedbackScreen));
-		if (SaveManager.Instance.SettingsSave.ModSettings != null && ModManager.AllMods.Count > 0)
+		if (SaveManager.Instance.SettingsSave.ModSettings != null && ModManager.Mods.Count > 0)
 		{
 			GetNode<Control>("%Modding").Visible = true;
 			GetNode<Control>("%ModdingDivider").Visible = true;
@@ -172,10 +240,12 @@ public class NSettingsScreen : NSubmenu
 		Node content = GetNode<NSettingsPanel>("%GeneralSettings").Content;
 		LocHelper(content.GetNode<Node>("LanguageLine"), new LocString("settings_ui", _isInRun ? "LANGUAGE_IN_RUN" : "LANGUAGE"));
 		LocHelper(content.GetNode<Node>("FastMode"), new LocString("settings_ui", "FASTMODE"));
+		LocHelper(content.GetNode<Node>("PhobiaMode"), new LocString("settings_ui", "PHOBIA_MODE"));
 		LocHelper(content.GetNode<Node>("Screenshake"), new LocString("settings_ui", "SCREENSHAKE"));
 		LocHelper(content.GetNode<Node>("CommonTooltips"), new LocString("settings_ui", "COMMON_TOOLTIPS"));
 		LocHelper(content.GetNode<Node>("ShowRunTimer"), new LocString("settings_ui", "SHOW_RUN_TIMER_HEADER"));
 		LocHelper(content.GetNode<Node>("ShowHandCardCount"), new LocString("settings_ui", "SHOW_HAND_CARD_COUNT_HEADER"));
+		LocHelper(content.GetNode<Node>("ShowMpDrawings"), new LocString("settings_ui", "SHOW_MP_DRAWINGS_HEADER"));
 		LocHelper(content.GetNode<Node>("LongPressConfirmations"), new LocString("settings_ui", "LONG_PRESS_CONFIRMATION_HEADER"));
 		LocHelper(content.GetNode<Node>("SkipIntroLogo"), new LocString("settings_ui", "SKIP_INTRO_LOGO_HEADER"));
 		LocHelper(content.GetNode<Node>("LimitFpsInBackground"), new LocString("settings_ui", "LIMIT_FPS_IN_BACKGROUND_HEADER"));
@@ -203,6 +273,9 @@ public class NSettingsScreen : NSubmenu
 		LocHelper(content3.GetNode<Node>("MuteIfBackground"), new LocString("settings_ui", "BACKGROUND_MUTE"));
 	}
 
+	/// <summary>
+	/// Helper class so the localize labels function doesn't look too busy.
+	/// </summary>
 	private static void LocHelper(Node settingsLineNode, LocString locString)
 	{
 		settingsLineNode.GetNode<MegaRichTextLabel>("Label").Text = locString.GetFormattedText();
@@ -227,18 +300,18 @@ public class NSettingsScreen : NSubmenu
 		NCapstoneContainer.Instance?.DisableBackstopInstantly();
 		NRun.Instance?.GlobalUi.RelicInventory.ShowImmediately();
 		NRun.Instance?.GlobalUi.MultiplayerPlayerContainer.ShowImmediately();
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await this.AwaitProcessFrame();
+		await this.AwaitProcessFrame();
+		await this.AwaitProcessFrame();
 		Image image = GetViewport().GetTexture().GetImage();
 		base.Visible = true;
 		NRun.Instance?.GlobalUi.RelicInventory.HideImmediately();
 		NRun.Instance?.GlobalUi.MultiplayerPlayerContainer.HideImmediately();
 		NGame.Instance.MainMenu?.EnableBackstopInstantly();
 		NCapstoneContainer.Instance?.EnableBackstopInstantly();
-		NSendFeedbackScreen feedbackScreen = NGame.Instance.FeedbackScreen;
-		feedbackScreen.SetScreenshot(image);
-		NGame.Instance.FeedbackScreen.Open();
+		NSendFeedbackScreen orCreateFeedbackScreen = NGame.Instance.GetOrCreateFeedbackScreen();
+		orCreateFeedbackScreen.SetScreenshot(image);
+		orCreateFeedbackScreen.Open();
 	}
 
 	public override void OnSubmenuOpened()
@@ -274,6 +347,11 @@ public class NSettingsScreen : NSubmenu
 		EmitSignal(SignalName.SettingsOpened);
 	}
 
+	/// <summary>
+	/// Get the method information for all the methods declared in this class.
+	/// This method is used by Godot to register the available methods in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<MethodInfo> GetGodotMethodList()
 	{
@@ -300,6 +378,7 @@ public class NSettingsScreen : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
 	{
@@ -366,6 +445,7 @@ public class NSettingsScreen : NSubmenu
 		return base.InvokeGodotClassMethod(in method, args, out ret);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassMethod(in godot_string_name method)
 	{
@@ -412,6 +492,7 @@ public class NSettingsScreen : NSubmenu
 		return base.HasGodotClassMethod(in method);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
 	{
@@ -443,6 +524,7 @@ public class NSettingsScreen : NSubmenu
 		return base.SetGodotClassPropertyValue(in name, in value);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
 	{
@@ -479,6 +561,11 @@ public class NSettingsScreen : NSubmenu
 		return base.GetGodotClassPropertyValue(in name, out value);
 	}
 
+	/// <summary>
+	/// Get the property information for all the properties declared in this class.
+	/// This method is used by Godot to register the available properties in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal new static List<PropertyInfo> GetGodotPropertyList()
 	{
@@ -492,6 +579,7 @@ public class NSettingsScreen : NSubmenu
 		return list;
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void SaveGodotObjectData(GodotSerializationInfo info)
 	{
@@ -505,6 +593,7 @@ public class NSettingsScreen : NSubmenu
 		info.AddSignalEventDelegate(SignalName.SettingsOpened, backing_SettingsOpened);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
 	{
@@ -539,6 +628,11 @@ public class NSettingsScreen : NSubmenu
 		}
 	}
 
+	/// <summary>
+	/// Get the signal information for all the signals declared in this class.
+	/// This method is used by Godot to register the available signals in the editor.
+	/// Do not call this method.
+	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	internal static List<MethodInfo> GetGodotSignalList()
 	{
@@ -558,6 +652,7 @@ public class NSettingsScreen : NSubmenu
 		EmitSignal(SignalName.SettingsOpened);
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override void RaiseGodotClassSignalCallbacks(in godot_string_name signal, NativeVariantPtrArgs args)
 	{
@@ -575,6 +670,7 @@ public class NSettingsScreen : NSubmenu
 		}
 	}
 
+	/// <inheritdoc />
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	protected override bool HasGodotClassSignal(in godot_string_name signal)
 	{

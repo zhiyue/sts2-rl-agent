@@ -1,10 +1,12 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Powers;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Combat;
@@ -21,9 +23,9 @@ public sealed class NoxiousFumesPower : PowerModel
 
 	protected override IEnumerable<IHoverTip> ExtraHoverTips => new global::_003C_003Ez__ReadOnlySingleElementList<IHoverTip>(HoverTipFactory.FromPower<PoisonPower>());
 
-	public override async Task AfterSideTurnStart(CombatSide side, CombatState combatState)
+	public override async Task AfterSideTurnStart(CombatSide side, IReadOnlyList<Creature> participants, ICombatState combatState)
 	{
-		if (side != base.Owner.Side)
+		if (!participants.Contains(base.Owner))
 		{
 			return;
 		}
@@ -38,6 +40,6 @@ public sealed class NoxiousFumesPower : PowerModel
 				NCombatRoom.Instance.CombatVfxContainer.AddChildSafely(child);
 			}
 		}
-		await PowerCmd.Apply<PoisonPower>(base.CombatState.HittableEnemies, base.Amount, base.Owner, null);
+		await PowerCmd.Apply<PoisonPower>(new ThrowingPlayerChoiceContext(), base.CombatState.HittableEnemies, base.Amount, base.Owner, null);
 	}
 }
