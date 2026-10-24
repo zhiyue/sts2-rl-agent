@@ -776,6 +776,13 @@ def fire_after_card_exhausted(card: object, combat: CombatState) -> None:
         power.after_card_exhausted(owner, card, combat)
     for owner, relic in _iter_relic_listeners(combat):
         relic.after_card_exhausted(owner, card, combat)
+    # C# Hook.AfterCardExhausted also dispatches to all card models (AllCards
+    # listener class, after powers/relics) — e.g. DrumOfBattle.
+    from sts2_env.cards.registry import fire_card_after_card_exhausted
+
+    for state in getattr(combat, "combat_player_states", ()):
+        for listener_card in combat.unique_cards_in_piles(state.all_piles):
+            fire_card_after_card_exhausted(listener_card, card, combat)
 
 
 def fire_after_card_discarded(card: object, combat: CombatState) -> None:

@@ -38,6 +38,7 @@ from sts2_env.cards.factory import (
     eligible_transform_cards,
 )
 from sts2_env.cards.registry import (
+    fire_card_after_auto_post_play,
     fire_card_after_card_entered_combat,
     fire_card_after_card_played,
     fire_card_after_turn_end,
@@ -982,6 +983,20 @@ class CombatState:
                 if self.is_over:
                     return
 
+    def _apply_card_after_auto_post_play(self) -> None:
+        """Fire CardModel.AfterAutoPostPlayPhaseEntered for each ending player.
+
+        C# CombatManager.EndPlayerTurnPhaseOneInternal invokes the hook once per
+        player whose turn is ending, before BeforeTurnEnd. Each card decides for
+        itself whether it matches (e.g. HowlFromBeyond replays itself when it is
+        in the owner's exhaust pile).
+        """
+        for state in self.combat_player_states:
+            for card in self.unique_cards_in_piles(state.all_piles):
+                fire_card_after_auto_post_play(card, state.creature, self)
+                if self.is_over:
+                    return
+
     def unique_cards_in_piles(self, piles: tuple[list[CardInstance], ...]) -> list[CardInstance]:
         cards: list[CardInstance] = []
         seen_ids: set[int] = set()
@@ -1507,6 +1522,14 @@ class CombatState:
         """End player turn, execute enemy turn, then start the next player turn."""
         from sts2_env.core.hooks import fire_after_turn_end, fire_before_turn_end
 
+        if self.is_over:
+            return
+
+        # C# CombatManager.EndPlayerTurnPhaseOneInternal enters the AutoPostPlay
+        # phase (firing CardModel.AfterAutoPostPlayPhaseEntered, e.g. the
+        # HowlFromBeyond exhaust-pile replay) before BeforeTurnEnd.
+        self._apply_card_after_auto_post_play()
+        self._check_combat_end()
         if self.is_over:
             return
 
@@ -2132,7 +2155,16 @@ class CombatState:
     def gain_energy(self, owner: Creature, amount: int) -> None:
         state = self.combat_player_state_for(owner)
         if not self.is_over and state is not None and amount > 0:
-            state.energy += amount
+            # C# PlayerCmd.GainEnergy runs Hook.ModifyEnergyGain first; powers
+            # like NoEnergyGainPower can reduce the gain to 0 (solo: only the
+            # gaining player's own powers matter here).
+            final_amount = amount
+            for power in owner.powers.values():
+                modify = getattr(power, "modify_energy_gain", None)
+                if callable(modify):
+                    final_amount = modify(owner, owner, final_amount)
+            if final_amount > 0:
+                state.energy += final_amount
 
     def lose_energy(self, owner: Creature, amount: int) -> None:
         state = self.combat_player_state_for(owner)

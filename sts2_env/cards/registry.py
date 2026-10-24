@@ -79,6 +79,14 @@ CardAfterCardDrawnHook = Callable[
     ["CardInstance", "CardInstance", bool, "CombatState"],
     None,
 ]
+CardAfterCardExhaustedHook = Callable[
+    ["CardInstance", "CardInstance", "CombatState"],
+    None,
+]
+CardAfterAutoPostPlayHook = Callable[
+    ["CardInstance", "Creature", "CombatState"],
+    None,
+]
 CardTurnEndInHandHook = Callable[
     ["CardInstance", "CombatState", int],
     None,
@@ -122,6 +130,8 @@ _CARD_REST_SITE_OPTIONS_HOOKS: dict[CardId, CardRestSiteOptionsHook] = {}
 _CARD_BEFORE_HAND_DRAW_HOOKS: dict[CardId, CardBeforeHandDrawHook] = {}
 _CARD_AFTER_TURN_END_HOOKS: dict[CardId, CardAfterTurnEndHook] = {}
 _CARD_AFTER_CARD_DRAWN_HOOKS: dict[CardId, CardAfterCardDrawnHook] = {}
+_CARD_AFTER_CARD_EXHAUSTED_HOOKS: dict[CardId, CardAfterCardExhaustedHook] = {}
+_CARD_AFTER_AUTO_POST_PLAY_HOOKS: dict[CardId, CardAfterAutoPostPlayHook] = {}
 _CARD_TURN_END_IN_HAND_HOOKS: dict[CardId, CardTurnEndInHandHook] = {}
 _CARD_AFTER_CARD_GENERATED_FOR_COMBAT_HOOKS: dict[CardId, CardAfterCardGeneratedForCombatHook] = {}
 _CARD_AFTER_CARD_ENTERED_COMBAT_HOOKS: dict[CardId, CardAfterCardEnteredCombatHook] = {}
@@ -257,6 +267,32 @@ def register_after_turn_end_hook(card_id: CardId):
 def register_after_card_drawn_hook(card_id: CardId):
     def decorator(func: CardAfterCardDrawnHook) -> CardAfterCardDrawnHook:
         _CARD_AFTER_CARD_DRAWN_HOOKS[card_id] = func
+        return func
+    return decorator
+
+
+def register_after_card_exhausted_hook(card_id: CardId):
+    """Register a per-card AfterCardExhausted hook (C# CardModel.AfterCardExhausted).
+
+    The hook receives (listener_card, exhausted_card, combat), mirroring the C#
+    signature AfterCardExhausted(choiceContext, card, causedByEthereal) where
+    `card` is the exhausted model; listeners compare identity against `this`.
+    """
+    def decorator(func: CardAfterCardExhaustedHook) -> CardAfterCardExhaustedHook:
+        _CARD_AFTER_CARD_EXHAUSTED_HOOKS[card_id] = func
+        return func
+    return decorator
+
+
+def register_after_auto_post_play_hook(card_id: CardId):
+    """Register a per-card AfterAutoPostPlayPhaseEntered hook.
+
+    C# CardModel.AfterAutoPostPlayPhaseEntered(choiceContext, player) fires at
+    the start of the end-of-turn phase, before BeforeTurnEnd, for the player
+    whose turn is ending.
+    """
+    def decorator(func: CardAfterAutoPostPlayHook) -> CardAfterAutoPostPlayHook:
+        _CARD_AFTER_AUTO_POST_PLAY_HOOKS[card_id] = func
         return func
     return decorator
 
@@ -520,6 +556,26 @@ def fire_card_after_card_drawn(
     hook = _CARD_AFTER_CARD_DRAWN_HOOKS.get(listener_card.card_id)
     if hook is not None:
         hook(listener_card, drawn_card, from_hand_draw, combat)
+
+
+def fire_card_after_card_exhausted(
+    listener_card: "CardInstance",
+    exhausted_card: "CardInstance",
+    combat: "CombatState",
+) -> None:
+    hook = _CARD_AFTER_CARD_EXHAUSTED_HOOKS.get(listener_card.card_id)
+    if hook is not None:
+        hook(listener_card, exhausted_card, combat)
+
+
+def fire_card_after_auto_post_play(
+    card: "CardInstance",
+    player: "Creature",
+    combat: "CombatState",
+) -> None:
+    hook = _CARD_AFTER_AUTO_POST_PLAY_HOOKS.get(card.card_id)
+    if hook is not None:
+        hook(card, player, combat)
 
 
 def fire_card_turn_end_in_hand(
