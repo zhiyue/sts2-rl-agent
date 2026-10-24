@@ -624,7 +624,8 @@ class TestWitheringPresencePowerParity:
         """CardsLeft only triggers at <= 0 (WitheringPresencePower.cs line 52)."""
         combat = _make_combat()
         enemy = combat.enemies[0]
-        enemy.apply_power(WITHERING_PRESENCE_POWER_ID, 6)
+        power = WitheringPresencePower(6)
+        enemy.powers[WITHERING_PRESENCE_POWER_ID] = power
         combat.hand = [make_strike_ironclad() for _ in range(5)]
         combat.energy = 20
 
@@ -632,7 +633,11 @@ class TestWitheringPresencePowerParity:
             assert combat.play_card(0, 0)
 
         assert not any(c.card_id == CardId.WITHER for c in combat.hand)
-        assert enemy.get_power_amount(WITHERING_PRESENCE_POWER_ID) == 1
+        # C# keeps the applied Amount (6) separate from the CardsLeft dynamic
+        # var that counts down (WitheringPresencePower.cs:24 vs :28); the sim
+        # mirrors that: amount stays 6, the per-player counter is what drops.
+        assert enemy.get_power_amount(WITHERING_PRESENCE_POWER_ID) == 6
+        assert power.cards_left_for(combat.player) == 1
 
     def test_counter_restarts_after_trigger(self):
         """After the trigger the count restarts from 6
@@ -670,6 +675,99 @@ class TestWitheringPresencePowerParity:
         enemy_card.owner = enemy
         power.after_card_played(enemy, enemy_card, combat)
         assert power.amount == 6
+
+    def test_multiplayer_counters_are_per_opponent(self):
+        """C# PowerInstanceType.Instanced (WitheringPresencePower.cs:26):
+        Aeonglass.AfterAddedToRoom (Aeonglass.cs:74-84) applies a separate
+        instance per opposing player — `foreach (Creature item in
+        CombatState.GetOpponentsOf(base.Creature))` with `Target = item` — so
+        a two-player fight runs two independent CardsLeft clocks. The sim
+        holds a single instance (Creature.powers is keyed by power id) and
+        mirrors that with one counter per opponent: cards played by one
+        opponent never move the other opponent's counter."""
+        combat = _make_combat()
+        ally = combat.add_ally_player(
+            PlayerState(player_id=2, character_id="Silent", max_hp=70, current_hp=70)
+        )
+        enemy = combat.enemies[0]
+        power = WitheringPresencePower(6)
+        enemy.powers[WITHERING_PRESENCE_POWER_ID] = power
+
+        primary_card = make_strike_ironclad()
+        primary_card.owner = combat.player
+        ally_card = make_strike_ironclad()
+        ally_card.owner = ally
+
+        # Five cards as the primary player: only their counter drops.
+        for _ in range(5):
+            power.after_card_played(enemy, primary_card, combat)
+        assert power.cards_left_for(combat.player) == 1
+        assert power.cards_left_for(ally) == 6
+
+        # Interleaved play by the ally: independent countdown.
+        power.after_card_played(enemy, ally_card, combat)
+        assert power.cards_left_for(ally) == 5
+        assert power.cards_left_for(combat.player) == 1
+
+    def test_multiplayer_trigger_only_refills_that_player(self):
+        """WitheringPresencePower.cs lines 52-58: on reaching <= 0 the Wither
+        is added to `cardPlay.Card.Owner`'s hand (`AddToCombatAndPreview<
+        Wither>(cardPlay.Card.Owner.Creature, PileType.Hand, 1)`) and only
+        that instance's CardsLeft resets to 6 — the other opponent's clock
+        keeps counting from where it was."""
+        combat = _make_combat()
+        ally = combat.add_ally_player(
+            PlayerState(player_id=2, character_id="Silent", max_hp=70, current_hp=70)
+        )
+        enemy = combat.enemies[0]
+        power = WitheringPresencePower(6)
+        enemy.powers[WITHERING_PRESENCE_POWER_ID] = power
+
+        primary_card = make_strike_ironclad()
+        primary_card.owner = combat.player
+        ally_card = make_strike_ironclad()
+        ally_card.owner = ally
+        primary_state = combat.combat_player_state_for(combat.player)
+        ally_state = combat.combat_player_state_for(ally)
+
+        # The ally counts down two cards first.
+        power.after_card_played(enemy, ally_card, combat)
+        power.after_card_played(enemy, ally_card, combat)
+        assert power.cards_left_for(ally) == 4
+
+        # The primary player triggers their sixth card.
+        for _ in range(6):
+            power.after_card_played(enemy, primary_card, combat)
+
+        assert any(c.card_id is CardId.WITHER for c in primary_state.hand)
+        assert not any(c.card_id is CardId.WITHER for c in ally_state.hand)
+        assert power.cards_left_for(combat.player) == 6
+        assert power.cards_left_for(ally) == 4
+
+    def test_counters_registered_for_all_opponents_at_combat_start(self):
+        """C# Aeonglass.AfterAddedToRoom (Aeonglass.cs:74-84) applies one
+        instance per opposing player at room entry; the sim analogue is the
+        power's before_combat_start hook, which seeds every opponent's
+        CardsLeft to 6 before any card is played (opponents first seen later
+        are lazily seeded to 6 in after_card_played)."""
+        combat = CombatState(
+            player_hp=80,
+            player_max_hp=80,
+            deck=[make_strike_ironclad() for _ in range(10)],
+            rng_seed=42,
+        )
+        creature, ai = create_shrinker_beetle(Rng(42))
+        power = WitheringPresencePower(6)
+        creature.powers[WITHERING_PRESENCE_POWER_ID] = power
+        combat.add_enemy(creature, ai)
+        ally = combat.add_ally_player(
+            PlayerState(player_id=2, character_id="Silent", max_hp=70, current_hp=70)
+        )
+        combat.start_combat()
+
+        assert power.cards_left_for(combat.player) == 6
+        assert power.cards_left_for(ally) == 6
+
 
     def test_generated_wither_matches_csharp_card(self):
         """Wither.cs: cost -1 (X? no: `base(-1, ...)`), CardType.Status,

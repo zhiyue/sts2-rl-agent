@@ -2472,8 +2472,9 @@ def create_lagavulin_matriarch(rng: Rng, ascension_level: int = 0) -> tuple[Crea
 # Queen-tier act 4 boss (CustomBgm "act3_boss_queen", music param "queen_progress").
 # Fixed HP: MaxInitialHp => MinInitialHp.
 # AfterAddedToRoom: WitheringPresencePower (Amount 6) targeting each opposing
-# player (the sim tracks it as a single instance on the Aeonglass creature —
-# see WitheringPresencePower docstring) plus Artifact(3) on itself.
+# player (the sim tracks it as a single instance on the Aeonglass creature with
+# one independent CardsLeft counter per opposing player — see
+# WitheringPresencePower docstring) plus Artifact(3) on itself.
 # Move cycle: EBB -> EYE_LASERS -> INCREASING_INTENSITY -> EBB ...
 # INCREASING_INTENSITY fake-upgrades every Wither in the players' combat card
 # lists (C# loops PlayerCombatState.AllCards calling Wither.FakeUpgrade, then
@@ -2669,7 +2670,8 @@ def create_aeonglass(rng: Rng, ascension_level: int = 0) -> tuple[Creature, Mons
     states[AEONGLASS_INCREASING_INTENSITY_MOVE].intents[0].hits = initial_wither_amount
 
     # C# AfterAddedToRoom: WitheringPresence(6) on the opposing players (sim:
-    # single instance on Aeonglass; see power docstring) and Artifact(3).
+    # single instance on Aeonglass with one independent CardsLeft counter per
+    # opposing player; see power docstring) and Artifact(3).
     creature.apply_power(
         WITHERING_PRESENCE_POWER_ID,
         AEONGLASS_WITHERING_PRESENCE_AMOUNT,

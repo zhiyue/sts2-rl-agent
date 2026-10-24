@@ -8,6 +8,8 @@ observation invariants.
 import pytest
 import numpy as np
 
+import gymnasium
+
 from sts2_env.cards.factory import create_card
 from sts2_env.cards.ironclad import create_ironclad_starter_deck
 from sts2_env.cards.ironclad_basic import make_strike_ironclad
@@ -655,7 +657,7 @@ class TestObservationEncoding:
         assert not np.array_equal(obs1, obs2)
 
     def test_combat_obs_populated_during_combat(self, env):
-        """The first 132 dims (combat obs) should be non-zero during combat."""
+        """The first 217 dims (combat obs) should be non-zero during combat."""
         obs, info = env.reset(seed=42)
         rng = np.random.RandomState(42)
         for _ in range(200):
@@ -667,7 +669,7 @@ class TestObservationEncoding:
                 break
             if info.get("phase") == RunManager.PHASE_COMBAT:
                 # Combat portion of obs should have non-zero values
-                combat_obs = obs[:132]
+                combat_obs = obs[:202]
                 assert np.any(combat_obs != 0), "Combat obs is all zeros during combat"
                 return
         pytest.skip("No combat phase reached")
@@ -675,7 +677,7 @@ class TestObservationEncoding:
     def test_run_state_obs_always_present(self, seeded_env):
         """Run-state portion (last 20 dims) should have some non-zero values."""
         obs = seeded_env._encode_obs()
-        run_state_obs = obs[132:]
+        run_state_obs = obs[202:]
         assert np.any(run_state_obs != 0), "Run-state obs is all zeros"
 
 
@@ -734,3 +736,80 @@ class TestMultiCharacter:
         env = STS2RunEnv(character_id=char_id, ascension_level=0, max_steps=DEFAULT_MAX_STEPS)
         done, steps, reward, info = _run_random_episode(env, seed=42)
         assert done, f"{char_id} episode did not complete"
+
+
+# ---------------------------------------------------------------------------
+# Test: episode-end contract (Gymnasium termination convention)
+# ---------------------------------------------------------------------------
+
+class TestEpisodeEndContract:
+    """Gymnasium termination convention (see STS2RunEnv docstring): after
+    step() reports terminated=True or truncated=True the episode is frozen --
+    any further step() raises gymnasium.error.ClosedEnvironmentError and
+    reset() clears the guard.  Truncation (step_count reaching max_steps) is
+    judged as a loss at the run layer via RunState.lose_run() but is reported
+    exclusively through truncated=True (terminated stays False).
+    """
+
+    def test_truncation_reports_truncated_and_blocks_further_steps(self):
+        env = STS2RunEnv(character_id="Ironclad", max_steps=3)
+        env.reset(seed=7)
+        terminated = truncated = True
+        for _ in range(3):
+            obs, reward, terminated, truncated, info = env.step(0)
+        assert terminated is False
+        assert truncated is True
+        assert reward == -1.0  # timeout is scored as a loss
+        with pytest.raises(gymnasium.error.ClosedEnvironmentError):
+            env.step(0)
+
+    def test_truncation_judged_as_loss_at_run_layer(self):
+        """The timeout reward is -1, so truncation ends the run internally
+        (RunState.lose_run) to stop the simulation; the Gymnasium
+        terminated/truncated separation is preserved in what step() reports.
+        """
+        env = STS2RunEnv(character_id="Ironclad", max_steps=2)
+        env.reset(seed=7)
+        env.step(0)
+        obs, reward, terminated, truncated, info = env.step(0)
+        assert truncated is True
+        assert terminated is False
+        assert env._mgr.is_over is True
+        assert env._mgr.player_won is False
+
+    def test_step_after_termination_raises_closed_env_error(self):
+        """A run that ended (win/lose) rejects further steps with
+        ClosedEnvironmentError (Gymnasium step-after-done guard)."""
+        env = STS2RunEnv(character_id="Ironclad", max_steps=DEFAULT_MAX_STEPS)
+        env.reset(seed=7)
+        env._mgr.run_state.lose_run()  # force the run to end
+        obs, reward, terminated, truncated, info = env.step(0)
+        assert terminated is True
+        assert truncated is False
+        with pytest.raises(gymnasium.error.ClosedEnvironmentError):
+            env.step(0)
+
+    def test_action_masks_after_truncation_returns_fallback(self):
+        """action_masks() after the episode ended must not crash and must
+        still unmask at least one action."""
+        env = STS2RunEnv(character_id="Ironclad", max_steps=2)
+        env.reset(seed=7)
+        env.step(0)
+        env.step(0)
+        mask = env.action_masks()
+        assert mask.shape == (TOTAL_ACTIONS,)
+        assert mask.sum() >= 1
+
+    def test_reset_clears_ended_state(self):
+        """reset() starts a fresh episode and clears the end-of-episode
+        guard, so stepping after reset is legal again."""
+        env = STS2RunEnv(character_id="Ironclad", max_steps=2)
+        env.reset(seed=7)
+        env.step(0)
+        env.step(0)  # truncated
+        with pytest.raises(gymnasium.error.ClosedEnvironmentError):
+            env.step(0)
+        env.reset(seed=8)
+        obs, reward, terminated, truncated, info = env.step(0)
+        assert terminated is False
+        assert truncated is False

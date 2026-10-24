@@ -7,9 +7,31 @@ invalid action handling, and multi-episode stability.
 import pytest
 import numpy as np
 
+import gymnasium
+
 from sts2_env.gym_env.combat_env import STS2CombatEnv
-from sts2_env.gym_env.observation import OBS_SIZE
-from sts2_env.core.constants import ACTION_SPACE_SIZE
+from sts2_env.gym_env.observation import (
+    ENEMY_FEATURES,
+    INTENT_TYPES,
+    MAX_INTENTS_PER_MOVE,
+    NUM_INTENT_TYPES,
+    OBS_SIZE,
+    _ENEMY_INTENT_SLOT_OFFSETS,
+    encode_observation,
+)
+from sts2_env.core.constants import ACTION_SPACE_SIZE, MAX_ENEMIES
+from sts2_env.core.combat import CombatState
+from sts2_env.core.creature import Creature
+from sts2_env.core.enums import CombatSide, IntentType
+from sts2_env.core.rng import Rng
+from sts2_env.cards.ironclad_basic import create_ironclad_starter_deck
+from sts2_env.monsters.act4 import (
+    WATERFALL_GIANT_MONSTER_ID,
+    WATERFALL_GIANT_STOMP_MOVE,
+    create_waterfall_giant,
+)
+from sts2_env.monsters.intents import Intent, attack_intent, buff_intent, debuff_intent, defend_intent
+from sts2_env.monsters.state_machine import MonsterAI, MoveState
 
 
 @pytest.fixture
@@ -37,7 +59,7 @@ class TestReset:
         obs, info = env.reset(seed=42)
         assert isinstance(obs, np.ndarray)
         assert obs.shape == (OBS_SIZE,)
-        assert obs.shape == (132,)
+        assert obs.shape == (217,)
 
     def test_reset_obs_dtype(self, env):
         obs, info = env.reset(seed=42)
@@ -70,7 +92,7 @@ class TestStep:
     def test_step_end_turn_obs_shape(self, seeded_env):
         obs, reward, terminated, truncated, info = seeded_env.step(0)
         assert isinstance(obs, np.ndarray)
-        assert obs.shape == (132,)
+        assert obs.shape == (217,)
         assert obs.dtype == np.float32
 
     def test_step_end_turn_reward_is_float(self, seeded_env):
@@ -104,7 +126,7 @@ class TestStep:
         action = int(valid_actions[1])
         obs, reward, terminated, truncated, info = seeded_env.step(action)
         assert isinstance(obs, np.ndarray)
-        assert obs.shape == (132,)
+        assert obs.shape == (217,)
 
 
 class TestActionMasks:
@@ -292,7 +314,7 @@ class TestStressEpisodes:
                 action = int(rng.choice(valid))
                 obs, reward, terminated, truncated, info = env.step(action)
                 # Verify step outputs are well-formed at every step
-                assert obs.shape == (132,)
+                assert obs.shape == (217,)
                 assert obs.dtype == np.float32
                 assert isinstance(reward, float)
                 assert isinstance(terminated, bool)
@@ -378,3 +400,179 @@ class TestObservationRanges:
             assert len(violations) == 0, (
                 f"Obs out of range at seed {seed}, indices {violations}"
             )
+
+
+# ---------------------------------------------------------------------------
+# Multi-intent move encoding
+# ---------------------------------------------------------------------------
+
+# Offset of enemy slot 0 inside the flat observation.
+_ENEMY_BLOCK_START = OBS_SIZE - MAX_ENEMIES * ENEMY_FEATURES
+
+
+def _intent_slot_vec(obs: np.ndarray, slot: int) -> np.ndarray:
+    """Slice of the first enemy's intent *slot* (onehot + damage + hits)."""
+    base = _ENEMY_BLOCK_START + _ENEMY_INTENT_SLOT_OFFSETS[slot]
+    return obs[base:base + NUM_INTENT_TYPES + 2]
+
+
+class TestMultiIntentEncoding:
+    """Enemy blocks must encode every intent of a multi-intent move.
+
+    C# ``MoveState`` takes ``params AbstractIntent[] intents``; the decompiled
+    game attaches up to 3 intents to one move (e.g. WaterfallGiant.cs:195
+    STOMP: SingleAttackIntent + DebuffIntent + BuffIntent).
+    """
+
+    def test_waterfall_giant_stomp_encodes_all_three_slots(self):
+        """WaterfallGiant STOMP (3 intents) fills all 3 intent slots."""
+        _, factory_ai = create_waterfall_giant(Rng(42))
+        deck = create_ironclad_starter_deck()
+        combat = CombatState(player_hp=80, player_max_hp=80, deck=deck, rng_seed=42)
+        creature = Creature(
+            max_hp=300, current_hp=300, side=CombatSide.ENEMY,
+            monster_id=WATERFALL_GIANT_MONSTER_ID,
+        )
+        ai = MonsterAI(factory_ai.states, WATERFALL_GIANT_STOMP_MOVE)
+        combat.add_enemy(creature, ai)
+        combat.start_combat()
+
+        assert ai.current_move.state_id == WATERFALL_GIANT_STOMP_MOVE
+        assert len(ai.current_move.intents) == MAX_INTENTS_PER_MOVE
+
+        obs = encode_observation(combat)
+        assert obs.shape == (OBS_SIZE,)
+
+        # C# WaterfallGiant.cs:195: SingleAttackIntent(15) + Debuff + Buff
+        expected = [
+            (IntentType.ATTACK, 15),
+            (IntentType.DEBUFF, 0),
+            (IntentType.BUFF, 0),
+        ]
+        for slot, (intent_type, damage) in enumerate(expected):
+            vec = _intent_slot_vec(obs, slot)
+            expected_onehot = [1.0 if t == intent_type else 0.0 for t in INTENT_TYPES]
+            assert list(vec[:NUM_INTENT_TYPES]) == expected_onehot, (
+                f"slot {slot}: expected {intent_type} one-hot, got {vec[:NUM_INTENT_TYPES]}"
+            )
+            assert vec[NUM_INTENT_TYPES] == pytest.approx(damage / 30.0)
+            assert vec[NUM_INTENT_TYPES + 1] == pytest.approx(1 / 5.0)
+
+        # Enemy block head stays alive/hp/block, powers sit between slots.
+        assert obs[_ENEMY_BLOCK_START] == 1.0
+
+    def test_single_intent_move_leaves_overflow_slots_zero(self):
+        """A 1-intent move fills slot 0 only; slots 1-2 stay zero."""
+        move = MoveState(
+            "SOLO_MOVE", lambda combat: None, [attack_intent(6)],
+        )
+        combat, _, _ = self._combat_with_move(move)
+        obs = encode_observation(combat)
+
+        slot0 = _intent_slot_vec(obs, 0)
+        assert slot0[INTENT_TYPES.index(IntentType.ATTACK)] == 1.0
+        assert slot0[NUM_INTENT_TYPES] == pytest.approx(6 / 30.0)
+        for slot in range(1, MAX_INTENTS_PER_MOVE):
+            assert not _intent_slot_vec(obs, slot).any(), (
+                f"overflow slot {slot} should be all zeros"
+            )
+
+    def test_intents_beyond_max_slots_are_truncated(self):
+        """Intents past MAX_INTENTS_PER_MOVE are dropped without error.
+
+        Note: the decompiled C# never exceeds 3 intents per move, so in
+        practice this only guards against future Python monster definitions
+        drifting past the cap.
+        """
+        move = MoveState(
+            "OVERFLOW_MOVE",
+            lambda combat: None,
+            [attack_intent(9), defend_intent(), buff_intent(), debuff_intent()],
+        )
+        combat, _, ai = self._combat_with_move(move)
+        obs = encode_observation(combat)
+
+        # The move itself keeps all 4 intents; the encoding keeps the first 3.
+        assert len(ai.current_move.intents) == 4
+        assert _intent_slot_vec(obs, 0)[INTENT_TYPES.index(IntentType.ATTACK)] == 1.0
+        assert _intent_slot_vec(obs, 1)[INTENT_TYPES.index(IntentType.DEFEND)] == 1.0
+        assert _intent_slot_vec(obs, 2)[INTENT_TYPES.index(IntentType.BUFF)] == 1.0
+        for slot in range(MAX_INTENTS_PER_MOVE):
+            assert _intent_slot_vec(obs, slot)[INTENT_TYPES.index(IntentType.DEBUFF)] == 0.0
+
+    @staticmethod
+    def _combat_with_move(move: MoveState):
+        """Single-enemy combat whose AI starts at *move*."""
+        deck = create_ironclad_starter_deck()
+        combat = CombatState(player_hp=80, player_max_hp=80, deck=deck, rng_seed=42)
+        creature = Creature(
+            max_hp=50, current_hp=50, side=CombatSide.ENEMY, monster_id="TEST_ENEMY",
+        )
+        ai = MonsterAI({move.state_id: move}, move.state_id)
+        combat.add_enemy(creature, ai)
+        combat.start_combat()
+        return combat, creature, ai
+
+
+class TestEpisodeEndContract:
+    """Gymnasium termination convention: an episode is frozen once step()
+    reports terminated=True or truncated=True -- the internal combat stops
+    advancing and any further step() raises
+    gymnasium.error.ClosedEnvironmentError until reset() is called.
+    """
+
+    def test_truncation_reports_truncated_and_freezes_env(self):
+        """Gymnasium TimeLimit convention: hitting max_turns ends the episode
+        through truncated=True (terminated stays False -- the two signals stay
+        separate) and the internal combat no longer advances afterwards."""
+        env = STS2CombatEnv(max_turns=1)
+        env.reset(seed=0)
+        obs, reward, terminated, truncated, info = env.step(0)
+        assert terminated is False
+        assert truncated is True
+
+        frozen_turn_count = env.combat.turn_count
+        with pytest.raises(gymnasium.error.ClosedEnvironmentError):
+            env.step(0)
+        assert env.combat.turn_count == frozen_turn_count
+
+    def test_action_masks_after_truncation_returns_fallback(self):
+        """action_masks() after the episode ended must not crash (training
+        scaffolds may query it after the final step)."""
+        env = STS2CombatEnv(max_turns=1)
+        env.reset(seed=0)
+        env.step(0)
+        mask = env.action_masks()
+        assert mask.shape == (ACTION_SPACE_SIZE,)
+        assert mask.sum() >= 1
+
+    def test_step_after_termination_raises_closed_env_error(self):
+        """Once combat.is_over fires, the episode is over: a further step()
+        raises ClosedEnvironmentError (Gymnasium step-after-done guard)."""
+        env = STS2CombatEnv()
+        obs, info = env.reset(seed=3)
+        rng = np.random.RandomState(0)
+        terminated = truncated = False
+        action = 0
+        for _ in range(1000):
+            action = int(rng.choice(np.where(info["action_mask"] == 1)[0]))
+            obs, reward, terminated, truncated, info = env.step(action)
+            if terminated or truncated:
+                break
+        assert terminated or truncated
+        with pytest.raises(gymnasium.error.ClosedEnvironmentError):
+            env.step(action)
+
+    def test_reset_clears_ended_state(self):
+        """reset() starts a fresh episode and clears the end-of-episode
+        guard, so stepping after reset is legal again (with max_turns=1 the
+        new episode truncates on its own schedule instead of raising)."""
+        env = STS2CombatEnv(max_turns=1)
+        env.reset(seed=0)
+        env.step(0)  # truncated
+        with pytest.raises(gymnasium.error.ClosedEnvironmentError):
+            env.step(0)
+        env.reset(seed=1)
+        obs, reward, terminated, truncated, info = env.step(0)
+        assert isinstance(truncated, bool)  # stepped again without raising
+        assert env.combat.turn_count == 2

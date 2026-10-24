@@ -10,9 +10,16 @@ The observation format is defined in gym_env/observation.py:
   - Player powers: str, dex, vuln, weak, frail, artifact (6)
   - Hand cards: card_id_norm, cost, damage, block, is_attack (10 * 5 = 50)
   - Pile sizes: draw, discard, exhaust, reserved, reserved, reserved (6)
-  - Enemies: alive, hp%, block, intent_onehot(5), intent_dmg,
-             intent_hits, vuln, weak, str (5 * 13 = 65)
-  Total: 132 dimensions
+  - Enemies (27 features per enemy, 5 * 27 = 135):
+      alive, hp%, block,
+      intent slot 0: onehot(5) + intent_dmg + intent_hits (7),
+      vuln, weak, str (3),
+      intent slots 1-2: onehot(5) + dmg + hits each (2 * 7)
+    The C# bridge serializer only exposes the enemy's primary intent
+    (`intent`/`intent_damage`/`intent_hits`), so this adapter fills intent
+    slot 0 and leaves overflow slots 1-2 zeroed; the offsets it writes are
+    identical to those used by gym_env/observation.py.
+  Total: 5 + 6 + 50 + 6 + 135 = 202 dimensions
 """
 
 from __future__ import annotations
@@ -106,7 +113,7 @@ class StateAdapter:
                    Must contain 'combat_state' with player, hand, enemies.
 
         Returns:
-            Float32 numpy array of shape (OBS_SIZE,) = (131,).
+            Float32 numpy array of shape (OBS_SIZE,) = (217,).
             Returns zeros if not in combat.
         """
         obs = np.zeros(OBS_SIZE, dtype=np.float32)
@@ -178,7 +185,7 @@ class StateAdapter:
         obs[idx + 5] = 0.0
         idx += PILE_FEATURES
 
-        # --- Enemies (5 * 13 = 65) ---
+        # --- Enemies (5 * 27 = 135) ---
         enemies = combat.get("enemies", [])
         for i in range(MAX_ENEMIES):
             if i < len(enemies):
@@ -190,7 +197,9 @@ class StateAdapter:
                 obs[idx + 1] = enemy.get("hp", 0) / enemy_max_hp
                 obs[idx + 2] = enemy.get("block", 0) / 50.0
 
-                # Intent encoding (one-hot + damage + hits)
+                # Intent encoding: primary intent fills slot 0
+                # (one-hot + damage + hits); the bridge JSON exposes only
+                # one intent per enemy, so overflow slots 1-2 stay zero.
                 if is_alive:
                     intent_str = enemy.get("intent", "UNKNOWN")
                     intent_idx = _INTENT_STR_TO_IDX.get(intent_str, -1)

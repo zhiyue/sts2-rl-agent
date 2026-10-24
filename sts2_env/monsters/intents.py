@@ -40,6 +40,11 @@ def buff_intent() -> Intent:
     return Intent(IntentType.BUFF)
 
 
+def heal_intent() -> Intent:
+    """C# HealIntent (IntentType.Heal), e.g. KnowledgeDemon PONDER_MOVE."""
+    return Intent(IntentType.HEAL)
+
+
 def debuff_intent() -> Intent:
     return Intent(IntentType.DEBUFF)
 

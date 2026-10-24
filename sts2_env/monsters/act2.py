@@ -13,7 +13,7 @@ from sts2_env.core.damage import calculate_damage, apply_damage
 from sts2_env.core.rng import Rng
 from sts2_env.monsters.intents import (
     Intent, IntentType, attack_intent, multi_attack_intent,
-    buff_intent, debuff_intent, strong_debuff_intent, status_intent,
+    buff_intent, debuff_intent, heal_intent, strong_debuff_intent, status_intent,
     defend_intent, sleep_intent,
 )
 from sts2_env.monsters.state_machine import (
@@ -2528,7 +2528,10 @@ def create_knowledge_demon(rng: Rng, ascension_level: int = 0) -> tuple[Creature
         KNOWLEDGE_DEMON_PONDER_MOVE: MoveState(
             KNOWLEDGE_DEMON_PONDER_MOVE,
             ponder,
-            [attack_intent(ponder_intent_damage), buff_intent()],
+            # KnowledgeDemon.cs PONDER_MOVE: SingleAttackIntent(PonderDamage),
+            # HealIntent(), BuffIntent() — heal intent was missing, hiding the
+            # heal from intent-based observation encoding.
+            [attack_intent(ponder_intent_damage), heal_intent(), buff_intent()],
             follow_up_id=KNOWLEDGE_DEMON_CURSE_OF_KNOWLEDGE_BRANCH,
         ),
         KNOWLEDGE_DEMON_CURSE_OF_KNOWLEDGE_BRANCH: curse_check,

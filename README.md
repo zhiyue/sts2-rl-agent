@@ -12,7 +12,7 @@ A reinforcement learning agent for **Slay the Spire 2**, built on a high-perform
 |  | Core Engine    |  | Game Content   |  | Gym Environments          ||
 |  | combat.py      |  | 577 cards      |  | combat_env.py  (single)  ||
 |  | creature.py    |  | 260 powers     |  | run_env.py     (full run)||
-|  | hooks.py       |  | 121 monsters   |  | observation.py (132-dim) ||
+|  | hooks.py       |  | 121 monsters   |  | observation.py (217-dim) ||
 |  | damage.py      |  | 290 relics     |  | action_space.py(115/157)  ||
 |  | rng.py         |  | 63 potions     |  | reward.py                ||
 |  +-------+--------+  +-------+--------+  +-----------+--------------+|
@@ -241,7 +241,7 @@ sts2-rl-agent/
 |   |-- gym_env/                   # Gymnasium environments
 |   |   |-- combat_env.py          # Single-combat env (Discrete(115))
 |   |   |-- run_env.py             # Full-run env (Discrete(157))
-|   |   |-- observation.py         # State -> 132-dim float32 vector
+|   |   |-- observation.py         # State -> 217-dim float32 vector
 |   |   |-- action_space.py        # Action encoding + masking
 |   |   +-- reward.py              # Reward shaping
 |   |
@@ -303,7 +303,7 @@ Following lessons from the STS1 RL community, this project uses a two-phase stra
 
 - **MaskablePPO** from sb3-contrib (Stable Baselines 3)
 - **Invalid action masking**: Each step, the environment provides a boolean mask indicating which actions are legal (playable cards, valid targets). Illegal actions are zeroed out before policy sampling.
-- **Observation**: 132-dimensional float32 vector encoding player state, hand cards, pile summaries, and enemy state
+- **Observation**: 217-dimensional float32 vector encoding player state, hand cards, pile summaries, and enemy state (each enemy carries up to 3 intent slots of 8 features: one-hot type (6 types incl. Heal) + damage + hits)
 - **Action space**: Discrete(115) for combat (end turn + cards + targets + potions), Discrete(157) for full run
 
 ### Reward Design

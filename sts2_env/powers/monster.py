@@ -1609,39 +1609,75 @@ WITHERING_PRESENCE_POWER_ID = (
 
 
 class WitheringPresencePower(PowerInstance):
-    """Aeonglass's presence: every 6 cards played by the tracked player, add a
-    Wither status card to that player's hand and restart the count.
+    """Aeonglass's presence: every 6 cards played by an opposing player, add a
+    Wither status card to that player's hand and restart that player's count.
 
     C# ref: WitheringPresencePower.cs (v0.107.1)
-    - PowerType.Buff, PowerStackType.Counter, PowerInstanceType.Instanced.
-    - CanonicalVars: DynamicVar "CardsLeft" = 6; DisplayAmount = CardsLeft.
-    - Applied by Aeonglass.AfterAddedToRoom: for each opponent creature, the
-      power (Amount 6) is applied to Aeonglass itself with Target set to that
-      opponent (so each instance tracks one opposing player).
-    - AfterCardPlayed: `if (cardPlay.Card.Owner == base.Target.Player)` —
-      decrement CardsLeft; when it reaches <= 0, add 1 Wither to the played
-      card's owner's hand (CardPileCmd.AddToCombatAndPreview<Wither>,
-      PileType.Hand), flash, and reset CardsLeft to 6.
+    - PowerType.Buff, PowerStackType.Counter, PowerInstanceType.Instanced
+      (WitheringPresencePower.cs:20-26).
+    - CanonicalVars: DynamicVar "CardsLeft" = 6 (line 28); DisplayAmount =
+      CardsLeft (line 24). The applied Amount stays 6; only the CardsLeft
+      dynamic var counts down.
+    - Applied by Aeonglass.AfterAddedToRoom (Aeonglass.cs:74-84): for each
+      creature in ``GetOpponentsOf(Aeonglass)`` a fresh WitheringPresencePower
+      (Amount 6) is applied to Aeonglass itself with ``Target`` set to that
+      opponent -- one independent instance (and independent CardsLeft) per
+      opposing player.
+    - AfterCardPlayed (lines 46-61): ``if (cardPlay.Card.Owner ==
+      base.Target.Player)`` -- only the instance whose Target owns the played
+      card decrements its CardsLeft; when it reaches <= 0, add 1 Wither to the
+      played card's owner's hand (CardPileCmd.AddToCombatAndPreview<Wither>,
+      PileType.Hand), flash, and reset that CardsLeft to 6.
 
-    Sim wiring: fire_after_card_played reaches every power in combat, so a
-    single instance tracks the opposing player: the C# Target.Player check
-    becomes "the played card belongs to a player creature on the opposing
-    side". Aeonglass.MatchWitherToUpgradeCount upgrade matching lives with the
-    (unimplemented) monster, so this power adds plain Wither cards via the
-    standard card factory. The C# Amount stays 6 while the CardsLeft dynamic
-    var counts down; the sim uses amount itself as the live counter (it starts
-    at the Apply amount of 6 and resets to the canonical 6, so the observable
-    behavior is identical).
+    Sim wiring: ``Creature.powers`` is keyed by power id (core/creature.py), so
+    a single instance represents all C# instances and tracks one independent
+    CardsLeft counter per opposing player in ``_cards_left_by_player``.
+    ``amount`` keeps the applied Amount of 6 (matching C#, where Amount is
+    separate from the CardsLeft dynamic var); the C# ``Target.Player`` check
+    becomes "the played card belongs to that opposing player creature", so
+    each opponent counts down (and resets) only its own counter -- two-player
+    fights get two independent 6-card clocks, exactly like two C# instances.
+    Counters are registered for every opponent present at combat start
+    (``before_combat_start``, the sim analogue of C# AfterAddedToRoom); an
+    opponent first seen later is lazily initialized to 6 on its first played
+    card in ``after_card_played``. Aeonglass.MatchWitherToUpgradeCount upgrade
+    matching lives with the (unimplemented) monster, so this power adds plain
+    Wither cards via the standard card factory.
     """
 
     power_type = PowerType.BUFF
     stack_type = PowerStackType.COUNTER
 
-    #: C# `private const int _baseCardsLeft = 6;` and CardsLeft canonical var.
+    #: C# `private const int _baseCardsLeft = 6;` (line 16) and the CardsLeft
+    #: canonical var (line 28).
     BASE_CARDS_LEFT = 6
 
     def __init__(self, amount: int = BASE_CARDS_LEFT):
         super().__init__(WITHERING_PRESENCE_POWER_ID, amount)
+        #: C# PowerInstanceType.Instanced: one instance (one CardsLeft) per
+        #: opposing player. The sim keeps a single instance keyed by power id
+        #: and stores one CardsLeft per opponent creature instead. Untracked
+        #: players are implicitly at BASE_CARDS_LEFT (lazy AfterAddedToRoom).
+        self._cards_left_by_player: dict[Creature, int] = {}
+
+    def cards_left_for(self, player: Creature) -> int:
+        """CardsLeft of the C# instance whose ``Target`` is *player*
+        (WitheringPresencePower.cs:24 DisplayAmount)."""
+        return self._cards_left_by_player.get(player, self.BASE_CARDS_LEFT)
+
+    def before_combat_start(self, owner: Creature, combat: CombatState) -> None:
+        """C# Aeonglass.AfterAddedToRoom (Aeonglass.cs:74-84) applies one
+        instance per opposing player when the room starts; register every
+        opponent's counter at the sim equivalent point. Opponents not yet
+        known (e.g. the power attached in a test without ``start_combat``)
+        are lazily registered at 6 on their first played card."""
+        for state in combat.combat_player_states:
+            player = getattr(state, "creature", None)
+            if player is None:
+                continue
+            if player is owner or getattr(player, "side", None) == owner.side:
+                continue
+            self._cards_left_by_player.setdefault(player, self.BASE_CARDS_LEFT)
 
     def after_card_played(self, owner: Creature, card: object, combat: CombatState) -> None:
         card_owner = getattr(card, "owner", None)
@@ -1649,13 +1685,17 @@ class WitheringPresencePower(PowerInstance):
             return
         if card_owner is owner or getattr(card_owner, "side", None) == owner.side:
             return
-        self.amount -= 1
-        if self.amount > 0:
+        # C# AfterCardPlayed (WitheringPresencePower.cs:46-61): only the
+        # instance targeting the played card's owner counts the card, so each
+        # opponent's countdown is independent.
+        cards_left = self._cards_left_by_player.get(card_owner, self.BASE_CARDS_LEFT) - 1
+        if cards_left > 0:
+            self._cards_left_by_player[card_owner] = cards_left
             return
         from sts2_env.cards.factory import create_card
 
         combat.add_generated_card_to_creature_hand(card_owner, create_card(CardId.WITHER))
-        self.amount = self.BASE_CARDS_LEFT
+        self._cards_left_by_player[card_owner] = self.BASE_CARDS_LEFT
 
 
 # ---------------------------------------------------------------------------

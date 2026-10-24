@@ -118,10 +118,37 @@ decompiled v0.107.1 C# source as ground truth.
 
 Final regression at layers 10-12 close: **4774+ passed, 0 failed**; all 5 audits green.
 
-RL-environment scope (remaining, lower priority): observation intent encodes
-only the first intent (multi-intent enemies partially blind — C# AutoSlay has
-no observation builder to compare against); truncation marks but does not end
-episodes; enemy slots fixed at 5.
+RL-environment design limitations — **ALL CLOSED** (2026-10-24, layer 13):
+
+- ~~Observation intent encodes only the first intent~~ **CLOSED** — each enemy
+  block now exposes `MAX_INTENTS_PER_MOVE = 3` intent slots (7→8 features
+  each: one-hot over 6 types incl. Heal + damage/30 + hits/5). 3 is the
+  decompiled maximum (333 MoveState constructions scanned: 4 moves carry 3
+  intents — KnowledgeDemon PONDER, InfestedPrism, TheForgotten,
+  WaterfallGiant STOMP; 76 carry 2). KnowledgeDemon PONDER was also missing
+  its HealIntent in the sim move list (monsters/act2.py) — added. OBS_SIZE
+  132 → **217**, RUN_OBS_SIZE 152 → **237**. Slot 0 keeps the legacy offset
+  so the bridge encoder stays offset-compatible. IntentType gaps noted, not
+  actioned: Python lacks C# `Hidden` (test-monsters only); Python's extra
+  `MULTI_ATTACK` models C# `MultiAttackIntent : AttackIntent`.
+- ~~Truncation marks but does not end episodes~~ **CLOSED** — both envs set
+  an episode-ended flag on `terminated or truncated`; further `step()`
+  raises `gymnasium.error.ClosedEnvironmentError`; `reset()` clears.
+  combat_env truncation is mutually exclusive with termination (Gymnasium
+  TimeLimit convention); run_env truncation applies `lose_run()` so the
+  internal run state truly ends (Gymnasium signals stay separated).
+- ~~WitheringPresence one shared counter in multiplayer~~ **CLOSED** —
+  single power instance now keeps a per-opposing-player counter dict
+  (power framework holds one instance per PowerId, so true per-instance
+  powers are impossible without core changes; the dict is behaviorally
+  equivalent to C#'s Instanced-per-opponent Target semantics,
+  WitheringPresencePower.cs:26, Aeonglass.cs:74-84). `amount` stays at the
+  applied 6 like C#'s Amount-vs-CardsLeft separation.
+- Enemy slots fixed at 5 (MAX_ENEMIES) — kept: no C# encounter exceeds 5
+  simultaneous enemies (encounters audit: 87/87 aligned).
+
+Final regression at layer 13 close: **4805 passed, 0 failed**; all 5 audits
+green.
 
 ### Known remaining gaps (documented, intentional)
 
@@ -146,8 +173,10 @@ episodes; enemy slots fixed at 5.
   route: ScrollBoxes was in the wrong pool (belongs in positive,
   Neow.cs:80), HeftyTablet→remove-ArcaneScroll exclusion (Neow.cs:230-233),
   and the C# rng draw order for the three pairs.
-- Multiplayer: WitheringPresence uses one shared counter instead of one
-  instance per opponent (single-player behavior identical).
+- ~~Multiplayer: WitheringPresence uses one shared counter instead of one
+  instance per opponent~~ **CLOSED** — per-opposing-player counter dict in
+  the single power instance (see layer 13 above); behaviorally equivalent
+  to C#'s Instanced-per-opponent semantics.
 - ~~Tainted applier chain: sim still uses the March semantics for VitalSpark~~
   **CLOSED** — full C# chain implemented (VitalSparkPower.cs):
   BeforeCombatStart afflicts all Skills with stackable Tainted

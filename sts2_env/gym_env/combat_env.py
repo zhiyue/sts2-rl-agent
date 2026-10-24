@@ -31,6 +31,15 @@ class STS2CombatEnv(gymnasium.Env):
 
     Observation: flat float32 vector encoding player state, hand, piles, enemies.
     Action: fixed discrete combat action space including cards, end turn, and potions.
+
+    Episode end contract (Gymnasium termination convention): once ``step()``
+    returns ``terminated=True`` or ``truncated=True`` the episode is over and
+    the underlying combat is frozen -- no further internal state advances.
+    Any ``step()`` call after the episode ended raises
+    :class:`gymnasium.error.ClosedEnvironmentError`; ``reset()`` starts a new
+    episode and clears the flag.  Truncation (``turn_count > max_turns``) is
+    reported exclusively through ``truncated`` and keeps ``terminated``
+    untouched, preserving the Gymnasium terminated/truncated separation.
     """
 
     metadata = {"render_modes": ["ansi"]}
@@ -55,9 +64,13 @@ class STS2CombatEnv(gymnasium.Env):
         self.render_mode = render_mode
 
         self.combat: CombatState | None = None
+        #: Set when the episode ends (terminated or truncated). While set,
+        #: step() raises ClosedEnvironmentError and the internal combat is frozen.
+        self._episode_ended = False
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
+        self._episode_ended = False
         reset_instance_counter()
 
         rng_seed = int(self.np_random.integers(0, INT_MAX_EXCLUSIVE))
@@ -88,6 +101,11 @@ class STS2CombatEnv(gymnasium.Env):
         return obs, info
 
     def step(self, action: int):
+        if self._episode_ended:
+            raise gymnasium.error.ClosedEnvironmentError(
+                "STS2CombatEnv episode has ended (terminated or truncated); "
+                "call reset() before stepping again."
+            )
         assert self.combat is not None, "Must call reset() first"
 
         prev_hp = self.combat.player.current_hp
@@ -116,14 +134,21 @@ class STS2CombatEnv(gymnasium.Env):
         obs = encode_observation(self.combat)
         reward = compute_reward(self.combat, prev_hp)
         terminated = self.combat.is_over
-        truncated = self.combat.turn_count > self.max_turns
+        # Gymnasium TimeLimit convention: truncation is reported through
+        # ``truncated`` only, keeping it mutually exclusive with ``terminated``.
+        truncated = not terminated and self.combat.turn_count > self.max_turns
+        if terminated or truncated:
+            # Freeze the episode: the combat above stops advancing here (this
+            # final observation is returned as-is) and any later step() call
+            # is rejected by the _episode_ended guard.
+            self._episode_ended = True
         info = {"action_mask": get_action_mask(self.combat)}
 
         return obs, reward, terminated, truncated, info
 
     def action_masks(self) -> np.ndarray:
         """Return the current action mask (for sb3-contrib MaskablePPO)."""
-        if self.combat is None:
+        if self.combat is None or self._episode_ended:
             mask = np.zeros(ACTION_SPACE_SIZE, dtype=np.int8)
             mask[0] = 1
             return mask

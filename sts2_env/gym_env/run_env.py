@@ -28,9 +28,9 @@ for the current game phase are unmasked:
 
 Observation space
 -----------------
-Flat ``float32`` vector of size ``RUN_OBS_SIZE`` (152).
+Flat ``float32`` vector of size ``RUN_OBS_SIZE`` (237).
 
-* Combat observation (131) -- reuses :func:`encode_observation`.
+* Combat observation (202) -- reuses :func:`encode_observation`.
 * Run-level state (20):
   - current_act, total_floor, and act_floor normalized by run scales (3)
   - player HP ratio and normalized gold                             (2)
@@ -203,7 +203,7 @@ NUM_PHASES = len(_PHASE_INDEX)
 # ---------------------------------------------------------------------------
 
 _RUN_STATE_SIZE = 20   # see module docstring
-RUN_OBS_SIZE = COMBAT_OBS_SIZE + _RUN_STATE_SIZE  # 132 + 20 = 152
+RUN_OBS_SIZE = COMBAT_OBS_SIZE + _RUN_STATE_SIZE  # 202 + 20 = 222
 
 DEFAULT_MAX_STEPS = 10_000
 DEFAULT_MAX_COMBAT_TURNS = 200
@@ -248,6 +248,20 @@ class STS2RunEnv(gymnasium.Env):
         as a loss.
     render_mode : str or None
         ``"ansi"`` for text rendering.
+
+    Notes
+    -----
+    Episode end contract (Gymnasium termination convention): once ``step()``
+    returns ``terminated=True`` or ``truncated=True`` the episode is over and
+    the wrapped :class:`RunManager` is frozen -- any further ``step()`` call
+    raises :class:`gymnasium.error.ClosedEnvironmentError`; ``reset()``
+    starts a new episode and clears the flag.  On truncation (``step_count``
+    reaches ``max_steps``) the run is judged a loss internally via
+    ``RunState.lose_run()`` (matching the ``-1`` timeout reward and stopping
+    the simulation from advancing), but the Gymnasium signal on that final
+    step stays ``truncated=True`` with ``terminated=False``: ``is_over`` is
+    the run layer's own loss state, and the environment keeps reporting the
+    Gymnasium terminated/truncated separation unchanged.
     """
 
     metadata = {"render_modes": ["ansi"]}
@@ -279,6 +293,9 @@ class STS2RunEnv(gymnasium.Env):
         # Mutable state -- set during reset()
         self._mgr: RunManager | None = None
         self._step_count: int = 0
+        #: Set when the episode ends (terminated or truncated). While set,
+        #: step() raises ClosedEnvironmentError and the run manager is frozen.
+        self._episode_ended: bool = False
 
     # ------------------------------------------------------------------
     # Gymnasium API
@@ -298,6 +315,7 @@ class STS2RunEnv(gymnasium.Env):
             ascension_level=self._ascension_level,
         )
         self._step_count = 0
+        self._episode_ended = False
 
         obs = self._encode_obs()
         info = self._build_info()
@@ -306,6 +324,11 @@ class STS2RunEnv(gymnasium.Env):
     def step(
         self, action: int,
     ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        if self._episode_ended:
+            raise gymnasium.error.ClosedEnvironmentError(
+                "STS2RunEnv episode has ended (terminated or truncated); "
+                "call reset() before stepping again."
+            )
         assert self._mgr is not None, "Must call reset() before step()"
         self._step_count += 1
 
@@ -347,6 +370,15 @@ class STS2RunEnv(gymnasium.Env):
         if not terminated and self._step_count >= self.max_steps:
             truncated = True
 
+        if truncated:
+            # Timeout is judged as a loss (matches the -1 timeout reward):
+            # end the run at the run-layer so no further simulation state
+            # advances.  The Gymnasium signal on this final step stays
+            # truncated=True / terminated=False (see class docstring).
+            self._mgr.run_state.lose_run()
+        if terminated or truncated:
+            self._episode_ended = True
+
         if terminated:
             reward = REWARD_WIN if self._mgr.player_won else REWARD_DEATH
         elif truncated:
@@ -364,7 +396,7 @@ class STS2RunEnv(gymnasium.Env):
         layout = _LAYOUT
         mask = np.zeros(layout.total_actions, dtype=np.int8)
 
-        if self._mgr is None or self._mgr.is_over:
+        if self._mgr is None or self._episode_ended or self._mgr.is_over:
             # Fallback: unmask a single action so sampling never fails.
             mask[0] = 1
             return mask
@@ -686,7 +718,7 @@ class STS2RunEnv(gymnasium.Env):
         if mgr is None:
             return obs
 
-        # ---- Combat observation (131 dims) ----
+        # ---- Combat observation (217 dims) ----
         combat = mgr.get_combat_state()
         if combat is not None:
             combat_obs = encode_observation(combat)
