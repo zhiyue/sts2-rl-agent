@@ -6,6 +6,11 @@ from typing import Callable, TYPE_CHECKING
 
 from sts2_env.core.enums import PowerId
 from sts2_env.core.rng import Rng
+from sts2_env.encounters.room_set import (
+    ROOM_TYPE_BOSS,
+    ROOM_TYPE_ELITE,
+    EncounterSpec,
+)
 
 if TYPE_CHECKING:
     from sts2_env.core.combat import CombatState
@@ -151,6 +156,10 @@ def setup_tunneler_normal(combat: CombatState, rng: Rng) -> None:
     combat.add_enemy(creature, ai)
 
 
+# C# Hive.GenerateAllEncounters normals: BowlbugsNormal, ChompersNormal,
+# ExoskeletonsNormal, HunterKillerNormal, LouseProgenitorNormal, MytesNormal,
+# OvicopterNormal, SlumberingBeetleNormal, SpinyToadNormal, TheObscuraNormal.
+# (TunnelerNormal exists as a model but is not in any act pool in v0.107.1.)
 NORMAL_ENCOUNTERS: list[EncounterSetup] = [
     setup_bowlbugs_normal,
     setup_chompers_normal,
@@ -162,7 +171,6 @@ NORMAL_ENCOUNTERS: list[EncounterSetup] = [
     setup_slumbering_beetle_normal,
     setup_spiny_toad_normal,
     setup_the_obscura_normal,
-    setup_tunneler_normal,
 ]
 
 
@@ -242,3 +250,31 @@ ALL_ACT2_ENCOUNTERS: list[EncounterSetup] = (
     list(ELITE_ENCOUNTERS) +
     list(BOSS_ENCOUNTERS)
 )
+
+
+# ---- C#-ordered encounter table (v0.107.1) ----
+# Hive.GenerateAllEncounters array order, with each entry's
+# EncounterModel.Tags / IsWeak / RoomType (ActModel.cs anti-repeat inputs).
+# Note: TunnelerNormal exists in C# but is NOT part of Hive's encounter pool.
+ALL_ENCOUNTER_SPECS: list[EncounterSpec] = [
+    EncounterSpec(setup_bowlbugs_normal, tags=frozenset({"Workers"})),
+    EncounterSpec(setup_bowlbugs_weak, tags=frozenset({"Workers"}), is_weak=True),
+    EncounterSpec(setup_chompers_normal, tags=frozenset({"Chomper"})),
+    EncounterSpec(setup_decimillipede_elite, room_type=ROOM_TYPE_ELITE),
+    EncounterSpec(setup_entomancer_elite, room_type=ROOM_TYPE_ELITE),
+    EncounterSpec(setup_exoskeletons_normal, tags=frozenset({"Exoskeletons"})),
+    EncounterSpec(setup_exoskeletons_weak, tags=frozenset({"Exoskeletons"}), is_weak=True),
+    EncounterSpec(setup_hunter_killer_normal),
+    EncounterSpec(setup_kaiser_crab_boss, room_type=ROOM_TYPE_BOSS),
+    EncounterSpec(setup_infested_prisms_elite, room_type=ROOM_TYPE_ELITE),
+    EncounterSpec(setup_knowledge_demon_boss, room_type=ROOM_TYPE_BOSS),
+    EncounterSpec(setup_louse_progenitor_normal),
+    EncounterSpec(setup_mytes_normal),
+    EncounterSpec(setup_ovicopter_normal),
+    EncounterSpec(setup_slumbering_beetle_normal, tags=frozenset({"Workers"})),
+    EncounterSpec(setup_spiny_toad_normal),
+    EncounterSpec(setup_the_insatiable_boss, room_type=ROOM_TYPE_BOSS),
+    EncounterSpec(setup_the_obscura_normal),
+    EncounterSpec(setup_thieving_hopper_weak, tags=frozenset({"Thieves"}), is_weak=True),
+    EncounterSpec(setup_tunneler_weak, tags=frozenset({"Burrower"}), is_weak=True),
+]

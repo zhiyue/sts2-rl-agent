@@ -5,6 +5,11 @@ from __future__ import annotations
 from typing import Callable, TYPE_CHECKING
 
 from sts2_env.core.rng import Rng
+from sts2_env.encounters.room_set import (
+    ROOM_TYPE_BOSS,
+    ROOM_TYPE_ELITE,
+    EncounterSpec,
+)
 
 if TYPE_CHECKING:
     from sts2_env.core.combat import CombatState
@@ -278,3 +283,32 @@ ALL_ACT1_ENCOUNTERS: list[EncounterSetup] = (
     list(ELITE_ENCOUNTERS) +
     list(BOSS_ENCOUNTERS)
 )
+
+
+# ---- C#-ordered encounter table (v0.107.1) ----
+# Overgrowth.GenerateAllEncounters array order, with each entry's
+# EncounterModel.Tags / IsWeak / RoomType (ActModel.cs anti-repeat inputs).
+ALL_ENCOUNTER_SPECS: list[EncounterSpec] = [
+    EncounterSpec(setup_bygone_effigy_elite, room_type=ROOM_TYPE_ELITE),
+    EncounterSpec(setup_byrdonis_elite, room_type=ROOM_TYPE_ELITE),
+    EncounterSpec(setup_ceremonial_beast_boss, room_type=ROOM_TYPE_BOSS),
+    EncounterSpec(setup_cubex_construct_normal),
+    EncounterSpec(setup_flyconid_normal, tags=frozenset({"Mushroom", "Slimes"})),
+    EncounterSpec(setup_fogmog_normal),
+    EncounterSpec(setup_fuzzy_wurm_crawler_weak, tags=frozenset({"Crawler"}), is_weak=True),
+    EncounterSpec(setup_inklets_normal),
+    EncounterSpec(setup_mawler_normal),
+    EncounterSpec(setup_nibbits_normal),
+    EncounterSpec(setup_nibbits_weak, tags=frozenset({"Nibbit"}), is_weak=True),
+    EncounterSpec(setup_overgrowth_crawlers, tags=frozenset({"Crawler", "Shrinker"})),
+    EncounterSpec(setup_phrog_parasite_elite, room_type=ROOM_TYPE_ELITE),
+    EncounterSpec(setup_ruby_raiders_normal),
+    EncounterSpec(setup_shrinker_beetle_weak, tags=frozenset({"Shrinker"}), is_weak=True),
+    EncounterSpec(setup_slimes_normal, tags=frozenset({"Slimes"})),
+    EncounterSpec(setup_slimes_weak, tags=frozenset({"Slimes"}), is_weak=True),
+    EncounterSpec(setup_slithering_strangler_normal),
+    EncounterSpec(setup_snapping_jaxfruit_normal, tags=frozenset({"Mushroom"})),
+    EncounterSpec(setup_the_kin_boss, room_type=ROOM_TYPE_BOSS),
+    EncounterSpec(setup_vantom_boss, room_type=ROOM_TYPE_BOSS),
+    EncounterSpec(setup_vine_shambler_normal),
+]

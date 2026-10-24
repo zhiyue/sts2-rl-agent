@@ -10,6 +10,12 @@ from __future__ import annotations
 from sts2_env.core.enums import MapPointType
 from sts2_env.core.rng import Rng
 from sts2_env.map.map_point import MapCoord, MapPoint
+from sts2_env.map.path_pruning import prune_and_repair
+from sts2_env.map.post_processing import (
+    center_grid,
+    spread_adjacent_map_points,
+    straighten_paths,
+)
 
 
 MAP_WIDTH = 7
@@ -153,12 +159,21 @@ def _is_type_valid_for_point(
     point: MapPoint,
     point_type: MapPointType,
     map_length: int,
+    ignore_rules_for: frozenset[MapPointType] = frozenset(),
 ) -> bool:
-    """Check all five placement constraint rules."""
+    """Check all five placement constraint rules.
+
+    Types in ``ignore_rules_for`` bypass all rules, matching C#
+    MapPointTypeCounts.ShouldIgnoreMapPointRulesForMapPointType /
+    PointTypesThatIgnoreRules (e.g. BigGameHunter sets Elite to ignore rules).
+    """
+    if point_type in ignore_rules_for:
+        return True
     row = point.row
 
-    # Rule 1: Lower map (row < 5) -- no RestSite or Elite
-    if row < 5 and point_type in (MapPointType.REST_SITE, MapPointType.ELITE):
+    # Rule 1: Lower map (row < 6) -- no RestSite or Elite
+    # C# StandardActMap.IsValidForLower: "if (mapPoint.coord.row < 6)"
+    if row < 6 and point_type in (MapPointType.REST_SITE, MapPointType.ELITE):
         return False
 
     # Rule 2: Upper map (row >= mapLength - 3) -- no RestSite
@@ -199,6 +214,7 @@ def _assign_room_types(
     num_unknowns: int,
     num_rests: int,
     replace_treasure_with_elite: bool = False,
+    ignore_rules_for: frozenset[MapPointType] = frozenset(),
 ) -> None:
     """Assign room types to all map points.
 
@@ -209,9 +225,11 @@ def _assign_room_types(
     map_length = act_map.map_length
     row_count = map_length
 
-    # Fixed: last room row = RestSite
+    # Fixed: last room row = RestSite (C# also sets CanBeModified = false so
+    # MapPathPruning.RepairPointType never touches these)
     for p in act_map.get_row(row_count - 1):
         p.point_type = MapPointType.REST_SITE
+        p.can_be_modified = False
 
     # Fixed: treasure row (rowCount - 7)
     treasure_row = row_count - 7
@@ -221,10 +239,12 @@ def _assign_room_types(
                 p.point_type = MapPointType.ELITE
             else:
                 p.point_type = MapPointType.TREASURE
+            p.can_be_modified = False
 
     # Fixed: first room row = Monster
     for p in act_map.get_row(1):
         p.point_type = MapPointType.MONSTER
+        p.can_be_modified = False
 
     # Build the random pool as a queue (C# uses Queue<MapPointType>)
     from collections import deque
@@ -235,17 +255,26 @@ def _assign_room_types(
     pool_list.extend([MapPointType.UNKNOWN] * num_unknowns)
     pool: deque[MapPointType] = deque(pool_list)
 
-    # Collect unassigned points and shuffle (C# StableShuffle on all map points)
-    unassigned = [
-        p for p in act_map.room_points()
-        if p.point_type == MapPointType.UNASSIGNED
-    ]
-    rng.shuffle(unassigned)
-
-    # Assign from pool with cycling queue (matches C# GetNextValidPointType)
-    for point in unassigned:
-        assigned_type = _get_next_valid_type_from_queue(pool, point, map_length)
-        point.point_type = assigned_type
+    # Collect unassigned points and assign from the pool.
+    # C# AssignRemainingTypesToRandomPoints: up to 3 passes -- each pass
+    # re-collects the still-unassigned points, StableShuffles them, and retries
+    # the pool queue on each. Points whose queue cycle fails stay Unassigned
+    # and get another chance on the next pass.
+    for _pass in range(3):
+        if not pool:
+            break
+        unassigned = [
+            p for p in act_map.room_points()
+            if p.point_type == MapPointType.UNASSIGNED
+        ]
+        # C# StableShuffle sorts by coord (col, row) before Fisher-Yates.
+        unassigned.sort(key=lambda p: (p.coord.col, p.coord.row))
+        rng.shuffle(unassigned)
+        for point in unassigned:
+            if not pool:
+                break
+            assigned_type = _get_next_valid_type_from_queue(pool, point, map_length, ignore_rules_for)
+            point.point_type = assigned_type
 
     # Any remaining unassigned points become Monster
     for point in act_map.room_points():
@@ -263,6 +292,7 @@ def _get_next_valid_type_from_queue(
     pool: 'deque[MapPointType]',
     point: MapPoint,
     map_length: int,
+    ignore_rules_for: frozenset[MapPointType] = frozenset(),
 ) -> MapPointType:
     """Try each type in the queue; if valid, consume it. Otherwise re-enqueue.
 
@@ -271,36 +301,10 @@ def _get_next_valid_type_from_queue(
     """
     for _ in range(len(pool)):
         candidate = pool.popleft()
-        if _is_type_valid_for_point(point, candidate, map_length):
+        if _is_type_valid_for_point(point, candidate, map_length, ignore_rules_for):
             return candidate
         pool.append(candidate)  # put it back at the end
     return MapPointType.UNASSIGNED
-
-
-def _center_grid(act_map: ActMap) -> None:
-    """If left columns empty but right not (or vice versa), shift by 1."""
-    points = act_map.all_points()
-    if not points:
-        return
-
-    cols_used = {p.col for p in points}
-    left_empty = 0 not in cols_used and 1 not in cols_used
-    right_empty = 5 not in cols_used and 6 not in cols_used
-
-    if left_empty and not right_empty:
-        shift = -1  # shift left to center (matches C# num = -1)
-    elif right_empty and not left_empty:
-        shift = 1   # shift right to center (matches C# num = 1)
-    else:
-        return
-
-    # Rebuild grid with shifted coordinates
-    new_grid: dict[tuple[int, int], MapPoint] = {}
-    for p in points:
-        new_col = max(0, min(MAP_WIDTH - 1, p.coord.col + shift))
-        p.coord = MapCoord(new_col, p.coord.row)
-        new_grid[(new_col, p.coord.row)] = p
-    act_map._grid = new_grid
 
 
 def _map_point_type_counts(
@@ -309,32 +313,49 @@ def _map_point_type_counts(
     ascension_level: int,
     act_index: int,
 ) -> tuple[int, int, int, int]:
-    has_swarming = ascension_level >= 1
-    has_gloom = ascension_level >= 6
+    """Per-act MapPointTypeCounts, mirroring each act's C# GetMapPointTypes.
 
-    def base_counts(source: Rng) -> tuple[int, int, int, int]:
-        return (
-            round(5 * (1.6 if has_swarming else 1.0)),
-            3,
-            source.next_gaussian_int(mean=12, stddev=1, min_val=10, max_val=14),
-            source.next_gaussian_int(mean=5, stddev=1, min_val=3, max_val=6),
-        )
+    - Elites: C# MapPointTypeCounts.NumOfElites default
+      ``(int)Math.Round(5f * (SwarmingElites ? 1.6f : 1f))``; SwarmingElites is
+      ascension level 1 (AscensionLevel.SwarmingElites).
+    - Shops: C# ``NumOfShops = 3``.
+    - Unknowns baseline: C# MapPointTypeCounts.StandardRandomUnknownCount
+      ``rng.NextGaussianInt(12, 1, 10, 14)``.
+    - Overgrowth (act_index 0): rests = NextGaussianInt(7, 1, 6, 7),
+      unknowns = Standard (Overgrowth.cs GetMapPointTypes).
+    - Hive (act_index 1): rests = NextGaussianInt(6, 1, 6, 7),
+      unknowns = Standard - 1 (Hive.cs GetMapPointTypes).
+    - Glory (act_index 2): rests = NextInt(5, 7),
+      unknowns = Standard - 1 (Glory.cs GetMapPointTypes); both rolled from
+      the shared map RNG in C# order (rests first).
+    """
+    has_swarming = ascension_level >= 1  # C# AscensionLevel.SwarmingElites == 1
 
-    if act_index in (0, 1):
+    def elite_shop_counts() -> tuple[int, int]:
+        return round(5 * (1.6 if has_swarming else 1.0)), 3
+
+    if act_index == 0:
+        # Overgrowth.cs: restCount first, then StandardRandomUnknownCount
         num_rests = rng.next_gaussian_int(mean=7, stddev=1, min_val=6, max_val=7)
-        if has_gloom:
-            num_rests -= 1
-        num_elites, num_shops, num_unknowns, _ = base_counts(rng)
+        num_unknowns = rng.next_gaussian_int(mean=12, stddev=1, min_val=10, max_val=14)
+        num_elites, num_shops = elite_shop_counts()
+        return num_elites, num_shops, num_unknowns, num_rests
+
+    if act_index == 1:
+        # Hive.cs: restCount = NextGaussianInt(6, 1, 6, 7); unknowns = Standard - 1
+        num_rests = rng.next_gaussian_int(mean=6, stddev=1, min_val=6, max_val=7)
+        num_unknowns = rng.next_gaussian_int(mean=12, stddev=1, min_val=10, max_val=14) - 1
+        num_elites, num_shops = elite_shop_counts()
         return num_elites, num_shops, num_unknowns, num_rests
 
     if act_index == 2:
-        count_rng = Rng(rng.seed, counter=rng.counter)
-        _, _, num_unknowns, _ = base_counts(count_rng)
+        # Glory.cs: restCount = NextInt(5, 7) rolled first, then
+        # unknownCount = StandardRandomUnknownCount(mapRng) - 1 from the same
+        # map RNG stream.
         num_rests = rng.next_int_exclusive(5, 7)
-        if has_gloom:
-            num_rests -= 1
-        num_elites, num_shops, _, _ = base_counts(rng)
-        return num_elites, num_shops, num_unknowns - 1, num_rests
+        num_unknowns = rng.next_gaussian_int(mean=12, stddev=1, min_val=10, max_val=14) - 1
+        num_elites, num_shops = elite_shop_counts()
+        return num_elites, num_shops, num_unknowns, num_rests
 
     num_elites = round(5 * (1.6 if has_swarming else 1.0))
     num_shops = 3
@@ -443,7 +464,8 @@ def _redirect_to_spoils_treasure(act_map: ActMap, stray: MapPoint, treasure: Map
 
 
 def _is_spoils_type_valid(point: MapPoint, point_type: MapPointType, map_length: int) -> bool:
-    if point.row < 5 and point_type in (MapPointType.REST_SITE, MapPointType.ELITE):
+    # C# SpoilsActMap.IsValidForLower: "if (mapPoint.coord.row < 6)"
+    if point.row < 6 and point_type in (MapPointType.REST_SITE, MapPointType.ELITE):
         return False
     if point.row >= map_length - 3 and point_type == MapPointType.REST_SITE:
         return False
@@ -476,11 +498,14 @@ def _assign_spoils_room_types(
 ) -> None:
     from collections import deque
 
+    # C# SpoilsActMap.AssignPointTypes: fixed rows also clear CanBeModified.
     for point in act_map.get_row(act_map.map_length - 1):
         point.point_type = MapPointType.REST_SITE
+        point.can_be_modified = False
     for point in act_map.get_row(1):
         if point.point_type == MapPointType.UNASSIGNED:
             point.point_type = MapPointType.MONSTER
+        point.can_be_modified = False
 
     pool_list: list[MapPointType] = []
     pool_list.extend([MapPointType.REST_SITE] * num_rests)
@@ -489,17 +514,25 @@ def _assign_spoils_room_types(
     pool_list.extend([MapPointType.UNKNOWN] * num_unknowns)
     pool: deque[MapPointType] = deque(pool_list)
 
-    points = [p for p in act_map.room_points()]
-    rng.shuffle(points)
-    for point in points:
-        if point.point_type != MapPointType.UNASSIGNED:
-            continue
-        for _ in range(len(pool)):
-            candidate = pool.popleft()
-            if _is_spoils_type_valid(point, candidate, act_map.map_length):
-                point.point_type = candidate
+    # C# AssignRemainingTypesToRandomPoints (spoils variant): up to 3 passes,
+    # each re-collecting and StableShuffle-ing the still-unassigned points.
+    for _pass in range(3):
+        if not pool:
+            break
+        points = [p for p in act_map.room_points()]
+        points.sort(key=lambda p: (p.coord.col, p.coord.row))
+        rng.shuffle(points)
+        for point in points:
+            if not pool:
                 break
-            pool.append(candidate)
+            if point.point_type != MapPointType.UNASSIGNED:
+                continue
+            for _ in range(len(pool)):
+                candidate = pool.popleft()
+                if _is_spoils_type_valid(point, candidate, act_map.map_length):
+                    point.point_type = candidate
+                    break
+                pool.append(candidate)
 
     for point in act_map.room_points():
         if point.point_type == MapPointType.UNASSIGNED:
@@ -539,6 +572,7 @@ def generate_spoils_act_map(
 
     treasure = act_map.get_or_create(MAP_WIDTH // 2, treasure_row)
     treasure.point_type = MapPointType.TREASURE
+    treasure.can_be_modified = False  # C# GenerateHourglassMap
     for point in list(act_map.get_row(treasure_row)):
         if point is not treasure:
             _redirect_to_spoils_treasure(act_map, point, treasure)
@@ -556,6 +590,34 @@ def generate_spoils_act_map(
         num_unknowns=num_unknowns,
         num_rests=num_rests,
     )
+
+    # C# SpoilsActMap ctor: MapPathPruning.PruneAndRepair (no Center/Spread/
+    # Straighten post-processing for the hourglass map).
+    room_grid: dict[tuple[int, int], MapPoint] = {
+        coord: point
+        for coord, point in act_map._grid.items()
+        if point is not act_map.start_point and point is not act_map.boss_point
+    }
+
+    def _is_valid_spoils_type(point_type: MapPointType, point: MapPoint) -> bool:
+        return _is_spoils_type_valid(point, point_type, act_map.map_length)
+
+    prune_and_repair(
+        room_grid,
+        set(start_points),
+        act_map.start_point,
+        rng,
+        is_valid_point_type=_is_valid_spoils_type,
+        num_shops=num_shops,
+        num_elites=num_elites,
+        num_rests=num_rests,
+        num_unknowns=num_unknowns,
+    )
+    act_map._grid = dict(room_grid)
+    act_map._grid[(act_map.start_point.coord.col, 0)] = act_map.start_point
+    act_map._grid[
+        (act_map.boss_point.coord.col, act_map.map_length)
+    ] = act_map.boss_point
     return act_map
 
 
@@ -566,6 +628,7 @@ def generate_act_map(
     replace_treasure_with_elite: bool = False,
     act_index: int = 0,
     num_elites_override: int | None = None,
+    ignore_rules_for: frozenset[MapPointType] = frozenset(),
 ) -> ActMap:
     """Generate a complete act map.
 
@@ -575,6 +638,8 @@ def generate_act_map(
         ascension_level: Current ascension level.
         replace_treasure_with_elite: If True, treasure row becomes elite.
         act_index: Which act (0=Overgrowth, 1=Hive, 2=Glory).
+        ignore_rules_for: Point types exempt from placement rules
+            (C# MapPointTypeCounts.PointTypesThatIgnoreRules).
 
     Returns:
         A fully generated ActMap with all room types assigned.
@@ -584,6 +649,17 @@ def generate_act_map(
     # Create start and boss meta-nodes
     act_map.start_point = act_map.get_or_create(3, 0)
     act_map.boss_point = act_map.get_or_create(3, act_map.map_length)
+
+    # C# StandardActMap ctor order: _pointTypeCounts = actModel
+    # .GetMapPointTypes(mapRng) is assigned BEFORE GenerateMap(), so the
+    # per-act counts roll first from the fresh map RNG stream.
+    num_elites, num_shops, num_unknowns, num_rests = _map_point_type_counts(
+        rng,
+        ascension_level=ascension_level,
+        act_index=act_index,
+    )
+    if num_elites_override is not None:
+        num_elites = num_elites_override
 
     # Generate 7 random paths
     start_points: list[MapPoint] = []
@@ -610,14 +686,6 @@ def generate_act_map(
     for point in act_map.get_row(1):
         act_map.start_point.add_child(point)
 
-    num_elites, num_shops, num_unknowns, num_rests = _map_point_type_counts(
-        rng,
-        ascension_level=ascension_level,
-        act_index=act_index,
-    )
-    if num_elites_override is not None:
-        num_elites = num_elites_override
-
     # Assign room types
     _assign_room_types(
         act_map, rng,
@@ -626,9 +694,44 @@ def generate_act_map(
         num_unknowns=num_unknowns,
         num_rests=num_rests,
         replace_treasure_with_elite=replace_treasure_with_elite,
+        ignore_rules_for=ignore_rules_for,
     )
 
-    # Post-processing
-    _center_grid(act_map)
+    # C# StandardActMap ctor (L100-108):
+    #   GenerateMap -> AssignPointTypes -> MapPathPruning.PruneAndRepair
+    #   -> CenterGrid -> SpreadAdjacentMapPoints -> StraightenPaths.
+    # The pruning grid holds ONLY room points (the C# Grid array never
+    # contains the Ancient start / Boss points; MapPathPruning.IsInMap
+    # special-cases those two types).
+    room_grid: dict[tuple[int, int], MapPoint] = {
+        coord: point
+        for coord, point in act_map._grid.items()
+        if point is not act_map.start_point and point is not act_map.boss_point
+    }
+
+    def _is_valid_point_type(point_type: MapPointType, point: MapPoint) -> bool:
+        # C# StandardActMap.IsValidPointType (no ignore-rules check here).
+        return _is_type_valid_for_point(point, point_type, act_map.map_length)
+
+    prune_and_repair(
+        room_grid,
+        set(start_points),
+        act_map.start_point,
+        rng,
+        is_valid_point_type=_is_valid_point_type,
+        num_shops=num_shops,
+        num_elites=num_elites,
+        num_rests=num_rests,
+        num_unknowns=num_unknowns,
+    )
+    center_grid(room_grid)
+    spread_adjacent_map_points(room_grid)
+    straighten_paths(room_grid)
+
+    act_map._grid = dict(room_grid)
+    act_map._grid[(act_map.start_point.coord.col, 0)] = act_map.start_point
+    act_map._grid[
+        (act_map.boss_point.coord.col, act_map.map_length)
+    ] = act_map.boss_point
 
     return act_map

@@ -368,10 +368,20 @@ def test_web_session_can_continue_to_second_map_node_after_rewards() -> None:
 
     state = _reach_first_combat_reward(session)
     state = _skip_reward_screens_until_map(state, session)
-    assert state["screen"]["current"] == (0, 1)
+    # The exact column of the visited row-1 node depends on the generated
+    # map; the flow invariant is being back on the map at row 1.
+    assert state["screen"]["current"][1] == 1
 
     state = _take_first_map_node(state, session)
 
-    assert state["phase"] == RunManager.PHASE_COMBAT
-    assert state["screen"]["title"] == "Combat"
+    # The room type at the second node depends on the generated map; the flow
+    # invariant is that we leave the map and enter that room at floor 2.
+    room_phases = {
+        RunManager.PHASE_COMBAT,
+        RunManager.PHASE_SHOP,
+        RunManager.PHASE_REST_SITE,
+        RunManager.PHASE_EVENT,
+        RunManager.PHASE_TREASURE,
+    }
+    assert state["phase"] in room_phases
     assert state["floor"] == 2

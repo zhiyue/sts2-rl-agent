@@ -5,6 +5,11 @@ from __future__ import annotations
 from typing import Callable, TYPE_CHECKING
 
 from sts2_env.core.rng import Rng
+from sts2_env.encounters.room_set import (
+    ROOM_TYPE_BOSS,
+    ROOM_TYPE_ELITE,
+    EncounterSpec,
+)
 
 if TYPE_CHECKING:
     from sts2_env.core.combat import CombatState
@@ -31,7 +36,7 @@ from sts2_env.monsters.act3 import (
     create_test_subject,
 )
 from sts2_env.monsters.act1 import apply_cubex_construct_room_setup, create_cubex_construct
-from sts2_env.monsters.act4 import create_punch_construct
+from sts2_env.monsters.act4 import create_punch_construct, create_aeonglass
 from sts2_env.monsters.shared import create_torch_head_amalgam
 
 EncounterSetup = Callable[..., None]
@@ -185,10 +190,19 @@ def setup_test_subject_boss(combat: CombatState, rng: Rng) -> None:
     combat.add_enemy(creature, ai)
 
 
+def setup_aeonglass_boss(combat: CombatState, rng: Rng) -> None:
+    # C# AeonglassBoss.GenerateMonsters: single Aeonglass, RoomType.Boss
+    # (decompiled/MegaCrit.Sts2.Core.Models.Encounters/AeonglassBoss.cs).
+    creature, ai = create_aeonglass(rng, ascension_level=getattr(combat, "ascension_level", 0))
+    combat.add_enemy(creature, ai)
+
+
 BOSS_ENCOUNTERS: list[EncounterSetup] = [
+    # C# Glory.GenerateAllEncounters bosses: AeonglassBoss, QueenBoss,
+    # TestSubjectBoss. (The Doormaker is not an act encounter in v0.107.1.)
+    setup_aeonglass_boss,
     setup_queen_boss,
     setup_test_subject_boss,
-    setup_doormaker_boss,
 ]
 
 
@@ -196,7 +210,7 @@ ALL_ACT3_ENCOUNTERS: list[EncounterSetup] = [
     setup_axebots_normal,
     setup_construct_menagerie_normal,
     setup_devoted_sculptor_weak,
-    setup_doormaker_boss,
+    setup_aeonglass_boss,
     setup_fabricator_normal,
     setup_frog_knight_normal,
     setup_globe_head_normal,
@@ -211,4 +225,29 @@ ALL_ACT3_ENCOUNTERS: list[EncounterSetup] = [
     setup_test_subject_boss,
     setup_the_lost_and_forgotten_normal,
     setup_turret_operator_weak,
+]
+
+
+# ---- C#-ordered encounter table (v0.107.1) ----
+# Glory.GenerateAllEncounters array order, with each entry's
+# EncounterModel.Tags / IsWeak / RoomType (ActModel.cs anti-repeat inputs).
+ALL_ENCOUNTER_SPECS: list[EncounterSpec] = [
+    EncounterSpec(setup_axebots_normal),
+    EncounterSpec(setup_construct_menagerie_normal),
+    EncounterSpec(setup_devoted_sculptor_weak, is_weak=True),
+    EncounterSpec(setup_aeonglass_boss, room_type=ROOM_TYPE_BOSS),
+    EncounterSpec(setup_fabricator_normal),
+    EncounterSpec(setup_frog_knight_normal),
+    EncounterSpec(setup_globe_head_normal),
+    EncounterSpec(setup_knights_elite, tags=frozenset({"Knights"}), room_type=ROOM_TYPE_ELITE),
+    EncounterSpec(setup_mecha_knight_elite, room_type=ROOM_TYPE_ELITE),
+    EncounterSpec(setup_owl_magistrate_normal),
+    EncounterSpec(setup_queen_boss, room_type=ROOM_TYPE_BOSS),
+    EncounterSpec(setup_scrolls_of_biting_normal, tags=frozenset({"Scrolls"})),
+    EncounterSpec(setup_scrolls_of_biting_weak, tags=frozenset({"Scrolls"}), is_weak=True),
+    EncounterSpec(setup_slimed_berserker_normal),
+    EncounterSpec(setup_soul_nexus_elite, room_type=ROOM_TYPE_ELITE),
+    EncounterSpec(setup_test_subject_boss, room_type=ROOM_TYPE_BOSS),
+    EncounterSpec(setup_the_lost_and_forgotten_normal),
+    EncounterSpec(setup_turret_operator_weak, is_weak=True),
 ]

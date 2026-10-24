@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from sts2_env.cards.base import CardInstance
 from sts2_env.cards.factory import create_card
@@ -961,6 +961,28 @@ ENCOUNTER_GOLD_REWARD_RANGES: dict[RoomType, tuple[int, int]] = {
     RoomType.ELITE: (35, 45),
     RoomType.BOSS: (100, 100),
 }
+
+
+def calculate_gold_proportion(combat_state: Any) -> float:
+    """Proportion of gold granted when a combat ends.
+
+    Matches C# EncounterModel.CalculateGoldProportion (EncounterModel.cs
+    L373-376): ``1f - EscapedCreatures.Count / SpawnedEnemies.Count``.
+    Escaped creatures are ones that fled combat (removed while still alive);
+    creatures that died are not counted as escaped (C# only adds to
+    EscapedCreatures via CreatureEscaped). The Python engine flags both
+    deaths and flees with ``escaped`` on the Creature, so a fled creature is
+    identified by ``escaped`` with HP still above zero.
+    """
+    spawned = list(getattr(combat_state, "enemies", None) or [])
+    if not spawned:
+        return 1.0
+    escaped = sum(
+        1
+        for creature in spawned
+        if getattr(creature, "escaped", False) and creature.current_hp > 0
+    )
+    return 1.0 - escaped / len(spawned)
 POVERTY_ASCENSION_LEVEL = 3
 POVERTY_ASCENSION_GOLD_MULTIPLIER = 0.75
 TUTORIAL_FIRST_RUN_COUNT = 0
@@ -1039,8 +1061,10 @@ class RewardsSet:
         elif room.room_type in ENCOUNTER_GOLD_REWARD_RANGES:
             low, high = ENCOUNTER_GOLD_REWARD_RANGES[room.room_type]
             if run_state.ascension_level >= POVERTY_ASCENSION_LEVEL:
-                low = round(low * POVERTY_ASCENSION_GOLD_MULTIPLIER)
-                high = round(high * POVERTY_ASCENSION_GOLD_MULTIPLIER)
+                # C# EncounterModel.Min/MaxGoldReward: num *= 0.75 then
+                # `return (int)num` -- truncation, not rounding.
+                low = int(low * POVERTY_ASCENSION_GOLD_MULTIPLIER)
+                high = int(high * POVERTY_ASCENSION_GOLD_MULTIPLIER)
             gold_proportion = getattr(room, "gold_proportion", 1.0) if room.room_type == RoomType.MONSTER else 1.0
             if gold_proportion > 0:
                 self.rewards.append(

@@ -45,6 +45,10 @@ class MapPoint:
     parents: list[MapPoint] = field(default_factory=list)
     quests: list[object] = field(default_factory=list)
     x_offset: float = 0.0  # visual offset for spreading
+    # C# MapPoint.CanBeModified: cleared for fixed rows during
+    # AssignPointTypes so repair (MapPathPruning.RepairPointType) never
+    # replaces them.
+    can_be_modified: bool = True
 
     @property
     def col(self) -> int:

@@ -41,8 +41,14 @@ POTION_BASE_COSTS = {
 }
 POTION_DEFAULT_BASE_COST = 50
 
+# C# MerchantCardRemovalEntry: BaseCost => AscensionHelper.GetValueIfAscension(
+#   AscensionLevel.Inflation, 100, 75); PriceIncrease => ... 50 : 25.
+# C# AscensionLevel.Inflation == 6.
 CARD_REMOVAL_BASE_COST = 75
 CARD_REMOVAL_COST_INCREASE = 25
+CARD_REMOVAL_INFLATION_BASE_COST = 100
+CARD_REMOVAL_INFLATION_COST_INCREASE = 50
+INFLATION_ASCENSION_LEVEL = 6
 
 
 def card_base_cost(rarity: CardRarity) -> int:
@@ -71,9 +77,21 @@ def relic_price(merchant_cost: int, rng: Rng) -> int:
     return round(merchant_cost * rng.next_float_range(*MERCHANT_RELIC_PRICE_VARIANCE))
 
 
-def card_removal_cost(removals_used: int) -> int:
-    """75 + 25 * number of removals already used."""
-    return CARD_REMOVAL_BASE_COST + CARD_REMOVAL_COST_INCREASE * removals_used
+def card_removal_cost(removals_used: int, ascension_level: int = 0) -> int:
+    """Cost of the card removal option.
+
+    Matches C# MerchantCardRemovalEntry.CalcCost:
+      cost = BaseCost + PriceIncrease * CardShopRemovalsUsed
+    where BaseCost/PriceIncrease are 75/25 normally and 100/50 at
+    AscensionLevel.Inflation (6+).
+    """
+    if ascension_level >= INFLATION_ASCENSION_LEVEL:
+        base = CARD_REMOVAL_INFLATION_BASE_COST
+        increase = CARD_REMOVAL_INFLATION_COST_INCREASE
+    else:
+        base = CARD_REMOVAL_BASE_COST
+        increase = CARD_REMOVAL_COST_INCREASE
+    return base + increase * removals_used
 
 
 # ── Relic Rarity Roll ─────────────────────────────────────────────────
@@ -108,11 +126,13 @@ MERCHANT_CHARACTER_CARD_TYPES = ("Attack", "Attack", "Skill", "Skill", "Power")
 MERCHANT_COLORLESS_CARD_RARITIES = (CardRarity.UNCOMMON, CardRarity.RARE)
 MERCHANT_ROLLED_RELIC_COUNT = 2
 MERCHANT_POTION_COUNT = 3
+# C# RelicModel.MerchantCost (RelicModel.cs L304-312): base price by rarity,
+# rolled in the shop with x[0.85, 1.15] variance (MerchantRelicEntry.CalcCost).
 RELIC_BASE_COSTS = {
-    RelicRarity.COMMON: 150,
-    RelicRarity.UNCOMMON: 250,
-    RelicRarity.RARE: 300,
-    RelicRarity.SHOP: 150,
+    RelicRarity.COMMON: 175,
+    RelicRarity.UNCOMMON: 225,
+    RelicRarity.RARE: 275,
+    RelicRarity.SHOP: 200,
 }
 RELIC_DEFAULT_BASE_COST = 200
 
@@ -445,7 +465,10 @@ def generate_shop_inventory(run_state: RunState) -> ShopInventory:
     # ── Card removal ──────────────────────────────────────────────────
     inv.removal_cost = apply_merchant_price_modifiers(
         run_state,
-        card_removal_cost(run_state.player.card_shop_removals_used),
+        card_removal_cost(
+            run_state.player.card_shop_removals_used,
+            ascension_level=run_state.ascension_level,
+        ),
         item_kind="remove_card",
         item=inv,
     )

@@ -37,35 +37,51 @@ class ActConfig:
 
 
 # ── Act definitions ───────────────────────────────────────────────────
+#
+# Event pools mirror each C# act's `AllEvents` plus ModelDb.AllSharedEvents
+# (v0.107.1). The C# shared pool (18 events) is appended to every act:
+#   BrainLeech, CrystalSphere, DollRoom, FakeMerchant, PotionCourier,
+#   RanwidTheElder, RelicTrader, RoomFullOfCheese, SelfHelpBook,
+#   SlipperyBridge, StoneOfAllTime, Symbiote, TeaMaster, TheFutureOfPotions,
+#   TheLegendsWereTrue, ThisOrThat, WarHistorianRepy, WelcomeToWongos
+#
+# Ancients are NOT part of the event rotation in C#: they are
+# AncientEventModels rolled per act (Overgrowth/Underdocks: Neow;
+# Hive: Orobas (epoch-gated) / Pael / Tezcatara; Glory: Nonupeipe / Tanx /
+# Vakuu; shared ancient: Darv) and only appear at the act's Ancient map node.
+# This simulator does not implement the per-act Ancient node yet (acts 2/3
+# start directly on the map), so ancients are excluded from these pools.
+
+_SHARED_EVENT_IDS = [
+    "BrainLeech", "CrystalSphere", "DollRoom", "FakeMerchant",
+    "PotionCourier", "RanwidTheElder", "RelicTrader", "RoomFullOfCheese",
+    "SelfHelpBook", "SlipperyBridge", "StoneOfAllTime", "Symbiote",
+    "TeaMaster", "TheFutureOfPotions", "TheLegendsWereTrue", "ThisOrThat",
+    "WarHistorianRepy", "WelcomeToWongos",
+]
 
 ACT_0 = ActConfig(
     act_index=0,
     num_rooms=15,
-    boss_ids=["TheLich"],
-    elite_ids=["SentryAndSentry", "GremlinNob", "BookOfStabbing"],
+    boss_ids=["VantomBoss", "CeremonialBeastBoss", "TheKinBoss"],
+    elite_ids=["BygoneEffigyElite", "ByrdonisElite", "PhrogParasiteElite"],
     weak_encounter_ids=[
-        "TwoLouses", "ThreeJawWorms", "SmallSlimes",
-        "Cultist", "GremlinGang",
+        "ShrinkerBeetleWeak", "FuzzyWurmCrawlerWeak", "NibbitsWeak", "SlimesWeak",
     ],
     strong_encounter_ids=[
-        "BlueSlaver", "RedSlaver", "FungiBeast",
-        "LooterGroup", "ExordiumWildlife", "LotOfSlimes",
+        "CubexConstructNormal", "FlyconidNormal", "FogmogNormal",
+        "InkletsNormal", "MawlerNormal", "NibbitsNormal", "OvergrowthCrawlers",
+        "RubyRaidersNormal", "SlimesNormal", "SlitheringStranglerNormal",
+        "SnappingJaxfruitNormal", "VineShamblerNormal",
     ],
     event_ids=[
-        "AbyssalBaths", "Amalgamator", "BattlewornDummy", "BrainLeech",
-        "Bugslayer", "ByrdonisNest", "ColorfulPhilosophers",
-        "ColossalFlower", "Darv", "DenseVegetation",
-        "DoorsOfLightAndDark", "DrowningBeacon",
-        "GraveOfTheForgotten", "HungryForMushrooms",
-        "InfestedAutomaton", "LostWisp", "Nonupeipe",
-        "Orobas", "Pael", "PunchOff", "Reflections",
-        "RoomFullOfCheese", "RoundTeaParty", "SapphireSeed",
-        "SelfHelpBook", "SpiritGrafter", "SunkenStatue",
-        "SunkenTreasury", "TabletOfTruth", "Tanx",
-        "TeaMaster", "Tezcatara", "TheLegendsWereTrue",
-        "ThisOrThat", "TinkerTime", "TrashHeap", "Trial",
-        "UnrestSite", "Vakuu", "Wellspring",
-        "WoodCarvings", "ZenWeaver",
+        # Overgrowth.AllEvents (C# MegaCrit.Sts2.Core.Models.Acts/Overgrowth.cs)
+        "AromaOfChaos", "ByrdonisNest", "DenseVegetation",
+        "JungleMazeAdventure", "LuminousChoir", "MorphicGrove",
+        "SapphireSeed", "SunkenStatue", "TabletOfTruth", "UnrestSite",
+        "Wellspring", "WhisperingHollow", "WoodCarvings",
+        # ModelDb.AllSharedEvents
+        *_SHARED_EVENT_IDS,
     ],
 )
 
@@ -73,36 +89,24 @@ ACT_1 = ActConfig(
     act_index=1,
     num_rooms=14,  # C# Hive.BaseNumberOfRooms = 14
     num_weak_encounters=2,  # C# Hive.NumberOfWeakEncounters = 2
-    boss_ids=["TheCollector", "Automaton", "Champ"],
-    elite_ids=["TaskMaster", "SphericGuardian", "Snecko"],
+    boss_ids=["KaiserCrabBoss", "KnowledgeDemonBoss", "TheInsatiableBoss"],
+    elite_ids=["DecimillipedeElite", "EntomancerElite", "InfestedPrismsElite"],
     weak_encounter_ids=[
-        "SnakePlant", "Centurion", "ThreeByrds",
+        "BowlbugsWeak", "ExoskeletonsWeak", "ThievingHopperWeak", "TunnelerWeak",
     ],
     strong_encounter_ids=[
-        "SlaverGroup", "BookOfStabbing", "MushroomGroup",
+        "BowlbugsNormal", "ChompersNormal", "ExoskeletonsNormal",
+        "HunterKillerNormal", "LouseProgenitorNormal", "MytesNormal",
+        "OvicopterNormal", "SlumberingBeetleNormal", "SpinyToadNormal",
+        "TheObscuraNormal",
     ],
     event_ids=[
-        "AbyssalBaths", "Amalgamator", "AromaOfChaos",
-        "BattlewornDummy", "Bugslayer", "ByrdonisNest",
-        "ColorfulPhilosophers", "ColossalFlower", "CrystalSphere",
-        "Darv", "DenseVegetation", "DollRoom",
-        "DoorsOfLightAndDark", "DrowningBeacon", "EndlessConveyor",
-        "FakeMerchant", "FieldOfManSizedHoles",
-        "GraveOfTheForgotten", "HungryForMushrooms",
-        "InfestedAutomaton", "JungleMazeAdventure",
-        "LostWisp", "LuminousChoir", "MorphicGrove",
-        "Nonupeipe", "Orobas", "Pael", "PotionCourier",
-        "PunchOff", "RanwidTheElder", "Reflections",
-        "RelicTrader", "RoundTeaParty", "SapphireSeed",
-        "SelfHelpBook", "SlipperyBridge", "SpiralingWhirlpool",
-        "SpiritGrafter", "StoneOfAllTime", "SunkenStatue",
-        "SunkenTreasury", "Symbiote", "TabletOfTruth",
-        "Tanx", "Tezcatara", "TheFutureOfPotions",
-        "TheLanternKey", "ThisOrThat", "TinkerTime",
-        "TrashHeap", "Trial", "UnrestSite", "Vakuu",
-        "WaterloggedScriptorium", "WelcomeToWongos",
-        "Wellspring", "WhisperingHollow", "WoodCarvings",
-        "ZenWeaver",
+        # Hive.AllEvents (C# MegaCrit.Sts2.Core.Models.Acts/Hive.cs)
+        "Amalgamator", "Bugslayer", "ColorfulPhilosophers", "ColossalFlower",
+        "FieldOfManSizedHoles", "InfestedAutomaton", "LostWisp",
+        "SpiritGrafter", "TheLanternKey", "ZenWeaver",
+        # ModelDb.AllSharedEvents
+        *_SHARED_EVENT_IDS,
     ],
 )
 
@@ -110,34 +114,23 @@ ACT_2 = ActConfig(
     act_index=2,
     num_rooms=13,  # C# Glory.BaseNumberOfRooms = 13
     num_weak_encounters=2,  # C# Glory.NumberOfWeakEncounters = 2
-    boss_ids=["AwakenedOne", "TimeEater", "DonuAndDeca"],
-    elite_ids=["GiantHead", "Nemesis", "Reptomancer"],
+    boss_ids=["AeonglassBoss", "QueenBoss", "TestSubjectBoss"],
+    elite_ids=["KnightsElite", "MechaKnightElite", "SoulNexusElite"],
     weak_encounter_ids=[
-        "Darkling", "OrbWalker",
+        "DevotedSculptorWeak", "ScrollsOfBitingWeak", "TurretOperatorWeak",
     ],
     strong_encounter_ids=[
-        "WrithingMass", "Transient", "Maw",
+        "AxebotsNormal", "ConstructMenagerieNormal", "FabricatorNormal",
+        "FrogKnightNormal", "GlobeHeadNormal", "OwlMagistrateNormal",
+        "ScrollsOfBitingNormal", "SlimedBerserkerNormal",
+        "TheLostAndForgottenNormal",
     ],
     event_ids=[
-        "AbyssalBaths", "Amalgamator", "AromaOfChaos",
-        "BattlewornDummy", "Bugslayer", "ByrdonisNest",
-        "ColorfulPhilosophers", "ColossalFlower", "CrystalSphere",
-        "Darv", "DenseVegetation", "DoorsOfLightAndDark",
-        "DrowningBeacon", "EndlessConveyor", "FakeMerchant",
-        "FieldOfManSizedHoles", "GraveOfTheForgotten",
-        "HungryForMushrooms", "InfestedAutomaton",
-        "JungleMazeAdventure", "LostWisp", "LuminousChoir",
-        "MorphicGrove", "Nonupeipe", "Orobas", "Pael",
-        "PotionCourier", "PunchOff", "RanwidTheElder",
-        "Reflections", "RelicTrader", "RoundTeaParty",
-        "SapphireSeed", "SelfHelpBook", "SlipperyBridge",
-        "SpiralingWhirlpool", "SpiritGrafter",
-        "SunkenStatue", "SunkenTreasury", "Symbiote",
-        "TabletOfTruth", "Tanx", "Tezcatara",
-        "TheFutureOfPotions", "TheLanternKey", "ThisOrThat",
-        "TinkerTime", "TrashHeap", "Trial", "UnrestSite",
-        "Vakuu", "WaterloggedScriptorium", "Wellspring",
-        "WhisperingHollow", "WoodCarvings", "ZenWeaver",
+        # Glory.AllEvents (C# MegaCrit.Sts2.Core.Models.Acts/Glory.cs)
+        "BattlewornDummy", "GraveOfTheForgotten", "HungryForMushrooms",
+        "Reflections", "RoundTeaParty", "TinkerTime", "Trial",
+        # ModelDb.AllSharedEvents
+        *_SHARED_EVENT_IDS,
     ],
 )
 

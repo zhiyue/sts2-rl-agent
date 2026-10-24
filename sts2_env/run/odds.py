@@ -272,18 +272,17 @@ class PotionRewardOdds:
     def roll(self, rng: Rng, is_elite: bool = False, force: bool = False) -> bool:
         """Roll whether a potion drops. Returns True if yes.
 
-        Matches C# PotionRewardOdds.Roll: odds update uses base value
-        (without elite bonus), but drop check includes elite bonus.
+        Matches C# PotionRewardOdds.Roll (PotionRewardOdds.cs L62-69): the
+        elite bonus (25%, halved) is added to the comparison threshold, and
+        that SAME comparison decides the +/-0.10 odds update.
         """
-        saved_value = self.current_value
-        roll_val = rng.next_float()
-
-        # Update odds based on raw roll vs base value (no elite bonus)
-        if roll_val < saved_value or force:
-            self.current_value -= self.SWING
-        else:
-            self.current_value += self.SWING
-
-        # Return check includes elite bonus
+        # C#: num3 = currentValue + (elite ? 0.25f : 0f) * 0.5f
         elite_bonus = self.ELITE_BONUS if is_elite else 0.0
-        return force or roll_val < saved_value + elite_bonus * 0.50
+        threshold = self.current_value + elite_bonus * 0.50
+        roll_val = rng.next_float()
+        # C#: if (flag || num4 < num3) { CurrentValue -= 0.1f; return true; }
+        if force or roll_val < threshold:
+            self.current_value -= self.SWING
+            return True
+        self.current_value += self.SWING
+        return False

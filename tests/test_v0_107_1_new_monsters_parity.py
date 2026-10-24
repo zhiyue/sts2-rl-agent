@@ -1,7 +1,7 @@
 """Parity tests for the last batch of new monsters/encounters (v0.107.1).
 
 Ground truth: decompiled C# under decompiled/MegaCrit.Sts2.Core.Models.
-Covers Aeonglass (act 4 queen-tier boss), the AeonglassBoss and SeapunkNormal
+Covers Aeonglass (C# Glory boss in v0.107.1), the AeonglassBoss and SeapunkNormal
 encounter compositions, and pool registration.
 """
 
@@ -12,11 +12,11 @@ from sts2_env.cards.ironclad_basic import create_ironclad_starter_deck, make_str
 from sts2_env.core.combat import CombatState
 from sts2_env.core.enums import CardId, PowerId
 from sts2_env.core.rng import Rng
+from sts2_env.encounters.act3 import setup_aeonglass_boss
 from sts2_env.encounters.act4 import (
     ALL_ACT4_ENCOUNTERS,
     BOSS_ENCOUNTERS as ACT4_BOSS,
     NORMAL_ENCOUNTERS as ACT4_NORMAL,
-    setup_aeonglass_boss,
     setup_seapunk_normal,
 )
 from sts2_env.monsters.act4 import (
@@ -267,8 +267,13 @@ class TestNewAct4Encounters:
         ]
         assert all(combat.enemy_ais[enemy.combat_id].current_move.is_move for enemy in combat.enemies)
 
-    def test_new_encounters_registered_in_act4_pools(self):
-        assert setup_aeonglass_boss in ACT4_BOSS
+    def test_new_encounters_registered_in_pools(self):
+        # C# v0.107.1: AeonglassBoss is a Glory (act 3) boss; SeapunkNormal is
+        # an Underdocks normal.
+        from sts2_env.encounters.act3 import ALL_ACT3_ENCOUNTERS, BOSS_ENCOUNTERS as ACT3_BOSS
+
+        assert setup_aeonglass_boss in ACT3_BOSS
+        assert setup_aeonglass_boss in ALL_ACT3_ENCOUNTERS
+        assert setup_aeonglass_boss not in ACT4_BOSS
         assert setup_seapunk_normal in ACT4_NORMAL
-        assert setup_aeonglass_boss in ALL_ACT4_ENCOUNTERS
         assert setup_seapunk_normal in ALL_ACT4_ENCOUNTERS

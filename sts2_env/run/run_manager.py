@@ -65,6 +65,7 @@ from sts2_env.run.reward_objects import (
     RewardsSet,
     TransformCardsReward,
     UpgradeCardsReward,
+    calculate_gold_proportion,
     CARD_REWARD_ALTERNATIVE_LIMIT_MESSAGE,
     MAX_CARD_REWARD_ALTERNATIVES,
 )
@@ -160,28 +161,9 @@ def _get_starter_deck(character_id: str) -> list[CardInstance]:
 
 def _get_encounter_pools(act_index: int) -> dict[str, list]:
     """Return {weak, normal, elite, boss} encounter setup lists for an act."""
-    if act_index == 0:
-        from sts2_env.encounters.act1 import (
-            WEAK_ENCOUNTERS, NORMAL_ENCOUNTERS, ELITE_ENCOUNTERS, BOSS_ENCOUNTERS,
-        )
-    elif act_index == 1:
-        from sts2_env.encounters.act2 import (
-            WEAK_ENCOUNTERS, NORMAL_ENCOUNTERS, ELITE_ENCOUNTERS, BOSS_ENCOUNTERS,
-        )
-    elif act_index == 2:
-        from sts2_env.encounters.act3 import (
-            WEAK_ENCOUNTERS, NORMAL_ENCOUNTERS, ELITE_ENCOUNTERS, BOSS_ENCOUNTERS,
-        )
-    else:
-        from sts2_env.encounters.act4 import (
-            WEAK_ENCOUNTERS, NORMAL_ENCOUNTERS, ELITE_ENCOUNTERS, BOSS_ENCOUNTERS,
-        )
-    return {
-        "weak": list(WEAK_ENCOUNTERS),
-        "normal": list(NORMAL_ENCOUNTERS),
-        "elite": list(ELITE_ENCOUNTERS),
-        "boss": list(BOSS_ENCOUNTERS),
-    }
+    from sts2_env.encounters import get_act_encounter_pools
+
+    return get_act_encounter_pools(act_index)
 
 
 _BOSS_RELIC_POOL = [
@@ -546,19 +528,20 @@ class RunManager:
         )
         self._selected_combat_player_id = player.player_id
 
-        # Select encounter from appropriate pool
-        pools = _get_encounter_pools(self._run_state.current_act_index)
+        # Select encounter from the act's pre-generated room set
+        # (C# RoomSet: NextNormalEncounter / NextEliteEncounter /
+        # NextBossEncounter read list[visited % len], then MarkVisited
+        # increments the counter when the room is entered).
+        room_set = self._run_state.get_act_room_set(self._run_state.current_act_index)
         if room_type == RoomType.BOSS:
-            pool = pools["boss"]
+            setup_fn = room_set.next_boss_encounter
         elif room_type == RoomType.ELITE:
-            pool = pools["elite"]
-        elif self._run_state.act_floor <= self._run_state.current_act.num_weak_encounters:
-            pool = pools["weak"]
+            setup_fn = room_set.next_elite_encounter
         else:
-            pool = pools["normal"]
+            setup_fn = room_set.next_normal_encounter
+        room_set.mark_visited(room_type)
 
-        if pool:
-            setup_fn = self._rng.choice(pool)
+        if setup_fn is not None:
             encounter_rng = Rng(self._rng.next_int(0, INT_MAX))
             setup_fn(self._combat, encounter_rng)
 
@@ -606,6 +589,12 @@ class RunManager:
         if setup_fn is not None:
             encounter_rng = Rng(self._rng.next_int(0, INT_MAX))
             setup_fn(self._combat, encounter_rng)
+        # NOTE: event combats do NOT consume a slot of the act's encounter
+        # sequences. C# enters them via EnterRoomWithoutExitingCurrentRoom
+        # (room stack count becomes 2), and MarkRoomVisited only fires when
+        # CurrentRoomCount == 1 (RunManager.cs L1127); the event's own
+        # EncounterModel is used instead of PullNextEncounter (EventModel.cs
+        # L625 builds the CombatRoom from the event's encounter).
         self._fire_modifiers_after_room_entered(RoomVisitContext(self._current_room.room_type), combat=self._combat)
         self._combat.start_combat()
 
@@ -1397,6 +1386,11 @@ class RunManager:
                     CardReward(player.player_id, context=context),
                 )
 
+        # C# CombatRoom.OnCombatEnded: GoldProportion = Encounter.CalculateGoldProportion(CombatState)
+        # (1 - escaped / spawned); Monsters flee -> less gold (EncounterModel.cs L373-376).
+        if isinstance(self._current_room, CombatRoom):
+            self._current_room.gold_proportion = calculate_gold_proportion(combat)
+
         if isinstance(self._current_room, CombatRoom) and getattr(self._current_room, "suppress_default_rewards", False):
             self._current_rewards = RewardsSet(player.player_id).empty_for_room(self._current_room)
             for reward in self._current_room.extra_rewards.get(player.player_id, []):
@@ -1799,7 +1793,10 @@ class RunManager:
         player = self._run_state.player
         player.card_shop_removals_used += 1
         inv.removal_used = True
-        inv.removal_cost = card_removal_cost(player.card_shop_removals_used)
+        inv.removal_cost = card_removal_cost(
+            player.card_shop_removals_used,
+            ascension_level=self._run_state.ascension_level,
+        )
         self._handle_post_shop_purchase("remove_card", inv, gold_spent=gold_spent)
 
     def _handle_post_shop_purchase(self, item_kind: str, entry: object, *, gold_spent: int) -> None:

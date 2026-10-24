@@ -169,9 +169,11 @@ def test_rewards_set_applies_poverty_ascension_to_encounter_gold_ranges():
     run_state = RunState(seed=46, character_id="Ironclad", ascension_level=3)
     run_state.initialize_run()
 
+    # C# EncounterModel.Min/MaxGoldReward (Poverty): multiply by 0.75 then
+    # `return (int)num` -- truncation: 10->7, 20->15, 35->26, 45->33, 100->75.
     expected = {
-        RoomType.MONSTER: (8, 15),
-        RoomType.ELITE: (26, 34),
+        RoomType.MONSTER: (7, 15),
+        RoomType.ELITE: (26, 33),
         RoomType.BOSS: (75, 75),
     }
     for room_type, expected_range in expected.items():

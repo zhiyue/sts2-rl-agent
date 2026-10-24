@@ -416,23 +416,38 @@ class TestWingedBootsParity:
         relic.after_room_entered(run_state.player, None)
 
         target_row = next_point.coord.row + 1
-        off_path_points = [
-            point for point in run_state.map.get_row(target_row)
-            if point not in next_point.children
-        ]
-        assert off_path_points, "map generator should offer off-path points"
-        for point in off_path_points[:3]:
+        # Walk off-path (to nodes not reachable from the current point) until
+        # all three charges are consumed. The walk adapts to the generated
+        # map shape: pruning/repair (A10) can make individual rows narrow, so
+        # the three off-path steps may span several rows.
+        current = next_point
+        row = target_row
+        guard = 0
+        while relic.times_used < 3 and guard < 30:
+            guard += 1
+            row_points = run_state.map.get_row(row)
+            off_path_points = [p for p in row_points if p not in current.children]
+            if not off_path_points:
+                # Step along the path to stay connected, then try the next row.
+                if current.children:
+                    current = current.children[0]
+                    run_state.add_visited_coord(current.coord)
+                    relic.after_room_entered(run_state.player, None)
+                row += 1
+                continue
+            point = off_path_points[0]
             run_state.add_visited_coord(point.coord)
             relic.after_room_entered(run_state.player, None)
+            current = point
+            row += 1
         assert relic.times_used == 3
         assert relic.is_used_up is True  # IsUsedUp: TimesUsed >= 3
         assert relic.should_allow_free_travel() is False  # ShouldAllowFreeTravel
 
         # Further off-path travel no longer consumes anything.
-        extra_row = off_path_points[0].coord.row + 1
         extra_points = [
-            point for point in run_state.map.get_row(extra_row)
-            if point not in off_path_points[0].children
+            point for point in run_state.map.get_row(row)
+            if point not in current.children
         ]
         if extra_points:
             run_state.add_visited_coord(extra_points[0].coord)

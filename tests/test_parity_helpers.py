@@ -972,6 +972,12 @@ class TestUntargetableReviveStates:
             character_id="Ironclad",
         )
         eye, eye_ai = create_eye_with_teeth(Rng(91))
+        # C# CombatManager.cs:192: combat is won once no *primary* enemy is
+        # alive.  EyeWithTeeth carries MinionPower (via Illusion), so it is a
+        # SECONDARY enemy — a solo secondary combat ends immediately, exactly
+        # like C#.  Pair it with a primary enemy to exercise the revive flow.
+        primary, primary_ai = create_shrinker_beetle(Rng(91))
+        combat.add_enemy(primary, primary_ai)
         combat.add_enemy(eye, eye_ai)
         combat.start_combat()
 

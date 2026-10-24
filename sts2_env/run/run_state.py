@@ -1397,6 +1397,89 @@ class RunRngSet:
         return self.map_rngs[act_index]
 
 
+class _EncounterGrabBag:
+    """C# MegaCrit.Sts2.Core.Helpers.GrabBag with the uniform weights used by
+    ActModel.GenerateRooms (every Add uses weight 1.0): draws without
+    replacement until empty, then the caller refills it."""
+
+    def __init__(self, entries: list):
+        self._entries = list(entries)
+
+    def any(self) -> bool:
+        return bool(self._entries)
+
+    def grab_and_remove(self, rng: Rng, predicate=None):
+        """C# GrabBag.GrabAndRemove: rejection-samples a weighted index until
+        the predicate matches; returns None when no entry can match."""
+        if predicate is not None and not any(predicate(e) for e in self._entries):
+            return None
+        if not self._entries:
+            return None
+        while True:
+            index = rng.next_int(0, len(self._entries) - 1)
+            entry = self._entries[index]
+            if predicate is None or predicate(entry):
+                self._entries.pop(index)
+                return entry
+
+
+class ActRoomSet:
+    """Per-act encounter queues: the encounter half of C#
+    MegaCrit.Sts2.Core.Rooms.RoomSet.
+
+    normal_encounters has one entry per potential normal fight (the first
+    ``num_weak`` are from the act's weak pool, the rest from its regular
+    pool); elite_encounters holds 15 entries; boss is rolled once per act.
+    Rooms pull ``list[visited % len]`` and visiting increments the counter
+    (C# RoomSet.NextNormalEncounter / NextEliteEncounter / NextBossEncounter /
+    MarkVisited).
+    """
+
+    def __init__(
+        self,
+        normal_encounters: list,
+        elite_encounters: list,
+        boss=None,
+        second_boss=None,
+    ):
+        self.normal_encounters = normal_encounters
+        self.elite_encounters = elite_encounters
+        self.boss = boss
+        self.second_boss = second_boss
+        self.normal_encounters_visited = 0
+        self.elite_encounters_visited = 0
+        self.boss_encounters_visited = 0
+
+    @property
+    def next_normal_encounter(self):
+        return self.normal_encounters[
+            self.normal_encounters_visited % len(self.normal_encounters)
+        ]
+
+    @property
+    def next_elite_encounter(self):
+        return self.elite_encounters[
+            self.elite_encounters_visited % len(self.elite_encounters)
+        ]
+
+    @property
+    def next_boss_encounter(self):
+        if self.boss_encounters_visited != 0 and self.second_boss is not None:
+            return self.second_boss
+        return self.boss
+
+    def mark_visited(self, room_type) -> None:
+        """C# RoomSet.MarkVisited."""
+        from sts2_env.core.enums import RoomType
+
+        if room_type == RoomType.MONSTER:
+            self.normal_encounters_visited += 1
+        elif room_type == RoomType.ELITE:
+            self.elite_encounters_visited += 1
+        elif room_type == RoomType.BOSS:
+            self.boss_encounters_visited += 1
+
+
 class RunState:
     """Complete run state, persisted across combats and rooms."""
 
@@ -1425,6 +1508,7 @@ class RunState:
         self.act_floor: int = 0
         self.total_floor: int = 0
         self._rooms_generated = False
+        self.act_rooms: dict[int, ActRoomSet] = {}
 
         # Event tracking
         self.visited_event_ids: set[str] = set()
@@ -1515,7 +1599,86 @@ class RunState:
         for act in self.acts:
             self.rng.up_front.shuffle(act.event_ids)
             act.events_visited = 0
+        self._generate_encounter_rooms()
         self._rooms_generated = True
+
+    def _generate_encounter_rooms(self) -> None:
+        """Build each act's encounter queues (C# ActModel.GenerateRooms driven
+        by RunManager.GenerateRooms with State.Rng.UpFront).
+
+        - Normal queue: the first ``NumberOfWeakEncounters`` fights come from
+          the weak pool, the rest from the regular pool; both via a refill
+          shuffle-bag (C# GrabBag, all weights 1.0) with the
+          AddWithoutRepeatingTags rule (no shared tags with / equality to the
+          previous pick, falling back to any entry).
+        - Elite queue: 15 entries from the elite pool via the same bag.
+        - Boss: one rng.NextItem pick per act.
+        - Double boss (A10): the last act also rolls a distinct second boss.
+        """
+        from sts2_env.encounters import get_act_encounter_pools, shares_tags_with
+
+        def add_without_repeating_tags(
+            chosen: list, bag: _EncounterGrabBag, rng: Rng
+        ) -> None:
+            previous = chosen[-1] if chosen else None
+            candidate = bag.grab_and_remove(
+                rng,
+                predicate=lambda e: not shares_tags_with(e, previous) and e != previous,
+            )
+            if candidate is None:
+                candidate = bag.grab_and_remove(rng)
+            if candidate is not None:
+                chosen.append(candidate)
+
+        for act_index, act in enumerate(self.acts):
+            pools = get_act_encounter_pools(act_index)
+            rng = self.rng.up_front
+            # C#: _mapLength = actModel.GetNumberOfRooms(isMultiplayer) + 1;
+            # GenerateRooms fills one normal-queue entry per room
+            # (multiplayer removes one room).
+            num_rooms = act.num_rooms - (1 if len(self.players) > 1 else 0)
+            num_weak = act.num_weak_encounters
+
+            normal: list = []
+            weak_bag = _EncounterGrabBag(pools["weak"])
+            for _ in range(num_weak):
+                if not weak_bag.any():
+                    weak_bag = _EncounterGrabBag(pools["weak"])
+                add_without_repeating_tags(normal, weak_bag, rng)
+            regular_bag = _EncounterGrabBag(pools["normal"])
+            for _ in range(num_weak, num_rooms):
+                if not regular_bag.any():
+                    regular_bag = _EncounterGrabBag(pools["normal"])
+                add_without_repeating_tags(normal, regular_bag, rng)
+
+            elite: list = []
+            elite_bag = _EncounterGrabBag(pools["elite"])
+            for _ in range(15):
+                if not elite_bag.any():
+                    elite_bag = _EncounterGrabBag(pools["elite"])
+                add_without_repeating_tags(elite, elite_bag, rng)
+
+            boss = rng.choice(pools["boss"]) if pools["boss"] else None
+
+            second_boss = None
+            if act_index == len(self.acts) - 1 and self.has_double_boss and pools["boss"]:
+                others = [e for e in pools["boss"] if e != boss]
+                if others:
+                    second_boss = rng.choice(others)
+
+            self.act_rooms[act_index] = ActRoomSet(
+                normal_encounters=normal,
+                elite_encounters=elite,
+                boss=boss,
+                second_boss=second_boss,
+            )
+
+    def get_act_room_set(self, act_index: int) -> ActRoomSet:
+        room_set = self.act_rooms.get(act_index)
+        if room_set is None:
+            self._generate_encounter_rooms()
+            room_set = self.act_rooms[act_index]
+        return room_set
 
     def _apply_ascension_effects(self) -> None:
         """Apply all ascension effects matching AscensionManager.ApplyEffectsTo
@@ -1528,7 +1691,9 @@ class RunState:
           3 = Poverty          — Starting gold × 0.75
           4 = TightBelt        — -1 max potion slot
           5 = AscendersBane    — Add Ascender's Bane curse to deck
-          6 = Gloom            — Map gen effects (handled in generator.py)
+          6 = Inflation         — shop card-removal base cost 100 / +50 per
+                                  removal (handled in run/shop.py; C#
+                                  MerchantCardRemovalEntry)
           7 = Scarcity         — Card upgrade rate halved (0.125 instead of 0.25)
           8 = ToughEnemies     — Higher monster HP (handled per-monster)
           9 = DeadlyEnemies    — Higher monster damage (handled per-monster)

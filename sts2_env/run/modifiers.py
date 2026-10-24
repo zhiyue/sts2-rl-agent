@@ -281,6 +281,9 @@ class BigGameHunterModifier(ModifierModel):
             replace_treasure_with_elite=replace_treasure,
             act_index=act_index,
             num_elites_override=round(current_elites * BIG_GAME_HUNTER_ELITE_COUNT_MULTIPLIER),
+            # C# BigGameHunter.ModifyGeneratedMap: PointTypesThatIgnoreRules
+            # = { MapPointType.Elite }
+            ignore_rules_for=frozenset({MapPointType.ELITE}),
         )
 
     def modify_card_reward_creation_options(self, player, options, reward, room, run_state):

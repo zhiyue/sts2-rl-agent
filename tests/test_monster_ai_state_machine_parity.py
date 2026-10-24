@@ -2549,6 +2549,12 @@ class TestFixedRotation:
         combat = _make_combat(rng_seed)
         creature, ai = create_kin_follower(Rng(rng_seed))
         dance_creature, dance_ai = create_kin_follower(Rng(rng_seed), starts_with_dance=True)
+        # C# CombatManager.cs:192: combat is won once no *primary* enemy is
+        # alive.  KinFollower carries MinionPower, so it is a SECONDARY enemy —
+        # pair it with a primary enemy so the combat stays live while the move
+        # rotation and setup power are exercised.
+        primary, primary_ai = create_twig_slime_s(Rng(rng_seed))
+        combat.add_enemy(primary, primary_ai)
         combat.add_enemy(creature, ai)
 
         assert 58 <= creature.max_hp <= 59

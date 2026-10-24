@@ -901,7 +901,9 @@ class TestAct2Pools:
         assert len(ACT2_WEAK) == 4
 
     def test_normal_encounter_count(self):
-        assert len(ACT2_NORMAL) == 11
+        # C# Hive.GenerateAllEncounters normals: 10 (TunnelerNormal is defined
+        # as a model but not referenced by any act pool in v0.107.1).
+        assert len(ACT2_NORMAL) == 10
 
     def test_elite_encounter_count(self):
         assert len(ACT2_ELITE) == 3
@@ -910,7 +912,7 @@ class TestAct2Pools:
         assert len(ACT2_BOSS) == 3
 
     def test_all_act2_total(self):
-        assert len(ALL_ACT2_ENCOUNTERS) == 4 + 11 + 3 + 3  # 21
+        assert len(ALL_ACT2_ENCOUNTERS) == 4 + 10 + 3 + 3  # 20 (C# Hive: 20)
 
 
 # ========================================================================
@@ -934,16 +936,18 @@ class TestAct3Pools:
         assert len(ALL_ACT3_ENCOUNTERS) == 3 + 9 + 3 + 3  # 18
 
     def test_act3_order_matches_original_glory_lists(self):
+        # C# Glory.GenerateAllEncounters bosses: AeonglassBoss, QueenBoss,
+        # TestSubjectBoss (the Doormaker is not an act encounter in v0.107.1).
         assert [encounter.__name__ for encounter in ACT3_BOSS] == [
+            "setup_aeonglass_boss",
             "setup_queen_boss",
             "setup_test_subject_boss",
-            "setup_doormaker_boss",
         ]
         assert [encounter.__name__ for encounter in ALL_ACT3_ENCOUNTERS] == [
             "setup_axebots_normal",
             "setup_construct_menagerie_normal",
             "setup_devoted_sculptor_weak",
-            "setup_doormaker_boss",
+            "setup_aeonglass_boss",
             "setup_fabricator_normal",
             "setup_frog_knight_normal",
             "setup_globe_head_normal",
@@ -970,16 +974,22 @@ class TestAct4Pools:
         assert len(ACT4_WEAK) == 4
 
     def test_normal_encounter_count(self):
-        assert len(ACT4_NORMAL) == 11
+        # C# Underdocks.GenerateAllEncounters normals: 10 (Toadpoles has only
+        # a Weak encounter in v0.107.1).
+        assert len(ACT4_NORMAL) == 10
 
     def test_elite_encounter_count(self):
         assert len(ACT4_ELITE) == 3
 
     def test_boss_encounter_count(self):
-        assert len(ACT4_BOSS) == 4
+        # C# Underdocks bosses: WaterfallGiant, SoulFysh, LagavulinMatriarch
+        # (AeonglassBoss belongs to Glory in v0.107.1).
+        assert len(ACT4_BOSS) == 3
 
     def test_all_act4_total(self):
-        assert len(ALL_ACT4_ENCOUNTERS) == 4 + 11 + 3 + 4  # 22
+        # C# Underdocks.GenerateAllEncounters: 20 entries -- 10 normal,
+        # 4 weak, 3 elite, 3 boss.
+        assert len(ALL_ACT4_ENCOUNTERS) == 4 + 10 + 3 + 3  # 20
 
 
 # ========================================================================
@@ -1056,8 +1066,9 @@ class TestAllActsHaveEncounters:
             len(ALL_ACT3_ENCOUNTERS) +
             len(ALL_ACT4_ENCOUNTERS)
         )
-        # 22 + 21 + 18 + 22 = 83
-        assert total == 83
+        # 22 + 20 + 18 + 20 = 80 (C# pools: Overgrowth 22, Hive 20,
+        # Glory 18, Underdocks 20; AeonglassBoss counts once, in Glory)
+        assert total == 80
 
     def test_each_act_has_all_tiers(self):
         """Each act should have weak, normal, elite, and boss encounters."""
